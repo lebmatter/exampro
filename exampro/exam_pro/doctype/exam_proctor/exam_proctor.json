@@ -6,14 +6,63 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_awap"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_awap",
-   "fieldtype": "Section Break"
-  }
- ],
+    "examiner",
+    "can_proctor",
+    "can_evaluate",
+    "proctoring_count",
+    "evaluation_count",
+    "notification_sent"
+   ],
+   "fields": [
+    {
+     "fieldname": "examiner",
+     "fieldtype": "Link",
+     "in_list_view": 1,
+     "label": "Examiner",
+     "options": "User",
+     "reqd": 1,
+     "set_only_once": 1,
+     "width": "100"
+    },
+    {
+     "default": "0",
+     "description": "Examiner can proctor the exam by viewing live video feed from candidate.",
+     "fieldname": "can_proctor",
+     "fieldtype": "Check",
+     "in_list_view": 1,
+     "label": "Can Proctor"
+    },
+    {
+     "default": "1",
+     "description": "Can evaluate candidate's response.",
+     "fieldname": "can_evaluate",
+     "fieldtype": "Check",
+     "in_list_view": 1,
+     "label": "Can Evaluate"
+    },
+    {
+     "fieldname": "proctoring_count",
+     "fieldtype": "Int",
+     "in_list_view": 1,
+     "label": "Proctoring",
+     "non_negative": 1,
+     "read_only": 1
+    },
+    {
+     "fieldname": "evaluation_count",
+     "fieldtype": "Int",
+     "in_list_view": 1,
+     "label": "Evaluating",
+     "non_negative": 1,
+     "read_only": 1
+    },
+    {
+     "default": "0",
+     "fieldname": "notification_sent",
+     "fieldtype": "Check",
+     "label": "Notification sent"
+    }
+   ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
