@@ -5,14 +5,253 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_lx5k"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_lx5k",
-   "fieldtype": "Section Break"
-  }
- ],
+    "question",
+    "category",
+    "mark",
+    "description_image",
+    "type",
+    "options_section",
+    "option_1",
+    "option_1_image",
+    "is_correct_1",
+    "column_break_5",
+    "explanation_1",
+    "section_break_5",
+    "option_2",
+    "option_2_image",
+    "is_correct_2",
+    "column_break_10",
+    "explanation_2",
+    "column_break_4",
+    "option_3",
+    "option_3_image",
+    "is_correct_3",
+    "column_break_15",
+    "explanation_3",
+    "section_break_11",
+    "option_4",
+    "option_4_image",
+    "is_correct_4",
+    "column_break_20",
+    "explanation_4",
+    "section_break_mnhr",
+    "possibility_1",
+    "possibility_3",
+    "column_break_vnaj",
+    "possibility_2",
+    "possibility_4",
+    "section_break_c1lf",
+    "multiple"
+   ],
+   "fields": [
+    {
+     "fieldname": "question",
+     "fieldtype": "Text Editor",
+     "in_list_view": 1,
+     "label": "Question",
+     "reqd": 1
+    },
+    {
+     "fieldname": "type",
+     "fieldtype": "Select",
+     "in_list_view": 1,
+     "label": "Type",
+     "options": "Choices\nUser Input"
+    },
+    {
+     "depends_on": "eval: doc.type == 'Choices'",
+     "fieldname": "options_section",
+     "fieldtype": "Section Break"
+    },
+    {
+     "fieldname": "option_1",
+     "fieldtype": "Small Text",
+     "label": "Option 1",
+     "mandatory_depends_on": "eval: doc.type == 'Choices'"
+    },
+    {
+     "default": "0",
+     "depends_on": "option_1",
+     "fieldname": "is_correct_1",
+     "fieldtype": "Check",
+     "label": "Is Correct"
+    },
+    {
+     "fieldname": "column_break_5",
+     "fieldtype": "Column Break"
+    },
+    {
+     "depends_on": "option_1",
+     "fieldname": "explanation_1",
+     "fieldtype": "Data",
+     "label": "Explanation"
+    },
+    {
+     "depends_on": "eval: doc.type == 'Choices'",
+     "fieldname": "section_break_5",
+     "fieldtype": "Section Break"
+    },
+    {
+     "fieldname": "option_2",
+     "fieldtype": "Small Text",
+     "label": "Option 2",
+     "mandatory_depends_on": "eval: doc.type == 'Choices'"
+    },
+    {
+     "default": "0",
+     "depends_on": "option_2",
+     "fieldname": "is_correct_2",
+     "fieldtype": "Check",
+     "label": "Is Correct"
+    },
+    {
+     "fieldname": "column_break_10",
+     "fieldtype": "Column Break"
+    },
+    {
+     "depends_on": "option_2",
+     "fieldname": "explanation_2",
+     "fieldtype": "Data",
+     "label": "Explanation"
+    },
+    {
+     "depends_on": "eval: doc.type == 'Choices'",
+     "fieldname": "column_break_4",
+     "fieldtype": "Section Break"
+    },
+    {
+     "fieldname": "option_3",
+     "fieldtype": "Small Text",
+     "label": "Option 3"
+    },
+    {
+     "default": "0",
+     "depends_on": "option_3",
+     "fieldname": "is_correct_3",
+     "fieldtype": "Check",
+     "label": "Is Correct"
+    },
+    {
+     "fieldname": "column_break_15",
+     "fieldtype": "Column Break"
+    },
+    {
+     "depends_on": "option_3",
+     "fieldname": "explanation_3",
+     "fieldtype": "Data",
+     "label": "Explanation"
+    },
+    {
+     "depends_on": "eval: doc.type == 'Choices'",
+     "fieldname": "section_break_11",
+     "fieldtype": "Section Break"
+    },
+    {
+     "fieldname": "option_4",
+     "fieldtype": "Small Text",
+     "label": "Option 4"
+    },
+    {
+     "default": "0",
+     "depends_on": "option_4",
+     "fieldname": "is_correct_4",
+     "fieldtype": "Check",
+     "label": "Is Correct"
+    },
+    {
+     "fieldname": "column_break_20",
+     "fieldtype": "Column Break"
+    },
+    {
+     "depends_on": "option_4",
+     "fieldname": "explanation_4",
+     "fieldtype": "Data",
+     "label": "Explanation"
+    },
+    {
+     "depends_on": "eval: doc.type == 'User Input'",
+     "fieldname": "section_break_mnhr",
+     "fieldtype": "Section Break"
+    },
+    {
+     "fieldname": "possibility_1",
+     "fieldtype": "Small Text",
+     "label": "Possible Answer 1",
+     "mandatory_depends_on": "eval: doc.type == 'User Input'"
+    },
+    {
+     "fieldname": "possibility_3",
+     "fieldtype": "Small Text",
+     "label": "Possible Answer 3"
+    },
+    {
+     "fieldname": "column_break_vnaj",
+     "fieldtype": "Column Break"
+    },
+    {
+     "fieldname": "possibility_2",
+     "fieldtype": "Small Text",
+     "label": "Possible Answer 2"
+    },
+    {
+     "fieldname": "possibility_4",
+     "fieldtype": "Small Text",
+     "label": "Possible Answer 4"
+    },
+    {
+     "fieldname": "section_break_c1lf",
+     "fieldtype": "Section Break"
+    },
+    {
+     "default": "0",
+     "fieldname": "multiple",
+     "fieldtype": "Check",
+     "hidden": 1,
+     "label": "Multiple Correct Answers",
+     "read_only": 1
+    },
+    {
+     "fieldname": "description_image",
+     "fieldtype": "Attach Image",
+     "label": "Description Image"
+    },
+    {
+     "fieldname": "option_1_image",
+     "fieldtype": "Attach Image",
+     "label": "Option 1 Image"
+    },
+    {
+     "fieldname": "option_2_image",
+     "fieldtype": "Attach Image",
+     "label": "Option 2 Image"
+    },
+    {
+     "fieldname": "option_3_image",
+     "fieldtype": "Attach Image",
+     "label": "Option 3 Image"
+    },
+    {
+     "fieldname": "option_4_image",
+     "fieldtype": "Attach Image",
+     "label": "Option 4 Image"
+    },
+    {
+     "fieldname": "category",
+     "fieldtype": "Link",
+     "in_list_view": 1,
+     "label": "Category",
+     "options": "Exam Question Category",
+     "reqd": 1,
+     "search_index": 1
+    },
+    {
+     "fieldname": "mark",
+     "fieldtype": "Int",
+     "in_list_view": 1,
+     "label": "Mark",
+     "non_negative": 1
+    }
+   ],
  "index_web_pages_for_search": 1,
  "links": [],
  "modified": "2024-12-04 13:22:14.991862",
