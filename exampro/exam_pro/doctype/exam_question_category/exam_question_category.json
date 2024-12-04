@@ -5,16 +5,23 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_3qvb"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_3qvb",
-   "fieldtype": "Section Break"
-  }
- ],
+    "title"
+   ],
+   "fields": [
+    {
+     "fieldname": "title",
+     "fieldtype": "Data",
+     "label": "Title",
+     "unique": 1
+    }
+],
  "index_web_pages_for_search": 1,
- "links": [],
+ "links": [
+    {
+     "link_doctype": "Exam Question",
+     "link_fieldname": "category"
+    }
+   ],
  "modified": "2024-12-04 13:29:58.400534",
  "modified_by": "Administrator",
  "module": "Exam Pro",
