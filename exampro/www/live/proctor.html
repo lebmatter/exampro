@@ -1,0 +1,283 @@
+{% extends "lms/templates/exam_base.html" %}
+<!-- {% from "www/macros/livecode.html" import LiveCodeEditorJS, LiveCodeEditor with context %} -->
+
+
+{% block title %}
+Proctor
+{% endblock %}
+
+
+{% block head_include %}
+{% for ext in page_extensions %}
+{{ ext.render_header() }}
+{% endfor %}
+<style>
+    .web-footer {
+        display: none;
+    }
+
+    #timer {
+        font-size: 16px;
+    }
+
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+    }
+
+    .video-container video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .controls__button {
+        background: none;
+        border: 0;
+        line-height: 1;
+        color: white;
+        text-align: center;
+        outline: 0;
+        padding: 5px;
+    }
+
+    .progress_slider {
+        width: 10px;
+        height: 30px;
+    }
+
+    .controls {
+        position: absolute;
+        width: 100%;
+        flex-wrap: wrap;
+        background: rgba(255, 255, 255, 0.206);
+        transform: translateY(0);
+        bottom: 5px;
+        color: white;
+        text-align: center;
+    }
+
+    .controls>* {
+        flex: 1;
+    }
+
+    .progress {
+        flex: 10;
+        position: relative;
+        display: flex;
+        flex-basis: 100%;
+        height: 5px;
+        /* background: rgba(0,0,0,0.5); */
+        background: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        height: 15px;
+    }
+
+    .progress__filled {
+        width: 50%;
+        background: #0D4646;
+        flex: 0;
+        flex-basis: 0%;
+    }
+
+    .svg-white {
+        fill: white;
+    }
+
+    .scrollable-column {
+        max-height: 600px;
+        /* Adjust the maximum height as needed */
+        overflow-y: auto;
+    }
+    .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+    }
+    .message {
+        max-width: 70%;
+        margin-bottom: 20px;
+        padding: 8px 12px;
+        border-radius: 20px;
+        position: relative;
+    }
+    .message-content {
+        margin-bottom: 5px;
+    }
+    .timestamp {
+        font-size: 0.75em;
+        color: #777;
+        position: absolute;
+        bottom: -18px;
+    }
+    .user-message {
+        align-self: flex-end;
+        background-color: #007bff;
+        color: white;
+    }
+    .user-message .timestamp {
+        right: 10px;
+    }
+    .bot-message {
+        align-self: flex-start;
+        background-color: #f1f0f0;
+    }
+    .bot-message .timestamp {
+        left: 10px;
+    }
+    .modal-video-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    #modalVideoElement {
+        max-width: 100%;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+<div class="container">
+    <div class="row mt-2 mb-3">
+        <div class="col-12">
+            <button type="button" class="btn btn-primary mr-2">
+                Live exams <span class="badge badge-light">{{ submissions|length }}</span>
+            </button>
+            <button type="button" class="btn btn-secondary">
+                Pending candidates <span class="badge badge-light">{{ pending_candidates|length }}</span>
+            </button>
+        </div>
+    </div>
+    <div class="row text-center">
+        {% for index, submission in enumerate(submissions) %}
+        <div class="col-md-4">
+            <small>{{ submission.candidate_name }} | <span class="examstatus">{{ submission.status }}</span></small>
+            <div class="video-container border border-primary" data-videoid="{{ submission.name }}"
+                data-candidatename="{{ submission.candidate_name }}" data-islive="0">
+                <video class="video" id="{{ submission.name }}" data-videoid="{{ submission.name }}" preload="metadata">
+                    <p>Your browser doesn't support HTML5 video.</p>
+                </video>
+                <div class="controls">
+                    <small class="fileTimeStamp"></small>
+                    <button class="controls__button toggleButton" title="Toggle Play">
+                        <svg class="svg-white" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="feather feather-play">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    </button>
+                    <!-- <button class="controls__button volToggle" title="Toggle Volume" disabled>
+                        <svg class="svg-white" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-x">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <line x1="23" y1="9" x2="17" y2="15"></line>
+                            <line x1="17" y1="9" x2="23" y2="15"></line>
+                        </svg>
+                    </button> -->
+                    <button class="controls__button skipBack" title="Skip back">
+                        <svg class="svg-white" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="feather feather-rewind">
+                            <polygon points="11 19 2 12 11 5 11 19"></polygon>
+                            <polygon points="22 19 13 12 22 5 22 19"></polygon>
+                        </svg>
+                    </button>
+                    <button class="controls__button skipFwd" title="Skip forward">
+                        <svg class="svg-white" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="feather feather-fast-forward">
+                            <polygon points="13 19 22 12 13 5 13 19"></polygon>
+                            <polygon points="2 19 11 12 2 5 2 19"></polygon>
+                        </svg>
+                    </button>
+                    <small><button class="controls__button goLive" title="Go Live">
+                            Go Live
+                        </button></small>
+                    <button type="button" class="controls__button menu" title="Chat"
+                        data-videoid="{{ submission.name }}">
+                        <svg class="svg-white" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="feather feather-message-square">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% if loop.index % 3 == 0 %}
+    </div>
+    <div class="row mt-5">
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+<!-- Bootstrap Modal -->
+<div class="modal fade m-10" id="chatModal" tabindex="-1" aria-labelledby="chatVideoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chatVideoModalLabel">Chat with: <span id="candidateName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Chat Column -->
+                    <div class="col-md-6">
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Sample messages -->
+                            <!-- <div class="message bot-message">
+                                <div class="message-content">Hello! How can I assist you today?</div>
+                                <div class="timestamp">10:00 AM</div>
+                            </div>
+                            <div class="message user-message">
+                                <div class="message-content">Hi! I have a question about your services.</div>
+                                <div class="timestamp">10:02 AM</div>
+                            </div> -->
+                        </div>
+                            <div class="input-group">
+                                <input type="text" id="messageInput" class="form-control" placeholder="Type your message...">
+                                <button class="btn btn-primary" id="send-button">Send</button>
+                            </div>
+                    </div>
+                    <!-- Video Column -->
+                    <div class="col-md-6">
+                        <div class="modal-video-container">
+                            <video id="modalVideoElement" controls width="80%">
+                                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <div>
+                                <button type="button" class="btn btn-danger" id="terminateExam">Terminate Exam</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- Scripts -->
+{%- block script %}
+{{ super() }}
+<script type="text/javascript">
+    {% include "lms/templates/exam/examutils.js" %}
+</script>
+<script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+<script type="text/javascript">
+    {% include "lms/templates/exam/proctorutils.js" %}
+</script>
+{% endblock %}

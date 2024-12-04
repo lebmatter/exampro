@@ -1,0 +1,331 @@
+{% extends "lms/templates/exam_base.html" %}
+<!-- {% from "www/macros/livecode.html" import LiveCodeEditorJS, LiveCodeEditor with context %} -->
+
+
+{% block title %}
+{% if alert %}
+Alert!
+{% else %}
+{{ exam.title }}
+{% endif %}
+{% endblock %}
+
+
+{% block head_include %}
+{% for ext in page_extensions %}
+{{ ext.render_header() }}
+{% endfor %}
+<style>
+    .web-footer {
+        display: none;
+    }
+
+    .timer {
+        font-size: 16px;
+    }
+
+    /* Zerodha-style chat container */
+    #messages {
+        max-height: 400px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Zerodha-style chat bubble */
+    .chat-bubble {
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+
+    .chat-left {
+        background-color: #e6f3ff;
+        align-self: flex-start;
+    }
+
+    .chat-right {
+        background-color: #f0f0f0;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    .chat-timestamp-right {
+        font-size: 11px;
+        color: #999;
+        margin-bottom: 2px;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    /* Zerodha-style timestamp */
+    .chat-timestamp {
+        font-size: 11px;
+        color: #999;
+        margin-bottom: 2px;
+    }
+
+    /* Chat container styles */
+    .chat-container {
+        height: 300px;
+        overflow-y: auto;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    /* Chat input container styles */
+    .chat-input-container {
+        position: sticky;
+        bottom: 0;
+        background-color: #f9f9f9;
+        padding-top: 10px;
+    }
+
+    /* Zerodha-style input box */
+    #chat-input {
+        border: 1px solid #e0e0e0;
+        border-radius: 4px 0 0 4px;
+        padding: 8px;
+        font-size: 14px;
+        height: 38px;
+    }
+
+    /* Zerodha-style send button */
+    #send-message {
+        background-color: #387ed1;
+        color: white;
+        border: none;
+        border-radius: 0 4px 4px 0;
+        padding: 8px 12px;
+        font-size: 14px;
+        height: 38px;
+        line-height: 22px;
+    }
+
+    /* Adjust input group */
+    .input-group {
+        display: flex;
+    }
+
+    .input-group .form-control {
+        flex: 1;
+    }
+
+    .input-group-append {
+        display: flex;
+    }
+
+    #send-message:hover {
+        background-color: #2c6cb2;
+    }
+    .focus-ring {
+      outline: 1px solid #007bff; /* Blue outline, can be customized */
+    }
+    .calcBtn:active, .calcBtn.active {
+    background-image: none;
+    outline: 0;
+    box-shadow: none;
+}
+</style>
+{% endblock %}
+
+{% block page_content %}
+
+<div class="container mt-10">
+    {% if alert %}
+    <div class="row justify-content-center mt-10 mb-10">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ alert.title }}</h5>
+                    <p class="card-text">{{ alert.text }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Sidebar content -->
+            <div class="bold-heading mb-3">
+                {{ exam.title }}
+            </div>
+            <!-- Bootstrap Navigation -->
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#messages">Messages
+                        {% if exam.enable_chat %}
+                        <span class="badge badge-pill badge-warning" id="msgCount"></span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#calculator">Calculator</a>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content mt-5">
+                
+                <div id="messages" class="tab-pane fade show active">
+                    {% if exam.enable_chat %}
+                    <!-- Tab 1 Content Goes Here -->
+                    <div class="chat-container">
+                        <div id="chat-messages" class="d-flex flex-column mb-3"></div>
+                    </div>
+                    <div class="chat-input-container">
+                        <div class="input-group">
+                            <input type="text" id="chat-input" class="form-control" placeholder="Type your message...">
+                            <div class="input-group-append">
+                                <button class="btn" type="button" id="send-message">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="card-text">Chat disabled.</p>
+                    {% endif %}
+                </div>
+                <div id="calculator" class="tab-pane fade">
+                    {% if exam.enable_calculator %}
+                    <!-- Tab 2 Content Goes Here -->
+                    <div class="tab-pane fade show active">
+                        {{ frappe.render_template('templates/exam/calculator.html', {}) }}
+                    </div>
+                    {% else %}
+                    <p class="card-text">Calculator disabled.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card  mt-5">
+                <div class="collapse show" id="videoCollapse">
+                    <div class="card-body">
+                        {% if exam.enable_video_proctoring %}
+                        <video id="webcam-stream" autoplay style="max-width: 100%;"></video>
+                        {% else %}
+                        <p class="card-text">Video proctoring disabled.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if exam.enable_video_proctoring %}
+                <div class="card-footer">
+                    <button class="btn  btn-outline-info btn-sm" type="button" data-toggle="collapse"
+                        data-target="#videoCollapse" aria-expanded="true" aria-controls="videoCollapse"
+                        id="toggleButton">
+                        Hide Video
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-9">
+            <!-- Main content -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-start">
+                        <button class="btn btn-info btn-sm mr-2" id="toggleInstruction">Hide instructions</button>
+                        <button class="btn btn-light btn-sm" id="submitTopBtn">Submit</button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-end" id="timerdiv">
+                        <!-- Right-aligned element -->
+                        <button class="btn btn-info btn-sm" id="showTimer" style="display: none;">Show
+                            timer</button>
+                        <a class="btn btn-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off"
+                                id="toggleTimer">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                </path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                            <span class="badge badge-pill badge-warning timer">--:--</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <div id="instruction" class="mt-3">
+                        <div class="alert alert-info pl-9">
+                            {{ exam.instructions }}
+                        </div>
+                    </div>
+                </div>
+                {{ frappe.render_template('templates/exam/examform.html', {"exam": exam}) }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <!-- Bootstrap Modal -->
+    <div class="modal" id="examAlert">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alertTitle"></h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="alertText">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Scripts -->
+    {%- block script %}
+    {{ super() }}
+    {% if exam %}
+    <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+    <script type="text/javascript">
+        var exam = {{ exam | tojson }};
+        {% include "lms/templates/exam/examutils.js" %}
+        {% include "lms/templates/exam/inactivityDetector.js" %}
+        {% include "lms/templates/exam/examform.js" %}
+        {% include "lms/templates/exam/calculator.js" %}
+    </script>
+    <script>
+        $(document).ready(function () {
+            $('#toggleInstruction').click(function () {
+                $('#instruction').toggle();
+                $(this).text(function (i, text) {
+                    return text === "Show instructions" ? "Hide instructions" : "Show instructions";
+                });
+            });
+            $('#toggleTimer').click(function () {
+                // Replace the content of the timerdiv with the button
+                $('#toggleTimer').hide();
+                $('.timer').hide();
+                $("#showTimer").show();
+            });
+            $('#showTimer').click(function () {
+                // Replace the content of the timerdiv with the button
+                $('#toggleTimer').show();
+                $('.timer').show();
+                $("#showTimer").hide();
+            });
+
+            // Chat functionality
+            $('#send-message').click(function() {
+                sendChatMessage();
+            });
+
+            $('#chat-input').keypress(function(e) {
+                if(e.which == 13) {
+                    sendChatMessage();
+                    return false;
+                }
+            });
+        });
+    </script>
+    {% endif %}
+    {% endblock %}

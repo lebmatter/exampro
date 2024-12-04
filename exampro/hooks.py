@@ -219,3 +219,11 @@ app_license = "mit"
 # auth_hooks = [
 #	"exampro.auth.validate"
 # ]
+
+website_route_rules = [
+    {"from_route": "/exams/evaluate", "to_route": "exams/evaluate"},
+    {"from_route": "/exams/<exam>", "to_route": "exams/exam"},
+    {"from_route": "/exams/scorecard/<exam_submission>", "to_route": "exams/scorecard"},
+	{"from_route": "/exams/finished/<exam_submission>", "to_route": "exams/finished"},
+    {"from_route": "/exams/terminated/<exam_submission>", "to_route": "exams/terminated"}
+]

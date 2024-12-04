@@ -1,0 +1,146 @@
+{% extends "lms/templates/lms_base.html" %}
+
+
+{% block title %}
+{{ 'Exams' }}
+{% endblock %}
+
+
+{% block page_content %}
+<div class="common-page-style pt-8">
+    <div class="container">
+        {% if restriction %}
+        {% set profile_link = "<a href='/edit-profile'> profile </a>" %}
+        <div class="empty-state">
+            <div class="course-home-headings text-center mb-0" style="color: inherit;">
+                {{ _("You haven't completed your profile.") }}
+            </div>
+            <p class="small text-center">
+                {{ _("Complete your {0} to access the exam.").format(profile_link) }}
+            </p>
+        </div>
+
+        {% else %}
+
+        {% include "lms/templates/search_exam/search_exam.html" %}
+
+        <div class="course-list-cta">
+            {% if frappe.session.user != "Guest" %}
+            <a class="btn btn-default btn-sm" href="/users">
+                {{ _("My Profile") }}
+            </a>
+            {% endif %}
+
+            <a class="btn btn-default btn-sm ml-2" id="open-search">
+                {{ _("Search") }} (Ctrl + k)
+            </a>
+        </div>
+
+        <div class="page-title mb-6">
+            {{ _("All Exams") }}
+        </div>
+
+        <ul class="nav lms-nav" id="courses-tab">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#live">
+                    {{ _("Live") }}
+                    <span class="course-list-count">
+                        {{ live_exams | length }}
+                    </span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#upcoming">
+                    {{ _("Upcoming") }}
+                    <span class="course-list-count">
+                        {{ upcoming_exams | length }}
+                    </span>
+                </a>
+            </li>
+
+            {% if frappe.session.user != "Guest" %}
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#exams-enrolled">
+                    {{ _("Registered") }}
+                    <span class="course-list-count">
+                        {{ registered_exams | length }}
+                    </span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if show_creators_section %}
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#exams-created">
+                    {{ _("Created") }}
+                    <span class="course-list-count">
+                        {{ created_exams | length }}
+                    </span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if show_review_section %}
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#exams-under-review">
+                    {{ _("Under Review") }}
+                    <span class="course-list-count">
+                        {{ review_exams | length }}
+                    </span>
+                </a>
+            </li>
+            {% endif %}
+
+        </ul>
+
+        <div class="border-bottom mb-4"></div>
+
+        <div class="tab-content">
+            <div class="tab-pane active" id="live" role="tabpanel" aria-labelledby="live">
+                {% set exams = live_exams %}
+                {% set title = _("Live Exams") %}
+                {% set classes = "live-exams" %}
+                {% include "lms/templates/exam_list.html" %}
+            </div>
+
+            <div class="tab-pane" id="upcoming" role="tabpanel" aria-labelledby="upcoming">
+                {% set exams = upcoming_exams %}
+                {% set title = _("Upcoming Exams") %}
+                {% set classes = "upcoming-exams" %}
+                {% include "lms/templates/exam_list.html" %}
+            </div>
+
+            {% if frappe.session.user != "Guest" %}
+            <div class="tab-pane fade" id="courses-enrolled" role="tabpanel" aria-labelledby="courses-enrolled">
+                {% set exams = enrolled_exams %}
+                {% set title = _("Registered Exams") %}
+                {% set classes = "enrolled-exams" %}
+                {% include "lms/templates/exam_list.html" %}
+            </div>
+            {% endif %}
+
+            {% if show_creators_section %}
+            <div class="tab-pane fade" id="courses-created" role="tabpanel" aria-labelledby="courses-created">
+                {% set exams = created_exams %}
+                {% set title = _("Created Exams") %}
+                {% set classes = "created-exams" %}
+                {% include "lms/templates/exam_list.html" %}
+            </div>
+            {% endif %}
+
+            {% if show_review_section %}
+            <div class="tab-pane fade" id="courses-under-review" role="tabpanel" aria-labelledby="courses-under-review">
+                {% set exams = review_exams %}
+                {% set title = _("Review Exams") %}
+                {% set classes = "review-exams" %}
+                {% include "lms/templates/exam_list.html" %}
+            </div>
+            {% endif %}
+
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

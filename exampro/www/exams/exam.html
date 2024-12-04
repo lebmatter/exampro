@@ -1,0 +1,259 @@
+{% extends "lms/templates/lms_base.html" %}
+{% block title %}
+{{ exam.title if exam.title else _("New Exam") }}
+{% endblock %}
+
+
+{% block page_content %}
+<div class="common-page-style">
+    <div class="course-home-top-container">
+        {{ ExamHomeHeader(exam) }}
+        <div class="course-home-page">
+            <div class="container">
+                <div class="course-body-container">
+                    {{ ExamHeaderOverlay(exam) }}
+                    {{ ExamDescription(exam) }}
+                    {% if exam.status == "Approved" and not frappe.utils.cint(exam.upcoming) %}
+                    {% include "lms/templates/examreviews.html" %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% macro ExamHomeHeader(exam) %}
+<div class="course-head-container">
+    <div class="container">
+        <div class="course-card-wide">
+            {{ ExamBreadCrumb(exam) }}
+            {{ ExamCardWide(exam) }}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+<!-- BreadCrumb -->
+{% macro ExamBreadCrumb(exam) %}
+<div class="breadcrumb">
+    <a class="dark-links" href="/exams">{{ _("All Exams") }}</a>
+    <img class="ml-1 mr-1" src="/assets/lms/icons/chevron-right.svg">
+    <span class="breadcrumb-destination">{{ exam.title if exam.title else _("New Exam") }}</span>
+</div>
+{% endmacro %}
+
+
+<!-- Exam Card -->
+{% macro ExamCardWide(exam) %}
+<div class="d-flex align-items-center mt-8">
+    {% for tag in get_tags(exam.name) %}
+    <div class="course-card-pills">
+        {{ tag }}
+    </div>
+    {% endfor %}
+</div>
+
+<div id="title" {% if exam.name %} data-course="{{ exam.name | urlencode }}" {% endif %} class="page-title">
+    {% if exam.title %} {{ exam.title }} {% endif %}
+</div>
+
+<div id="intro">
+    {% if exam.short_introduction %}
+    {{ exam.short_introduction }}
+    {% endif %}
+</div>
+
+{% if not exam.upcoming %}
+<div class="avg-rating-stars">
+    <div class="rating">
+        {% for i in [1, 2, 3, 4, 5] %}
+        <svg class="icon icon-lg {% if i <= frappe.utils.ceil(avg_rating) %} star-click {% endif %}"
+            data-rating="{{ i }}">
+            <use href="#icon-star"></use>
+        </svg>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+
+<!-- Overlay -->
+{% macro ExamHeaderOverlay(exam) %}
+<div class="course-overlay-card">
+
+    {% if exam.video_link %}
+    <iframe class="preview-video" frameborder="0" allowfullscreen
+        src="https://www.youtube.com/embed/{{ exam.video_link }}"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+    {% endif %}
+
+    <div class="course-overlay-content">
+
+        <div class="cta-parent">
+            {{ ExamCTASection(exam) }}
+        </div>
+
+        {{ Notes(exam) }}
+
+        <div class="vertically-center mb-3">
+            <svg class="icon icon-md mr-1">
+                <use class="" href="#icon-users">
+            </svg>
+            {{ format_number(get_students(exam.name) | length) }} {{ _("Registered") }}
+        </div>
+
+        {% if exam.enable_certification %}
+        <div class="vertically-center mb-3">
+            <svg class="icon icon-md mr-1">
+                <use href="#icon-badge"></use>
+            </svg>
+            {{ _("Get Certified") }}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endmacro %}
+
+
+<!-- Description -->
+{% macro ExamDescription(exam) %}
+<div class="course-description-section">
+    {{ exam.description }}
+</div>
+{% endmacro %}
+
+
+
+<!-- Related Courses Section -->
+{% macro RelatedCourses(exam) %}
+{% if exam.related_courses | length %}
+<div class="related-courses">
+    <div class="container">
+        <div class="page-title"> {{ _("Other Courses") }} </div>
+        <div class="carousel slide" id="carouselExampleControls" data-ride="carousel" data-interval="false">
+            <div class="carousel-inner">
+                {% for crs in exam.related_courses %}
+                {% if loop.index % 3 == 1 %}
+                <div class="carousel-item {% if loop.index == 1 %} active {% endif %}">
+                    <div class="cards-parent">
+                        {% endif %}
+                        {{ widgets.CourseCard(course=crs, read_only=False) }}
+                        {% if loop.index % 3 == 0 or loop.index == exam.related_courses | length %} </div>
+                </div> {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if exam.related_courses | length > 3 %}
+            <div class="slider-controls">
+                <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                </a>
+
+                <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endif %}
+{% endmacro %}
+
+
+<!-- CTA's -->
+{% macro ExamCTASection(exam) %}
+<div class="all-cta">
+    {% if exam.upcoming and not is_user_interested %}
+    <div class="btn btn-secondary wide-button notify-me" data-course="{{exam.name | urlencode}}">
+        {{ _("Notify me when available") }}
+    </div>
+
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+<!-- Notes and Messages -->
+{% macro Notes(exam) %}
+<div id="interest-alert" class="{% if not is_user_interested %} hide {% endif %}">
+    {{ _("You have opted to be notified for this exam. You will receive an email when the course becomes available.") }}
+</div>
+
+{% if exam.status == "Under Review" %}
+<div class="mb-4">
+    {{ _("This exam is currently under review. Once the review is complete, the System Admins will publish it on the
+    website.") }}
+</div>
+{% endif %}
+
+{% if no_of_attempts and no_of_attempts >= exam.max_attempts %}
+<p>
+    {{ _("You have exceeded the maximum number of attempts allowed to appear for evaluations of this exam.") }}
+</p>
+{% endif %}
+{% endmacro %}
+
+
+<!-- Modal for Slots -->
+{% macro ExamSlotModal(exam) %}
+<div class="modal fade" id="slot-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">{{ _("Pick a Slot") }}</div>
+            </div>
+            <div class="modal-body">
+                <form id="slot-form">
+                    <p class="">{{ _("This course requires you to complete an evaluation to get certified. Please pick a
+                        slot based on your convenience for the evaluations. ") }}</p>
+                    <div class="form-group">
+                        <div class="clearfix">
+                            <label class="control-label reqd" style="padding-right: 0px;">{{ _("Date") }}</label>
+                        </div>
+                        <div class="control-input-wrapper">
+                            <div class="control-input">
+                                <input type="date" class="input-with-feedback form-control bold" data-fieldtype="Date"
+                                    data-course="{{ exam.name | urlencode }}" id="slot-date"
+                                    min="{{ frappe.utils.format_date(frappe.utils.add_days(frappe.utils.getdate(), 1), 'yyyy-mm-dd') }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="clearfix">
+                            <label class="control-label reqd slot-label hide" style="padding-right: 0px;">{{ _("Slots")
+                                }}</label>
+                        </div>
+                        <div class="control-input-wrapper">
+                            <div class="control-input">
+                                <div class="slots"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="no-slots-message" class="small text-danger hide"> {{ _("There are no slots available on this
+                        day.") }} </p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm pull-right mr-2 close-slot-modal" data-dismiss="modal"
+                    aria-label="Close">
+                    {{ _("Discard") }}
+                </button>
+
+                <button class="btn btn-primary btn-sm pull-right" data-course="{{ exam.name | urlencode}}"
+                    id="submit-slot">
+                    {{ _("Submit") }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
