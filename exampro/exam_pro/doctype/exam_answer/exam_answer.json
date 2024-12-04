@@ -5,14 +5,95 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_lypn"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_lypn",
-   "fieldtype": "Section Break"
-  }
- ],
+    "seq_no",
+    "exam_question",
+    "question",
+    "marked_for_later",
+    "answer",
+    "is_correct",
+    "section_break_r1io",
+    "evaluation_status",
+    "evaluator",
+    "evaluator_response",
+    "mark"
+   ],
+   "fields": [
+    {
+     "fieldname": "exam_question",
+     "fieldtype": "Link",
+     "label": "Exam Question",
+     "options": "LMS Exam Question",
+     "reqd": 1
+    },
+    {
+     "fetch_from": "exam_question.question",
+     "fieldname": "question",
+     "fieldtype": "Text",
+     "in_list_view": 1,
+     "label": "Question",
+     "read_only": 1
+    },
+    {
+     "default": "0",
+     "fieldname": "marked_for_later",
+     "fieldtype": "Check",
+     "in_list_view": 1,
+     "label": "Marked for Later"
+    },
+    {
+     "fieldname": "answer",
+     "fieldtype": "Long Text",
+     "in_list_view": 1,
+     "label": "Users Response",
+     "read_only": 1
+    },
+    {
+     "default": "0",
+     "fieldname": "is_correct",
+     "fieldtype": "Check",
+     "in_list_view": 1,
+     "label": "Is Correct",
+     "read_only": 1
+    },
+    {
+     "fieldname": "section_break_r1io",
+     "fieldtype": "Section Break",
+     "label": "Evaluation"
+    },
+    {
+     "description": "Choice questions will be Auto evaluated.",
+     "fieldname": "evaluation_status",
+     "fieldtype": "Select",
+     "in_list_view": 1,
+     "label": "Evaluation Status",
+     "options": "Not Attempted\nPending\nAuto\nDone"
+    },
+    {
+     "depends_on": "eval: doc.evaluation_status != 'Auto'",
+     "fieldname": "evaluator",
+     "fieldtype": "Link",
+     "label": "Evaluator",
+     "options": "User"
+    },
+    {
+     "depends_on": "eval: doc.evaluation_status != 'Auto'",
+     "fieldname": "evaluator_response",
+     "fieldtype": "Long Text",
+     "label": "Evaluator Response"
+    },
+    {
+     "fetch_from": "exam_question.mark",
+     "fieldname": "mark",
+     "fieldtype": "Float",
+     "label": "Mark"
+    },
+    {
+     "fieldname": "seq_no",
+     "fieldtype": "Int",
+     "label": "Seq No",
+     "non_negative": 1
+    }
+   ],
  "index_web_pages_for_search": 1,
  "links": [],
  "modified": "2024-12-04 13:24:34.494603",
