@@ -3,7 +3,7 @@ from datetime import datetime
 import frappe
 from frappe import _
 
-from lms.lms.utils import (redirect_to_exams_list)
+from exampro.exam_pro.utils import (redirect_to_exams_list)
 
 
 def get_context(context):

@@ -1,6 +1,4 @@
-{% extends "lms/templates/lms_base.html" %}
-<!-- {% from "www/macros/livecode.html" import LiveCodeEditorJS, LiveCodeEditor with context %} -->
-
+{% extends "exampro/templates/lms_base.html" %}
 
 {% block title %}
 {{ exam.title }}
@@ -35,8 +33,8 @@
     {% if exam %}
     <script type="text/javascript">
         var exam = {{ exam | tojson }};
-        {% include "lms/templates/exam/examform.js" %}
-        {% include "lms/templates/exam/examutils.js" %}
+        {% include "exampro/templates/exam/examform.js" %}
+        {% include "exampro/templates/exam/examutils.js" %}
     </script>
     {% endif %}
     {% endblock %}

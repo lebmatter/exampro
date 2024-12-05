@@ -5,7 +5,7 @@ from frappe.utils.data import markdown
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs
-from .exam import get_live_exam
+from .evaluate import get_live_exam
 
 # ACTIVE_EXAM_CODE_CACHE = "ACTIVEEXAMCODECACHE"
 

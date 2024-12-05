@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 
-from lms.lms.utils import (
+from exampro.exam_pro.utils import (
 	has_course_moderator_role,
 	is_certified,
 	is_instructor,

@@ -1,4 +1,4 @@
-{% extends "lms/templates/lms_base.html" %}
+{% extends "exampro/templates/lms_base.html" %}
 
 
 {% block title %}
@@ -22,7 +22,7 @@
 
         {% else %}
 
-        {% include "lms/templates/search_exam/search_exam.html" %}
+        {% include "exampro/templates/search_exam/search_exam.html" %}
 
         <div class="course-list-cta">
             {% if frappe.session.user != "Guest" %}
@@ -101,14 +101,14 @@
                 {% set exams = live_exams %}
                 {% set title = _("Live Exams") %}
                 {% set classes = "live-exams" %}
-                {% include "lms/templates/exam_list.html" %}
+                {% include "exampro/templates/exam_list.html" %}
             </div>
 
             <div class="tab-pane" id="upcoming" role="tabpanel" aria-labelledby="upcoming">
                 {% set exams = upcoming_exams %}
                 {% set title = _("Upcoming Exams") %}
                 {% set classes = "upcoming-exams" %}
-                {% include "lms/templates/exam_list.html" %}
+                {% include "exampro/templates/exam_list.html" %}
             </div>
 
             {% if frappe.session.user != "Guest" %}
@@ -116,7 +116,7 @@
                 {% set exams = enrolled_exams %}
                 {% set title = _("Registered Exams") %}
                 {% set classes = "enrolled-exams" %}
-                {% include "lms/templates/exam_list.html" %}
+                {% include "exampro/templates/exam_list.html" %}
             </div>
             {% endif %}
 
@@ -125,7 +125,7 @@
                 {% set exams = created_exams %}
                 {% set title = _("Created Exams") %}
                 {% set classes = "created-exams" %}
-                {% include "lms/templates/exam_list.html" %}
+                {% include "exampro/templates/exam_list.html" %}
             </div>
             {% endif %}
 
@@ -134,7 +134,7 @@
                 {% set exams = review_exams %}
                 {% set title = _("Review Exams") %}
                 {% set classes = "review-exams" %}
-                {% include "lms/templates/exam_list.html" %}
+                {% include "exampro/templates/exam_list.html" %}
             </div>
             {% endif %}
 

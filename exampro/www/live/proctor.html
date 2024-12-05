@@ -1,6 +1,4 @@
-{% extends "lms/templates/exam_base.html" %}
-<!-- {% from "www/macros/livecode.html" import LiveCodeEditorJS, LiveCodeEditor with context %} -->
-
+{% extends "exampro/templates/exam_base.html" %}
 
 {% block title %}
 Proctor
@@ -274,10 +272,10 @@ Proctor
 {%- block script %}
 {{ super() }}
 <script type="text/javascript">
-    {% include "lms/templates/exam/examutils.js" %}
+    {% include "exampro/templates/exam/examutils.js" %}
 </script>
 <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
 <script type="text/javascript">
-    {% include "lms/templates/exam/proctorutils.js" %}
+    {% include "exampro/templates/exam/proctorutils.js" %}
 </script>
 {% endblock %}

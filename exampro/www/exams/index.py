@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from lms.lms.utils import (
+from exampro.exam_pro.utils import (
 	# Exams and Course ceators share same role
 	can_create_courses,
 	check_profile_restriction,

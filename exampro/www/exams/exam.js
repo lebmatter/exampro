@@ -84,7 +84,7 @@ const submit_review = (e) => {
 		return;
 	}
 	frappe.call({
-		method: "lms.lms.doctype.lms_course_review.lms_course_review.submit_review",
+		method: "exampro.exam_pro.doctype.lms_course_review.lms_course_review.submit_review",
 		args: {
 			rating: rating,
 			review: review,
@@ -112,7 +112,7 @@ const create_certificate = (e) => {
 	e.preventDefault();
 	course = $(e.currentTarget).attr("data-course");
 	frappe.call({
-		method: "lms.lms.doctype.lms_certificate.lms_certificate.create_certificate",
+		method: "exampro.exam_pro.doctype.lms_certificate.lms_certificate.create_certificate",
 		args: {
 			course: course,
 		},
@@ -135,7 +135,7 @@ const element_not_in_viewport = (el) => {
 const submit_for_review = (e) => {
 	let course = $(e.currentTarget).data("course");
 	frappe.call({
-		method: "lms.lms.doctype.lms_course.lms_course.submit_for_review",
+		method: "exampro.exam_pro.doctype.lms_course.lms_course.submit_for_review",
 		args: {
 			course: course,
 		},
@@ -171,7 +171,7 @@ const submit_slot = (e) => {
 	e.preventDefault();
 	const slot = window.selected_slot;
 	frappe.call({
-		method: "lms.lms.doctype.lms_certificate_request.lms_certificate_request.create_certificate_request",
+		method: "exampro.exam_pro.doctype.lms_certificate_request.lms_certificate_request.create_certificate_request",
 		args: {
 			course: slot.data("course"),
 			date: $("#slot-date").val(),
@@ -199,7 +199,7 @@ const submit_slot = (e) => {
 
 const display_slots = (e) => {
 	frappe.call({
-		method: "lms.lms.doctype.course_evaluator.course_evaluator.get_schedule",
+		method: "exampro.exam_pro.doctype.course_evaluator.course_evaluator.get_schedule",
 		args: {
 			course: $(e.currentTarget).data("course"),
 			date: $(e.currentTarget).val(),

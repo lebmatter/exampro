@@ -1,4 +1,4 @@
-{% extends "lms/templates/lms_base.html" %}
+{% extends "exampro/templates/lms_base.html" %}
 {% block title %}
 {{ exam.title if exam.title else _("New Exam") }}
 {% endblock %}
@@ -14,7 +14,7 @@
                     {{ ExamHeaderOverlay(exam) }}
                     {{ ExamDescription(exam) }}
                     {% if exam.status == "Approved" and not frappe.utils.cint(exam.upcoming) %}
-                    {% include "lms/templates/examreviews.html" %}
+                    {% include "exampro/templates/examreviews.html" %}
                     {% endif %}
                 </div>
             </div>
