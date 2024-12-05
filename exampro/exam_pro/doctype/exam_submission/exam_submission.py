@@ -620,7 +620,7 @@ def get_videos(exam_submission, ttl=None):
 	"""
 	lms_settings = frappe.get_single("Exam Settings")
 	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
-		lms_settings.cloudflare_account_id
+		lms_settings.aws_account_id
 	)
 	s3_client = boto3.client(
 		's3', 
@@ -716,7 +716,7 @@ def upload_video(exam_submission=None):
 	
 	lms_settings = frappe.get_single("Exam Settings")
 	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
-		lms_settings.cloudflare_account_id
+		lms_settings.aws_account_id
 	)
 	s3_client = boto3.client(
 		's3',
