@@ -1,9 +1,12 @@
 # Copyright (c) 2024, Labeeb Mattra and contributors
 # For license information, please see license.txt
 
+import re
 import random
 import frappe
 from frappe.model.document import Document
+
+RE_SLUG_NOTALLOWED = re.compile("[^a-z0-9]+")
 
 def generate_slug(title, doctype):
 	result = frappe.get_all(doctype, fields=["name"])
