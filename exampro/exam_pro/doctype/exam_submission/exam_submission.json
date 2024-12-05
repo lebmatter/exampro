@@ -10,7 +10,6 @@
     "candidate_name",
     "exam_schedule",
     "exam",
-    "course",
     "new_user",
     "reset_password_key",
     "column_break_ngvn",
@@ -47,14 +46,6 @@
      "in_list_view": 1,
      "label": "Exam",
      "options": "Exam"
-    },
-    {
-     "fieldname": "course",
-     "fieldtype": "Link",
-     "in_list_view": 1,
-     "in_standard_filter": 1,
-     "label": "Course",
-     "options": "Course"
     },
     {
      "fieldname": "candidate",
@@ -208,7 +199,7 @@
      "link_fieldname": "exam_submission"
     }
 ],
- "modified": "2024-12-04 13:19:44.625291",
+ "modified": "2024-12-04 14:19:44.625291",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Submission",

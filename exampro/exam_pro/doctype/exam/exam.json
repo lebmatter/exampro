@@ -255,7 +255,7 @@
         "fieldname": "added_questions",
         "fieldtype": "Table",
         "label": "Added Questions",
-        "options": "Schedule Exam Question",
+        "options": "Exam Schedule Question",
         "read_only": 1
        },
        {

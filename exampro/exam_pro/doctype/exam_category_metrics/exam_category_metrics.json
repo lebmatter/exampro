@@ -15,7 +15,7 @@
      "fieldtype": "Link",
      "in_list_view": 1,
      "label": "Question Category",
-     "options": "Question Category"
+     "options": "Exam Question Category"
     },
     {
      "fieldname": "no_of_questions",
