@@ -120,7 +120,7 @@
      "fieldname": "submitted_answers",
      "fieldtype": "Table",
      "label": "Submitted answers",
-     "options": "Exam Result"
+     "options": "Exam Answer"
     },
     {
      "fieldname": "column_break_whlx",

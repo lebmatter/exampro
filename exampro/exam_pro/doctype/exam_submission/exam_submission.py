@@ -155,7 +155,7 @@ def can_process_question(doc, member=None):
 
 def get_submitted_questions(exam_submission, fields=["exam_question"]):
 	all_submitted = frappe.db.get_all(
-		"Exam Result",
+		"Exam Answer",
 		filters={"parent": exam_submission, "evaluation_status": ("!=", "Not Attempted")},
 		fields=fields,
 		order_by="seq_no asc"
@@ -169,7 +169,7 @@ def get_current_qs(exam_submission):
 	Next qs: next valid qs
 	"""
 	all_attempted = frappe.db.get_all(
-		"Exam Result",
+		"Exam Answer",
 		filters={"parent": exam_submission, "evaluation_status": ("!=", "Not Attempted")},
 		fields=["exam_question", "seq_no"],
 		order_by="seq_no asc"
@@ -362,7 +362,7 @@ def get_question(exam_submission=None, qsno=1):
 
 
 	answer_doc = frappe.get_value(
-		"Exam Result", "{}-{}".format(exam_submission, qs_name),
+		"Exam Answer", "{}-{}".format(exam_submission, qs_name),
 		["marked_for_later", "answer", "seq_no"], as_dict=True
 	)
 
@@ -402,10 +402,10 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 		raise PermissionError("You don't have access to submit and answer.")
 
 	can_process_question(submission)
-	if not frappe.db.exists("Exam Result", "{}-{}".format(exam_submission, qs_name)):
+	if not frappe.db.exists("Exam Answer", "{}-{}".format(exam_submission, qs_name)):
 		frappe.throw("Invalid question.")
 
-	result_doc = frappe.get_doc("Exam Result", "{}-{}".format(exam_submission, qs_name))
+	result_doc = frappe.get_doc("Exam Answer", "{}-{}".format(exam_submission, qs_name))
 	frappe.cache().hset(
 		exam_submission,
 		"qs:{}".format(result_doc.seq_no),
