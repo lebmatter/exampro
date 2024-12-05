@@ -24,7 +24,7 @@ def set_exam_context(context, exam_submission):
 	"""
 	try:
 		exam_submission = frappe.db.get_value(
-			"LMS Exam Submission", exam_submission,
+			"Exam Submission", exam_submission,
 			["exam", "candidate", "total_marks", "result_status", "evaluation_pending"],
 			as_dict=True
 		)
@@ -38,7 +38,7 @@ def set_exam_context(context, exam_submission):
 		frappe.throw("Evaluation pending in exam.")
 	else:
 		exam_data = frappe.db.get_value(
-			"LMS Exam", exam_submission["exam"],
+			"Exam", exam_submission["exam"],
 			["total_marks", "show_result", "show_result_after_date"],
 			as_dict=True
 		)

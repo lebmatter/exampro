@@ -249,7 +249,7 @@
         "fieldname": "select_questions",
         "fieldtype": "Table",
         "label": "Select Questions",
-        "options": "Exam Question Weightage"
+        "options": "Exam Category Metrics"
        },
        {
         "fieldname": "added_questions",

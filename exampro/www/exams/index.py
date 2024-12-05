@@ -47,7 +47,7 @@ def get_context(context):
 
 def get_exams():
 	exams = frappe.get_all(
-		"LMS Exam",
+		"Exam",
 		filters={"published": True},
 		fields=[
 			"name",

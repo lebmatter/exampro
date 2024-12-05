@@ -618,7 +618,7 @@ def get_videos(exam_submission, ttl=None):
 	"""
 	Get list of videos. Optional cache the urls with ttl
 	"""
-	lms_settings = frappe.get_single("Settings")
+	lms_settings = frappe.get_single("Exam Settings")
 	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
 		lms_settings.cloudflare_account_id
 	)
@@ -714,7 +714,7 @@ def upload_video(exam_submission=None):
 		frappe.get_cached_value("Exam Submission", exam_submission, "candidate"):
 		raise frappe.PermissionError(_("Exam does not belongs to the user."))
 	
-	lms_settings = frappe.get_single("Settings")
+	lms_settings = frappe.get_single("Exam Settings")
 	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
 		lms_settings.cloudflare_account_id
 	)

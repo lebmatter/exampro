@@ -23,7 +23,7 @@ def set_exam_context(context, exmsubmn):
 	If yes, get the score card
 	"""
 	try:
-		exam_submission = frappe.get_doc("LMS Exam Submission", exmsubmn)
+		exam_submission = frappe.get_doc("Exam Submission", exmsubmn)
 	except Exception:
 		frappe.throw("Invalid exam requested.")
 	
@@ -35,7 +35,7 @@ def set_exam_context(context, exmsubmn):
 	else:
 		
 		exam_data = frappe.db.get_value(
-			"LMS Exam", exam_submission.exam,
+			"Exam", exam_submission.exam,
 			["total_marks", "show_result", "show_result_after_date"],
 			as_dict=True
 		)

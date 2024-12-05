@@ -23,7 +23,7 @@ def set_exam_context(context, exam_submission):
 	If yes, get the score card
 	"""
 	try:
-		exam_submission = frappe.get_doc("LMS Exam Submission", exam_submission)
+		exam_submission = frappe.get_doc("Exam Submission", exam_submission)
 	except Exception:
 		frappe.throw("Invalid exam requested.")
 	
@@ -36,7 +36,7 @@ def set_exam_context(context, exam_submission):
 		redirect_to_exams_list()
 	else:
 		termination_message = frappe.get_all(
-			"LMS Exam Messages",
+			"Exam Messages",
 			filters={
 				"exam_submission": exam_submission.name,
 				"type_of_message": "Critical"

@@ -15,7 +15,7 @@
      "fieldname": "exam_question",
      "fieldtype": "Link",
      "label": "Exam Question",
-     "options": "LMS Exam Question",
+     "options": "Exam Question",
      "reqd": 1
     },
     {

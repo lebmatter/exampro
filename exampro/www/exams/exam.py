@@ -24,7 +24,7 @@ def get_context(context):
 
 def set_exam_context(context, exam_name):
 	exam = frappe.db.get_value(
-		"LMS Exam",
+		"Exam",
 		exam_name,
 		[
 			"name",
@@ -53,7 +53,7 @@ def set_exam_context(context, exam_name):
 	for csr in related_courses:
 		csr.update(
 			frappe.db.get_value(
-				"LMS Course",
+				"Course",
 				csr.course,
 				["name", "upcoming", "title", "image", "enable_certification"],
 				as_dict=True,
@@ -78,5 +78,5 @@ def set_exam_context(context, exam_name):
 
 def get_user_interest(exam):
 	return frappe.db.count(
-		"LMS Exam Interest", {"exam": exam, "user": frappe.session.user}
+		"Exam Interest", {"exam": exam, "user": frappe.session.user}
 	)

@@ -36,7 +36,7 @@
      "fieldname": "exam_schedule",
      "fieldtype": "Link",
      "label": "Exam Schedule",
-     "options": "LMS Exam Schedule",
+     "options": "Exam Schedule",
      "reqd": 1,
      "search_index": 1
     },
@@ -46,7 +46,7 @@
      "fieldtype": "Link",
      "in_list_view": 1,
      "label": "Exam",
-     "options": "LMS Exam"
+     "options": "Exam"
     },
     {
      "fieldname": "course",
@@ -54,7 +54,7 @@
      "in_list_view": 1,
      "in_standard_filter": 1,
      "label": "Course",
-     "options": "LMS Course"
+     "options": "Course"
     },
     {
      "fieldname": "candidate",
@@ -179,7 +179,7 @@
      "fieldname": "issued_certificate",
      "fieldtype": "Link",
      "label": "Issued Certificate",
-     "options": "LMS Exam Certificate",
+     "options": "Exam Certificate",
      "read_only": 1
     },
     {
@@ -200,11 +200,11 @@
 "index_web_pages_for_search": 1,
 "links": [
     {
-     "link_doctype": "LMS Exam Messages",
+     "link_doctype": "Exam Messages",
      "link_fieldname": "exam_submission"
     },
     {
-     "link_doctype": "LMS Exam Certificate",
+     "link_doctype": "Exam Certificate",
      "link_fieldname": "exam_submission"
     }
 ],

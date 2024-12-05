@@ -1,7 +1,7 @@
 // Copyright (c) 2024, Labeeb Mattra and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('LMS Exam Schedule', {
+frappe.ui.form.on('Exam Schedule', {
     refresh: function(frm) {
         frm.add_custom_button(__('End Schedule'), function() {
             frappe.call({
