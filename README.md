@@ -1,6 +1,7 @@
 ## Exam Pro
 
-Proctored Exams for Frappe Framework
+Proctored Exams for Frappe Framework.
+
 Create and manage video-proctored online examinations from Frappe.
 
 ## Features
@@ -9,10 +10,13 @@ Create and manage video-proctored online examinations from Frappe.
 - **Seamless Integration**: Conduct online exams with inbuilt video proctoring, ensuring a secure and fair testing environment.
 - **Live Monitoring**: Monitor candidates in real-time to maintain the authenticity of the examination process.
 - **Recording**: Automatically record sessions for further review and analysis.
+- **Live Chat**: Two-way live chat between Candidates and Proctors.
+- **Auto Termination**: Configurable auto termination of exams in case of violations.
 
 ### 2. Question Type Support
 - **Objective Questions**: Create questions with multiple choice, true/false, and single-best-answer.
 - **Subjective Questions**: Support for open-ended questions requiring descriptive answers, ideal for comprehensive evaluations.
+- **Image support in Questions**: Can add images to questions.
 
 ### 3. Evaluation Support
 - **Automated Grading**: Instantly grade objective questions to save time and reduce manual effort.
