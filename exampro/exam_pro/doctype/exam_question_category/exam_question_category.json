@@ -1,31 +1,33 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:title",
  "creation": "2024-12-04 13:29:58.400534",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-    "title"
-   ],
-   "fields": [
-    {
-     "fieldname": "title",
-     "fieldtype": "Data",
-     "label": "Title",
-     "unique": 1
-    }
-],
+  "title"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "unique": 1
+  }
+ ],
  "index_web_pages_for_search": 1,
  "links": [
-    {
-     "link_doctype": "Exam Question",
-     "link_fieldname": "category"
-    }
-   ],
- "modified": "2024-12-04 13:29:58.400534",
+  {
+   "link_doctype": "Exam Question",
+   "link_fieldname": "category"
+  }
+ ],
+ "modified": "2024-12-05 14:13:14.916435",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Question Category",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -41,6 +43,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
