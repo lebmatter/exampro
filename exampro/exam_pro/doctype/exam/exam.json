@@ -6,27 +6,25 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
+  "section_break_wkvo",
   "duration",
   "pass_percentage",
   "candidates_per_exam",
-  "column_break_3",
-  "video_link",
   "image",
-  "start_time_type",
-  "flexible_time_ends_in",
-  "section_break_7",
+  "video_link",
+  "column_break_vleg",
   "published",
   "upcoming",
+  "start_time_type",
+  "flexible_time_ends_in",
   "column_break_10",
   "enable_video_proctoring",
   "enable_calculator",
   "enable_chat",
   "max_warning_count",
-  "column_break_12",
   "show_result",
   "show_result_after_date",
   "section_break_18",
-  "short_introduction",
   "description",
   "instructions",
   "certification_section",
@@ -72,15 +70,6 @@
    "label": "Preview Image"
   },
   {
-   "fieldname": "column_break_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_7",
-   "fieldtype": "Section Break",
-   "label": "Exam Settings"
-  },
-  {
    "default": "0",
    "fieldname": "published",
    "fieldtype": "Check",
@@ -97,18 +86,8 @@
    "label": "Upcoming"
   },
   {
-   "fieldname": "column_break_12",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "section_break_18",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "short_introduction",
-   "fieldtype": "Small Text",
-   "label": "Short Introduction",
-   "reqd": 1
   },
   {
    "fieldname": "description",
@@ -329,6 +308,14 @@
    "fieldname": "enable_chat",
    "fieldtype": "Check",
    "label": "Enable Chat"
+  },
+  {
+   "fieldname": "section_break_wkvo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_vleg",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -339,7 +326,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2024-12-11 12:59:24.779934",
+ "modified": "2024-12-11 15:23:17.468766",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",
@@ -358,6 +345,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

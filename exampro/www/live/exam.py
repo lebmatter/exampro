@@ -51,7 +51,7 @@ def get_context(context):
 		context.metatags = {
 			"title": exam.title,
 			"image": exam.image,
-			"description": exam.short_introduction,
+			"description": exam.description,
 			"keywords": exam.title,
 			"og:type": "website",
 		}

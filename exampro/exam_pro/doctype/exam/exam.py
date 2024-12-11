@@ -160,7 +160,6 @@ def search_exam(text):
 		or_filters={
 			"title": ["like", f"%{text}%"],
 			"tags": ["like", f"%{text}%"],
-			"short_introduction": ["like", f"%{text}%"],
 			"description": ["like", f"%{text}%"],
 		},
 		fields=["name", "title"],
