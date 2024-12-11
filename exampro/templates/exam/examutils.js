@@ -80,7 +80,7 @@ const updateMessages = (exam_submission) => {
         existingMessages[exam_submission] = [];
     }
     frappe.call({
-        method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.exam_messages",
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.exam_messages",
         args: {
             'exam_submission': exam_submission,
         },

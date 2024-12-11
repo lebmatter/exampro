@@ -57,7 +57,7 @@ let recordingInterval;
 function sendVideoBlob(blob) {
     let xhr = new XMLHttpRequest();
     const unixTimestamp = Math.floor(Date.now() / 1000);
-    xhr.open('POST', '/api/method/exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.upload_video', true);
+    xhr.open('POST', '/api/method/exampro.exam_pro.doctype.exam_submission.exam_submission.upload_video', true);
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('X-Frappe-CSRF-Token', frappe.csrf_token);
 
@@ -297,7 +297,7 @@ frappe.ready(() => {
 
 function updateOverviewMap() {
     frappe.call({
-        method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.exam_overview",
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.exam_overview",
         args: {
             "exam_submission": exam.exam_submission,
         },
@@ -471,7 +471,7 @@ function displayQuestion(current_qs) {
 function sendMessage(message, messageType, warningType) {
     if (currentQsNo > 1) {
         frappe.call({
-            method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.post_exam_message",
+            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
             type: "POST",
             args: {
                 'exam_submission': exam["exam_submission"],
@@ -491,7 +491,7 @@ function sendChatMessage() {
     var message = $('#chat-input').val().trim();
     if(message) {
         frappe.call({
-            method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.post_exam_message",
+            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
             type: "POST",
             args: {
                 'exam_submission': exam["exam_submission"],
@@ -510,7 +510,7 @@ function sendChatMessage() {
 function endExam() {
     if (!examEnded) {
         frappe.call({
-            method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.end_exam",
+            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.end_exam",
             type: "POST",
             args: {
                 "exam_submission": exam["exam_submission"],
@@ -533,7 +533,7 @@ function endExam() {
 
 function startExam() {
     frappe.call({
-        method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.start_exam",
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.start_exam",
         type: "POST",
         args: {
             "exam_submission": exam["exam_submission"],
@@ -550,7 +550,7 @@ function startExam() {
 
 function getQuestion(qsno) {
     frappe.call({
-        method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.get_question",
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_question",
         type: "POST",
         args: {
             "exam_submission": exam["exam_submission"],
@@ -619,7 +619,7 @@ function submitAnswer(loadNext) {
     }
 
     frappe.call({
-        method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.submit_question_response",
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.submit_question_response",
         type: "POST",
         async: false,
         args: {

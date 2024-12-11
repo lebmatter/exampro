@@ -20,7 +20,7 @@
      "in_list_view": 1,
      "in_standard_filter": 1,
      "label": "Exam",
-     "options": "LMS Exam",
+     "options": "Exam",
      "reqd": 1
     },
     {
@@ -58,13 +58,13 @@
      "fieldname": "exam_submission",
      "fieldtype": "Link",
      "label": "Exam Submission",
-     "options": "LMS Exam Submission",
+     "options": "Exam Submission",
      "reqd": 1
     }
    ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-10 13:21:27.182582",
+ "modified": "2024-12-11 13:21:27.182582",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Certificate",

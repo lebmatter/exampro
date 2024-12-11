@@ -618,22 +618,22 @@ def get_videos(exam_submission, ttl=None):
 	"""
 	Get list of videos. Optional cache the urls with ttl
 	"""
-	lms_settings = frappe.get_single("Exam Settings")
+	settings = frappe.get_single("Exam Settings")
 	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
-		lms_settings.aws_account_id
+		settings.aws_account_id
 	)
 	s3_client = boto3.client(
 		's3', 
 		endpoint_url = cfdomain,
-		aws_access_key_id=lms_settings.aws_key, 
-		aws_secret_access_key=lms_settings.get_password("aws_secret"),
+		aws_access_key_id=settings.aws_key, 
+		aws_secret_access_key=settings.get_password("aws_secret"),
 		config=Config(signature_version='s3v4')
 	)
 	res = {"videos": {}}
 
 	# Paginator to handle buckets with many objects
 	paginator = s3_client.get_paginator('list_objects_v2')
-	for page in paginator.paginate(Bucket=lms_settings.s3_bucket, Prefix=exam_submission):
+	for page in paginator.paginate(Bucket=settings.s3_bucket, Prefix=exam_submission):
 		if 'Contents' in page:
 			for obj in page['Contents']:
 				if not obj['Key'].endswith('.webm'):
@@ -645,7 +645,7 @@ def get_videos(exam_submission, ttl=None):
 				if not cached_url:
 					presigned_url = s3_client.generate_presigned_url(
 						'get_object', Params={
-							'Bucket': lms_settings.s3_bucket,
+							'Bucket': settings.s3_bucket,
 							'Key': obj['Key']},
 							ExpiresIn=ttl
 					)
@@ -714,15 +714,15 @@ def upload_video(exam_submission=None):
 		frappe.get_cached_value("Exam Submission", exam_submission, "candidate"):
 		raise frappe.PermissionError(_("Exam does not belongs to the user."))
 	
-	lms_settings = frappe.get_single("Exam Settings")
+	settings = frappe.get_single("Exam Settings")
 	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
-		lms_settings.aws_account_id
+		settings.aws_account_id
 	)
 	s3_client = boto3.client(
 		's3',
 		endpoint_url = cfdomain,
-		aws_access_key_id=lms_settings.aws_key, 
-		aws_secret_access_key=lms_settings.get_password("aws_secret"),
+		aws_access_key_id=settings.aws_key, 
+		aws_secret_access_key=settings.get_password("aws_secret"),
 		config=Config(signature_version='s3v4')
 	)
 	if 'file' not in frappe.request.files:
@@ -736,7 +736,7 @@ def upload_video(exam_submission=None):
 	filename = secure_filename(file.filename)
 
 	# Specify your S3 bucket and folder
-	bucket_name = lms_settings.s3_bucket
+	bucket_name = settings.s3_bucket
 	object_name = "{}/{}".format(exam_submission, filename)
 	ttl = frappe.cache().ttl("{}:tracker".format(exam_submission))
 
@@ -749,7 +749,7 @@ def upload_video(exam_submission=None):
 	else:
 		presigned_url = s3_client.generate_presigned_url(
 			'get_object', Params={
-				'Bucket': lms_settings.s3_bucket,
+				'Bucket': settings.s3_bucket,
 				'Key': object_name},
 				ExpiresIn=ttl,
 				HttpMethod='GET'

@@ -232,7 +232,7 @@ const updateProcMessages = (exam_submission) => {
       existingMessages[exam_submission] = [];
   }
   frappe.call({
-      method: "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.exam_messages",
+      method: "exampro.exam_pro.doctype.exam_submission.exam_submission.exam_messages",
       args: {
           'exam_submission': exam_submission,
       },
@@ -350,7 +350,7 @@ function updateVideoList() {
     let exam_submission = videos[i].getAttribute("data-videoid");
     frappe.call({
       method:
-        "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.proctor_video_list",
+        "exampro.exam_pro.doctype.exam_submission.exam_submission.proctor_video_list",
       args: {
         exam_submission: exam_submission,
       },
@@ -418,7 +418,7 @@ frappe.ready(() => {
     if (result === "Terminate Exam") {
       frappe.call({
         method:
-          "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.terminate_exam",
+          "exampro.exam_pro.doctype.exam_submission.exam_submission.terminate_exam",
         type: "POST",
         args: {
           exam_submission: activeChat,
@@ -440,7 +440,7 @@ frappe.ready(() => {
     if (message.trim() !== "") {
       frappe.call({
         method:
-          "exampro.exam_pro.doctype.lms_exam_submission.lms_exam_submission.post_exam_message",
+          "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
         type: "POST",
         args: {
           exam_submission: activeChat,

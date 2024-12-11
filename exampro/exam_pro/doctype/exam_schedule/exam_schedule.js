@@ -5,7 +5,7 @@ frappe.ui.form.on('Exam Schedule', {
     refresh: function(frm) {
         frm.add_custom_button(__('End Schedule'), function() {
             frappe.call({
-                method: 'exampro.exam_pro.doctype.lms_exam_schedule.lms_exam_schedule.end_schedule',
+                method: 'exampro.exam_pro.doctype.exam_schedule.exam_schedule.end_schedule',
                 args: {
                     docname: frm.doc.name
                 },

@@ -70,7 +70,4 @@ def get_context(context):
 
 	context.submissions = proctor_list["live_submissions"]
 	context.pending_candidates = proctor_list["pending_candidates"]
-	context.video_chunk_length = frappe.db.get_single_value(
-		"Exam Settings", "video_chunk_length"
-	)
 

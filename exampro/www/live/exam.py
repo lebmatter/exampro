@@ -47,9 +47,6 @@ def get_context(context):
 			_, current_qs_no = get_current_qs(exam_details["exam_submission"]) 
 			exam["current_qs"] = current_qs_no or 1
 		context.exam = exam
-		context.video_chunk_length = frappe.db.get_single_value(
-		"Exam Settings", "video_chunk_length"
-	)
 
 		context.metatags = {
 			"title": exam.title,

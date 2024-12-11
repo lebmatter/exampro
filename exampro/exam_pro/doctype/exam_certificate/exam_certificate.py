@@ -12,7 +12,7 @@ class ExamCertificate(Document):
 
     def before_save(self):
         # only one certificate per exam submission
-        existing_certs = frappe.get_all("LMS Exam Certificate", filters={"exam_submission": self.exam_submission})
+        existing_certs = frappe.get_all("Exam Certificate", filters={"exam_submission": self.exam_submission})
         if len(existing_certs) > 0:
             frappe.throw("Duplicate certificate exist for exam submission {}.".format(self.exam_submission))
 
@@ -21,25 +21,25 @@ class ExamCertificate(Document):
         self.send_email()
 
     def can_send_certificate(self):
-        has_certification = frappe.db.get_value("LMS Exam", self.exam, "enable_certification")
+        has_certification = frappe.db.get_value("Exam", self.exam, "enable_certification")
         assert has_certification, "Exam does not have certification enabled."
         # assert result status
-        result_status = frappe.db.get_value("LMS Exam Submission", self.exam_submission, "result_status")
+        result_status = frappe.db.get_value("Exam Submission", self.exam_submission, "result_status")
         assert result_status == "Passed", "Exam is not passed. Can't send certificate."
 
     def send_email(self):
         self.can_send_certificate()
 
-        cert_template = frappe.db.get_value("LMS Exam", self.exam, "certificate_template")
-        cert_template_path = frappe.db.get_value("LMS Exam Certificate Template", cert_template, "template_path")
+        cert_template = frappe.db.get_value("Exam", self.exam, "certificate_template")
+        cert_template_path = frappe.db.get_value("Exam Certificate Template", cert_template, "template_path")
         assert cert_template_path
         assert os.path.exists(cert_template_path)
 
         # Render certificate content
         context = {
             "name": self.member_name,
-            "score": frappe.db.get_value("LMS Exam Submission", self.exam_submission, "total_marks"),
-            "total_marks": frappe.db.get_value("LMS Exam", self.exam, "total_marks")
+            "score": frappe.db.get_value("Exam Submission", self.exam_submission, "total_marks"),
+            "total_marks": frappe.db.get_value("Exam", self.exam, "total_marks")
         }
         input_html = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.html')
         cert_pdf = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.pdf')
