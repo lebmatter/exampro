@@ -9,19 +9,6 @@
 {% block page_content %}
 <div class="common-page-style pt-8">
     <div class="container">
-        {% if restriction %}
-        {% set profile_link = "<a href='/edit-profile'> profile </a>" %}
-        <div class="empty-state">
-            <div class="course-home-headings text-center mb-0" style="color: inherit;">
-                {{ _("You haven't completed your profile.") }}
-            </div>
-            <p class="small text-center">
-                {{ _("Complete your {0} to access the exam.").format(profile_link) }}
-            </p>
-        </div>
-
-        {% else %}
-
         {% include "exampro/templates/search_exam/search_exam.html" %}
 
         <div class="course-list-cta">
@@ -70,28 +57,6 @@
             </li>
             {% endif %}
 
-            {% if show_creators_section %}
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#exams-created">
-                    {{ _("Created") }}
-                    <span class="course-list-count">
-                        {{ created_exams | length }}
-                    </span>
-                </a>
-            </li>
-            {% endif %}
-
-            {% if show_review_section %}
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#exams-under-review">
-                    {{ _("Under Review") }}
-                    <span class="course-list-count">
-                        {{ review_exams | length }}
-                    </span>
-                </a>
-            </li>
-            {% endif %}
-
         </ul>
 
         <div class="border-bottom mb-4"></div>
@@ -116,24 +81,6 @@
                 {% set exams = enrolled_exams %}
                 {% set title = _("Registered Exams") %}
                 {% set classes = "enrolled-exams" %}
-                {% include "exampro/templates/exam_list.html" %}
-            </div>
-            {% endif %}
-
-            {% if show_creators_section %}
-            <div class="tab-pane fade" id="courses-created" role="tabpanel" aria-labelledby="courses-created">
-                {% set exams = created_exams %}
-                {% set title = _("Created Exams") %}
-                {% set classes = "created-exams" %}
-                {% include "exampro/templates/exam_list.html" %}
-            </div>
-            {% endif %}
-
-            {% if show_review_section %}
-            <div class="tab-pane fade" id="courses-under-review" role="tabpanel" aria-labelledby="courses-under-review">
-                {% set exams = review_exams %}
-                {% set title = _("Review Exams") %}
-                {% set classes = "review-exams" %}
                 {% include "exampro/templates/exam_list.html" %}
             </div>
             {% endif %}
