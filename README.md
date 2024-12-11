@@ -1,3 +1,5 @@
+<img src="./exampro-logo.svg" alt="ExamPro Logo" width="200">
+
 ## Exam Pro
 
 Proctored Exams for Frappe Framework.
