@@ -5,347 +5,341 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-    "title",
-    "video_link",
-    "image",
-    "tags",
-    "column_break_3",
-    "candidates_per_exam",
-    "duration",
-    "start_time_type",
-    "flexible_time_ends_in",
-    "section_break_7",
-    "published",
-    "upcoming",
-    "column_break_10",
-    "enable_video_proctoring",
-    "enable_calculator",
-    "enable_chat",
-    "max_warning_count",
-    "column_break_12",
-    "show_result",
-    "show_result_after_date",
-    "section_break_18",
-    "short_introduction",
-    "description",
-    "instructions",
-    "certification_section",
-    "enable_certification",
-    "expiry",
-    "certificate_template",
-    "pricing_column",
-    "paid_certificate",
-    "currency",
-    "price_certificate",
-    "questions_tab",
-    "section_break_iifh",
-    "question_type",
-    "randomize_questions",
-    "pass_percentage",
-    "column_break_lgrh",
-    "evaluation_required",
-    "evaluation_ends_in_days",
-    "section_break_sdfb",
-    "total_questions",
-    "column_break_xzim",
-    "total_marks",
-    "section_break_tpbr",
-    "select_questions",
-    "added_questions"
+  "title",
+  "duration",
+  "pass_percentage",
+  "candidates_per_exam",
+  "column_break_3",
+  "video_link",
+  "image",
+  "start_time_type",
+  "flexible_time_ends_in",
+  "section_break_7",
+  "published",
+  "upcoming",
+  "column_break_10",
+  "enable_video_proctoring",
+  "enable_calculator",
+  "enable_chat",
+  "max_warning_count",
+  "column_break_12",
+  "show_result",
+  "show_result_after_date",
+  "section_break_18",
+  "short_introduction",
+  "description",
+  "instructions",
+  "certification_section",
+  "enable_certification",
+  "expiry",
+  "certificate_template",
+  "pricing_column",
+  "paid_certificate",
+  "currency",
+  "price_certificate",
+  "questions_tab",
+  "section_break_iifh",
+  "question_type",
+  "randomize_questions",
+  "column_break_lgrh",
+  "evaluation_required",
+  "evaluation_ends_in_days",
+  "section_break_sdfb",
+  "total_questions",
+  "column_break_xzim",
+  "total_marks",
+  "section_break_tpbr",
+  "select_questions",
+  "added_questions"
  ],
  "fields": [
-    {
-        "fieldname": "title",
-        "fieldtype": "Data",
-        "in_list_view": 1,
-        "label": "Title",
-        "reqd": 1,
-        "width": "200"
-       },
-       {
-        "fieldname": "video_link",
-        "fieldtype": "Data",
-        "label": "Video Embed Link"
-       },
-       {
-        "fieldname": "image",
-        "fieldtype": "Attach Image",
-        "label": "Preview Image"
-       },
-       {
-        "fieldname": "column_break_3",
-        "fieldtype": "Column Break"
-       },
-       {
-        "fieldname": "tags",
-        "fieldtype": "Data",
-        "label": "Tags"
-       },
-       {
-        "fieldname": "section_break_7",
-        "fieldtype": "Section Break",
-        "label": "Exam Settings"
-       },
-       {
-        "default": "0",
-        "fieldname": "published",
-        "fieldtype": "Check",
-        "label": "Published"
-       },
-       {
-        "fieldname": "column_break_10",
-        "fieldtype": "Column Break"
-       },
-       {
-        "default": "0",
-        "fieldname": "upcoming",
-        "fieldtype": "Check",
-        "label": "Upcoming"
-       },
-       {
-        "fieldname": "column_break_12",
-        "fieldtype": "Column Break"
-       },
-       {
-        "fieldname": "section_break_18",
-        "fieldtype": "Section Break"
-       },
-       {
-        "fieldname": "short_introduction",
-        "fieldtype": "Small Text",
-        "label": "Short Introduction",
-        "reqd": 1
-       },
-       {
-        "fieldname": "description",
-        "fieldtype": "Text Editor",
-        "label": "Description",
-        "reqd": 1
-       },
-       {
-        "fieldname": "certification_section",
-        "fieldtype": "Section Break",
-        "label": "Certification"
-       },
-       {
-        "default": "0",
-        "fieldname": "enable_certification",
-        "fieldtype": "Check",
-        "label": "Enable Certification"
-       },
-       {
-        "default": "0",
-        "depends_on": "enable_certification",
-        "description": "Keep 0 if certificate doesn't have an expiry.",
-        "fieldname": "expiry",
-        "fieldtype": "Int",
-        "label": "Certification Expires After (Years)"
-       },
-       {
-        "default": "0",
-        "depends_on": "enable_certification",
-        "fieldname": "paid_certificate",
-        "fieldtype": "Check",
-        "label": "Paid Certificate"
-       },
-       {
-        "depends_on": "paid_certificate",
-        "fieldname": "currency",
-        "fieldtype": "Link",
-        "label": "Currency",
-        "mandatory_depends_on": "paid_certificate",
-        "options": "Currency"
-       },
-       {
-        "depends_on": "paid_certificate",
-        "fieldname": "price_certificate",
-        "fieldtype": "Currency",
-        "label": "Certificate Price",
-        "mandatory_depends_on": "paid_certificate"
-       },
-       {
-        "default": "25",
-        "fieldname": "candidates_per_exam",
-        "fieldtype": "Int",
-        "label": "Candidates per Exam",
-        "non_negative": 1
-       },
-       {
-        "fieldname": "instructions",
-        "fieldtype": "Markdown Editor",
-        "label": "Instruction to Candidate"
-       },
-       {
-        "fieldname": "questions_tab",
-        "fieldtype": "Tab Break",
-        "label": "Questions"
-       },
-       {
-        "default": "0",
-        "description": "If Question Type = Choices, evaluation is not required ",
-        "fieldname": "evaluation_required",
-        "fieldtype": "Check",
-        "label": "Evaluation Required",
-        "read_only": 1
-       },
-       {
-        "depends_on": "evaluation_required",
-        "fieldname": "evaluation_ends_in_days",
-        "fieldtype": "Int",
-        "label": "Evaluation ends in days",
-        "non_negative": 1
-       },
-       {
-        "fieldname": "question_type",
-        "fieldtype": "Select",
-        "label": "Question Type",
-        "options": "Choices\nUser Input\nMixed"
-       },
-       {
-        "fieldname": "total_questions",
-        "fieldtype": "Int",
-        "label": "Total no. of question",
-        "non_negative": 1,
-        "read_only": 1
-       },
-       {
-        "fieldname": "total_marks",
-        "fieldtype": "Int",
-        "label": "Total Marks",
-        "non_negative": 1,
-        "read_only": 1
-       },
-       {
-        "default": "0",
-        "description": "Each exam will have a random order of questions",
-        "fieldname": "randomize_questions",
-        "fieldtype": "Check",
-        "label": "Randomize Questions"
-       },
-       {
-        "fieldname": "pass_percentage",
-        "fieldtype": "Float",
-        "label": "Pass Percentage",
-        "non_negative": 1,
-        "reqd": 1
-       },
-       {
-        "fieldname": "show_result",
-        "fieldtype": "Select",
-        "label": "Show Result",
-        "options": "After Exam Submission\nAfter Specific Date\nDo Not Show Score"
-       },
-       {
-        "depends_on": "eval: doc.show_result == 'After Specific Date'",
-        "fieldname": "show_result_after_date",
-        "fieldtype": "Datetime",
-        "label": "Show Result After Date"
-       },
-       {
-        "fieldname": "section_break_tpbr",
-        "fieldtype": "Section Break"
-       },
-       {
-        "fieldname": "select_questions",
-        "fieldtype": "Table",
-        "label": "Select Questions",
-        "options": "Exam Category Settings"
-       },
-       {
-        "fieldname": "added_questions",
-        "fieldtype": "Table",
-        "label": "Added Questions",
-        "options": "Exam Schedule Question",
-        "read_only": 1
-       },
-       {
-        "fieldname": "column_break_xzim",
-        "fieldtype": "Column Break"
-       },
-       {
-        "fieldname": "section_break_iifh",
-        "fieldtype": "Section Break"
-       },
-       {
-        "fieldname": "column_break_lgrh",
-        "fieldtype": "Column Break"
-       },
-       {
-        "fieldname": "section_break_sdfb",
-        "fieldtype": "Section Break"
-       },
-       {
-        "description": "Duration in minutes",
-        "fieldname": "duration",
-        "fieldtype": "Int",
-        "label": "Duration",
-        "non_negative": 1,
-        "reqd": 1
-       },
-       {
-        "default": "1",
-        "fieldname": "enable_calculator",
-        "fieldtype": "Check",
-        "label": "Enable Calculator"
-       },
-       {
-        "default": "Fixed",
-        "description": "Fixed = start exam at specific time only. ",
-        "fieldname": "start_time_type",
-        "fieldtype": "Select",
-        "label": "Start Time Type",
-        "options": "Fixed\nFlexible"
-       },
-       {
-        "depends_on": "eval: doc.start_time_type=='Flexible'",
-        "description": "Buffer time in minutes",
-        "fieldname": "flexible_time_ends_in",
-        "fieldtype": "Int",
-        "label": "Flexible Time Ends In",
-        "non_negative": 1
-       },
-       {
-        "default": "1",
-        "fieldname": "enable_video_proctoring",
-        "fieldtype": "Check",
-        "label": "Enable Video Proctoring"
-       },
-       {
-        "default": "3",
-        "description": "Exam will terminate after max number",
-        "fieldname": "max_warning_count",
-        "fieldtype": "Int",
-        "label": "Max Warning Count",
-        "non_negative": 1
-       },
-       {
-        "fieldname": "pricing_column",
-        "fieldtype": "Column Break",
-        "label": "Pricing"
-       },
-       {
-        "depends_on": "enable_certification",
-        "fieldname": "certificate_template",
-        "fieldtype": "Link",
-        "label": "Certificate Template",
-        "options": "Exam Certificate Template"
-       },
-       {
-        "default": "1",
-        "fieldname": "enable_chat",
-        "fieldtype": "Check",
-        "label": "Enable Chat"
-       }
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1,
+   "width": "200"
+  },
+  {
+   "fieldname": "video_link",
+   "fieldtype": "Data",
+   "label": "Video Embed Link"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Preview Image"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_7",
+   "fieldtype": "Section Break",
+   "label": "Exam Settings"
+  },
+  {
+   "default": "0",
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "label": "Published"
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "upcoming",
+   "fieldtype": "Check",
+   "label": "Upcoming"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_18",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "short_introduction",
+   "fieldtype": "Small Text",
+   "label": "Short Introduction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "certification_section",
+   "fieldtype": "Section Break",
+   "label": "Certification"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_certification",
+   "fieldtype": "Check",
+   "label": "Enable Certification"
+  },
+  {
+   "default": "0",
+   "depends_on": "enable_certification",
+   "description": "Keep 0 if certificate doesn't have an expiry.",
+   "fieldname": "expiry",
+   "fieldtype": "Int",
+   "label": "Certification Expires After (Years)"
+  },
+  {
+   "default": "0",
+   "depends_on": "enable_certification",
+   "fieldname": "paid_certificate",
+   "fieldtype": "Check",
+   "label": "Paid Certificate"
+  },
+  {
+   "depends_on": "paid_certificate",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "mandatory_depends_on": "paid_certificate",
+   "options": "Currency"
+  },
+  {
+   "depends_on": "paid_certificate",
+   "fieldname": "price_certificate",
+   "fieldtype": "Currency",
+   "label": "Certificate Price",
+   "mandatory_depends_on": "paid_certificate"
+  },
+  {
+   "default": "25",
+   "fieldname": "candidates_per_exam",
+   "fieldtype": "Int",
+   "label": "Candidates per Exam",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Markdown Editor",
+   "label": "Instruction to Candidate"
+  },
+  {
+   "fieldname": "questions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Questions"
+  },
+  {
+   "default": "0",
+   "description": "If Question Type = Choices, evaluation is not required ",
+   "fieldname": "evaluation_required",
+   "fieldtype": "Check",
+   "label": "Evaluation Required",
+   "read_only": 1
+  },
+  {
+   "depends_on": "evaluation_required",
+   "fieldname": "evaluation_ends_in_days",
+   "fieldtype": "Int",
+   "label": "Evaluation ends in days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "question_type",
+   "fieldtype": "Select",
+   "label": "Question Type",
+   "options": "Choices\nUser Input\nMixed"
+  },
+  {
+   "fieldname": "total_questions",
+   "fieldtype": "Int",
+   "label": "Total no. of question",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_marks",
+   "fieldtype": "Int",
+   "label": "Total Marks",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Each exam will have a random order of questions",
+   "fieldname": "randomize_questions",
+   "fieldtype": "Check",
+   "label": "Randomize Questions"
+  },
+  {
+   "fieldname": "pass_percentage",
+   "fieldtype": "Float",
+   "label": "Pass Percentage",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "show_result",
+   "fieldtype": "Select",
+   "label": "Show Result",
+   "options": "After Exam Submission\nAfter Specific Date\nDo Not Show Score"
+  },
+  {
+   "depends_on": "eval: doc.show_result == 'After Specific Date'",
+   "fieldname": "show_result_after_date",
+   "fieldtype": "Datetime",
+   "label": "Show Result After Date"
+  },
+  {
+   "fieldname": "section_break_tpbr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "select_questions",
+   "fieldtype": "Table",
+   "label": "Select Questions",
+   "options": "Exam Category Settings"
+  },
+  {
+   "fieldname": "added_questions",
+   "fieldtype": "Table",
+   "label": "Added Questions",
+   "options": "Exam Added Question",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xzim",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_iifh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_lgrh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_sdfb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Duration in minutes",
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "label": "Duration",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_calculator",
+   "fieldtype": "Check",
+   "label": "Enable Calculator"
+  },
+  {
+   "default": "Fixed",
+   "description": "Fixed = start exam at specific time only. ",
+   "fieldname": "start_time_type",
+   "fieldtype": "Select",
+   "label": "Start Time Type",
+   "options": "Fixed\nFlexible"
+  },
+  {
+   "depends_on": "eval: doc.start_time_type=='Flexible'",
+   "description": "Buffer time in minutes",
+   "fieldname": "flexible_time_ends_in",
+   "fieldtype": "Int",
+   "label": "Flexible Time Ends In",
+   "non_negative": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_video_proctoring",
+   "fieldtype": "Check",
+   "label": "Enable Video Proctoring"
+  },
+  {
+   "default": "3",
+   "description": "Exam will terminate after max number",
+   "fieldname": "max_warning_count",
+   "fieldtype": "Int",
+   "label": "Max Warning Count",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "pricing_column",
+   "fieldtype": "Column Break",
+   "label": "Pricing"
+  },
+  {
+   "depends_on": "enable_certification",
+   "fieldname": "certificate_template",
+   "fieldtype": "Link",
+   "label": "Certificate Template",
+   "options": "Exam Certificate Template"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_chat",
+   "fieldtype": "Check",
+   "label": "Enable Chat"
+  }
  ],
  "index_web_pages_for_search": 1,
  "links": [
-    {
-        "group": "Schedule",
-        "link_doctype": "Exam Schedule",
-        "link_fieldname": "exam"
-       }
+  {
+   "group": "Schedule",
+   "link_doctype": "Exam Schedule",
+   "link_fieldname": "exam"
+  }
  ],
- "modified": "2024-12-10 13:17:55.619223",
+ "modified": "2024-12-11 12:59:24.779934",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",
