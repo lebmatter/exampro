@@ -1,8 +1,6 @@
 <img src="./exampro-logo.svg" alt="ExamPro Logo" width="200">
 
-## Exam Pro
-
-Proctored Exams for Frappe Framework.
+**Proctored Exams for Frappe Framework**
 
 Easily create and manage video-proctored online examinations with this app, inspired by and modeled after the Frappe Learning app. Note: This app works independently and does not require the Frappe Learning app.
 
