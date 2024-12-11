@@ -82,7 +82,7 @@ class ExamSchedule(Document):
 					subject=subject,
 					message=message,
 				)
-				frappe.db.set_value("Exam Proctor", examiner.name, "notification_sent", 1)
+				frappe.db.set_value("Examiner", examiner.name, "notification_sent", 1)
 	
 	def can_end_schedule(self):
 		now = datetime.now()
@@ -121,7 +121,7 @@ class ExamSchedule(Document):
 			exam2_end = exam2["start_date_time"] + timedelta(minutes=exam2["duration"])
 			if check_overlap(exam_start, end_time, exam2["start_date_time"], exam2_end):
 				examiners2 = frappe.db.get_all(
-					"Exam Proctor",
+					"Examiner",
 					filters={"parent": self.name, "can_proctor": 1},
 					fields=["examiner"]
 				)

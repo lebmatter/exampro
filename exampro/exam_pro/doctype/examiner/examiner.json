@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-11 12:21:22.343116",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "can_proctor",
+  "can_evaluate"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "can_proctor",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Can Proctor"
+  },
+  {
+   "default": "1",
+   "fieldname": "can_evaluate",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Can Evaluate"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-12-11 12:22:41.481912",
+ "modified_by": "Administrator",
+ "module": "Exam Pro",
+ "name": "Examiner",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class ExamProctor(Document):
+class Examiner(Document):
 	pass

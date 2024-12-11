@@ -46,7 +46,7 @@
      "fieldname": "examiners",
      "fieldtype": "Table",
      "label": "Examiners",
-     "options": "Exam Proctor"
+     "options": "Examiner"
     },
     {
      "fieldname": "exam_settings_section",
@@ -113,7 +113,7 @@
      "link_fieldname": "exam_schedule"
     }
    ],
- "modified": "2024-12-04 13:18:21.405169",
+ "modified": "2024-12-10 13:18:21.405169",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Schedule",
