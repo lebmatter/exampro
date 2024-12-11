@@ -5,17 +5,66 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_mblc"
- ],
- "fields": [
-  {
-   "fieldname": "section_break_mblc",
-   "fieldtype": "Section Break"
-  }
- ],
+    "exam_submission",
+    "exam",
+    "member",
+    "member_name",
+    "column_break_3",
+    "issue_date",
+    "expiry_date"
+   ],
+   "fields": [
+    {
+     "fieldname": "exam",
+     "fieldtype": "Link",
+     "in_list_view": 1,
+     "in_standard_filter": 1,
+     "label": "Exam",
+     "options": "LMS Exam",
+     "reqd": 1
+    },
+    {
+     "fieldname": "member",
+     "fieldtype": "Link",
+     "in_list_view": 1,
+     "in_standard_filter": 1,
+     "label": "Member",
+     "options": "User",
+     "reqd": 1
+    },
+    {
+     "fetch_from": "member.full_name",
+     "fieldname": "member_name",
+     "fieldtype": "Data",
+     "label": "Member Name",
+     "read_only": 1
+    },
+    {
+     "fieldname": "column_break_3",
+     "fieldtype": "Column Break"
+    },
+    {
+     "fieldname": "issue_date",
+     "fieldtype": "Date",
+     "label": "Issue Date",
+     "reqd": 1
+    },
+    {
+     "fieldname": "expiry_date",
+     "fieldtype": "Date",
+     "label": "Expiry Date"
+    },
+    {
+     "fieldname": "exam_submission",
+     "fieldtype": "Link",
+     "label": "Exam Submission",
+     "options": "LMS Exam Submission",
+     "reqd": 1
+    }
+   ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-04 13:21:27.182582",
+ "modified": "2024-12-10 13:21:27.182582",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Certificate",
