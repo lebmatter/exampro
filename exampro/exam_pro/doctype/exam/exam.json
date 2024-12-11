@@ -39,13 +39,11 @@
   "section_break_iifh",
   "question_type",
   "randomize_questions",
+  "total_questions",
   "column_break_lgrh",
+  "total_marks",
   "evaluation_required",
   "evaluation_ends_in_days",
-  "section_break_sdfb",
-  "total_questions",
-  "column_break_xzim",
-  "total_marks",
   "section_break_tpbr",
   "select_questions",
   "added_questions"
@@ -221,7 +219,7 @@
   {
    "fieldname": "select_questions",
    "fieldtype": "Table",
-   "label": "Select Questions",
+   "label": "Select Questions by Category",
    "options": "Exam Category Settings"
   },
   {
@@ -232,20 +230,12 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_xzim",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "section_break_iifh",
    "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_lgrh",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_sdfb",
-   "fieldtype": "Section Break"
   },
   {
    "description": "Duration in minutes",
@@ -311,7 +301,8 @@
   },
   {
    "fieldname": "section_break_wkvo",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Exam Settings"
   },
   {
    "fieldname": "column_break_vleg",
@@ -326,7 +317,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2024-12-11 15:23:17.468766",
+ "modified": "2024-12-11 15:29:48.398242",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",

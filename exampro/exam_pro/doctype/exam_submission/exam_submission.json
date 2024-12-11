@@ -5,201 +5,201 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-    "section_break_lmge",
-    "candidate",
-    "candidate_name",
-    "exam_schedule",
-    "exam",
-    "new_user",
-    "reset_password_key",
-    "column_break_ngvn",
-    "status",
-    "exam_started_time",
-    "additional_time_given",
-    "exam_submitted_time",
-    "video_section",
-    "candidate_video",
-    "result_tab",
-    "total_marks",
-    "result_status",
-    "issued_certificate",
-    "column_break_whlx",
-    "evaluation_pending",
-    "assigned_evaluator",
-    "assigned_proctor",
-    "section_break_rxvo",
-    "submitted_answers"
-   ],
-"fields": [
-    {
-     "fieldname": "exam_schedule",
-     "fieldtype": "Link",
-     "label": "Exam Schedule",
-     "options": "Exam Schedule",
-     "reqd": 1,
-     "search_index": 1
-    },
-    {
-     "fetch_from": "exam_schedule.exam",
-     "fieldname": "exam",
-     "fieldtype": "Link",
-     "in_list_view": 1,
-     "label": "Exam",
-     "options": "Exam"
-    },
-    {
-     "fieldname": "candidate",
-     "fieldtype": "Link",
-     "in_list_view": 1,
-     "in_standard_filter": 1,
-     "label": "Candidate",
-     "options": "User",
-     "reqd": 1,
-     "search_index": 1
-    },
-    {
-     "default": "Registered",
-     "fieldname": "status",
-     "fieldtype": "Select",
-     "in_list_view": 1,
-     "label": "Status",
-     "options": "Registered\nRegistration Cancelled\nStarted\nSubmitted\nTerminated",
-     "search_index": 1
-    },
-    {
-     "fieldname": "exam_started_time",
-     "fieldtype": "Datetime",
-     "label": "Exam started at"
-    },
-    {
-     "fieldname": "exam_submitted_time",
-     "fieldtype": "Datetime",
-     "label": "Exam submitted at"
-    },
-    {
-     "default": "0",
-     "description": "Additional time given in minutes",
-     "fieldname": "additional_time_given",
-     "fieldtype": "Int",
-     "label": "Additional Time Given",
-     "non_negative": 1
-    },
-    {
-     "fieldname": "column_break_ngvn",
-     "fieldtype": "Column Break"
-    },
-    {
-     "description": "Total marks after evaluation",
-     "fieldname": "total_marks",
-     "fieldtype": "Float",
-     "label": "Total marks",
-     "read_only": 1
-    },
-    {
-     "description": "No. of questions pending to be evaluated",
-     "fieldname": "evaluation_pending",
-     "fieldtype": "Int",
-     "label": "Evaluation pending",
-     "read_only": 1
-    },
-    {
-     "default": "NA",
-     "fieldname": "result_status",
-     "fieldtype": "Select",
-     "in_list_view": 1,
-     "label": "Result Status",
-     "options": "NA\nPassed\nFailed",
-     "read_only": 1
-    },
-    {
-     "fieldname": "result_tab",
-     "fieldtype": "Tab Break",
-     "label": "Result"
-    },
-    {
-     "fieldname": "submitted_answers",
-     "fieldtype": "Table",
-     "label": "Submitted answers",
-     "options": "Exam Answer"
-    },
-    {
-     "fieldname": "column_break_whlx",
-     "fieldtype": "Column Break"
-    },
-    {
-     "fieldname": "section_break_rxvo",
-     "fieldtype": "Section Break"
-    },
-    {
-     "fieldname": "section_break_lmge",
-     "fieldtype": "Section Break"
-    },
-    {
-     "fieldname": "assigned_evaluator",
-     "fieldtype": "Link",
-     "label": "Assigned Evaluator",
-     "options": "User",
-     "read_only": 1
-    },
-    {
-     "fieldname": "assigned_proctor",
-     "fieldtype": "Link",
-     "label": "Assigned Proctor",
-     "options": "User",
-     "read_only": 1
-    },
-    {
-     "fieldname": "video_section",
-     "fieldtype": "Section Break",
-     "label": "Video"
-    },
-    {
-     "fieldname": "candidate_video",
-     "fieldtype": "HTML",
-     "label": "Candidate Video",
-     "options": "<div id=\"videoDiv\" class=\"hidden\">\n<video id=\"candidateVideo\" style=\"max-width: 400px;\"></video>\n  <div id=\"controls\" class=\"icon-group\">\n    <button class=\"btn btn-light\" id=\"previous-btn\">\u23ee\ufe0f</button>\n    <button class=\"btn btn-light\" id=\"play-pause-btn\">\u25b6\ufe0f/\u23f8\ufe0f</button>\n    <button class=\"btn btn-light\" id=\"next-btn\">\u23ed\ufe0f</button>\n<input type=\"text\" id=\"index-field\" readonly>\n  </div>\n</div>"
-    },
-    {
-     "fetch_from": "candidate.full_name",
-     "fieldname": "candidate_name",
-     "fieldtype": "Data",
-     "label": "Candidate Name",
-     "read_only": 1
-    },
-    {
-     "fieldname": "issued_certificate",
-     "fieldtype": "Link",
-     "label": "Issued Certificate",
-     "options": "Exam Certificate",
-     "read_only": 1
-    },
-    {
-     "default": "0",
-     "fieldname": "new_user",
-     "fieldtype": "Check",
-     "hidden": 1,
-     "label": "New user",
-     "read_only": 1
-    },
-    {
-     "fieldname": "reset_password_key",
-     "fieldtype": "Data",
-     "hidden": 1,
-     "label": "Reset password key"
-    }
-],
-"index_web_pages_for_search": 1,
-"links": [
-    {
-     "link_doctype": "Exam Messages",
-     "link_fieldname": "exam_submission"
-    },
-    {
-     "link_doctype": "Exam Certificate",
-     "link_fieldname": "exam_submission"
-    }
-],
- "modified": "2024-12-04 14:19:44.625291",
+  "section_break_lmge",
+  "candidate",
+  "candidate_name",
+  "exam_schedule",
+  "exam",
+  "new_user",
+  "reset_password_key",
+  "column_break_ngvn",
+  "status",
+  "exam_started_time",
+  "additional_time_given",
+  "exam_submitted_time",
+  "video_section",
+  "candidate_video",
+  "result_tab",
+  "total_marks",
+  "result_status",
+  "issued_certificate",
+  "column_break_whlx",
+  "evaluation_pending",
+  "assigned_evaluator",
+  "assigned_proctor",
+  "section_break_rxvo",
+  "submitted_answers"
+ ],
+ "fields": [
+  {
+   "fieldname": "exam_schedule",
+   "fieldtype": "Link",
+   "label": "Exam Schedule",
+   "options": "Exam Schedule",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "exam_schedule.exam",
+   "fieldname": "exam",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Exam",
+   "options": "Exam"
+  },
+  {
+   "fieldname": "candidate",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Candidate",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Registered",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Registered\nRegistration Cancelled\nStarted\nSubmitted\nTerminated",
+   "search_index": 1
+  },
+  {
+   "fieldname": "exam_started_time",
+   "fieldtype": "Datetime",
+   "label": "Exam started at"
+  },
+  {
+   "fieldname": "exam_submitted_time",
+   "fieldtype": "Datetime",
+   "label": "Exam submitted at"
+  },
+  {
+   "default": "0",
+   "description": "Additional time given in minutes",
+   "fieldname": "additional_time_given",
+   "fieldtype": "Int",
+   "label": "Additional Time Given",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_ngvn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Total marks after evaluation",
+   "fieldname": "total_marks",
+   "fieldtype": "Float",
+   "label": "Total marks",
+   "read_only": 1
+  },
+  {
+   "description": "No. of questions pending to be evaluated",
+   "fieldname": "evaluation_pending",
+   "fieldtype": "Int",
+   "label": "Evaluation pending",
+   "read_only": 1
+  },
+  {
+   "default": "NA",
+   "fieldname": "result_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Result Status",
+   "options": "NA\nPassed\nFailed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result_tab",
+   "fieldtype": "Tab Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "submitted_answers",
+   "fieldtype": "Table",
+   "label": "Submitted answers",
+   "options": "Exam Answer"
+  },
+  {
+   "fieldname": "column_break_whlx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_rxvo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_lmge",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "assigned_evaluator",
+   "fieldtype": "Link",
+   "label": "Assigned Evaluator",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "assigned_proctor",
+   "fieldtype": "Link",
+   "label": "Assigned Proctor",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "video_section",
+   "fieldtype": "Section Break",
+   "label": "Video"
+  },
+  {
+   "fieldname": "candidate_video",
+   "fieldtype": "HTML",
+   "label": "Candidate Video",
+   "options": "<div id=\"videoDiv\" class=\"hidden\">\n<video id=\"candidateVideo\" style=\"max-width: 400px;\"></video>\n  <div id=\"controls\" class=\"icon-group\">\n    <button class=\"btn btn-light\" id=\"previous-btn\">\u23ee\ufe0f</button>\n    <button class=\"btn btn-light\" id=\"play-pause-btn\">\u25b6\ufe0f/\u23f8\ufe0f</button>\n    <button class=\"btn btn-light\" id=\"next-btn\">\u23ed\ufe0f</button>\n<input type=\"text\" id=\"index-field\" readonly>\n  </div>\n</div>"
+  },
+  {
+   "fetch_from": "candidate.full_name",
+   "fieldname": "candidate_name",
+   "fieldtype": "Data",
+   "label": "Candidate Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_certificate",
+   "fieldtype": "Link",
+   "label": "Issued Certificate",
+   "options": "Exam Certificate",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "new_user",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "New user",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reset_password_key",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Reset password key"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Exam Messages",
+   "link_fieldname": "exam_submission"
+  },
+  {
+   "link_doctype": "Exam Certificate",
+   "link_fieldname": "exam_submission"
+  }
+ ],
+ "modified": "2024-12-11 15:32:07.392659",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Submission",
@@ -218,6 +218,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

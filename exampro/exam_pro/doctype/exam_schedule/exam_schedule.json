@@ -5,115 +5,105 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-    "exam",
-    "visibility",
-    "start_date_time",
-    "column_break_3",
-    "question_type",
-    "duration",
-    "status",
-    "certificate_template",
-    "exam_settings_section",
-    "column_break_5bke",
-    "examiners",
-    "amended_from"
-   ],
-   "fields": [
-    {
-     "fieldname": "column_break_3",
-     "fieldtype": "Column Break"
-    },
-    {
-     "default": "Public",
-     "fieldname": "visibility",
-     "fieldtype": "Select",
-     "in_list_view": 1,
-     "label": "Visibility",
-     "options": "Public\nPrivate\nArchived"
-    },
-    {
-     "fieldname": "exam",
-     "fieldtype": "Link",
-     "in_list_view": 1,
-     "in_standard_filter": 1,
-     "label": "Exam",
-     "options": "Exam",
-     "reqd": 1,
-     "search_index": 1,
-     "set_only_once": 1
-    },
-    {
-     "fieldname": "examiners",
-     "fieldtype": "Table",
-     "label": "Examiners",
-     "options": "Examiner"
-    },
-    {
-     "fieldname": "exam_settings_section",
-     "fieldtype": "Section Break"
-    },
-    {
-     "fieldname": "column_break_5bke",
-     "fieldtype": "Column Break"
-    },
-    {
-     "allow_in_quick_entry": 1,
-     "fieldname": "start_date_time",
-     "fieldtype": "Datetime",
-     "in_list_view": 1,
-     "label": "Start Date Time",
-     "reqd": 1
-    },
-    {
-     "fetch_from": "exam.question_type",
-     "fieldname": "question_type",
-     "fieldtype": "Data",
-     "label": "Question Type",
-     "read_only": 1
-    },
-    {
-     "fetch_from": "exam.duration",
-     "fieldname": "duration",
-     "fieldtype": "Int",
-     "label": "Duration",
-     "read_only": 1
-    },
-    {
-     "default": "Scheduled",
-     "fieldname": "status",
-     "fieldtype": "Select",
-     "in_list_view": 1,
-     "label": "Status",
-     "options": "Scheduled\nEnded",
-     "read_only": 1
-    },
-    {
-     "fieldname": "amended_from",
-     "fieldtype": "Link",
-     "label": "Amended From",
-     "no_copy": 1,
-     "options": "Exam Schedule",
-     "print_hide": 1,
-     "read_only": 1,
-     "search_index": 1
-    },
-    {
-     "fetch_from": ".certificate_template",
-     "fieldname": "certificate_template",
-     "fieldtype": "Link",
-     "label": "Certificate Template",
-     "options": "Exam Certificate Template"
-    }
-   ],
+  "exam",
+  "visibility",
+  "start_date_time",
+  "column_break_3",
+  "question_type",
+  "duration",
+  "status",
+  "certificate_template",
+  "exam_settings_section",
+  "column_break_5bke",
+  "examiners"
+ ],
+ "fields": [
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Public",
+   "fieldname": "visibility",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Visibility",
+   "options": "Public\nPrivate\nArchived"
+  },
+  {
+   "fieldname": "exam",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Exam",
+   "options": "Exam",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "examiners",
+   "fieldtype": "Table",
+   "label": "Examiners",
+   "options": "Examiner"
+  },
+  {
+   "fieldname": "exam_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Manage Examiners"
+  },
+  {
+   "fieldname": "column_break_5bke",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "start_date_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Start Date Time",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "exam.question_type",
+   "fieldname": "question_type",
+   "fieldtype": "Data",
+   "label": "Question Type",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "exam.duration",
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "label": "Duration",
+   "read_only": 1
+  },
+  {
+   "default": "Scheduled",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Scheduled\nEnded",
+   "read_only": 1
+  },
+  {
+   "fetch_from": ".certificate_template",
+   "fieldname": "certificate_template",
+   "fieldtype": "Link",
+   "label": "Certificate Template",
+   "options": "Exam Certificate Template"
+  }
+ ],
  "index_web_pages_for_search": 1,
  "links": [
-    {
-     "group": "Candidates",
-     "link_doctype": "Exam Submission",
-     "link_fieldname": "exam_schedule"
-    }
-   ],
- "modified": "2024-12-10 13:18:21.405169",
+  {
+   "group": "Candidates",
+   "link_doctype": "Exam Submission",
+   "link_fieldname": "exam_schedule"
+  }
+ ],
+ "modified": "2024-12-11 15:33:45.512758",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Schedule",
@@ -132,6 +122,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
