@@ -1,4 +1,4 @@
-{% extends "exampro/templates/lms_base.html" %}
+{% extends "exampro/templates/exam_base.html" %}
 
 
 {% block title %}
@@ -9,19 +9,6 @@
 {% block page_content %}
 <div class="common-page-style pt-8">
     <div class="container">
-        {% include "exampro/templates/search_exam/search_exam.html" %}
-
-        <div class="course-list-cta">
-            {% if frappe.session.user != "Guest" %}
-            <a class="btn btn-default btn-sm" href="/users">
-                {{ _("My Profile") }}
-            </a>
-            {% endif %}
-
-            <a class="btn btn-default btn-sm ml-2" id="open-search">
-                {{ _("Search") }} (Ctrl + k)
-            </a>
-        </div>
 
         <div class="page-title mb-6">
             {{ _("All Exams") }}
@@ -87,7 +74,6 @@
 
         </div>
 
-        {% endif %}
     </div>
 </div>
 {% endblock %}

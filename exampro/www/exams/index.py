@@ -2,10 +2,6 @@ from datetime import datetime, timedelta
 import frappe
 from frappe.utils import now
 from frappe import _
-from exampro.exam_pro.utils import (
-	check_profile_restriction,
-	get_restriction_details
-)
 
 def get_live_exam(member=None):
 	"""
