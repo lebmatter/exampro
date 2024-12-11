@@ -243,7 +243,7 @@ def start_exam(exam_submission=None):
 	doc.exam_started_time = start_time
 	# get questions
 	questions = frappe.get_all(
-		"Exam Schedule Question", filters={"parent": doc.exam}, fields=["exam_question"]
+		"Exam Added Question", filters={"parent": doc.exam}, fields=["exam_question"]
 	)
 	random_questions = frappe.get_cached_value("Exam", doc.exam, "randomize_questions")
 	if random_questions:
