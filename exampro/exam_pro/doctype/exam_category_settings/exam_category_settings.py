@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class ExamCategoryMetrics(Document):
+class ExamCategorySettings(Document):
 	pass

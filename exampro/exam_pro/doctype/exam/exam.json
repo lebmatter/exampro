@@ -249,7 +249,7 @@
         "fieldname": "select_questions",
         "fieldtype": "Table",
         "label": "Select Questions",
-        "options": "Exam Category Metrics"
+        "options": "Exam Category Settings"
        },
        {
         "fieldname": "added_questions",
@@ -345,7 +345,7 @@
         "link_fieldname": "exam"
        }
  ],
- "modified": "2024-12-04 13:17:55.619223",
+ "modified": "2024-12-10 13:17:55.619223",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",
