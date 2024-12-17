@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "prompt",
  "creation": "2024-12-04 13:18:21.405169",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -103,10 +104,11 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2024-12-11 15:33:45.512758",
+ "modified": "2024-12-17 16:05:11.680115",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Schedule",
+ "naming_rule": "Set by user",
  "owner": "Administrator",
  "permissions": [
   {
