@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import random
+import json
 from datetime import datetime, timedelta
 
 import frappe
@@ -779,7 +780,7 @@ def ping(securities):
 
 
 @frappe.whitelist()
-def register_candidate(schedule=None, user_email=None, user_name=None):
+def register_candidate():
 	"""
 	External API to register candidate
 	Create the user if nit exists
@@ -788,9 +789,18 @@ def register_candidate(schedule=None, user_email=None, user_name=None):
 	# validate email
 	# assert schedule is valid, public, can register
 	"""
-	assert schedule, "Exam schedule is required."
-	assert user_email, "User email is required."
-	assert user_name, "User name is required."
+	try:
+		body = json.loads(frappe.request.data)
+		schedule = body["schedule"]
+		user_email = body["user_email"]
+		user_name = body["user_name"]
+
+		assert schedule, "Exam schedule is required."
+		assert user_email, "User email is required."
+		assert user_name, "User name is required."
+	except:
+		frappe.throw("Invalid parameters given.")
+
 
 	assert frappe.db.exists("Exam Schedule", schedule), "Invalid exam schedule."
 	create_website_user(user_name, user_email)
