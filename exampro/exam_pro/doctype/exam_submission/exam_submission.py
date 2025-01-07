@@ -780,7 +780,7 @@ def ping(securities):
 
 
 @frappe.whitelist()
-def register_candidate():
+def register_candidate(schedule='', user_email='', user_name=''):
 	"""
 	External API to register candidate
 	Create the user if nit exists
@@ -789,17 +789,9 @@ def register_candidate():
 	# validate email
 	# assert schedule is valid, public, can register
 	"""
-	try:
-		body = json.loads(frappe.request.data)
-		schedule = body["schedule"]
-		user_email = body["user_email"]
-		user_name = body["user_name"]
-
-		assert schedule, "Exam schedule is required."
-		assert user_email, "User email is required."
-		assert user_name, "User name is required."
-	except:
-		frappe.throw("Invalid parameters given.")
+	assert schedule, "Exam schedule is required."
+	assert user_email, "User email is required."
+	assert user_name, "User name is required."
 
 
 	assert frappe.db.exists("Exam Schedule", schedule), "Invalid exam schedule."
