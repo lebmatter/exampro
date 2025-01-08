@@ -37,8 +37,6 @@ def create_website_user(full_name, email):
 		"send_welcome_email": 0
     })
     
-    # Add roles (adjust as needed)
-    user.add_roles("Exam Candidate")
     # Save the user
     user.insert(ignore_permissions=True)
     return email
@@ -796,6 +794,13 @@ def register_candidate(schedule='', user_email='', user_name=''):
 
 	assert frappe.db.exists("Exam Schedule", schedule), "Invalid exam schedule."
 	create_website_user(user_name, user_email)
+	user = frappe.get_doc("User", user_email)
+	roles = [ro.role for ro in user.roles]
+	if "Exam Candidate" not in roles:
+		user.add_roles("Exam Candidate")
+		user.save(ignore_permissions=True)
+		frappe.db.commit()
+
 	if not frappe.db.exists({"doctype": "Exam Submission", "candidate": user_email, "exam_schedule": schedule}):
 		new_submission = frappe.get_doc(
 			{"doctype": "Exam Submission", "candidate": user_email, "exam_schedule": schedule}
