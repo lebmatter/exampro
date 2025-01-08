@@ -395,7 +395,7 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	"""
 	assert exam_submission, qs_name
 
-	submission = frappe.get_doc("Exam Submission", exam_submission)
+	submission = frappe.get_doc("Exam Submission", exam_submission, ignore_permissions=True)
 	# check of the logged in user is same as exam submission candidate
 	if frappe.session.user != submission.candidate:
 		raise PermissionError("You don't have access to submit and answer.")
@@ -404,7 +404,7 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	if not frappe.db.exists("Exam Answer", "{}-{}".format(exam_submission, qs_name)):
 		frappe.throw("Invalid question.")
 
-	result_doc = frappe.get_doc("Exam Answer", "{}-{}".format(exam_submission, qs_name))
+	result_doc = frappe.get_doc("Exam Answer", "{}-{}".format(exam_submission, qs_name), ignore_permissions=True)
 	frappe.cache().hset(
 		exam_submission,
 		"qs:{}".format(result_doc.seq_no),
@@ -427,7 +427,7 @@ def submit_exam(exam_submission=None):
 	"""
 	assert exam_submission
 
-	doc = frappe.get_doc("Exam Submission", exam_submission)
+	doc = frappe.get_doc("Exam Submission", exam_submission, ignore_permissions=True)
 	# check of the logged in user is same as exam submission candidate
 	if frappe.session.user != doc.candidate:
 		raise PermissionError("You don't have access to this exam.")
@@ -555,15 +555,18 @@ def exam_messages(exam_submission=None):
 	Get messages
 	"""
 	assert exam_submission
-	doc = frappe.get_doc("Exam Submission", exam_submission)
+	doc = frappe.get_doc("Exam Submission", exam_submission, ignore_permissions=True)
 
 	# check of the logged in user is same as exam submission candidate or proctor
 	if frappe.session.user not in [doc.candidate, doc.assigned_proctor]:
 		raise PermissionError("You don't have access to view messages.")
 
-	res = frappe.get_all("Exam Messages", filters={
+	res = frappe.get_all(
+		"Exam Messages", filters={
 		"exam_submission": exam_submission
-	}, fields=["creation", "from", "message", "type_of_message"])
+		}, fields=["creation", "from", "message", "type_of_message"],
+		ignore_permissions=True
+	)
 	for idx, _ in enumerate(res):
 		res[idx]["creation"] = res[idx]["creation"].isoformat()
 
