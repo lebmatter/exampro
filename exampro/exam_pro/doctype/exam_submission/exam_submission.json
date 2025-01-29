@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "creation": "2024-12-04 13:19:44.625291",
  "doctype": "DocType",
@@ -199,7 +200,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2024-12-11 15:32:07.392659",
+ "modified": "2025-01-29 14:46:21.191982",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Submission",
@@ -210,6 +211,7 @@
    "delete": 1,
    "email": 1,
    "export": 1,
+   "import": 1,
    "print": 1,
    "read": 1,
    "report": 1,
