@@ -452,8 +452,9 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 	assert message
 
 	doc = frappe.get_doc("Exam Submission", exam_submission)
-	if doc.status != "Started":
-		{"status": 0}
+	enable_chat = frappe.get_cached_value("Exam", doc.exam, "enable_chat")
+	if not enable_chat:
+		raise PermissionError("Chat is disabled for this exam.")
 
 	# check of the logged in user is same as exam submission candidate
 	if frappe.session.user not in [doc.candidate, doc.assigned_proctor]:
@@ -778,6 +779,27 @@ def val_secs(securities):
 @frappe.whitelist()
 def ping(securities):
 	return val_secs(securities)
+
+
+# def send_registration_email(uname, uemail, exam_name, sched_time, duration):
+# 		context = {
+# 			"exam": exam_name,
+# 			"scheduled_time": self.start_date_time
+# 		}
+# 		# Retrieve the email template document
+# 		email_template = frappe.get_doc("Email Template", "Exam Proctor Assignment")
+
+# 		# Render the subject and message
+# 		subject = frappe.render_template(email_template.subject, context)
+# 		message = frappe.render_template(email_template.response, context)
+
+# 		member_email = frappe.db.get_value("User", self.examiner, "email")
+# 		frappe.sendmail(
+# 			recipients=[user_email],
+# 			subject=subject,
+# 			message=message,
+# 		)
+# 		frappe.db.set_value("Examiner", examiner.name, "notification_sent", 1)
 
 
 @frappe.whitelist()
