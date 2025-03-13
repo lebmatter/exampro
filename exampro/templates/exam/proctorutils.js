@@ -381,16 +381,16 @@ frappe.ready(() => {
   setInterval(function () {
     updateVideoList();
   }, 5000); // 5 seconds
-  // frappe.realtime.on('newproctorvideo', (data) => {
-  //     videoStore[data.exam_submission].push(data.url);
-  // });
+  frappe.realtime.on('newproctorvideo', (data) => {
+      videoStore[data.exam_submission].push(data.url);
+  });
 
-  // frappe.realtime.on('newproctormsg', (data) => {
-  //     convertedTime = timeAgo(data.creation);
-  //     if (data.exam_submission === activeChat) {
-  //         addChatBubble(convertedTime, data.message, data.type_of_message)
-  //     }
-  // });
+  frappe.realtime.on('newproctormsg', (data) => {
+      convertedTime = timeAgo(data.creation);
+      if (data.exam_submission === activeChat) {
+          addChatBubble(convertedTime, data.message, data.type_of_message)
+      }
+  });
 
   // chatModal controls
   // Handle send button click event
