@@ -1,79 +1,130 @@
 {% extends "exampro/templates/exam_base.html" %}
 
-
 {% block title %}
-{{ 'Exams' }}
+{{ _('My Exams') }}
 {% endblock %}
-
 
 {% block page_content %}
 <div class="common-page-style pt-8">
     <div class="container">
-
-        <div class="page-title mb-6">
-            {{ _("All Exams") }}
+        <div class="page-title mb-4">
+            {{ _("My Exams") }}
         </div>
 
-        <ul class="nav exampro-nav" id="courses-tab">
-            <li class="nav-item">
-                <a class="nav-link active" data-toggle="tab" href="#live">
-                    {{ _("Live") }}
-                    <span class="course-list-count">
-                        {{ live_exams | length }}
-                    </span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#upcoming">
-                    {{ _("Upcoming") }}
-                    <span class="course-list-count">
-                        {{ upcoming_exams | length }}
-                    </span>
-                </a>
-            </li>
-
-            {% if frappe.session.user != "Guest" %}
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#exams-enrolled">
-                    {{ _("Registered") }}
-                    <span class="course-list-count">
-                        {{ registered_exams | length }}
-                    </span>
-                </a>
-            </li>
-            {% endif %}
-
-        </ul>
-
-        <div class="border-bottom mb-4"></div>
-
-        <div class="tab-content">
-            <div class="tab-pane active" id="live" role="tabpanel" aria-labelledby="live">
-                {% set exams = live_exams %}
-                {% set title = _("Live Exams") %}
-                {% set classes = "live-exams" %}
-                {% include "exampro/templates/exam_list.html" %}
+        {% if next_exam %}
+        <div class="alert alert-info mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h4 class="alert-heading mb-1">Next Upcoming Exam</h4>
+                    <p class="mb-0">
+                        You have an exam "{{ next_exam.exam_name }}" scheduled for {{ next_exam.schedule_time }}
+                        (Duration: {{ next_exam.duration }} minutes)
+                    </p>
+                </div>
+                <div>
+                    <a href="/live/exam" class="btn btn-primary">View Details</a>
+                </div>
             </div>
-
-            <div class="tab-pane" id="upcoming" role="tabpanel" aria-labelledby="upcoming">
-                {% set exams = upcoming_exams %}
-                {% set title = _("Upcoming Exams") %}
-                {% set classes = "upcoming-exams" %}
-                {% include "exampro/templates/exam_list.html" %}
-            </div>
-
-            {% if frappe.session.user != "Guest" %}
-            <div class="tab-pane fade" id="courses-enrolled" role="tabpanel" aria-labelledby="courses-enrolled">
-                {% set exams = enrolled_exams %}
-                {% set title = _("Registered Exams") %}
-                {% set classes = "enrolled-exams" %}
-                {% include "exampro/templates/exam_list.html" %}
-            </div>
-            {% endif %}
-
         </div>
+        {% endif %}
 
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>{{ _("Exam Name") }}</th>
+                                <th>{{ _("Schedule Time") }}</th>
+                                <th>{{ _("Status") }}</th>
+                                <th>{{ _("Score") }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if not exams %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    {{ _("No exams found") }}
+                                </td>
+                            </tr>
+                            {% endif %}
+
+                            {% for exam in exams %}
+                            <tr>
+                                <td>{{ exam.exam_name }}</td>
+                                <td>{{ exam.schedule_time }}</td>
+                                <td>
+                                    {% if exam.status == "Upcoming" %}
+                                        <span class="badge badge-info">{{ exam.status }}</span>
+                                    {% elif exam.status == "Started" %}
+                                        <span class="badge badge-warning">{{ exam.status }}</span>
+                                    {% elif exam.status == "Submitted" %}
+                                        <span class="badge badge-success">{{ exam.status }}</span>
+                                    {% elif exam.status == "Terminated" %}
+                                        <span class="badge badge-danger">{{ exam.status }}</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">{{ exam.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if exam.score is not none %}
+                                        {{ exam.score }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-right">
+                                    {% if exam.status == "Upcoming" %}
+                                        <a href="/live/exam" class="btn btn-sm btn-outline-primary">View</a>
+                                    {% elif exam.status == "Started" %}
+                                        <a href="/live/exam" class="btn btn-sm btn-primary">Continue Exam</a>
+                                    {% elif exam.status == "Submitted" %}
+                                        <a href="/exams/finished?exam_submission={{ exam.submission }}" 
+                                           class="btn btn-sm btn-outline-secondary">View Result</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.8em;
+}
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+.badge-warning {
+    background-color: #ffc107;
+    color: #000;
+}
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+.table td, .table th {
+    padding: 1rem;
+    vertical-align: middle;
+}
+.alert-info {
+    border-left: 4px solid #17a2b8;
+}
+</style>
 {% endblock %}

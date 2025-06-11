@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import frappe
-from frappe.utils import now
+from frappe.utils import now, format_datetime
 from frappe import _
 
 def get_live_exam(member=None):
@@ -117,53 +117,77 @@ def get_registered_exams():
 
 	return {"in_progress": in_progress, "completed": completed}
 
+def get_user_exams(user=None):
+    """Get all exams (upcoming and past) for a user with relevant details"""
+    user = user or frappe.session.user
+    
+    # Get all submissions for the user
+    submissions = frappe.get_all(
+        "Exam Submission",
+        filters={"candidate": user},
+        fields=[
+            "name",
+            "exam_schedule",
+            "exam",
+            "status",
+            "total_marks",
+            "result_status",
+            "exam_started_time",
+            "exam_submitted_time",
+        ]
+    )
+    
+    exams = []
+    next_exam = None
+    current_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
+    
+    for submission in submissions:
+        schedule = frappe.get_doc("Exam Schedule", submission.exam_schedule)
+        exam = frappe.get_doc("Exam", schedule.exam)
+        
+        exam_data = {
+            "exam_name": exam.title,
+            "schedule_time": format_datetime(schedule.start_date_time),
+            "duration": schedule.duration,
+            "status": "Upcoming" if schedule.start_date_time > current_time else submission.status,
+            "score": submission.total_marks if submission.status == "Submitted" else None,
+            "schedule_datetime": schedule.start_date_time,
+            "submission": submission.name
+        }
+        
+        # Find the next upcoming exam
+        if schedule.start_date_time > current_time:
+            if not next_exam or schedule.start_date_time < next_exam["schedule_datetime"]:
+                next_exam = exam_data
+        
+        exams.append(exam_data)
+    
+    # Sort exams by schedule time
+    exams.sort(key=lambda x: x["schedule_datetime"], reverse=True)
+    
+    return exams, next_exam
+
 def get_context(context):
 	"""
-	Check if there is any live exams for the user,
-	If so redirect to it. Else show exam list
+	Check if there is any started exam for the user,
+	If so redirect to it. Otherwise show exam list with upcoming exam banner.
 	"""
-	if frappe.session.user != "Guest":
-		exam_details = get_live_exam(frappe.session.user)
-		if exam_details:
-			frappe.local.flags.redirect_location = "/live/exam"
-			raise frappe.Redirect
+	if frappe.session.user == "Guest":
+		frappe.local.flags.redirect_location = "/login"
+		raise frappe.Redirect
+
+	# Get live exam details
+	exam_details = get_live_exam(frappe.session.user)
 	
+	# Only redirect if exam is actually started
+	if exam_details and exam_details.get("submission_status") == "Started":
+		frappe.local.flags.redirect_location = "/live/exam"
+		raise frappe.Redirect
 
 	context.no_cache = 1
-	context.live_exams, context.upcoming_exams = get_exams()
-	context.enrolled_exams = (
-		get_registered_exams()["in_progress"] + get_registered_exams()["completed"]
-	)
-	context.created_exams = []
-
+	context.exams, context.next_exam = get_user_exams()
+	
 	context.metatags = {
-		"title": _("Exam List"),
-		"image": frappe.db.get_single_value("Website Settings", "banner_image"),
-		"description": "This page lists all the exams published on our website",
-		"keywords": "All Exams, Exams, Learn",
+		"title": _("My Exams"),
+		"description": "View your upcoming and past exams"
 	}
-
-
-def get_exams():
-	exams = frappe.get_all(
-		"Exam",
-		filters={"published": True},
-		fields=[
-			"name",
-			"upcoming",
-			"title",
-			"image",
-			"enable_certification",
-			"paid_certificate",
-			"price_certificate",
-			"currency",
-		],
-	)
-
-	live_exams, upcoming_exams = [], []
-	for exam in exams:
-		if exam.upcoming:
-			upcoming_exams.append(exam)
-		else:
-			live_exams.append(exam)
-	return live_exams, upcoming_exams
