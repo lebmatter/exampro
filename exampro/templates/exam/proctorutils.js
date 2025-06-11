@@ -6,6 +6,9 @@ var activeChat = "";
 const videos = document.getElementsByClassName("video");
 const toggleButton = document.getElementsByClassName("toggleButton");
 
+// Cache for storing the last known message for each candidate
+var lastKnownMessages = {};
+
 /**
  * A utility function to manage the FIFO queue-like behavior of the videoBlobStore.
  */
@@ -397,18 +400,46 @@ function updateSidebarMessages() {
       
       data.message.forEach(msg => {
         const card = document.querySelector(`.message-card[data-submission="${msg.exam_submission}"]`);
-        if (card) {
-          const messageText = card.querySelector('.message-text');
-          const statusText = card.querySelector('.status-text');
+        if (!card) return;
+
+        const messageText = card.querySelector('.message-text');
+        const statusText = card.querySelector('.status-text');
+        const statusBadge = card.querySelector('.status-badge');
+        
+        // Get last known message for this candidate
+        const lastMessage = lastKnownMessages[msg.exam_submission];
+        
+        // Check if either message or status has changed
+        const messageChanged = !lastMessage || lastMessage.message !== msg.message;
+        const statusChanged = !lastMessage || lastMessage.status !== msg.status;
+        
+        if (messageChanged || statusChanged) {
+          // Update the message
+          messageText.textContent = msg.message;
           
-          // If message has changed, update and highlight
-          if (messageText.textContent !== msg.message) {
-            messageText.textContent = msg.message;
-            card.classList.add('has-new-message');
-            setTimeout(() => card.classList.remove('has-new-message'), 3000);
+          // Update status
+          statusText.textContent = `Status: ${msg.status}`;
+          if (statusBadge) {
+            statusBadge.className = `badge status-badge status-${msg.status.toLowerCase()}`;
+            statusBadge.textContent = msg.status;
           }
           
-          statusText.textContent = `Status: ${msg.status}`;
+          // Visual feedback for changes
+          card.classList.add('has-new-message');
+          messageText.style.transition = 'background-color 0.5s';
+          messageText.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+          
+          setTimeout(() => {
+            card.classList.remove('has-new-message');
+            messageText.style.backgroundColor = '';
+          }, 3000);
+          
+          // Update cache
+          lastKnownMessages[msg.exam_submission] = {
+            message: msg.message,
+            status: msg.status,
+            timestamp: new Date()
+          };
         }
       });
     }

@@ -76,7 +76,13 @@ Proctor
 
     .message-card.has-new-message {
         border-left-color: #007bff;
-        background-color: #f8f9fa;
+        animation: pulseBackground 3s ease-in-out;
+    }
+
+    @keyframes pulseBackground {
+        0% { background-color: #f8f9fa; }
+        50% { background-color: rgba(0, 123, 255, 0.1); }
+        100% { background-color: #f8f9fa; }
     }
 
     .message-card .card-text {
