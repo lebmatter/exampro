@@ -63,6 +63,52 @@ Proctor
         margin-bottom: 2px;
     }
 
+    /* Messages sidebar styles */
+    .messages-sidebar {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .message-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #e0e0e0;
+    }
+
+    .message-card.has-new-message {
+        border-left-color: #007bff;
+        background-color: #f8f9fa;
+    }
+
+    .message-card .card-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        font-weight: normal;
+    }
+
+    .status-started {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .status-registered {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .status-terminated {
+        background-color: #dc3545;
+        color: white;
+    }
+
     /* Chat container styles */
     .chat-container {
         height: 600px;
@@ -244,7 +290,30 @@ Proctor
 
 <div class="container-fluid m-5">
     <div class="row">
-        <div class="col-md-12">
+        <!-- Message Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Latest Messages</h5>
+                </div>
+                <div class="card-body messages-sidebar">
+                    {% for msg in latest_messages %}
+                    <div class="card mb-2 message-card" data-submission="{{ msg.exam_submission }}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="card-subtitle text-muted mb-0">{{ msg.candidate_name }}</h6>
+                                <span class="badge status-badge status-{{ msg.status.lower() }}">{{ msg.status }}</span>
+                            </div>
+                            <p class="card-text message-text mb-0">{{ msg.message }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Video Grid -->
+        <div class="col-md-9">
             <!-- Main content -->
             <div class="row">
                 <div class="col-md-6">

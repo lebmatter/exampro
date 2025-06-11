@@ -377,10 +377,38 @@ function updateVideoList() {
   }
 }
 
+function updateSidebarMessages() {
+  frappe.call({
+    method: "exampro.www.live.proctor.get_latest_messages",
+    callback: (data) => {
+      if (!data.message) return;
+      
+      data.message.forEach(msg => {
+        const card = document.querySelector(`.message-card[data-submission="${msg.exam_submission}"]`);
+        if (card) {
+          const messageText = card.querySelector('.message-text');
+          const statusText = card.querySelector('.status-text');
+          
+          // If message has changed, update and highlight
+          if (messageText.textContent !== msg.message) {
+            messageText.textContent = msg.message;
+            card.classList.add('has-new-message');
+            setTimeout(() => card.classList.remove('has-new-message'), 3000);
+          }
+          
+          statusText.textContent = `Status: ${msg.status}`;
+        }
+      });
+    }
+  });
+}
+
 frappe.ready(() => {
   setInterval(function () {
     updateVideoList();
+    updateSidebarMessages();
   }, 5000); // 5 seconds
+  
   frappe.realtime.on('newproctorvideo', (data) => {
       videoStore[data.exam_submission].push(data.url);
   });

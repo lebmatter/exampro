@@ -55,6 +55,42 @@ def get_proctor_live_exams(proctor=None):
 
 	return res
 
+@frappe.whitelist()
+def get_latest_messages(proctor=None):
+	"""Get latest messages from all candidates being proctored by the current proctor"""
+	result = []
+	submissions = frappe.get_all(
+		"Exam Submission",
+		{"assigned_proctor": proctor or frappe.session.user},
+		["name", "candidate_name", "status"]
+	)
+
+	for submission in submissions:
+		latest_msg = frappe.get_all(
+			"Exam Messages",
+			filters={"exam_submission": submission.name},
+			fields=["message", "creation", "from"],
+			order_by="creation desc",
+			limit=1
+		)
+
+		msg_text = "Exam not started"
+		if submission.status == "Started":
+			msg_text = "Exam started"
+		elif submission.status == "Terminated":
+			msg_text = "Exam terminated"
+		if latest_msg:
+			msg_text = latest_msg[0].message
+
+		result.append({
+			"exam_submission": submission.name,
+			"candidate_name": submission.candidate_name,
+			"message": msg_text,
+			"status": submission.status
+		})
+
+	return result
+
 def get_context(context):
 	"""
 	Get the active exams the logged-in user proctoring
@@ -70,4 +106,5 @@ def get_context(context):
 
 	context.submissions = proctor_list["live_submissions"]
 	context.pending_candidates = proctor_list["pending_candidates"]
+	context.latest_messages = get_latest_messages()
 
