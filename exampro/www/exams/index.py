@@ -60,8 +60,8 @@ def get_live_exam(member=None):
 		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
 		if schedule.start_date_time <= tnow <= end_time:
-			exam_details["live_status"] = "Live"
-			return exam_details
+			frappe.local.flags.redirect_location = "/live/exam"
+			raise frappe.Redirect
 		elif tnow <= schedule.start_date_time:
 			exam_details["live_status"] = "Upcoming"
 			return exam_details
