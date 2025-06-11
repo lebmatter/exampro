@@ -257,19 +257,31 @@ const updateProcMessages = (exam_submission) => {
 
 };
 
-function openChatModal() {
-  const videoContainer = this.closest(".video-container");
-  const video = videoContainer.querySelector("video");
+function openChatModal(event) {
+  let videoId, candName, videoSrc;
+  
+  if (this.classList.contains('message-card')) {
+    // Called from sidebar card click
+    videoId = this.getAttribute("data-submission");
+    candName = this.querySelector(".card-subtitle").textContent;
+    const videoContainer = document.querySelector(`.video-container[data-videoid="${videoId}"]`);
+    const video = videoContainer.querySelector("video");
+    videoSrc = video.src;
+  } else {
+    // Called from video controls
+    const videoContainer = this.closest(".video-container");
+    const video = videoContainer.querySelector("video");
+    videoSrc = video.src;
+    videoId = videoContainer.getAttribute("data-videoid");
+    candName = videoContainer.getAttribute("data-candidatename");
+  }
+
   const modalVideo = document.getElementById("modalVideoElement");
-  modalVideo.src = video.src;
-  const videoId = videoContainer.getAttribute("data-videoid");
-  const candName = videoContainer.getAttribute("data-candidatename");
+  modalVideo.src = videoSrc;
   $("#chatModal").modal("show");
   $("#candidateName").text(candName);
   activeChat = videoId;
   $("#chatMessages").empty();
-  // loop through msgs and add alerts
-  // Add new messages as alerts to the Bootstrap div
   existingMessages[videoId] = [];
 
   setInterval(function () {
@@ -404,9 +416,21 @@ function updateSidebarMessages() {
 }
 
 frappe.ready(() => {
+  // Add click handlers for sidebar message cards
+  document.querySelectorAll('.message-card').forEach(card => {
+    card.addEventListener('click', openChatModal);
+    card.style.cursor = 'pointer';
+  });
+
   setInterval(function () {
     updateVideoList();
     updateSidebarMessages();
+    // Re-attach click handlers to any new cards
+    document.querySelectorAll('.message-card').forEach(card => {
+      card.removeEventListener('click', openChatModal);
+      card.addEventListener('click', openChatModal);
+      card.style.cursor = 'pointer';
+    });
   }, 5000); // 5 seconds
   
   frappe.realtime.on('newproctorvideo', (data) => {
