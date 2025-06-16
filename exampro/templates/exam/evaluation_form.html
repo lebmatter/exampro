@@ -1,0 +1,133 @@
+{% extends "templates/exam/examform.html" %}
+
+{% block quiz_form %}
+<div class="evaluation-header mb-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Candidate: {{ submission.candidate_name }}</h5>
+                    <p class="text-muted mb-0">Submission ID: {{ submission.name }}</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <h5>Total Marks: <span id="total-marks">{{ submission.obtained_marks or 0 }}</span> / {{ submission.total_marks }}</h5>
+                    <p class="text-muted mb-0">Status: {{ submission.status }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="quiz-form" class="common-card-style column-card">
+    <div class="question" id="question" data-name="{{ question.name }}" data-type="{{ question.question_type }}" data-multi="{{ question.allow_multiple }}" data-max-marks="{{ question.marks }}">
+        <div>
+            <div class="question-number" id="question-number">Question {{ current_question }}</div>
+            <div class="question-text" id="question-text">{{ question.question_text }}</div>
+            {% if question.image %}
+            <div class="question-image"><img src="{{ question.image }}" class="img-fluid" alt="Question Image"></div>
+            {% endif %}
+        </div>
+
+        {% if question.question_type == "objective" %}
+        <div id="choices" class="readonly-choices">
+            {% for choice in question.choices %}
+            <div class="choice {% if choice.is_correct %}correct{% endif %} {% if choice.selected %}selected{% endif %}">
+                <input type="{% if question.allow_multiple %}checkbox{% else %}radio{% endif %}" 
+                       id="choice_{{ choice.idx }}" 
+                       name="answer" 
+                       value="{{ choice.choice }}"
+                       {% if choice.selected %}checked{% endif %}
+                       disabled>
+                <label for="choice_{{ choice.idx }}">{{ choice.choice }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="control-input-wrapper">
+            <div class="control-input">
+                <div class="subjective-answer readonly">
+                    {{ answer.answer or "" }}
+                </div>
+                <div class="marking-interface mt-3">
+                    <div class="d-flex align-items-center">
+                        <label class="me-2">Marks:</label>
+                        <input type="number" 
+                               class="form-control mark-input" 
+                               data-question-id="{{ question.name }}"
+                               min="0" 
+                               max="{{ question.marks }}"
+                               value="{{ answer.marks or 0 }}">
+                        <span class="ms-2">/ {{ question.marks }}</span>
+                    </div>
+                    <div class="feedback mt-2">
+                        <textarea class="form-control feedback-input" 
+                                  data-question-id="{{ question.name }}"
+                                  placeholder="Add feedback (optional)">{{ answer.feedback or "" }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="quiz-footer">
+        <span>
+            Question
+            <span class="current-question" id="current-question">{{ current_question }}</span>
+            of
+            <span id="question-length">{{ total_questions }}</span>
+        </span>
+
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-secondary btn-sm" id="prevQs" {% if current_question == 1 %}style="display: none;"{% endif %}>
+                Previous
+            </button>
+            <button class="btn btn-primary btn-sm ms-2" id="nextQs" {% if current_question == total_questions %}style="display: none;"{% endif %}>
+                Next Question
+            </button>
+            <button class="btn btn-success btn-sm ms-2" id="finish" {% if current_question != total_questions %}style="display: none;"{% endif %}>
+                Complete Evaluation
+            </button>
+        </div>
+    </div>
+</form>
+
+<style>
+.readonly-choices .choice {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.readonly-choices .choice.correct {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+}
+
+.readonly-choices .choice.selected:not(.correct) {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+}
+
+.subjective-answer.readonly {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    min-height: 100px;
+    white-space: pre-wrap;
+}
+
+.marking-interface {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+}
+
+.evaluation-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

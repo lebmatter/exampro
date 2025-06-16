@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import frappe
 from frappe import _
 from frappe.utils.data import markdown
-from frappe.utils import now
+from frappe.utils import now, get_fullname
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs
@@ -82,14 +82,37 @@ def get_live_exam(member=None):
 
 	return exam_details
 
+def get_assigned_exams(user):
+    """Get all exams assigned to the evaluator"""
+    assigned_exams = frappe.get_all(
+        "Exam Submission",
+        filters={
+            "evaluator": user,
+            "status": ["in", ["Submitted", "Evaluation In Progress"]]
+        },
+        fields=["name as submission_id", "exam", "candidate", "status", 
+                "exam_schedule", "total_marks", "obtained_marks"]
+    )
+
+    for exam in assigned_exams:
+        exam_doc = frappe.get_doc("Exam", exam.exam)
+        exam.title = exam_doc.title
+        exam.candidate_name = get_fullname(exam.candidate)
+        
+    return assigned_exams
+
 def get_context(context):
-	context.no_cache = 1
+    context.no_cache = 1
 
-	if frappe.session.user == "Guest":
-		raise frappe.PermissionError(_("Please login to access this page."))
-
-	exam_details = get_live_exam(frappe.session.user)
-	context.page_context = {}
+    if frappe.session.user == "Guest":
+        raise frappe.PermissionError(_("Please login to access this page."))
+    
+    # Check if user is an evaluator
+    if not frappe.db.exists("Examiner", {"user": frappe.session.user}):
+        raise frappe.PermissionError(_("You are not authorized to access this page."))
+        
+    context.assigned_exams = get_assigned_exams(frappe.session.user)
+    context.page_context = {}
 
 	if not exam_details:
 		context.exam = {}
