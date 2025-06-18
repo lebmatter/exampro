@@ -76,13 +76,26 @@ Proctor
 
     .message-card.has-new-message {
         border-left-color: #007bff;
-        animation: pulseBackground 3s ease-in-out;
+        animation: pulseBackground 2s ease-in-out;
     }
 
     @keyframes pulseBackground {
-        0% { background-color: #f8f9fa; }
-        50% { background-color: rgba(0, 123, 255, 0.1); }
-        100% { background-color: #f8f9fa; }
+        0% { 
+            background-color: #fff;
+            transform: translateX(0);
+        }
+        25% {
+            background-color: rgba(0, 123, 255, 0.1);
+            transform: translateX(4px);
+        }
+        75% {
+            background-color: rgba(0, 123, 255, 0.1);
+            transform: translateX(-4px);
+        }
+        100% { 
+            background-color: #fff;
+            transform: translateX(0);
+        }
     }
 
     .message-card .card-text {

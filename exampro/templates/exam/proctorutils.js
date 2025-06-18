@@ -403,7 +403,6 @@ function updateSidebarMessages() {
         if (!card) return;
 
         const messageText = card.querySelector('.message-text');
-        const statusText = card.querySelector('.status-text');
         const statusBadge = card.querySelector('.status-badge');
         
         // Get last known message for this candidate
@@ -418,21 +417,26 @@ function updateSidebarMessages() {
           messageText.textContent = msg.message;
           
           // Update status
-          statusText.textContent = `Status: ${msg.status}`;
           if (statusBadge) {
             statusBadge.className = `badge status-badge status-${msg.status.toLowerCase()}`;
             statusBadge.textContent = msg.status;
           }
           
-          // Visual feedback for changes
-          card.classList.add('has-new-message');
-          messageText.style.transition = 'background-color 0.5s';
-          messageText.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+          // Remove existing animation class if present
+          card.classList.remove('has-new-message');
           
+          // Trigger reflow to restart animation
+          void card.offsetWidth;
+          
+          // Add animation class
+          card.classList.add('has-new-message');
+          
+          // Remove animation class after animation completes
           setTimeout(() => {
-            card.classList.remove('has-new-message');
-            messageText.style.backgroundColor = '';
-          }, 3000);
+            if (card.classList.contains('has-new-message')) {
+              card.classList.remove('has-new-message');
+            }
+          }, 2000);
           
           // Update cache
           lastKnownMessages[msg.exam_submission] = {
