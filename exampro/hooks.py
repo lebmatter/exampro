@@ -48,6 +48,7 @@ app_license = "mit"
 # role_home_page = {
 #	"Role": "home_page"
 # }
+website_user_home_page = "/exams"
 
 # Generators
 # ----------
