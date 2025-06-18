@@ -14,8 +14,8 @@ def get_evaluator_live_exams(evaluator=None):
 		"Exam Submission",
 		filters={
 			"assigned_evaluator": evaluator,
-			"status": ["in", ["Submitted", "Evaluation In Progress"]], 
-			"evaluation_pending": [">", 0]
+			"evaluation_pending": [">", 0],
+			"status": "Submitted"
 		},
 		fields=[
 			"name as submission_id", 
@@ -61,11 +61,6 @@ def get_submission_details(exam_id, submission_id):
 		frappe.throw(_("You are not assigned to evaluate this submission"))
 		
 	exam = frappe.get_doc("Exam", exam_id)
-	
-	# Update submission status if needed
-	if submission.status == "Submitted":
-		submission.status = "Evaluation In Progress"
-		submission.save()
 	
 	context = {
 		"exam": exam,
@@ -137,13 +132,13 @@ def get_submission_answers(submission_id):
 	return frappe.get_all(
 		"Exam Answer",
 		filters={"parent": submission_id},
-		fields=["name", "question", "answer", "is_correct", "marks"]
+		fields=["name", "question", "answer", "is_correct", "mark"]
 	)
 
 def update_total_marks(submission_id):
 	"""Update total obtained marks in submission"""
 	total_marks = frappe.db.sql("""
-		SELECT SUM(marks) as total
+		SELECT SUM(mark) as total
 		FROM `tabExam Evaluation`
 		WHERE submission = %s
 	""", submission_id)[0][0] or 0
