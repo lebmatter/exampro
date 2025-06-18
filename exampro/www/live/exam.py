@@ -1,13 +1,88 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import frappe
+from frappe.utils import now
+
 from frappe import _
 from frappe.utils.data import markdown
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs
-from .evaluate import get_live_exam
 
 # ACTIVE_EXAM_CODE_CACHE = "ACTIVEEXAMCODECACHE"
+
+def get_live_exam(member=None):
+	"""
+	Get upcoming/ongoing exam of a candidate.
+
+	Check if current time is inbetween start and end time
+	Function returns only one live/upcoming exam details
+	even if multiple entries are there.
+	"""
+	exam_details = {}
+
+	submissions = frappe.get_all(
+		"Exam Submission",
+		{"candidate": member or frappe.session.user},[
+			"name",
+			"exam_schedule",
+			"status",
+			"exam_started_time",
+			"exam_submitted_time",
+			"additional_time_given"
+	])
+	for submission in submissions:
+		if submission["status"] in ["Registration Cancelled", "Aborted"]:
+			continue
+
+		schedule = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
+		exam = frappe.get_doc("Exam", schedule.exam)
+
+		# end time is schedule start time + duration + additional time given
+		end_time = schedule.start_date_time + timedelta(minutes=schedule.duration) + \
+			timedelta(minutes=submission["additional_time_given"])
+
+		exam_details = {
+			"exam_submission": submission["name"],
+			"exam": schedule.exam,
+			"exam_schedule": submission["exam_schedule"],
+			"start_time": schedule.start_date_time,
+			"end_time": end_time,
+			"additional_time_given": submission["additional_time_given"],
+			"submission_status": submission["status"],
+			"duration": schedule.duration,
+			"enable_calculator": exam.enable_calculator,
+			"live_status": "",
+			"submission_status": submission["status"],
+			"enable_video_proctoring": exam.enable_video_proctoring,
+			"enable_chat": exam.enable_chat,
+			"enable_calculator": exam.enable_calculator
+		}
+
+		# make datetime in isoformat
+		for key,val in exam_details.items():
+			if type(val) == datetime:
+				exam_details[key] = val.isoformat()
+
+		# checks if current time is between schedule start and end time
+		# ongoing exams can be in Not staryed, started or submitted states
+		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
+		if schedule.start_date_time <= tnow <= end_time:
+			exam_details["live_status"] = "Live"
+			return exam_details
+		elif tnow <= schedule.start_date_time:
+			exam_details["live_status"] = "Upcoming"
+			return exam_details
+		elif tnow > end_time:
+			# if time is over, submit if applicable
+			if submission["status"] != "Submitted":
+				doc = frappe.get_doc("Exam Submission", submission["name"])
+				doc.status == "Submitted"
+				doc.save(ignore_permissions=True)
+
+			return {}
+
+	return exam_details
+
 
 def get_context(context):
 	context.no_cache = 1
