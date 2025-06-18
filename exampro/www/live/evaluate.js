@@ -3,6 +3,7 @@ frappe.ready(function() {
     class ExamEvaluation {
         constructor() {
             this.currentExam = null;
+            this.currentSubmissionId = null;
             this.bindEvents();
             this.setupMarkingInterface();
         }
@@ -17,10 +18,11 @@ frappe.ready(function() {
             });
 
             // Handle mark input changes
-            $(document).on('change', '.mark-input', (e) => {
+            $(document).on('change', '.mark-input, .feedback-input', (e) => {
                 const questionId = $(e.target).data('question-id');
-                const marks = $(e.target).val();
-                this.saveMarks(questionId, marks);
+                const marks = $(`.mark-input[data-question-id="${questionId}"]`).val();
+                const feedback = $(`.feedback-input[data-question-id="${questionId}"]`).val();
+                this.saveMarks(questionId, marks, feedback);
             });
         }
 
@@ -57,6 +59,8 @@ frappe.ready(function() {
         }
 
         loadExamSubmission(examId, submissionId) {
+            this.currentExam = examId;
+            this.currentSubmissionId = submissionId;
             frappe.call({
                 method: 'exampro.www.live.evaluate.get_submission_details',
                 args: {
@@ -73,16 +77,22 @@ frappe.ready(function() {
             });
         }
 
-        saveMarks(questionId, marks) {
+        saveMarks(questionId, marks, feedback) {
             frappe.call({
                 method: 'exampro.www.live.evaluate.save_marks',
                 args: {
                     question_id: questionId,
                     marks: marks,
+                    feedback: feedback,
                     submission_id: this.currentSubmissionId
                 },
                 callback: (r) => {
                     if (r.message && r.message.success) {
+                        // Update total marks display
+                        if (r.message.total_marks !== undefined) {
+                            $('#total-marks').text(r.message.total_marks);
+                        }
+                        
                         frappe.show_alert({
                             message: 'Marks saved successfully',
                             indicator: 'green'

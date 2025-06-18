@@ -1,7 +1,7 @@
 {% extends "exampro/templates/exam_base.html" %}
 
 {% block title %}
-{{ exam.title }}
+Exam Evaluation
 {% endblock %}
 
 
@@ -14,64 +14,59 @@
 {% block page_content %}
 
 <div class="container-fluid mt-10">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Assigned Exams</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush" id="exam-list">
-                        {% if assigned_exams %}
-                            {% for exam in assigned_exams %}
-                            <a href="#" class="list-group-item list-group-item-action exam-item" 
-                               data-exam-id="{{ exam.name }}"
-                               data-submission-id="{{ exam.submission_id }}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">{{ exam.title }}</h6>
-                                        <small class="text-muted">{{ exam.candidate_name }}</small>
-                                    </div>
-                                    <span class="badge {% if exam.status == 'Pending' %}bg-warning{% else %}bg-success{% endif %}">
-                                        {{ exam.status }}
-                                    </span>
-                                </div>
-                            </a>
-                            {% endfor %}
-                        {% else %}
-                            <div class="p-3 text-center text-muted">
-                                No exams assigned for evaluation
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-9">
-            <!-- Main content -->
-            <div class="row" id="evaluation-area">
-                {% if exam %}
-                    {{ frappe.render_template('templates/exam/examform.html', {"exam": exam, "evaluation": 1}) }}
-                {% else %}
-                    <div class="col-12 text-center mt-5">
-                        <h4 class="text-muted">Select an exam from the sidebar to start evaluation</h4>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+	<div class="row">
+		<div class="col-md-3">
+			<div class="card">
+				<div class="card-header">
+					<h5 class="mb-0">Assigned Exams</h5>
+				</div>
+				<div class="card-body p-0">
+					<div class="list-group list-group-flush" id="exam-list">
+						{% if assigned_exams %}
+							{% for submission in assigned_exams %}
+							<a href="#" class="list-group-item list-group-item-action exam-item" 
+							   data-exam-id="{{ submission.name }}"
+							   data-submission-id="{{ submission.submission_id }}">
+								<div class="d-flex justify-content-between align-items-center">
+									<div>
+										<h6 class="mb-1">{{ submission.title }}</h6>
+										<small class="text-muted">{{ submission.candidate_name }}</small>
+									</div>
+									<span class="badge {% if submission.status == 'Submitted' %}bg-warning{% else %}bg-success{% endif %}">
+										{{ submission.status }}
+									</span>
+								</div>
+							</a>
+							{% endfor %}
+						{% else %}
+							<div class="p-3 text-center text-muted">
+								No exams assigned for evaluation
+							</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-9">
+			<!-- Main content -->
+			<div class="row" id="evaluation-area">
+				{% if exam %}
+					{{ frappe.render_template('templates/exam/examform.html', {"exam": exam, "evaluation": 1}) }}
+				{% else %}
+					<div class="col-12 text-center mt-5">
+						<h4 class="text-muted">Select an exam from the sidebar to start evaluation</h4>
+					</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
 </div>
 
 {% endblock %}
 
-    <!-- Scripts -->
-    {%- block script %}
-    {{ super() }}
-    {% if exam %}
-    <script type="text/javascript">
-        var exam = {{ exam | tojson }};
-        {% include "exampro/templates/exam/examform.js" %}
-        {% include "exampro/templates/exam/examutils.js" %}
-    </script>
-    {% endif %}
-    {% endblock %}
+	<!-- Scripts -->
+	{%- block script %}
+	{{ super() }}
+	<script type="text/javascript" src="{{ frappe.assets_json['/assets/exampro/templates/exam/examutils.js'] }}"></script>
+	<script type="text/javascript" src="{{ frappe.assets_json['/assets/exampro/templates/exam/evaluate.js'] }}"></script>
+	{% endblock %}
