@@ -46,27 +46,73 @@ Exam Evaluation
 					</div>
 				</div>
 			</div>
+
+			<!-- Question Navigation Panel -->
+			<div class="card mt-3" id="question-nav-panel" style="display: none;">
+				<div class="card-header">
+					<h5 class="mb-0">Questions</h5>
+				</div>
+				<div class="card-body">
+					<div class="question-nav-grid" id="question-nav-buttons">
+						<!-- Question buttons will be added here dynamically -->
+					</div>
+				</div>
+			</div>
 		</div>
 		<div class="col-md-9">
 			<!-- Main content -->
 			<div class="row" id="evaluation-area">
-				{% if exam %}
-					{{ frappe.render_template('templates/exam/examform.html', {"exam": exam, "evaluation": 1}) }}
-				{% else %}
 					<div class="col-12 text-center mt-5">
 						<h4 class="text-muted">Select an exam from the sidebar to start evaluation</h4>
 					</div>
-				{% endif %}
 			</div>
 		</div>
 	</div>
 </div>
 
+<style>
+.question-nav-grid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 5px;
+	padding: 10px;
+}
+
+.question-nav-btn {
+	padding: 8px;
+	text-align: center;
+	border: 1px solid #dee2e6;
+	border-radius: 4px;
+	cursor: pointer;
+	background: #fff;
+}
+
+.question-nav-btn:hover {
+	background: #f8f9fa;
+}
+
+.question-nav-btn.active {
+	background: #007bff;
+	color: #fff;
+}
+
+.question-nav-btn.evaluated {
+	background: #28a745;
+	color: #fff;
+}
+
+.question-nav-btn.pending {
+	background: #ffc107;
+	color: #000;
+}
+</style>
 {% endblock %}
 
 	<!-- Scripts -->
 	{%- block script %}
 	{{ super() }}
-	<script type="text/javascript" src="{{ frappe.assets_json['/assets/exampro/templates/exam/examutils.js'] }}"></script>
-	<script type="text/javascript" src="{{ frappe.assets_json['/assets/exampro/templates/exam/evaluate.js'] }}"></script>
+	<script type="text/javascript">
+	{% include "exampro/templates/exam/examutils.js" %}
+	{% include "exampro/templates/exam/evaluate.js" %}
+	</script>
 	{% endblock %}
