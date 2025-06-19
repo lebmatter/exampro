@@ -71,6 +71,7 @@ website_user_home_page = "/exams"
 # before_install = "exampro.install.before_install"
 # after_install = "exampro.install.after_install"
 
+
 # Uninstallation
 # ------------
 
@@ -227,4 +228,13 @@ website_route_rules = [
     {"from_route": "/exams/scorecard/<exam_submission>", "to_route": "exams/scorecard"},
 	{"from_route": "/exams/finished/<exam_submission>", "to_route": "exams/finished"},
     {"from_route": "/exams/terminated/<exam_submission>", "to_route": "exams/terminated"}
+]
+
+fixtures = [
+    {
+        "dt": "Role",
+        "filters": [
+            ["name", "in", ["Exam Candidate", "Exam Proctor", "Exam Evaluator"]]
+        ]
+    }
 ]
