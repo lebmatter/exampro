@@ -7,9 +7,11 @@
 {% block page_content %}
 <div class="common-page-style pt-8">
     <div class="container">
-        <div class="page-title mb-4">
-            {{ _("My Exams") }}
-        </div>
+	<div class="row mb-3">
+		<div class="col">
+			<h4 class="text-center">📝 My Exams</h4>
+		</div>
+	</div>
 
         {% if next_exam %}
         <div class="alert alert-info mb-4" role="alert">

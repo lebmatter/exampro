@@ -51,7 +51,7 @@ frappe.ready(function() {
             this.currentSubmissionId = submissionId;
             
             // Show loading state
-            $('#evaluation-area').html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading exam...</div>');
+            $('#evaluation-area').html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Select a question...</div>');
             
             frappe.call({
                 method: 'exampro.www.live.evaluate.get_submission_details',
@@ -97,29 +97,34 @@ frappe.ready(function() {
         }
 
         showQuestion(index) {
-            // Validate index is a number and within bounds
-            const questionIndex = parseInt(index, 10);
-            if (isNaN(questionIndex)) {
+            // Validate index is a number
+            const questionSeqNo = parseInt(index, 10);
+            if (isNaN(questionSeqNo)) {
                 console.error('Invalid question index:', index);
                 return;
             }
 
-            if (questionIndex < 0 || questionIndex >= this.answers.length) {
-                console.error('Question index out of bounds:', questionIndex);
+            // Find the answer with the matching sequence number
+            const answerIndex = this.answers.findIndex(answer => answer.seq_no === questionSeqNo);
+            if (index <= 0) {
+                return;
+            }
+            if (answerIndex === -1) {
+                console.error('Question with sequence number not found:', questionSeqNo);
                 return;
             }
 
-            this.currentQuestionIndex = questionIndex;
-            const answer = this.answers[questionIndex];
+            this.currentQuestionIndex = answerIndex;
+            const answer = this.answers[answerIndex];
             
             if (!answer || !answer.question) {
-                console.error('Invalid answer data for index:', questionIndex);
+                console.error('Invalid answer data for index:', answerIndex);
                 return;
             }
 
             // Update navigation buttons
             $('.question-nav-btn').removeClass('active');
-            $(`.question-nav-btn[data-index="${questionIndex}"]`).addClass('active');
+            $(`.question-nav-btn[data-index="${questionSeqNo}"]`).addClass('active');
 
             // Check if evaluation is allowed (status is Pending)
             const isPending = answer.evaluation_status === 'Pending';
@@ -130,7 +135,7 @@ frappe.ready(function() {
                 $('#evaluation-area').html(`
                     <div class="card">
                         <div class="card-body">
-                            <h5>Question ${questionIndex + 1}</h5>
+                            <h5>Question ${questionSeqNo}</h5>
                             <div class="alert alert-info mt-3">
                                 <i class="fa fa-info-circle mr-2"></i>
                                 This answer has been automatically evaluated.
@@ -147,7 +152,7 @@ frappe.ready(function() {
                 $('#evaluation-area').html(`
                     <div class="card">
                         <div class="card-body">
-                            <h5>Question ${questionIndex + 1}</h5>
+                            <h5>Question ${questionSeqNo}</h5>
                             <div class="question-text mb-4">${answer.question}</div>
                             
                             <div class="answer-section mb-4">
