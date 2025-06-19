@@ -160,6 +160,7 @@
    "read_only": 1
   },
   {
+   "default": "3",
    "depends_on": "evaluation_required",
    "fieldname": "evaluation_ends_in_days",
    "fieldtype": "Int",
@@ -317,7 +318,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2024-12-11 15:29:48.398242",
+ "modified": "2025-06-19 14:08:42.644839",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",
@@ -337,6 +338,7 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
