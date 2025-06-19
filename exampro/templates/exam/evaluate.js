@@ -86,12 +86,12 @@ frappe.ready(function() {
             this.answers.forEach((answer, index) => {
             const status = answer.evaluation_status;
             const btnClass = status === 'Auto' ? 'evaluated' : 
-                       status === 'Pending' ? 'pending' : '';
-                       
+                   status === 'Pending' ? 'pending' : '';
+                   
             navGrid.append(`
-                <button class="question-nav-btn ${btnClass}" data-index="${answer.seq_no}">
-                ${answer.seq_no}
-                </button>
+            <button class="question-nav-btn btn-sm ${btnClass}" data-index="${answer.seq_no}">
+            ${answer.seq_no}
+            </button>
             `);
             });
         }
