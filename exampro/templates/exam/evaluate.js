@@ -35,6 +35,15 @@ frappe.ready(function() {
                     console.error('Invalid question index in button data attribute');
                 }
             });
+
+            // Handle Save Score button
+            $(document).on('click', '.save-score-btn:not(.disabled)', (e) => {
+                e.preventDefault();
+                const questionId = $(e.target).data('question-id');
+                const mark = $(`.mark-input[data-question-id="${questionId}"]`).val();
+                const feedback = $(`.feedback-input[data-question-id="${questionId}"]`).val();
+                this.saveMark(questionId, mark, feedback);
+            });
         }
 
         loadExamSubmission(examId, submissionId) {
@@ -112,39 +121,71 @@ frappe.ready(function() {
             $('.question-nav-btn').removeClass('active');
             $(`.question-nav-btn[data-index="${questionIndex}"]`).addClass('active');
 
+            // Check if evaluation is allowed (status is Pending)
+            const isPending = answer.evaluation_status === 'Pending';
+            
             // Update question display
-            $('#evaluation-area').html(`
-                <div class="card">
-                    <div class="card-body">
-                        <h5>Question ${questionIndex + 1}</h5>
-                        <div class="question-text mb-4">${answer.question}</div>
-                        
-                        <div class="answer-section mb-4">
-                            <h6>Candidate's Answer:</h6>
-                            <div class="p-3 bg-light rounded">${answer.answer || 'No answer provided'}</div>
-                        </div>
-                        
-                        <div class="evaluation-section">
-                            <h6>Evaluation</h6>
-                            <div class="form-group mb-3">
-                                <label>Mark (max: ${answer.max_marks})</label>
-                                <input type="number" 
-                                       class="form-control mark-input" 
-                                       data-question-id="${answer.exam_question}"
-                                       value="${answer.mark || 0}"
-                                       min="0" 
-                                       max="${answer.max_marks}">
-                            </div>
-                            <div class="form-group">
-                                <label>Feedback</label>
-                                <textarea class="form-control feedback-input" 
-                                          data-question-id="${answer.exam_question}"
-                                          rows="3">${answer.evaluator_response || ''}</textarea>
+            if (!isPending) {
+                // Show simplified view for auto-evaluated questions
+                $('#evaluation-area').html(`
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>Question ${questionIndex + 1}</h5>
+                            <div class="alert alert-info mt-3">
+                                <i class="fa fa-info-circle mr-2"></i>
+                                This answer has been automatically evaluated.
                             </div>
                         </div>
                     </div>
-                </div>
-            `);
+                `);
+            } else {
+                // Show full evaluation interface for pending questions
+                const readOnlyAttr = '';
+                const buttonDisabledClass = '';
+                const buttonDisabledAttr = '';
+                
+                $('#evaluation-area').html(`
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>Question ${questionIndex + 1}</h5>
+                            <div class="question-text mb-4">${answer.question}</div>
+                            
+                            <div class="answer-section mb-4">
+                                <h6>Candidate's Answer:</h6>
+                                <div class="p-3 bg-light rounded">${answer.answer || 'No answer provided'}</div>
+                            </div>
+                            
+                            <div class="evaluation-section">
+                                <h6>Evaluation</h6>
+                                <div class="form-group mb-3">
+                                    <label>Mark (max: ${answer.max_marks})</label>
+                                    <input type="number" 
+                                           class="form-control mark-input" 
+                                           data-question-id="${answer.exam_question}"
+                                           value="${answer.mark || 0}"
+                                           min="0" 
+                                           max="${answer.max_marks}"
+                                           ${readOnlyAttr}>
+                                </div>
+                                <div class="form-group">
+                                    <label>Feedback</label>
+                                    <textarea class="form-control feedback-input" 
+                                              data-question-id="${answer.exam_question}"
+                                              rows="3"
+                                              ${readOnlyAttr}>${answer.evaluator_response || ''}</textarea>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary save-score-btn ${buttonDisabledClass}" 
+                                            data-question-id="${answer.exam_question}"
+                                            ${buttonDisabledAttr}>
+                                        Save Score
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }
         }
 
         saveMark(questionId, mark, feedback) {
