@@ -75,15 +75,15 @@ frappe.ready(function() {
             navGrid.empty();
             
             this.answers.forEach((answer, index) => {
-                const status = answer.evaluation_status;
-                const btnClass = status === 'Done' ? 'evaluated' : 
-                               status === 'Pending' ? 'pending' : '';
-                               
-                navGrid.append(`
-                    <button class="question-nav-btn ${btnClass}" data-index="${index}">
-                        ${index + 1}
-                    </button>
-                `);
+            const status = answer.evaluation_status;
+            const btnClass = status === 'Auto' ? 'evaluated' : 
+                       status === 'Pending' ? 'pending' : '';
+                       
+            navGrid.append(`
+                <button class="question-nav-btn ${btnClass}" data-index="${answer.seq_no}">
+                ${answer.seq_no}
+                </button>
+            `);
             });
         }
 
