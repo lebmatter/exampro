@@ -51,7 +51,7 @@ frappe.ready(function() {
             this.currentSubmissionId = submissionId;
             
             // Show loading state
-            $('#evaluation-area').html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Select a question...</div>');
+            $('#evaluation-area').html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i><br></div>');
             
             frappe.call({
                 method: 'exampro.www.live.evaluate.get_submission_details',
