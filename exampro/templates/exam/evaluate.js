@@ -85,13 +85,14 @@ frappe.ready(function() {
             
             this.answers.forEach((answer, index) => {
             const status = answer.evaluation_status;
-            const btnClass = status === 'Auto' ? 'evaluated' : 
-                   status === 'Pending' ? 'pending' : '';
-                   
+            const btnClass = status === 'Auto' ? 'light' : 
+                       status === 'Done' ? 'success' :
+                       status === 'Pending' ? 'warning' : '';
+               
             navGrid.append(`
-            <button class="question-nav-btn btn-sm ${btnClass}" data-index="${answer.seq_no}">
-            ${answer.seq_no}
-            </button>
+                <button class="question-nav-btn btn-sm btn-${btnClass}" data-index="${answer.seq_no}">
+                ${answer.seq_no}
+                </button>
             `);
             });
         }
@@ -211,6 +212,7 @@ frappe.ready(function() {
                             message: 'Mark saved successfully',
                             indicator: 'green'
                         });
+
                     }
                 }
             });

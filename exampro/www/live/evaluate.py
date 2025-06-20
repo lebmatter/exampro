@@ -7,7 +7,6 @@ def get_evaluator_live_exams(evaluator=None):
 	Shows submissions ready for evaluation only after exam schedule has ended.
 	"""
 	evaluator = evaluator or frappe.session.user
-
 	submissions = frappe.get_all(
 		"Exam Submission",
 		filters={
@@ -21,16 +20,26 @@ def get_evaluator_live_exams(evaluator=None):
 			"candidate_name",
 			"status",
 			"evaluation_pending",
-			"exam_schedule"
+			"exam_schedule",
+			"exam_submitted_time",
 		]
 	)
+	res = []
 
 	for submission in submissions:
 		exam = frappe.get_doc("Exam", submission.exam)
+		# default 3 days for evaluation
+		evaluation_ends_days = frappe.db.get_value("Exam", exam.name,  "evaluation_ends_in_days") or 3
+		# end time is exam_submitted time + evaluation_ends_days 
+		evaluation_end_time = frappe.utils.add_days(submission.exam_submitted_time, evaluation_ends_days)
+		if evaluation_end_time < frappe.utils.now_datetime():
+			continue
+
 		submission.title = exam.title
 		submission.name = exam.name  # This is needed for the data-exam-id in template
+		res.append(submission)
 
-	return submissions
+	return res
 
 def get_context(context):
 	context.no_cache = 1
@@ -84,27 +93,44 @@ def get_submission_details(exam_id, submission_id):
 def save_marks(question_id, marks, submission_id, feedback=None):
 	"""Save marks for a question"""        
 	submission = frappe.get_doc("Exam Submission", submission_id)
-	
+	# Validate input
+	if not question_id or not marks or not submission_id:
+		frappe.throw(_("Question name, marks, and submission ID are required"))
+
+	# if marks is str, convert to float
+	if isinstance(marks, str):
+		try:
+			marks = float(marks)
+		except ValueError:
+			frappe.throw(_("Marks must be a valid number"))
+	if not isinstance(marks, (int, float)):
+		frappe.throw(_("Marks must be a number"))
+
 	# Verify if the user is assigned as evaluator
 	if submission.assigned_evaluator != frappe.session.user:
 		frappe.throw(_("You are not assigned to evaluate this submission"))
+
+	# check max mark
+	max_marks = frappe.get_cached_value(
+		"Exam Question", question_id, "mark"
+	)
+	if marks > max_marks:
+		frappe.throw(_("Marks cannot be greater than the maximum marks for this question: {0}").format(max_marks))
 	
 	# Find the answer record
-	answer = frappe.get_doc("Exam Answer", {
-		"parent": submission_id,
-		"exam_question": question_id
-	})
-	
+	result_doc = frappe.get_doc("Exam Answer", "{}-{}".format(submission_id, question_id), ignore_permissions=True)
 	# Update evaluation details
-	answer.mark = float(marks)
-	answer.evaluator_response = feedback
-	answer.evaluator = frappe.session.user
-	answer.evaluation_status = "Done"
-	answer.save()
-	
-	# Update total marks in submission
-	update_total_marks(submission_id)
-	
+	result_doc.mark = float(marks)
+	result_doc.evaluator_response = feedback
+	result_doc.evaluator = frappe.session.user
+	result_doc.evaluation_status = "Done"
+	result_doc.save(ignore_permissions=True)
+
+
+	# Update evaluation_pending count 
+	pending_count = frappe.db.get_value("Exam Submission", submission_id, "evaluation_pending")
+	frappe.db.set_value("Exam Submission", submission_id, "evaluation_pending", pending_count -1)
+
 	return {
 		"success": True,
 		"message": "Marks saved successfully"
@@ -148,20 +174,3 @@ def get_submission_answers(submission_id):
 		order_by="seq_no"
 	)
 
-def update_total_marks(submission_id):
-	"""Update total obtained marks in submission"""
-	total_marks = frappe.db.sql("""
-		SELECT SUM(mark) as total
-		FROM `tabExam Answer`
-		WHERE parent = %s
-	""", submission_id)[0][0] or 0
-	
-	frappe.db.set_value("Exam Submission", submission_id, "obtained_marks", total_marks)
-	
-	# Update evaluation_pending count 
-	pending_count = frappe.db.count("Exam Answer", {
-		"parent": submission_id,
-		"evaluation_status": ["in", ["Not Attempted", "Pending"]]
-	})
-	
-	frappe.db.set_value("Exam Submission", submission_id, "evaluation_pending", pending_count)

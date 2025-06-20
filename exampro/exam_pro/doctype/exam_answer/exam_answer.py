@@ -15,9 +15,13 @@ class ExamAnswer(Document):
 		Validate if appilicable before save
 		"""
 		# evaluate
-		question_type, mark = frappe.db.get_value(
-			"Exam Question", self.exam_question, ["type", "mark"]
+		question_type = frappe.get_cached_value(
+			"Exam Question", self.exam_question, "question_type"
 		)
+		mark = frappe.get_cached_value(
+			"Exam Question", self.exam_question, "mark"
+		)
+
 		if question_type == "Choices" and self.answer:
 			answered_options = [ans for ans in self.answer.split(",")]
 			correct_options = frappe.db.get_value(

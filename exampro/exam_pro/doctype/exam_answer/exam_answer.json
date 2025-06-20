@@ -82,10 +82,11 @@
    "label": "Evaluator Response"
   },
   {
-   "fetch_from": "exam_question.mark",
+   "default": "0",
    "fieldname": "mark",
    "fieldtype": "Float",
-   "label": "Mark"
+   "label": "Mark",
+   "non_negative": 1
   },
   {
    "fieldname": "seq_no",
@@ -97,12 +98,13 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-05 15:29:07.128382",
+ "modified": "2025-06-19 16:46:09.617801",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Answer",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
