@@ -232,7 +232,9 @@ fixtures = [
     {
         "dt": "Role",
         "filters": [
-            ["name", "in", ["Exam Candidate", "Exam Proctor", "Exam Evaluator"]]
+            ["name", "in", ["Exam Candidate", "Exam Proctor", "Exam Evaluator", "Exam Manager"]]
         ]
     }
 ]
+
+update_website_context = ["exampro.exam_pro.utils.get_website_context"]
