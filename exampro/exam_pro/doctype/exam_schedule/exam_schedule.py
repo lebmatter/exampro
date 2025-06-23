@@ -25,6 +25,19 @@ def upcoming_schedules():
 
 class ExamSchedule(Document):
 
+	def _validate_user_role(self, user_id, role_name):
+		"""
+		Check if the user has the specified role and assign it if needed
+		"""
+		# Check if the user has the role
+		roles = frappe.get_roles(user_id)
+		if role_name not in roles:
+			frappe.throw(
+				"User {} does not have the role '{}'. Please assign the role before proceeding.".format(
+					user_id, role_name
+				)
+			)
+
 	def on_trash(self):
 		frappe.db.delete("Exam Submission", {"exam_schedule": self.name})
 
@@ -49,11 +62,16 @@ class ExamSchedule(Document):
 		
 		old_doc = self.get_doc_before_save()
 		if old_doc:
-			if old_doc.start_date_time != self.start_date_time:
+			current_time = parse(self.start_date_time) if isinstance(self.start_date_time, str) else self.start_date_time
+			if old_doc.start_date_time != current_time:
+				old_time = old_doc.start_date_time if isinstance(old_doc.start_date_time, datetime) else parse(old_doc.start_date_time)
+				new_time = self.start_date_time if isinstance(self.start_date_time, datetime) else parse(self.start_date_time)
+				
 				frappe.msgprint(
 					msg="""Scheduled time has changed from {} to {}. \
 						System will send exam time modification emails to the students and proctors.""".format(
-							old_doc.start_date_time, self.start_date_time
+							old_time.strftime("%Y-%m-%d %H:%M") if old_time else "N/A",
+							new_time.strftime("%Y-%m-%d %H:%M") if new_time else "N/A"
 						),
 					title="Sending modification emails...",
 					wide=True
@@ -98,9 +116,20 @@ class ExamSchedule(Document):
 		get all the other exams which falls in the current exam's timeframe
 		make sure that there is no conflicting proctor.
 		Conflicting evaluator is fine, since they are not time bound.
+		
+		Also checks if examiners have the appropriate roles based on their assigned flags,
+		and assigns those roles if needed.
 		"""
 		if not self.examiners:
 			return
+			
+		# Check for appropriate roles for each examiner based on flags
+		for examiner in self.examiners:
+			if examiner.can_proctor:
+				self._validate_user_role(examiner.examiner, "Exam Proctor")
+				
+			if examiner.can_evaluate:
+				self._validate_user_role(examiner.examiner, "Exam Evaluator")
 		
 		if type(self.start_date_time) != datetime:
 			exam_start = parse(self.start_date_time)
