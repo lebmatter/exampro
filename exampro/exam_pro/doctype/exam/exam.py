@@ -71,6 +71,10 @@ class Exam(Document):
 		if self.show_result == "After Specific Date":
 			if not self.show_result_after_date:
 				frappe.throw("Specify date for showing result.")
+		
+		settings = frappe.get_single("Exam Settings")
+		if self.enable_video_proctoring and not settings.validate_video_settings():
+			frappe.throw("Please provide a video link for proctoring.")
 
 
 	def validate_video_link(self):

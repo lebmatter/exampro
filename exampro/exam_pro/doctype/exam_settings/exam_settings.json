@@ -5,37 +5,50 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-    "aws_account_id",
-    "aws_key",
-    "aws_secret",
-    "s3_bucket"
+  "video_proctoring_settings_section",
+  "storage_provider",
+  "aws_account_id",
+  "aws_key",
+  "aws_secret",
+  "s3_bucket"
  ],
  "fields": [
-    {
-        "fieldname": "aws_account_id",
-        "fieldtype": "Data",
-        "label": "AWS/Cloudflare Account ID"
-    },
-    {
-        "fieldname": "aws_key",
-        "fieldtype": "Data",
-        "label": "AWS Compatible Key"
-    },
-    {
-        "fieldname": "aws_secret",
-        "fieldtype": "Password",
-        "label": "AWS Compatible Secret"
-    },
-    {
-        "fieldname": "s3_bucket",
-        "fieldtype": "Data",
-        "label": "S3/R2 Bucket Name"
-    }
+  {
+   "fieldname": "aws_account_id",
+   "fieldtype": "Data",
+   "label": "AWS/Cloudflare Account ID"
+  },
+  {
+   "fieldname": "aws_key",
+   "fieldtype": "Data",
+   "label": "AWS Compatible Key"
+  },
+  {
+   "fieldname": "aws_secret",
+   "fieldtype": "Password",
+   "label": "AWS Compatible Secret"
+  },
+  {
+   "fieldname": "s3_bucket",
+   "fieldtype": "Data",
+   "label": "S3/R2 Bucket Name"
+  },
+  {
+   "fieldname": "video_proctoring_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Video Proctoring Settings"
+  },
+  {
+   "fieldname": "storage_provider",
+   "fieldtype": "Select",
+   "label": "Storage Provider",
+   "options": "AWS S3\nCloudflare R2"
+  }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-12-04 14:17:32.980370",
+ "modified": "2025-06-23 19:38:35.216226",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Settings",
@@ -52,6 +65,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

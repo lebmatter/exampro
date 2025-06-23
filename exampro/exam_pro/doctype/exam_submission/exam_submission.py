@@ -622,9 +622,10 @@ def get_videos(exam_submission, ttl=None):
 	Get list of videos. Optional cache the urls with ttl
 	"""
 	settings = frappe.get_single("Exam Settings")
-	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
-		settings.aws_account_id
-	)
+	cfdomain = settings.get_storage_endpoint()
+	if not cfdomain:
+		frappe.throw(_("Storage endpoint is not configured. Please check Exam Settings."))
+
 	s3_client = boto3.client(
 		's3', 
 		endpoint_url = cfdomain,
