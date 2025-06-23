@@ -100,10 +100,10 @@ def get_context(context):
         frappe.local.flags.redirect_location = "/login"
         raise frappe.Redirect
     
-    # Check if user has permission to manage exams
-    if not frappe.has_permission("Exam", "read"):
-        frappe.throw(_("You do not have permission to access this page"))
-    
+    # Check if user has Exam Manager role
+    if not "Exam Manager" in frappe.get_roles(frappe.session.user):
+        frappe.throw(_("You are not authorized to access this page"))
+
     # Set page data
     context.no_cache = 1
     context.exams = get_exams()

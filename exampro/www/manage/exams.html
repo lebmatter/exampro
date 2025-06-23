@@ -1,51 +1,26 @@
 {% extends "exampro/templates/exam_base.html" %}
 
 {% block title %}
-{{ _('Admin Dashboard') }}
+{{ _('Manage Exams') }}
 {% endblock %}
 
 {% block page_content %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-2 bg-light sidebar pt-3">
-            <h5 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-3">
-                <span>Administration</span>
-            </h5>
-            <ul class="nav flex-column mb-2">
-                <li class="nav-item">
-                    <a class="nav-link" href="/manage/users">
-                        <i class="fa fa-users mr-2"></i> Users
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/manage/exams">
-                        <i class="fa fa-file-alt mr-2"></i> Exams
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/manage/schedules">
-                        <i class="fa fa-calendar mr-2"></i> Schedules
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/manage/questions">
-                        <i class="fa fa-question-circle mr-2"></i> Questions
-                    </a>
-                </li>
-            </ul>
+<div class="container">
+    <div class="row mb-5">
+        <div class="col">
+            <h4 class="text-center">📝 Manage Exams</h4>
         </div>
-        
-        <!-- Main content -->
-        <div class="col-md-9 ml-sm-auto col-lg-10 px-md-4 pt-3">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-                <h4>📝 Manage Exams</h4>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <button id="create-exam-btn" class="btn btn-primary">
-                        <i class="fa fa-plus-circle mr-1"></i> Create Exam
-                    </button>
-                </div>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-12 text-end">
+            <div class="btn-toolbar justify-content-end">
+                <button id="create-exam-btn" class="btn btn-primary">
+                    <i class="fa fa-plus-circle mr-1"></i> Create Exam
+                </button>
             </div>
+        </div>
+    </div>
             
             <!-- Filter and Search -->
             <div class="row mb-3">
