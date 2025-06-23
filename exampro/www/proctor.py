@@ -102,6 +102,12 @@ def get_context(context):
 	"""
 	Get the active exams the logged-in user proctoring
 	"""
+	if frappe.session.user == "Guest":
+		raise frappe.PermissionError(_("Please login to access this page."))
+	
+	if "Exam Proctor" not in frappe.get_roles():
+		raise frappe.PermissionError("You are not authorized to access this page")
+
 	context.no_cache = 1
 
 	if frappe.session.user == "Guest":

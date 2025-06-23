@@ -46,6 +46,10 @@ def get_context(context):
 
 	if frappe.session.user == "Guest":
 		raise frappe.PermissionError(_("Please login to access this page."))
+	if "Exam Evaluator" not in frappe.get_roles():
+		raise frappe.PermissionError("You are not authorized to access this page")
+
+
 		
 	# Get assigned exams for the evaluator
 	context.assigned_exams = get_evaluator_live_exams()
