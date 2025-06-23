@@ -517,7 +517,7 @@ function endExam() {
             },
             callback: (data) => {
                 if (data.message.show_result === 1) {
-                    window.location.href = "/exams/scorecard/" + exam.exam_submission;
+                    window.location.href = "/exam/scorecard/" + exam.exam_submission;
                 } else {
                     window.location.reload();
                 }

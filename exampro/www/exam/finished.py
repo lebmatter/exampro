@@ -46,10 +46,10 @@ def set_exam_context(context, exmsubmn):
 			if datetime.now() < exam_data["show_result_after_date"]:
 				context.score_message = "Result will be published after {}.".format(exam_data["show_result_after_date"].strftime("%d %b %Y"))
 			else:
-				frappe.local.flags.redirect_location = "/exams/scorecard/{}".format(exam_submission.name)
+				frappe.local.flags.redirect_location = "/exam/scorecard/{}".format(exam_submission.name)
 				raise frappe.Redirect
 		elif exam_data["show_result"] == "Do Not Show Score":
 			context.score_message = "The score will not be displayed for this exam."
 		elif exam_data["show_result"] == "After Exam Submission":
-			frappe.local.flags.redirect_location = "/exams/scorecard/{}".format(exam_submission.name)
+			frappe.local.flags.redirect_location = "/exam/scorecard/{}".format(exam_submission.name)
 			raise frappe.Redirect

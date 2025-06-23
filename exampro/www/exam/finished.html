@@ -1,6 +1,6 @@
 {% extends "exampro/templates/exam_base.html" %}
 
-{% block title %}Exam Terminated{% endblock %}
+{% block title %}Exam finished{% endblock %}
 
 {% block head_include %}
 {% for ext in page_extensions %}
@@ -11,7 +11,7 @@
         background-color: #f9f9f9;
         font-family: 'Inter', sans-serif;
     }
-    .terminated-container {
+    .finished-container {
         max-width: 600px;
         margin: 50px auto;
         background-color: #fff;
@@ -19,34 +19,34 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
         overflow: hidden;
     }
-    .terminated-header {
-        background-color: #ff5722;
+    .finished-header {
+        background-color: #2c9213;
         color: white;
         padding: 20px;
         text-align: center;
         font-size: 24px;
         font-weight: 600;
     }
-    .terminated-body {
+    .finished-body {
         padding: 30px;
     }
-    .terminated-icon {
+    .finished-icon {
         text-align: center;
         margin-bottom: 20px;
     }
-    .terminated-icon i {
+    .finished-icon i {
         font-size: 64px;
-        color: #ff5722;
+        color: #2c9213;
     }
-    .terminated-message {
+    .finished-message {
         font-size: 18px;
         text-align: center;
         margin-bottom: 20px;
         color: #333;
     }
-    .terminated-reason {
+    .finished-reason {
         background-color: #f5f5f5;
-        border-left: 4px solid #ff5722;
+        border-left: 4px solid #2c9213;
         padding: 15px;
         margin-bottom: 20px;
         font-size: 16px;
@@ -74,21 +74,21 @@
 {% endblock %}
 
 {% block page_content %}
-<div class="terminated-container">
-    <div class="terminated-header">
-        Exam Terminated
+<div class="finished-container">
+    <div class="finished-header">
+        Exam completed
     </div>
-    <div class="terminated-body">
-        <div class="terminated-icon">
+    <div class="finished-body">
+        <div class="finished-icon">
             <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <div class="terminated-message">
-            We're sorry, but your exam has been terminated.
+        <div class="finished-message">
+            Your exam attempt has been successfully completed.
         </div>
-        <div class="terminated-reason">
-            <strong>Reason:</strong> {{ termination_reason }}
+        <div class="finished-reason">
+            <strong>Score:</strong> {{ score_message }}
         </div>
-        <a href="/exams" class="back-button">Back to Exams</a>
+        <a href="/my-exams" class="back-button">Back to Exams</a>
     </div>
 </div>
 {% endblock %}
