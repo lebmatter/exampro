@@ -54,7 +54,7 @@ frappe.ready(function() {
             $('#evaluation-area').html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i><br></div>');
             
             frappe.call({
-                method: 'exampro.www.live.evaluate.get_submission_details',
+                method: 'exampro.www.evaluate.get_submission_details',
                 args: {
                     exam_id: examId,
                     submission_id: submissionId
@@ -196,7 +196,7 @@ frappe.ready(function() {
 
         saveMark(questionId, mark, feedback) {
             frappe.call({
-                method: 'exampro.www.live.evaluate.save_marks',
+                method: 'exampro.www.evaluate.save_marks',
                 args: {
                     question_id: questionId,
                     marks: mark,  // Backend expects 'marks'

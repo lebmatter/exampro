@@ -394,7 +394,7 @@ function updateVideoList() {
 
 function updateSidebarMessages() {
   frappe.call({
-    method: "exampro.www.live.proctor.get_latest_messages",
+    method: "exampro.www.proctor.get_latest_messages",
     callback: (data) => {
       if (!data.message) return;
       
