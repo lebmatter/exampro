@@ -1,4 +1,5 @@
-<img src="./exampro-logo.svg" alt="ExamPro Logo" width="200">
+<a href="https://zerodha.tech"><img src="https://zerodha.tech/static/images/github-badge.svg" align="right" /></a>
+<img src="./exampro-logo.png" alt="ExamPro Logo" width="200">
 
 **Proctored Exams for Frappe Framework**
 
