@@ -347,7 +347,7 @@ frappe.ready(function() {
         var examName = $(this).data('exam');
         
         frappe.call({
-            method: 'exampro.www.manage.exams.exams.duplicate_exam',
+            method: 'exampro.www.manage.exams.duplicate_exam',
             args: {
                 exam: examName
             },
@@ -379,7 +379,7 @@ frappe.ready(function() {
         frappe.confirm('Are you sure you want to delete this exam? This action cannot be undone.',
             function() {
                 frappe.call({
-                    method: 'exampro.www.manage.exams.exams.delete_exam',
+                    method: 'exampro.www.manage.exams.delete_exam',
                     args: {
                         exam: examName
                     },

@@ -412,7 +412,7 @@ frappe.ready(function() {
         
         // Load question preview
         frappe.call({
-            method: 'exampro.www.manage.questions.questions.get_question_preview',
+            method: 'exampro.www.manage.questions.get_question_preview',
             args: {
                 question: questionName
             },
@@ -437,7 +437,7 @@ frappe.ready(function() {
         var questionName = $(this).data('question');
         
         frappe.call({
-            method: 'exampro.www.manage.questions.questions.duplicate_question',
+            method: 'exampro.www.manage.questions.duplicate_question',
             args: {
                 question: questionName
             },
@@ -469,7 +469,7 @@ frappe.ready(function() {
         frappe.confirm('Are you sure you want to delete this question? This action cannot be undone.',
             function() {
                 frappe.call({
-                    method: 'exampro.www.manage.questions.questions.delete_question',
+                    method: 'exampro.www.manage.questions.delete_question',
                     args: {
                         question: questionName
                     },

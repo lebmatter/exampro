@@ -364,7 +364,7 @@ frappe.ready(function() {
         var scheduleName = $(this).data('schedule');
         
         frappe.call({
-            method: 'exampro.www.manage.schedules.schedules.duplicate_schedule',
+            method: 'exampro.www.manage.schedules.duplicate_schedule',
             args: {
                 schedule: scheduleName
             },
@@ -396,7 +396,7 @@ frappe.ready(function() {
         frappe.confirm('Are you sure you want to delete this schedule? This action cannot be undone.',
             function() {
                 frappe.call({
-                    method: 'exampro.www.manage.schedules.schedules.delete_schedule',
+                    method: 'exampro.www.manage.schedules.delete_schedule',
                     args: {
                         schedule: scheduleName
                     },
