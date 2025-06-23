@@ -1,0 +1,467 @@
+{% extends "exampro/templates/exam_base.html" %}
+
+{% block title %}
+{{ _('Admin Dashboard') }}
+{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 bg-light sidebar pt-3">
+            <h5 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-3">
+                <span>Administration</span>
+            </h5>
+            <ul class="nav flex-column mb-2">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/manage/users">
+                        <i class="fa fa-users mr-2"></i> Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/manage/exams">
+                        <i class="fa fa-file-alt mr-2"></i> Exams
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/manage/schedules">
+                        <i class="fa fa-calendar mr-2"></i> Schedules
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/manage/questions">
+                        <i class="fa fa-question-circle mr-2"></i> Questions
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main content -->
+        <div class="col-md-9 ml-sm-auto col-lg-10 px-md-4 pt-3">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+                <h4>👥 Manage Users</h4>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <button id="save-changes-btn" class="btn btn-success mr-2">Save All Changes</button>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
+                        <i class="fa fa-plus-circle mr-1"></i> Add Users
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filter and Search -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <select id="role-filter" class="form-control">
+                        <option value="all">All Users</option>
+                        <option value="candidate">Candidates</option>
+                        <option value="proctor">Proctors</option>
+                        <option value="evaluator">Evaluators</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="user-search" class="form-control" placeholder="Search by email...">
+                </div>
+            </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">User Permissions</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>{{ _("Email") }}</th>
+                            <th>{{ _("Candidate") }}</th>
+                            <th>{{ _("Can Proctor") }}</th>
+                            <th>{{ _("Can Evaluate") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        {% if not users %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                {{ _("No users found") }}
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% for user in users %}
+                        <tr data-user="{{ user.name }}">
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input role-checkbox" 
+                                           id="candidate-{{ user.name }}" 
+                                           data-role="Candidate"
+                                           data-user="{{ user.name }}"
+                                           {% if user.is_candidate %} checked {% endif %}>
+                                    <label class="custom-control-label" for="candidate-{{ user.name }}"></label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input role-checkbox" 
+                                           id="proctor-{{ user.name }}" 
+                                           data-role="Proctor"
+                                           data-user="{{ user.name }}"
+                                           {% if user.is_proctor %} checked {% endif %}>
+                                    <label class="custom-control-label" for="proctor-{{ user.name }}"></label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input role-checkbox" 
+                                           id="evaluator-{{ user.name }}" 
+                                           data-role="Evaluator"
+                                           data-user="{{ user.name }}"
+                                           {% if user.is_evaluator %} checked {% endif %}>
+                                    <label class="custom-control-label" for="evaluator-{{ user.name }}"></label>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="row">
+                <div class="col">
+                    <span id="user-count">Total Users: {{ users|length }}</span>
+                </div>
+                <div class="col">
+                    <nav>
+                        <ul class="pagination justify-content-end pagination-sm mb-0" id="pagination-container">
+                            <!-- Pagination will be inserted here by JS -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Users Modal -->
+    <div class="modal fade" id="addUsersModal" tabindex="-1" role="dialog" aria-labelledby="addUsersModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUsersModalLabel">Add Users</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="user-emails">Email Addresses (comma separated)</label>
+                        <textarea id="user-emails" class="form-control" rows="3" placeholder="user1@example.com, user2@example.com"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="role-select">Assign Role</label>
+                        <select id="role-select" class="form-control">
+                            <option value="Candidate">Candidate</option>
+                            <option value="Proctor">Proctor</option>
+                            <option value="Evaluator">Evaluator</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button id="add-users-btn" type="button" class="btn btn-primary">Add Users</button>
+                </div>
+            </div>
+        </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.8em;
+}
+.table td, .table th {
+    padding: 1rem;
+    vertical-align: middle;
+}
+.custom-control {
+    display: flex;
+    justify-content: center;
+}
+/* Sidebar styles */
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 60px);
+    padding-top: 20px;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: .75rem 1rem;
+}
+.sidebar .nav-link.active {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+.sidebar .nav-link:hover {
+    color: #007bff;
+}
+</style>
+
+<script>
+frappe.ready(function() {
+    // Pagination variables
+    var currentPage = 1;
+    var rowsPerPage = 50;
+    var filteredUsers = [];
+    var allRows = $("#users-table-body tr").not('[data-placeholder="true"]');
+    
+    // Initialize pagination
+    function initPagination() {
+        // Get filtered users
+        applyFilters();
+        
+        // Calculate the number of pages
+        var numPages = Math.ceil(filteredUsers.length / rowsPerPage);
+        
+        // Create the pagination controls
+        updatePagination(numPages);
+        
+        // Display the first page
+        displayPage(1);
+    }
+    
+    // Apply filters to the table
+    function applyFilters() {
+        var searchTerm = $("#user-search").val().toLowerCase();
+        var roleFilter = $("#role-filter").val();
+        
+        // Reset filtered users
+        filteredUsers = [];
+        
+        // Apply filters
+        allRows.each(function() {
+            var $row = $(this);
+            var email = $row.find('td:first').text().toLowerCase();
+            var matchesSearch = !searchTerm || email.indexOf(searchTerm) > -1;
+            
+            var matchesRole = true;
+            if (roleFilter !== 'all') {
+                if (roleFilter === 'candidate') {
+                    matchesRole = $row.find('input[data-role="Candidate"]').prop('checked');
+                } else if (roleFilter === 'proctor') {
+                    matchesRole = $row.find('input[data-role="Proctor"]').prop('checked');
+                } else if (roleFilter === 'evaluator') {
+                    matchesRole = $row.find('input[data-role="Evaluator"]').prop('checked');
+                }
+            }
+            
+            if (matchesSearch && matchesRole) {
+                filteredUsers.push($row);
+            }
+        });
+        
+        // Update user count
+        $("#user-count").text(`Total Users: ${filteredUsers.length} of ${allRows.length}`);
+    }
+    
+    // Update pagination controls
+    function updatePagination(numPages) {
+        var $pagination = $("#pagination-container");
+        $pagination.empty();
+        
+        // Don't show pagination if only one page
+        if (numPages <= 1) {
+            return;
+        }
+        
+        // Previous button
+        $pagination.append(`
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="prev">&laquo;</a>
+            </li>
+        `);
+        
+        // Page numbers
+        var startPage = Math.max(1, currentPage - 2);
+        var endPage = Math.min(numPages, startPage + 4);
+        
+        for (var i = startPage; i <= endPage; i++) {
+            $pagination.append(`
+                <li class="page-item ${currentPage === i ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        // Next button
+        $pagination.append(`
+            <li class="page-item ${currentPage === numPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="next">&raquo;</a>
+            </li>
+        `);
+        
+        // Handle pagination clicks
+        $(".page-link").on("click", function(e) {
+            e.preventDefault();
+            
+            var page = $(this).data('page');
+            if (page === 'prev') {
+                if (currentPage > 1) {
+                    displayPage(currentPage - 1);
+                }
+            } else if (page === 'next') {
+                var numPages = Math.ceil(filteredUsers.length / rowsPerPage);
+                if (currentPage < numPages) {
+                    displayPage(currentPage + 1);
+                }
+            } else {
+                displayPage(page);
+            }
+        });
+    }
+    
+    // Display a specific page
+    function displayPage(page) {
+        currentPage = page;
+        
+        // Calculate indexes
+        var startIndex = (page - 1) * rowsPerPage;
+        var endIndex = Math.min(startIndex + rowsPerPage, filteredUsers.length);
+        
+        // Hide all rows
+        allRows.hide();
+        
+        // Show only the rows for the current page
+        for (var i = startIndex; i < endIndex; i++) {
+            $(filteredUsers[i]).show();
+        }
+        
+        // Update pagination controls
+        var numPages = Math.ceil(filteredUsers.length / rowsPerPage);
+        updatePagination(numPages);
+        
+        // Show no results message if needed
+        if (filteredUsers.length === 0) {
+            var colSpan = $("#users-table-body tr:first td").length || 4;
+            
+            // Remove any existing placeholder row
+            $("#users-table-body tr[data-placeholder='true']").remove();
+            
+            // Add placeholder row
+            $("#users-table-body").append(`
+                <tr data-placeholder="true">
+                    <td colspan="${colSpan}" class="text-center py-4">
+                        No users match the current filters
+                    </td>
+                </tr>
+            `);
+        } else {
+            // Remove placeholder if it exists
+            $("#users-table-body tr[data-placeholder='true']").remove();
+        }
+    }
+    
+    // Handle user search
+    $("#user-search").on("keyup", function() {
+        currentPage = 1;
+        initPagination();
+    });
+    
+    // Handle role filter
+    $("#role-filter").on("change", function() {
+        currentPage = 1;
+        initPagination();
+    });
+    
+    // Handle individual role checkbox changes
+    $(document).on("change", ".role-checkbox", function() {
+        var $checkbox = $(this);
+        var user = $checkbox.data('user');
+        var role = $checkbox.data('role');
+        var isChecked = $checkbox.prop('checked');
+        
+        frappe.call({
+            method: 'exampro.www.manage.users.update_user_role',
+            args: {
+                user: user,
+                role: role, 
+                action: isChecked ? 'add' : 'remove'
+            },
+            callback: function(response) {
+                if (response.message && response.message.success) {
+                    frappe.show_alert({
+                        message: `${role} role ${isChecked ? 'added to' : 'removed from'} ${user}`,
+                        indicator: 'green'
+                    }, 3);
+                    
+                    // Refresh the filter if we're using a role filter
+                    if ($("#role-filter").val() !== 'all') {
+                        initPagination();
+                    }
+                } else {
+                    // If error, revert the checkbox
+                    $checkbox.prop('checked', !isChecked);
+                    frappe.show_alert({
+                        message: response.message.error || 'Failed to update role',
+                        indicator: 'red'
+                    }, 5);
+                }
+            }
+        });
+    });
+    
+    // Handle adding users
+    $("#add-users-btn").on("click", function() {
+        var emails = $("#user-emails").val();
+        var role = $("#role-select").val();
+        
+        if (!emails) {
+            frappe.show_alert({
+                message: 'Please enter at least one email address',
+                indicator: 'red'
+            }, 3);
+            return;
+        }
+        
+        frappe.call({
+            method: 'exampro.www.manage.users.add_users',
+            args: {
+                emails: emails,
+                role: role
+            },
+            callback: function(response) {
+                if (response.message && response.message.success) {
+                    frappe.show_alert({
+                        message: response.message.message || 'Users added successfully',
+                        indicator: 'green'
+                    }, 3);
+                    
+                    // Close the modal
+                    $("#addUsersModal").modal('hide');
+                    
+                    // Clear the input and refresh the page
+                    $("#user-emails").val('');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    frappe.show_alert({
+                        message: response.message.error || 'Failed to add users',
+                        indicator: 'red'
+                    }, 5);
+                }
+            }
+        });
+    });
+    
+    // Initialize pagination on page load
+    initPagination();
+});
+</script>
+{% endblock %}
