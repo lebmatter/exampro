@@ -62,10 +62,17 @@ def get_latest_messages(proctor=None):
 	submissions = frappe.get_all(
 		"Exam Submission",
 		{"assigned_proctor": proctor or frappe.session.user},
-		["name", "candidate_name", "status"]
+		["name", "candidate_name", "status", "exam_schedule"]
 	)
 
 	for submission in submissions:
+		schedule_status = frappe.db.get_value(
+			"Exam Schedule", submission.exam_schedule, "status"
+		)
+		if schedule_status == "Ended":
+			# Skip ended exams
+			continue
+
 		latest_msg = frappe.get_all(
 			"Exam Messages",
 			filters={"exam_submission": submission.name},
