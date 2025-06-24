@@ -1,0 +1,107 @@
+/* Exam Builder Styles */
+
+/* Step navigation */
+.step-navigation {
+    display: flex;
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.step-navigation::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #e9ecef;
+    z-index: 1;
+}
+
+.step-navigation .nav-item {
+    position: relative;
+    flex: 1;
+    text-align: center;
+    z-index: 5;
+}
+
+.step-navigation .nav-link {
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.step-navigation .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.step-navigation .nav-link.active .step-number,
+.step-navigation .nav-link.completed .step-number {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.step-navigation .step-title {
+    font-size: 0.875rem;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.step-navigation .nav-link.active .step-title {
+    color: #212529;
+    font-weight: 500;
+}
+
+/* Questions containers */
+.available-questions-container, .selected-questions-container {
+    min-height: 300px;
+    transition: all 0.3s ease;
+    border-radius: 0.25rem;
+}
+
+.available-questions-container:hover, .selected-questions-container:hover {
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.1);
+}
+
+#available-questions .list-group-item, #selected-questions .list-group-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#available-questions .list-group-item:hover, #selected-questions .list-group-item:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Form buttons */
+.form-navigation-buttons {
+    margin-top: 30px;
+}
+
+/* Examiners table */
+#examiners-table .custom-control {
+    margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .step-navigation .step-title {
+        font-size: 0.75rem;
+    }
+}

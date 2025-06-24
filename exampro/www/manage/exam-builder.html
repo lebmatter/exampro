@@ -1,0 +1,1041 @@
+{% extends "exampro/templates/exam_base.html" %}
+
+{% block title %}
+{{ _('Exam Builder') }}
+{% endblock %}
+b∫∫∫∫bb
+{% block page_content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h4>🛠️ Exam Builder</h4>
+            <p class="text-muted">Create or edit exams and schedules in a few simple steps</p>
+        </div>
+    </div>
+
+    <!-- Steps navigation -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="steps">
+                <ul class="nav nav-pills nav-justified step-navigation mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="step1-tab" data-toggle="pill" href="#step1" role="tab">
+                            <div class="step-number">1</div>
+                            <div class="step-title">Select Exam</div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="step2-tab" data-toggle="pill" href="#step2" role="tab">
+                            <div class="step-number">2</div>
+                            <div class="step-title">Add Questions</div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="step3-tab" data-toggle="pill" href="#step3" role="tab">
+                            <div class="step-number">3</div>
+                            <div class="step-title">Schedule</div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="step4-tab" data-toggle="pill" href="#step4" role="tab">
+                            <div class="step-number">4</div>
+                            <div class="step-title">Registrations</div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form content -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Step 1: Select or Create Exam -->
+                        <div class="tab-pane fade show active" id="step1" role="tabpanel">
+                            <h5 class="card-title">Step 1: Select or Create Exam</h5>
+                            
+                            <div class="form-group mb-4">
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="select-existing-exam" name="exam-choice" class="custom-control-input" value="existing" checked>
+                                    <label class="custom-control-label" for="select-existing-exam">Select Existing Exam</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="create-new-exam" name="exam-choice" class="custom-control-input" value="new">
+                                    <label class="custom-control-label" for="create-new-exam">Create New Exam</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Select Existing Exam Form -->
+                            <div id="existing-exam-form" class="mt-4">
+                                <div class="form-group">
+                                    <label for="existing-exam">Select Exam</label>
+                                    <select id="existing-exam" class="form-control">
+                                        <option value="">Select an exam...</option>
+                                        {% for exam in exams %}
+                                        <option value="{{ exam.name }}">{{ exam.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Create New Exam Form -->
+                            <div id="new-exam-form" class="mt-4" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="exam-title">Title <span class="text-danger">*</span></label>
+                                            <input type="text" id="exam-title" class="form-control" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-duration">Duration (minutes) <span class="text-danger">*</span></label>
+                                            <input type="number" id="exam-duration" class="form-control" min="1" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-pass-percentage">Pass Percentage <span class="text-danger">*</span></label>
+                                            <input type="number" id="exam-pass-percentage" class="form-control" min="0" max="100" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-candidates">Candidates Per Exam</label>
+                                            <input type="number" id="exam-candidates" class="form-control" min="1">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="exam-image">Preview Image</label>
+                                            <input type="file" id="exam-image" class="form-control-file">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="exam-video">Video Embed Link</label>
+                                            <input type="text" id="exam-video" class="form-control">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" id="exam-published" class="custom-control-input">
+                                                <label class="custom-control-label" for="exam-published">Published</label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" id="exam-upcoming" class="custom-control-input">
+                                            <label class="custom-control-label" for="exam-upcoming">Upcoming</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="exam-description">Description <span class="text-danger">*</span></label>
+                                            <textarea id="exam-description" class="form-control" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="exam-instructions">Instructions</label>
+                                            <textarea id="exam-instructions" class="form-control" rows="3"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <h6>Examiners</h6>
+                                        <table class="table table-sm" id="examiners-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Examiner</th>
+                                                    <th>Can Proctor</th>
+                                                    <th>Can Evaluate</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Rows will be added dynamically -->
+                                            </tbody>
+                                        </table>
+                                        <button type="button" id="add-examiner" class="btn btn-sm btn-outline-primary">
+                                            <i class="fa fa-plus"></i> Add Examiner
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Add Questions -->
+                        <div class="tab-pane fade" id="step2" role="tabpanel">
+                            <h5 class="card-title">Step 2: Add Questions to Exam</h5>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="question-type">Question Type</label>
+                                        <select id="question-type" class="form-control">
+                                            <option value="Fixed">Fixed Questions</option>
+                                            <option value="Random">Randomized Questions</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" id="random-questions-count" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="total-questions">Total Questions</label>
+                                        <input type="number" id="total-questions" class="form-control" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="question-search">Search Questions</label>
+                                        <input type="text" id="question-search" class="form-control" placeholder="Type to search...">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Available Questions</h6>
+                                    <div class="available-questions-container border rounded p-2" style="height: 300px; overflow-y: auto;">
+                                        <ul class="list-group" id="available-questions">
+                                            <!-- Questions will be loaded here -->
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6>Selected Questions</h6>
+                                    <div class="selected-questions-container border rounded p-2" style="height: 300px; overflow-y: auto;">
+                                        <ul class="list-group" id="selected-questions">
+                                            <!-- Selected questions will appear here -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Schedule -->
+                        <div class="tab-pane fade" id="step3" role="tabpanel">
+                            <h5 class="card-title">Step 3: Exam Schedule</h5>
+                            
+                            <div class="form-group mb-4">
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="select-existing-schedule" name="schedule-choice" class="custom-control-input" value="existing">
+                                    <label class="custom-control-label" for="select-existing-schedule">Select Existing Schedule</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="create-new-schedule" name="schedule-choice" class="custom-control-input" value="new" checked>
+                                    <label class="custom-control-label" for="create-new-schedule">Create New Schedule</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Select Existing Schedule Form -->
+                            <div id="existing-schedule-form" class="mt-4" style="display: none;">
+                                <div class="form-group">
+                                    <label for="existing-schedule">Select Schedule</label>
+                                    <select id="existing-schedule" class="form-control">
+                                        <!-- Will be dynamically populated based on selected exam -->
+                                        <option value="">Select a schedule...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Create New Schedule Form -->
+                            <div id="new-schedule-form" class="mt-4">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="schedule-name">Schedule Name <span class="text-danger">*</span></label>
+                                            <input type="text" id="schedule-name" class="form-control" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="schedule-start-datetime">Start Date & Time <span class="text-danger">*</span></label>
+                                            <input type="datetime-local" id="schedule-start-datetime" class="form-control" required>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="schedule-type">Schedule Type</label>
+                                            <select id="schedule-type" class="form-control">
+                                                <option value="One Time">One Time</option>
+                                                <option value="Recurring">Recurring</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="schedule-visibility">Visibility</label>
+                                            <select id="schedule-visibility" class="form-control">
+                                                <option value="Public">Public</option>
+                                                <option value="Private">Private</option>
+                                                <option value="Archived">Archived</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="form-group" id="schedule-expire-days-container">
+                                            <label for="schedule-expire-days">Schedule Expire In Days</label>
+                                            <input type="number" id="schedule-expire-days" class="form-control" min="1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Manage Registrations -->
+                        <div class="tab-pane fade" id="step4" role="tabpanel">
+                            <h5 class="card-title">Step 4: Manage Registrations</h5>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label for="registration-email">Add User by Email</label>
+                                        <div class="input-group">
+                                            <input type="email" id="registration-email" class="form-control" placeholder="user@example.com">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button" id="add-registration">Add</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="registration-search">Search Registered Users</label>
+                                        <input type="text" id="registration-search" class="form-control" placeholder="Search...">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table" id="registrations-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Registration Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Registered users will be listed here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-secondary" id="prev-step" disabled>Previous</button>
+                        <button type="button" class="btn btn-primary" id="next-step">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="/assets/exampro/css/exam-builder.css">
+<style>
+    /* Additional inline styles if needed */
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    frappe.ready(function() {
+        // Global variables
+        let currentStep = 1;
+        let examData = {};
+        let scheduleData = {};
+        let questionsData = [];
+        let registrationsData = [];
+        
+        // Initialize the page
+        init();
+        
+        function init() {
+            bindEvents();
+            fetchAvailableQuestions();
+        }
+        
+        function bindEvents() {
+            // Exam choice toggle
+            $('input[name="exam-choice"]').on('change', function() {
+                const choice = $('input[name="exam-choice"]:checked').val();
+                if (choice === 'existing') {
+                    $('#existing-exam-form').show();
+                    $('#new-exam-form').hide();
+                } else {
+                    $('#existing-exam-form').hide();
+                    $('#new-exam-form').show();
+                }
+            });
+            
+            // Schedule choice toggle
+            $('input[name="schedule-choice"]').on('change', function() {
+                const choice = $('input[name="schedule-choice"]:checked').val();
+                if (choice === 'existing') {
+                    $('#existing-schedule-form').show();
+                    $('#new-schedule-form').hide();
+                } else {
+                    $('#existing-schedule-form').hide();
+                    $('#new-schedule-form').show();
+                }
+            });
+            
+            // Question type change
+            $('#question-type').on('change', function() {
+                if ($(this).val() === 'Random') {
+                    $('#random-questions-count').show();
+                } else {
+                    $('#random-questions-count').hide();
+                }
+            });
+            
+            // Schedule type change
+            $('#schedule-type').on('change', function() {
+                if ($(this).val() === 'Recurring') {
+                    $('#schedule-expire-days-container').show();
+                } else {
+                    $('#schedule-expire-days-container').hide();
+                }
+            });
+            
+            // Existing exam change
+            $('#existing-exam').on('change', function() {
+                const examId = $(this).val();
+                if (examId) {
+                    loadExamDetails(examId);
+                    loadExamSchedules(examId);
+                }
+            });
+            
+            // Existing schedule change
+            $('#existing-schedule').on('change', function() {
+                const scheduleId = $(this).val();
+                if (scheduleId) {
+                    loadScheduleDetails(scheduleId);
+                    loadRegistrations(scheduleId);
+                }
+            });
+            
+            // Add examiner button
+            $('#add-examiner').on('click', function() {
+                addExaminerRow();
+            });
+            
+            // Add registration button
+            $('#add-registration').on('click', function() {
+                const email = $('#registration-email').val().trim();
+                if (email && validateEmail(email)) {
+                    addRegistration(email);
+                    $('#registration-email').val('');
+                } else {
+                    frappe.throw(__('Please enter a valid email address'));
+                }
+            });
+            
+            // Search questions
+            $('#question-search').on('input', function() {
+                filterQuestions($(this).val());
+            });
+            
+            // Search registrations
+            $('#registration-search').on('input', function() {
+                filterRegistrations($(this).val());
+            });
+            
+            // Navigation buttons
+            $('#next-step').on('click', function() {
+                if (validateCurrentStep()) {
+                    if (currentStep < 4) {
+                        navigateToStep(currentStep + 1);
+                    } else {
+                        saveAllData();
+                    }
+                }
+            });
+            
+            $('#prev-step').on('click', function() {
+                if (currentStep > 1) {
+                    navigateToStep(currentStep - 1);
+                }
+            });
+            
+            // Tab navigation - ensure form validation
+            $('.nav-link').on('click', function(e) {
+                const targetStep = parseInt($(this).attr('id').replace('step', '').replace('-tab', ''));
+                if (targetStep > currentStep) {
+                    e.preventDefault();
+                    let canProceed = true;
+                    for (let i = 1; i < targetStep; i++) {
+                        if (!validateStep(i)) {
+                            canProceed = false;
+                            break;
+                        }
+                    }
+                    if (canProceed) {
+                        navigateToStep(targetStep);
+                    }
+                } else {
+                    navigateToStep(targetStep);
+                }
+            });
+        }
+        
+        function navigateToStep(step) {
+            // Update current step
+            currentStep = step;
+            
+            // Update UI
+            $(`.nav-link`).removeClass('active');
+            $(`#step${step}-tab`).addClass('active');
+            
+            $('.tab-pane').removeClass('show active');
+            $(`#step${step}`).addClass('show active');
+            
+            // Update button states
+            if (step === 1) {
+                $('#prev-step').prop('disabled', true);
+            } else {
+                $('#prev-step').prop('disabled', false);
+            }
+            
+            if (step === 4) {
+                $('#next-step').text('Save & Finish');
+            } else {
+                $('#next-step').text('Next');
+            }
+        }
+        
+        function validateCurrentStep() {
+            return validateStep(currentStep);
+        }
+        
+        function validateStep(step) {
+            switch (step) {
+                case 1:
+                    // Check if existing exam selected or new exam form filled
+                    if ($('input[name="exam-choice"]:checked').val() === 'existing') {
+                        if (!$('#existing-exam').val()) {
+                            frappe.throw(__('Please select an exam'));
+                            return false;
+                        }
+                    } else {
+                        // Check required fields for new exam
+                        if (!$('#exam-title').val()) {
+                            frappe.throw(__('Exam title is required'));
+                            return false;
+                        }
+                        if (!$('#exam-duration').val() || $('#exam-duration').val() <= 0) {
+                            frappe.throw(__('Valid duration is required'));
+                            return false;
+                        }
+                        if (!$('#exam-pass-percentage').val()) {
+                            frappe.throw(__('Pass percentage is required'));
+                            return false;
+                        }
+                        if (!$('#exam-description').val()) {
+                            frappe.throw(__('Description is required'));
+                            return false;
+                        }
+                    }
+                    break;
+                    
+                case 2:
+                    // For fixed questions, check if at least one question selected
+                    if ($('#question-type').val() === 'Fixed' && $('#selected-questions li').length === 0) {
+                        frappe.throw(__('Please select at least one question'));
+                        return false;
+                    }
+                    // For random questions, check if count is set
+                    if ($('#question-type').val() === 'Random' && (!$('#total-questions').val() || $('#total-questions').val() <= 0)) {
+                        frappe.throw(__('Please specify the number of questions'));
+                        return false;
+                    }
+                    break;
+                    
+                case 3:
+                    // Check schedule data
+                    if ($('input[name="schedule-choice"]:checked').val() === 'existing') {
+                        if (!$('#existing-schedule').val()) {
+                            frappe.throw(__('Please select a schedule'));
+                            return false;
+                        }
+                    } else {
+                        // Check required fields for new schedule
+                        if (!$('#schedule-name').val()) {
+                            frappe.throw(__('Schedule name is required'));
+                            return false;
+                        }
+                        if (!$('#schedule-start-datetime').val()) {
+                            frappe.throw(__('Start date and time is required'));
+                            return false;
+                        }
+                    }
+                    break;
+            }
+            
+            return true;
+        }
+        
+        function loadExamDetails(examId) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_exam_details',
+                args: {
+                    exam: examId
+                },
+                callback: function(response) {
+                    if (response.message) {
+                        examData = response.message;
+                        loadExamQuestions(examId);
+                    }
+                }
+            });
+        }
+        
+        function loadExamQuestions(examId) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_exam_questions',
+                args: {
+                    exam: examId
+                },
+                callback: function(response) {
+                    if (response.message) {
+                        questionsData = response.message;
+                        
+                        // Populate selected questions
+                        $('#selected-questions').empty();
+                        questionsData.forEach(q => {
+                            const listItem = `<li class="list-group-item d-flex justify-content-between align-items-center" data-id="${q.exam_question}">
+                                ${q.question_text} 
+                                <span class="badge badge-primary badge-pill">Mark: ${q.mark}</span>
+                                <button class="btn btn-sm btn-danger remove-question"><i class="fa fa-times"></i></button>
+                            </li>`;
+                            $('#selected-questions').append(listItem);
+                        });
+                        
+                        // Bind remove events
+                        $('.remove-question').on('click', function() {
+                            $(this).closest('li').remove();
+                        });
+                    }
+                }
+            });
+        }
+        
+        function loadExamSchedules(examId) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_exam_schedules',
+                args: {
+                    exam: examId
+                },
+                callback: function(response) {
+                    if (response.message) {
+                        // Populate schedules dropdown
+                        const schedules = response.message;
+                        $('#existing-schedule').empty();
+                        $('#existing-schedule').append('<option value="">Select a schedule...</option>');
+                        
+                        schedules.forEach(s => {
+                            $('#existing-schedule').append(`<option value="${s.name}">${s.schedule_name} (${s.start_date_time})</option>`);
+                        });
+                    }
+                }
+            });
+        }
+        
+        function loadScheduleDetails(scheduleId) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_schedule_details',
+                args: {
+                    schedule: scheduleId
+                },
+                callback: function(response) {
+                    if (response.message) {
+                        scheduleData = response.message;
+                    }
+                }
+            });
+        }
+        
+        function loadRegistrations(scheduleId) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_registrations',
+                args: {
+                    schedule: scheduleId
+                },
+                callback: function(response) {
+                    if (response.message) {
+                        registrationsData = response.message;
+                        renderRegistrationsTable();
+                    }
+                }
+            });
+        }
+        
+        function fetchAvailableQuestions() {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_available_questions',
+                callback: function(response) {
+                    if (response.message) {
+                        renderAvailableQuestions(response.message);
+                    }
+                }
+            });
+        }
+        
+        function renderAvailableQuestions(questions) {
+            $('#available-questions').empty();
+            
+            // Ensure questions is an array before using forEach
+            const questionArray = Array.isArray(questions) ? questions : [];
+            
+            questionArray.forEach(q => {
+                const listItem = `<li class="list-group-item d-flex justify-content-between align-items-center" data-id="${q.name}">
+                    ${q.question_text}
+                    <div>
+                        <span class="badge badge-info badge-pill mr-2">${q.question_type}</span>
+                        <button class="btn btn-sm btn-primary add-question" data-id="${q.name}" data-text="${q.question_text}">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </div>
+                </li>`;
+                $('#available-questions').append(listItem);
+            });
+            
+            // Bind add question event
+            $('.add-question').on('click', function() {
+                const questionId = $(this).data('id');
+                const questionText = $(this).data('text');
+                addSelectedQuestion(questionId, questionText);
+            });
+        }
+        
+        function addSelectedQuestion(questionId, questionText) {
+            // Check if already selected
+            if ($(`#selected-questions li[data-id="${questionId}"]`).length > 0) {
+                frappe.throw(__('This question is already selected'));
+                return;
+            }
+            
+            // Add to selected questions
+            const listItem = `<li class="list-group-item d-flex justify-content-between align-items-center" data-id="${questionId}">
+                ${questionText}
+                <div>
+                    <input type="number" class="form-control form-control-sm question-mark" style="width: 70px; display: inline-block;" value="1" min="0" placeholder="Mark">
+                    <button class="btn btn-sm btn-danger remove-question ml-2"><i class="fa fa-times"></i></button>
+                </div>
+            </li>`;
+            
+            $('#selected-questions').append(listItem);
+            
+            // Bind remove event
+            $('.remove-question').off('click').on('click', function() {
+                $(this).closest('li').remove();
+            });
+        }
+        
+        function addExaminerRow() {
+            const rowIndex = $('#examiners-table tbody tr').length;
+            const newRow = `<tr>
+                <td>
+                    <select class="form-control form-control-sm examiner-user" name="examiners[${rowIndex}][examiner]" required>
+                        <option value="">Select User...</option>
+                    </select>
+                </td>
+                <td>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="can-proctor-${rowIndex}" name="examiners[${rowIndex}][can_proctor]" checked>
+                        <label class="custom-control-label" for="can-proctor-${rowIndex}"></label>
+                    </div>
+                </td>
+                <td>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="can-evaluate-${rowIndex}" name="examiners[${rowIndex}][can_evaluate]" checked>
+                        <label class="custom-control-label" for="can-evaluate-${rowIndex}"></label>
+                    </div>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-danger remove-examiner">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+            
+            $('#examiners-table tbody').append(newRow);
+            
+            // Load users for the dropdown
+            loadUserOptions(rowIndex);
+            
+            // Bind remove button
+            $('.remove-examiner').off('click').on('click', function() {
+                $(this).closest('tr').remove();
+            });
+        }
+        
+        function loadUserOptions(rowIndex) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_users',
+                callback: function(response) {
+                    if (response.message) {
+                        const userSelect = $(`select[name="examiners[${rowIndex}][examiner]"]`);
+                        response.message.forEach(user => {
+                            userSelect.append(`<option value="${user.name}">${user.full_name} (${user.name})</option>`);
+                        });
+                    }
+                }
+            });
+        }
+        
+        function filterQuestions(query) {
+            if (!query) {
+                $('#available-questions li').show();
+                return;
+            }
+            
+            query = query.toLowerCase();
+            $('#available-questions li').each(function() {
+                const questionText = $(this).text().toLowerCase();
+                if (questionText.includes(query)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+        
+        function addRegistration(email) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.add_registration',
+                args: {
+                    schedule: scheduleData.name,
+                    email: email
+                },
+                callback: function(response) {
+                    if (response.message && response.message.success) {
+                        registrationsData.push(response.message.user);
+                        renderRegistrationsTable();
+                        frappe.show_alert({
+                            message: __('User added successfully'),
+                            indicator: 'green'
+                        });
+                    } else {
+                        frappe.throw(response.message.error || __('Failed to add user'));
+                    }
+                }
+            });
+        }
+        
+        function renderRegistrationsTable() {
+            $('#registrations-table tbody').empty();
+            
+            if (registrationsData.length === 0) {
+                $('#registrations-table tbody').append(`
+                    <tr>
+                        <td colspan="5" class="text-center">No registrations found</td>
+                    </tr>
+                `);
+                return;
+            }
+            
+            registrationsData.forEach(r => {
+                const row = `<tr>
+                    <td>${r.user_name || r.user}</td>
+                    <td>${r.email}</td>
+                    <td>${r.creation}</td>
+                    <td><span class="badge badge-${r.status === 'Registered' ? 'success' : 'secondary'}">${r.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger remove-registration" data-user="${r.user}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+                
+                $('#registrations-table tbody').append(row);
+            });
+            
+            // Bind remove buttons
+            $('.remove-registration').off('click').on('click', function() {
+                const user = $(this).data('user');
+                removeRegistration(user);
+            });
+        }
+        
+        function removeRegistration(user) {
+            frappe.confirm(
+                __('Are you sure you want to remove this user from the exam?'),
+                function() {
+                    frappe.call({
+                        method: 'exampro.www.manage.exam_builder.remove_registration',
+                        args: {
+                            schedule: scheduleData.name,
+                            user: user
+                        },
+                        callback: function(response) {
+                            if (response.message && response.message.success) {
+                                registrationsData = registrationsData.filter(r => r.user !== user);
+                                renderRegistrationsTable();
+                                frappe.show_alert({
+                                    message: __('User removed successfully'),
+                                    indicator: 'green'
+                                });
+                            } else {
+                                frappe.throw(response.message.error || __('Failed to remove user'));
+                            }
+                        }
+                    });
+                }
+            );
+        }
+        
+        function filterRegistrations(query) {
+            if (!query) {
+                $('#registrations-table tbody tr').show();
+                return;
+            }
+            
+            query = query.toLowerCase();
+            $('#registrations-table tbody tr').each(function() {
+                const text = $(this).text().toLowerCase();
+                if (text.includes(query)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+        
+        function saveAllData() {
+            // Collect all data
+            const formData = {
+                exam: collectExamData(),
+                questions: collectQuestionsData(),
+                schedule: collectScheduleData()
+            };
+            
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.save_exam_builder_data',
+                args: {
+                    data: formData
+                },
+                callback: function(response) {
+                    if (response.message && response.message.success) {
+                        frappe.show_alert({
+                            message: __('Exam and schedule saved successfully'),
+                            indicator: 'green'
+                        });
+                        
+                        setTimeout(function() {
+                            window.location.href = '/manage/exams';
+                        }, 1000);
+                    } else {
+                        frappe.throw(response.message.error || __('Failed to save data'));
+                    }
+                }
+            });
+        }
+        
+        function collectExamData() {
+            if ($('input[name="exam-choice"]:checked').val() === 'existing') {
+                return {
+                    type: 'existing',
+                    name: $('#existing-exam').val()
+                };
+            } else {
+                const examiners = [];
+                $('#examiners-table tbody tr').each(function() {
+                    const rowIndex = $(this).index();
+                    const examiner = {
+                        examiner: $(`select[name="examiners[${rowIndex}][examiner]"]`).val(),
+                        can_proctor: $(`#can-proctor-${rowIndex}`).is(':checked'),
+                        can_evaluate: $(`#can-evaluate-${rowIndex}`).is(':checked')
+                    };
+                    
+                    if (examiner.examiner) {
+                        examiners.push(examiner);
+                    }
+                });
+                
+                return {
+                    type: 'new',
+                    title: $('#exam-title').val(),
+                    duration: $('#exam-duration').val(),
+                    pass_percentage: $('#exam-pass-percentage').val(),
+                    candidates_per_exam: $('#exam-candidates').val(),
+                    image: $('#exam-image').val(), // Note: File handling will be different
+                    video_link: $('#exam-video').val(),
+                    published: $('#exam-published').is(':checked'),
+                    upcoming: $('#exam-upcoming').is(':checked'),
+                    description: $('#exam-description').val(),
+                    instructions: $('#exam-instructions').val(),
+                    examiners: examiners
+                };
+            }
+        }
+        
+        function collectQuestionsData() {
+            const questionType = $('#question-type').val();
+            
+            if (questionType === 'Random') {
+                return {
+                    type: 'Random',
+                    total_questions: $('#total-questions').val()
+                };
+            } else {
+                const questions = [];
+                $('#selected-questions li').each(function() {
+                    questions.push({
+                        exam_question: $(this).data('id'),
+                        mark: $(this).find('.question-mark').val() || 1
+                    });
+                });
+                
+                return {
+                    type: 'Fixed',
+                    questions: questions
+                };
+            }
+        }
+        
+        function collectScheduleData() {
+            if ($('input[name="schedule-choice"]:checked').val() === 'existing') {
+                return {
+                    type: 'existing',
+                    name: $('#existing-schedule').val()
+                };
+            } else {
+                return {
+                    type: 'new',
+                    name: $('#schedule-name').val(),
+                    start_date_time: $('#schedule-start-datetime').val(),
+                    schedule_type: $('#schedule-type').val(),
+                    schedule_expire_in_days: $('#schedule-expire-days').val(),
+                    visibility: $('#schedule-visibility').val()
+                };
+            }
+        }
+        
+        function validateEmail(email) {
+            const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(String(email).toLowerCase());
+        }
+    });
+</script>
+{% endblock %}
