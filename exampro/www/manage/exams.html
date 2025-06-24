@@ -12,30 +12,27 @@
         </div>
     </div>
     
-    <div class="row mb-3">
-        <div class="col-12 text-end">
-            <div class="btn-toolbar justify-content-end">
+    <!-- Filter, Search and Buttons in a single row -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-3 mb-2 mb-md-0">
+            <select id="status-filter" class="form-control rounded">
+                <option value="all">All Exams</option>
+                <option value="published">Published</option>
+                <option value="unpublished">Unpublished</option>
+                <option value="upcoming">Upcoming</option>
+            </select>
+        </div>
+        <div class="col-md-5 mb-2 mb-md-0">
+            <input type="text" id="exam-search" class="form-control rounded" placeholder="Search by title...">
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="btn-toolbar justify-content-md-end">
                 <button id="create-exam-btn" class="btn btn-primary">
                     <i class="fa fa-plus-circle mr-1"></i> Create Exam
                 </button>
             </div>
         </div>
     </div>
-            
-            <!-- Filter and Search -->
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <select id="status-filter" class="form-control">
-                        <option value="all">All Exams</option>
-                        <option value="published">Published</option>
-                        <option value="unpublished">Unpublished</option>
-                        <option value="upcoming">Upcoming</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <input type="text" id="exam-search" class="form-control" placeholder="Search by title...">
-                </div>
-            </div>
 
             <!-- Exams Table -->
             <div class="card">
