@@ -9,6 +9,8 @@
   "exam",
   "visibility",
   "start_date_time",
+  "schedule_type",
+  "schedule_expire_in_days",
   "column_break_3",
   "question_type",
   "duration",
@@ -94,6 +96,21 @@
    "fieldtype": "Link",
    "label": "Certificate Template",
    "options": "Exam Certificate Template"
+  },
+  {
+   "default": "Fixed",
+   "fieldname": "schedule_type",
+   "fieldtype": "Select",
+   "label": "Schedule Type",
+   "options": "Fixed\nFlexible"
+  },
+  {
+   "depends_on": "eval: doc.schedule_type == 'Flexible';",
+   "description": "No. of days till the exam is available in portal. ",
+   "fieldname": "schedule_expire_in_days",
+   "fieldtype": "Int",
+   "label": "Schedule Expire in Days",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -104,7 +121,7 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2024-12-17 16:05:11.680115",
+ "modified": "2025-06-24 17:04:42.931720",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Schedule",
@@ -122,9 +139,17 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Exam Manager",
+   "write": 1
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
