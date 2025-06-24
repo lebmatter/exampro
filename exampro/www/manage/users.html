@@ -2,41 +2,40 @@
 
 {% block title %}
 {{ _('Manage Users') }}
-{% endblock %}
+{% endblock %}å
 
 {% block page_content %}
-<div class="container">
-    <div class="row mb-5">
-        <div class="col">
-            <h4 class="text-center">👥 Manage Users</h4>
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col">
+                <h4 class="text-center">👥 Manage Users</h4>
+            </div>
         </div>
-    </div>
+        
     
-    <div class="row mb-3">
-        <div class="col-12 text-end">
-            <div class="btn-toolbar justify-content-end">
-                <button id="save-changes-btn" class="btn btn-success mr-2">Save All Changes</button>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
-                    <i class="fa fa-plus-circle mr-1"></i> Add Users
-                </button>
+        <!-- Filter, Search and Buttons in a single row -->
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <select id="role-filter" class="form-control rounded">
+                    <option value="all">All Users</option>
+                    <option value="candidate">Candidates</option>
+                    <option value="proctor">Proctors</option>
+                    <option value="evaluator">Evaluators</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-2 mb-md-0">
+                <input type="text" id="user-search" class="form-control rounded" placeholder="Search by email...">
+            </div>
+            <div class="col-md-5 text-md-end">
+                <div class="btn-toolbar justify-content-md-end">
+                    <button id="save-changes-btn" class="btn btn-success me-2 mr-2">Save All Changes</button>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
+                        <i class="fa fa-plus-circle mr-1"></i> Add Users
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-            
-            <!-- Filter and Search -->
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <select id="role-filter" class="form-control">
-                        <option value="all">All Users</option>
-                        <option value="candidate">Candidates</option>
-                        <option value="proctor">Proctors</option>
-                        <option value="evaluator">Evaluators</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <input type="text" id="user-search" class="form-control" placeholder="Search by email...">
-                </div>
-            </div>
+
 
     <!-- Users Table -->
     <div class="card">
