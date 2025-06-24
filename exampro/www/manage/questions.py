@@ -82,7 +82,7 @@ def get_question_preview(question):
             html += f'<div class="mb-3"><img src="{q.description_image}" class="img-fluid" /></div>'
         
         # Show options based on question type
-        if q.type == "Multiple Choice" or q.type == "Multiple Select":
+        if q.type == "Choices":
             html += '<div class="options-list">'
             
             for i in range(1, 5):
@@ -97,10 +97,8 @@ def get_question_preview(question):
                 html += f'<div class="d-flex align-items-center">'
                 html += f'<div class="mr-2">'
                 
-                if q.type == "Multiple Choice":
-                    html += f'<input type="radio" disabled {is_correct and "checked" or ""} />'
-                else:
-                    html += f'<input type="checkbox" disabled {is_correct and "checked" or ""} />'
+                # Always use checkbox for Choices type
+                html += f'<input type="checkbox" disabled {is_correct and "checked" or ""} />'
                 
                 html += '</div>'
                 html += f'<div class="option-content">{option_text}</div>'
@@ -112,7 +110,7 @@ def get_question_preview(question):
                 html += '</div>'
             
             html += '</div>'
-        elif q.type == "Text":
+        elif q.type == "User Input":
             html += '<div class="form-group">'
             html += '<textarea class="form-control" rows="3" disabled placeholder="Text answer..."></textarea>'
             html += '</div>'
@@ -188,8 +186,8 @@ def create_question(question_data):
         if not question_data.get("type"):
             return {"success": False, "error": _("Question type is required")}
         
-        # For Multiple Choice/Select questions, validate options
-        if question_data.get("type") in ["Multiple Choice", "Multiple Select"]:
+        # For Choices questions, validate options
+        if question_data.get("type") == "Choices":
             # Check if at least two options are provided
             options_count = sum(1 for i in range(1, 5) if question_data.get(f"option_{i}"))
             if options_count < 2:
@@ -199,10 +197,6 @@ def create_question(question_data):
             correct_count = sum(1 for i in range(1, 5) if question_data.get(f"is_correct_{i}"))
             if correct_count == 0:
                 return {"success": False, "error": _("At least one correct answer must be selected")}
-            
-            # For Multiple Choice, only one correct answer should be selected
-            if question_data.get("type") == "Multiple Choice" and correct_count > 1:
-                return {"success": False, "error": _("Multiple Choice questions can have only one correct answer")}
         
         # Create new question
         question = frappe.new_doc("Exam Question")
@@ -215,8 +209,8 @@ def create_question(question_data):
         if question_data.get("description_image"):
             question.description_image = question_data.get("description_image")
         
-        # Set options for Multiple Choice/Select questions
-        if question_data.get("type") in ["Multiple Choice", "Multiple Select"]:
+        # Set options for Choices questions
+        if question_data.get("type") == "Choices":
             for i in range(1, 5):
                 if question_data.get(f"option_{i}"):
                     setattr(question, f"option_{i}", question_data.get(f"option_{i}"))
@@ -225,8 +219,8 @@ def create_question(question_data):
                     if question_data.get(f"option_{i}_image"):
                         setattr(question, f"option_{i}_image", question_data.get(f"option_{i}_image"))
         
-        # For Text questions, set possible answers
-        if question_data.get("type") == "Text":
+        # For User Input questions, set possible answers
+        if question_data.get("type") == "User Input":
             for i in range(1, 5):
                 if question_data.get(f"possibility_{i}"):
                     setattr(question, f"possibility_{i}", question_data.get(f"possibility_{i}"))
@@ -289,6 +283,27 @@ def get_questions():
     )
     
     return questions
+
+@frappe.whitelist()
+def get_all_categories():
+    """Get all question categories (whitelisted)"""
+    
+    # Check if user has Exam Manager role
+    if "Exam Manager" not in frappe.get_roles(frappe.session.user):
+        return {"success": False, "error": _("You are not authorized to access this page")}
+        
+    try:
+        # Get all Exam Question Categories
+        categories = frappe.get_all(
+            "Exam Question Category",
+            fields=["name", "title"],
+            order_by="title"
+        )
+        
+        return {"success": True, "categories": categories}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error getting categories")
+        return {"success": False, "error": str(e)}
 
 def get_categories():
     """Get all question categories"""

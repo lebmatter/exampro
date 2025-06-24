@@ -38,9 +38,8 @@
                 <div class="col-md-2">
                     <select id="type-filter" class="form-control">
                         <option value="all">All Types</option>
-                        <option value="Multiple Choice">Multiple Choice</option>
-                        <option value="Multiple Select">Multiple Select</option>
-                        <option value="Text">Text</option>
+                        <option value="Choices">Choices</option>
+                        <option value="User Input">User Input</option>
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -81,12 +80,10 @@
                                     </td>
                                     <td>{{ question.category }}</td>
                                     <td>
-                                        {% if question.type == "Multiple Choice" %}
-                                            <span class="badge badge-info">MCQ</span>
-                                        {% elif question.type == "Multiple Select" %}
-                                            <span class="badge badge-primary">Multiple Select</span>
-                                        {% elif question.type == "Text" %}
-                                            <span class="badge badge-secondary">Text</span>
+                                        {% if question.type == "Choices" %}
+                                            <span class="badge badge-info">Choices</span>
+                                        {% elif question.type == "User Input" %}
+                                            <span class="badge badge-secondary">User Input</span>
                                         {% else %}
                                             <span class="badge badge-dark">{{ question.type }}</span>
                                         {% endif %}
@@ -224,9 +221,8 @@
                                         <label for="question-type" class="form-label">Question Type <span class="text-danger">*</span></label>
                                         <select id="question-type" name="type" class="form-control" required>
                                             <option value="">Select a type</option>
-                                            <option value="Multiple Choice">Multiple Choice</option>
-                                            <option value="Multiple Select">Multiple Select</option>
-                                            <option value="Text">Text</option>
+                                            <option value="Choices">Choices</option>
+                                            <option value="User Input">User Input</option>
                                         </select>
                                         <div class="invalid-feedback">Please select a question type.</div>
                                     </div>
@@ -261,7 +257,7 @@
                                 Please select a question type to configure answer options.
                             </div>
                             
-                            <!-- Multiple Choice/Select Options (initially hidden) -->
+                            <!-- Choices Options (initially hidden) -->
                             <div id="multiple-choice-options" class="d-none">
                                 <h6 class="mb-3">Answer Options</h6>
                                 
@@ -362,7 +358,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Text Question Options (initially hidden) -->
+                            <!-- User Input Options (initially hidden) -->
                             <div id="text-question-options" class="d-none">
                                 <h6 class="mb-3">Possible Correct Answers</h6>
                                 <div class="form-group mb-3">
@@ -494,9 +490,8 @@ frappe.ready(function() {
             var category = $row.find('td:eq(1)').text();
             var type = '';
             
-            if ($row.find('.badge-info').length > 0) type = "Multiple Choice";
-            else if ($row.find('.badge-primary').length > 0) type = "Multiple Select";
-            else if ($row.find('.badge-secondary').length > 0) type = "Text";
+            if ($row.find('.badge-info').length > 0) type = "Choices";
+            else if ($row.find('.badge-secondary').length > 0) type = "User Input";
             else type = $row.find('td:eq(2)').text();
             
             var matchesSearch = !searchTerm || questionText.indexOf(searchTerm) > -1;
@@ -759,16 +754,12 @@ frappe.ready(function() {
         `);
         
         frappe.call({
-            method: 'frappe.client.get_list',
-            args: {
-                doctype: 'Exam Question Category',
-                fields: ['name', 'title'],
-                order_by: 'title'
-            },
+            method: 'exampro.www.manage.questions.get_all_categories',
             callback: function(response) {
-                if (response.message) {
-                    renderCategoriesList(response.message);
+                if (response.message && response.message.success) {
+                    renderCategoriesList(response.message.categories);
                 } else {
+                    let errorMsg = response.message && response.message.error ? response.message.error : 'Failed to load categories';
                     $("#categories-list").html(`
                         <div class="alert alert-info">No categories found. Create your first category above.</div>
                     `);
@@ -890,15 +881,10 @@ frappe.ready(function() {
     // Update category dropdowns after adding/deleting categories
     function updateCategoryDropdowns() {
         frappe.call({
-            method: 'frappe.client.get_list',
-            args: {
-                doctype: 'Exam Question Category',
-                fields: ['name', 'title'],
-                order_by: 'title'
-            },
+            method: 'exampro.www.manage.questions.get_all_categories',
             callback: function(response) {
-                if (response.message) {
-                    let categories = response.message;
+                if (response.message && response.message.success) {
+                    let categories = response.message.categories;
                     
                     // Update filter dropdown
                     let filterDropdown = $('#category-filter');
@@ -940,18 +926,14 @@ frappe.ready(function() {
         $("#multiple-choice-options, #text-question-options").addClass("d-none");
         
         // Show the relevant container based on question type
-        if (questionType === "Multiple Choice" || questionType === "Multiple Select") {
+        if (questionType === "Choices") {
             $("#multiple-choice-options").removeClass("d-none");
             
-            // For Multiple Choice, only allow one correct answer
-            if (questionType === "Multiple Choice") {
-                $(".correct-option").prop("type", "radio").prop("name", "correct_option");
-            } else {
-                $(".correct-option").prop("type", "checkbox").each(function(i) {
-                    $(this).prop("name", "is_correct_" + (i+1));
-                });
-            }
-        } else if (questionType === "Text") {
+            // For Choices questions, allow multiple correct answers
+            $(".correct-option").prop("type", "checkbox").each(function(i) {
+                $(this).prop("name", "is_correct_" + (i+1));
+            });
+        } else if (questionType === "User Input") {
             $("#text-question-options").removeClass("d-none");
         }
     });
@@ -1048,8 +1030,8 @@ frappe.ready(function() {
             return;
         }
         
-        // For Multiple Choice/Select, validate options
-        if (formData.type === "Multiple Choice" || formData.type === "Multiple Select") {
+        // For Choices questions, validate options
+        if (formData.type === "Choices") {
             // Check if at least 2 options are provided
             let optionsCount = 0;
             let correctCount = 0;
@@ -1082,17 +1064,10 @@ frappe.ready(function() {
                     .removeClass("d-none");
                 return;
             }
-            
-            if (formData.type === "Multiple Choice" && correctCount > 1) {
-                $("#create-question-error")
-                    .text("Multiple Choice questions can have only one correct answer")
-                    .removeClass("d-none");
-                return;
-            }
         }
         
-        // For Text questions, validate possible answers
-        if (formData.type === "Text") {
+        // For User Input questions, validate possible answers
+        if (formData.type === "User Input") {
             const possibility1 = $("#possibility-1").val().trim();
             if (!possibility1) {
                 $("#create-question-error")
