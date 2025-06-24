@@ -142,7 +142,7 @@ b∫∫∫∫bb
                                             </tbody>
                                         </table>
                                         <button type="button" id="add-examiner" class="btn btn-sm btn-outline-primary">
-                                            <i class="fa fa-plus"></i> Add Examiner
+                                            <i class="bi bi-plus"></i> Add Examiner
                                         </button>
                                     </div>
                                 </div>
@@ -628,7 +628,7 @@ b∫∫∫∫bb
                             const listItem = `<li class="list-group-item d-flex justify-content-between align-items-center" data-id="${q.exam_question}">
                                 ${q.question_text} 
                                 <span class="badge badge-primary badge-pill">Mark: ${q.mark}</span>
-                                <button class="btn btn-sm btn-danger remove-question"><i class="fa fa-times"></i></button>
+                                <button class="btn btn-sm btn-danger remove-question"><i class="bi bi-x"></i></button>
                             </li>`;
                             $('#selected-questions').append(listItem);
                         });
@@ -715,7 +715,7 @@ b∫∫∫∫bb
                     <div>
                         <span class="badge badge-info badge-pill mr-2">${q.question_type}</span>
                         <button class="btn btn-sm btn-primary add-question" data-id="${q.name}" data-text="${q.question_text}">
-                            <i class="fa fa-plus"></i>
+                            <i class="bi bi-plus"></i>
                         </button>
                     </div>
                 </li>`;
@@ -742,7 +742,7 @@ b∫∫∫∫bb
                 ${questionText}
                 <div>
                     <input type="number" class="form-control form-control-sm question-mark" style="width: 70px; display: inline-block;" value="1" min="0" placeholder="Mark">
-                    <button class="btn btn-sm btn-danger remove-question ml-2"><i class="fa fa-times"></i></button>
+                    <button class="btn btn-sm btn-danger remove-question ml-2"><i class="bi bi-x"></i></button>
                 </div>
             </li>`;
             
@@ -776,7 +776,7 @@ b∫∫∫∫bb
                 </td>
                 <td>
                     <button type="button" class="btn btn-sm btn-danger remove-examiner">
-                        <i class="fa fa-trash"></i>
+                        <i class="bi bi-trash"></i>
                     </button>
                 </td>
             </tr>`;
@@ -865,7 +865,7 @@ b∫∫∫∫bb
                     <td><span class="badge badge-${r.status === 'Registered' ? 'success' : 'secondary'}">${r.status}</span></td>
                     <td>
                         <button class="btn btn-sm btn-danger remove-registration" data-user="${r.user}">
-                            <i class="fa fa-trash"></i>
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 </tr>`;

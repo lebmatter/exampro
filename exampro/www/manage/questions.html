@@ -35,10 +35,10 @@
         <div class="col-md-4 text-md-end">
             <div class="btn-toolbar justify-content-md-end">
                 <button id="manage-categories-btn" class="btn btn-outline-secondary me-2 mr-2">
-                    <i class="fa fa-tags me-1"></i> Manage Categories
+                    <i class="bi bi-tags me-1"></i> Manage Categories
                 </button>
                 <button id="create-question-btn" class="btn btn-primary">
-                    <i class="fa fa-plus-circle me-1"></i> Create Question
+                    <i class="bi bi-plus-circle me-1"></i> Create Question
                 </button>
             </div>
         </div>
@@ -89,7 +89,7 @@
                                     <td>
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-sm btn-outline-info view-question" data-question="{{ question.name }}">
-                                                <i class="fa fa-eye"></i>
+                                                <i class="bi bi-eye"></i>
                                             </button>
                                             <button type="button" class="btn btn-sm btn-outline-primary edit-question" data-question="{{ question.name }}">Edit</button>
                                             <button type="button" class="btn btn-sm btn-outline-danger delete-question" data-question="{{ question.name }}">Delete</button>
@@ -998,7 +998,7 @@ frappe.ready(function() {
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     ${category.title}
                     <button type="button" class="btn btn-sm btn-danger delete-category" data-category="${category.name}">
-                        <i class="fa fa-trash"></i>
+                        <i class="bi bi-trash"></i>
                     </button>
                 </div>
             `;

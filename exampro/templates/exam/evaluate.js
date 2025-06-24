@@ -51,7 +51,7 @@ frappe.ready(function() {
             this.currentSubmissionId = submissionId;
             
             // Show loading state
-            $('#evaluation-area').html('<div class="text-center p-5"><i class="fa fa-spinner fa-spin fa-2x"></i><br></div>');
+            $('#evaluation-area').html('<div class="text-center p-5"><i class="bi bi-arrow-repeat"></i><br></div>');
             
             frappe.call({
                 method: 'exampro.www.evaluate.get_submission_details',
@@ -138,7 +138,7 @@ frappe.ready(function() {
                         <div class="card-body">
                             <h5>Question ${questionSeqNo}</h5>
                             <div class="alert alert-info mt-3">
-                                <i class="fa fa-info-circle mr-2"></i>
+                                <i class="bi bi-info-circle me-2"></i>
                                 This answer has been automatically evaluated.
                             </div>
                         </div>
