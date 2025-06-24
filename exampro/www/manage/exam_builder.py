@@ -2,12 +2,18 @@ import frappe
 from frappe import _
 import json
 
+def has_exam_manager_role():
+    """
+    Check if the current user has Exam Manager role
+    """
+    return "Exam Manager" in frappe.get_roles()
+
 def get_context(context):
     """
     Get context for the exam builder page
     """
-    # Check permissions
-    if not frappe.has_permission("Exam", "write"):
+    # Check if user has Exam Manager role
+    if not has_exam_manager_role():
         frappe.throw(_("Not permitted"), frappe.PermissionError)
         
     context.exams = frappe.get_list("Exam", fields=["name", "title"], order_by="creation desc")
@@ -21,7 +27,7 @@ def get_exam_details(exam):
     Args:
         exam (str): Name of the exam to get details for
     """
-    if not frappe.has_permission("Exam", "read"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -39,7 +45,7 @@ def get_exam_questions(exam):
     Args:
         exam (str): Name of the exam to get questions for
     """
-    if not frappe.has_permission("Exam", "read"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -67,7 +73,7 @@ def get_exam_schedules(exam):
     Args:
         exam (str): Name of the exam to get schedules for
     """
-    if not frappe.has_permission("Exam Schedule", "read"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -95,7 +101,7 @@ def get_schedule_details(schedule):
     Args:
         schedule (str): Name of the schedule to get details for
     """
-    if not frappe.has_permission("Exam Schedule", "read"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -110,7 +116,7 @@ def get_available_questions():
     """
     Get all available exam questions
     """
-    if not frappe.has_permission("Exam Question", "read"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -140,7 +146,7 @@ def get_users():
     """
     Get all users who can be assigned as examiners
     """
-    if not frappe.has_permission("User", "read"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -164,7 +170,7 @@ def get_registrations(schedule):
     Args:
         schedule (str): Name of the schedule to get registrations for
     """
-    if not frappe.has_permission("Exam Schedule", "read"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -195,7 +201,7 @@ def add_registration(schedule, email):
         schedule (str): Name of the schedule
         email (str): Email of the user to register
     """
-    if not frappe.has_permission("Exam Schedule", "write"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -261,7 +267,7 @@ def remove_registration(schedule, user):
         schedule (str): Name of the schedule
         user (str): User to remove
     """
-    if not frappe.has_permission("Exam Schedule", "write"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
@@ -291,7 +297,7 @@ def save_exam_builder_data(data):
     Args:
         data (dict): Data from the exam builder form
     """
-    if not frappe.has_permission("Exam", "write") or not frappe.has_permission("Exam Schedule", "write"):
+    if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
