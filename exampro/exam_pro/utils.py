@@ -16,7 +16,7 @@ def get_website_context(context):
     
     if "Exam Manager" in user_roles:
         top_bar_items.append({
-            "label": "✨ Exam Builder", "right": True, "url": "/manage/exam-builder"
+            "label": "🛠️ Exam Builder", "right": True, "url": "/manage/exam-builder"
         })
         top_bar_items.append({
             "label": "Manage",

@@ -27,7 +27,7 @@
 
 .step-navigation .nav-link {
     padding: 0;
-    background-color: transparent;
+    background-color: transparent !important;
     border: none;
     display: flex;
     flex-direction: column;
@@ -50,7 +50,7 @@
 
 .step-navigation .nav-link.active .step-number,
 .step-navigation .nav-link.completed .step-number {
-    background-color: #28a745;
+    background-color: #007bff;
     color: #fff;
 }
 
@@ -64,9 +64,28 @@
     text-overflow: ellipsis;
 }
 
-.step-navigation .nav-link.active .step-title {
-    color: #212529;
-    font-weight: 500;
+.step-navigation .nav-link.active .step-title,
+.step-navigation .nav-link.completed .step-title {
+    color: #007bff;
+    font-weight: 700;
+}
+
+/* Step navigation - Completed steps */
+.step-navigation .nav-link.completed {
+    background-color: transparent !important;
+}
+
+/* Override Bootstrap default active pill style */
+.nav-pills .nav-link.active, 
+.nav-pills .show > .nav-link {
+    background-color: transparent !important;
+    border: none;
+    box-shadow: none;
+}
+
+/* Additional styles to ensure proper appearance */
+.step-navigation .nav-item .nav-link:hover {
+    background-color: transparent !important;
 }
 
 /* Questions containers */

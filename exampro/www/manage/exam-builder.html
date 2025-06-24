@@ -50,7 +50,7 @@ b∫∫∫∫bb
     <!-- Form content -->
     <div class="row">
         <div class="col">
-            <div class="card">
+            <div class="card mb-10">
                 <div class="card-body">
                     <div class="tab-content">
                         <!-- Step 1: Select or Create Exam -->
@@ -103,30 +103,6 @@ b∫∫∫∫bb
                                         <div class="form-group">
                                             <label for="exam-candidates">Candidates Per Exam</label>
                                             <input type="number" id="exam-candidates" class="form-control" min="1">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="exam-image">Preview Image</label>
-                                            <input type="file" id="exam-image" class="form-control-file">
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label for="exam-video">Video Embed Link</label>
-                                            <input type="text" id="exam-video" class="form-control">
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <div class="custom-control custom-checkbox">
-                                                <input type="checkbox" id="exam-published" class="custom-control-input">
-                                                <label class="custom-control-label" for="exam-published">Published</label>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="custom-control custom-checkbox">
-                                            <input type="checkbox" id="exam-upcoming" class="custom-control-input">
-                                            <label class="custom-control-label" for="exam-upcoming">Upcoming</label>
                                         </div>
                                     </div>
                                 </div>
@@ -352,7 +328,18 @@ b∫∫∫∫bb
 {% block style %}
 <link rel="stylesheet" href="/assets/exampro/css/exam-builder.css">
 <style>
-    /* Additional inline styles if needed */
+    /* Force override Bootstrap nav pill styling */
+    .nav-pills .nav-link.active, 
+    .nav-pills .show > .nav-link {
+        background-color: transparent !important;
+    }
+    
+    /* Additional specificity to ensure our styles take precedence */
+    .step-navigation.nav-pills .nav-link.active,
+    body .step-navigation .nav-link.active {
+        background-color: transparent !important;
+        color: #007bff;
+    }
 </style>
 {% endblock %}
 
@@ -372,6 +359,15 @@ b∫∫∫∫bb
         function init() {
             bindEvents();
             fetchAvailableQuestions();
+            
+            // Reset all step styles
+            $('.nav-link').removeClass('active completed');
+            $('#step1-tab').addClass('active');
+            
+            // Fix any Bootstrap nav-pills styling conflicts
+            setTimeout(() => {
+                $('.nav-pills .nav-link.active').css('background-color', 'transparent');
+            }, 100);
         }
         
         function bindEvents() {
@@ -501,7 +497,13 @@ b∫∫∫∫bb
         
         function navigateToStep(step) {
             // Update current step
+            const previousStep = currentStep;
             currentStep = step;
+            
+            // Mark completed steps
+            if (previousStep < step && validateStep(previousStep)) {
+                $(`#step${previousStep}-tab`).addClass('completed');
+            }
             
             // Update UI
             $(`.nav-link`).removeClass('active');
