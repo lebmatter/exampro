@@ -8,26 +8,9 @@
 <div class="container">
 	<div class="row mb-5">
 		<div class="col">
-			<h4 class="text-center">📝 My Exams</h4>
+			<h4>📝 My Exams</h4>
 		</div>
 	</div>
-
-        {% if next_exam %}
-        <div class="alert alert-info mb-4" role="alert">
-            <div class="d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h4 class="alert-heading mb-1">Next Upcoming Exam</h4>
-                    <p class="mb-0">
-                        You have an exam "{{ next_exam.exam_name }}" scheduled for {{ next_exam.schedule_time }}
-                        (Duration: {{ next_exam.duration }} minutes)
-                    </p>
-                </div>
-                <div>
-                    <a href="/live/exam" class="btn btn-primary">View Details</a>
-                </div>
-            </div>
-        </div>
-        {% endif %}
 
         <div class="card">
             <div class="card-body p-0">
@@ -37,7 +20,9 @@
                             <tr>
                                 <th>{{ _("Exam Name") }}</th>
                                 <th>{{ _("Schedule Time") }}</th>
-                                <th>{{ _("Status") }}</th>
+                                <th>{{ _("Duration") }}</th>
+                                <th>{{ _("Schedule Status") }}</th>
+                                <th>{{ _("Exam Status") }}</th>
                                 <th>{{ _("Score") }}</th>
                                 <th></th>
                             </tr>
@@ -55,6 +40,8 @@
                             <tr>
                                 <td>{{ exam.exam_name }}</td>
                                 <td>{{ exam.schedule_time }}</td>
+                                <td>{{ exam.duration }}</td>
+                                <td>{{ exam.schedule_status }}</td>
                                 <td>
                                     {% if exam.status == "Upcoming" %}
                                         <span class="badge badge-info">{{ exam.status }}</span>

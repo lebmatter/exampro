@@ -103,8 +103,11 @@ class ExamSchedule(Document):
 				frappe.db.set_value("Examiner", examiner.name, "notification_sent", 1)
 	
 	def can_end_schedule(self):
-		now = datetime.now()
-		end_time = self.start_date_time + timedelta(minutes=self.duration +0)
+		if self.schedule_type == "Fixed":
+			end_time = self.start_date_time + timedelta(minutes=self.duration +0)
+		else:
+			# For flexible schedules, we consider the end time as start time + duration + 5 min buffer
+			end_time = self.start_date_time + timedelta(minutes=self.duration, days=self.schedule_expire_in_days)
 		if now < end_time:
 			frappe.msgprint("Can't end the schedule before {} (end time + 5 min buffer).".format(end_time.isoformat()))
 			return False
