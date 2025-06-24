@@ -338,3 +338,121 @@ def get_context(context):
         "title": _("Manage Exam Questions"),
         "description": "Manage exam question bank"
     }
+
+@frappe.whitelist()
+def get_question_for_edit(question):
+    """
+    Get question data for editing in the modal form
+    
+    Args:
+        question (str): Name of the question to edit
+    """
+    # Check if user has Exam Manager role
+    if "Exam Manager" not in frappe.get_roles(frappe.session.user):
+        return {"success": False, "error": _("You are not authorized to access this page")}
+    
+    try:
+        # Get the question document
+        q = frappe.get_doc("Exam Question", question)
+        
+        # Prepare the response data
+        data = {
+            "name": q.name,
+            "question": q.question,
+            "category": q.category,
+            "type": q.type,
+            "mark": q.mark,
+            "description_image": q.description_image
+        }
+        
+        # Add options data for Choices questions
+        if q.type == "Choices":
+            for i in range(1, 5):
+                data[f"option_{i}"] = getattr(q, f"option_{i}", "")
+                data[f"option_{i}_image"] = getattr(q, f"option_{i}_image", "")
+                data[f"is_correct_{i}"] = getattr(q, f"is_correct_{i}", 0)
+        
+        # Add possibilities data for User Input questions
+        if q.type == "User Input":
+            for i in range(1, 5):
+                data[f"possibility_{i}"] = getattr(q, f"possibility_{i}", "")
+        
+        return {"success": True, "question": data}
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error getting question data for {question}")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def update_question(question_name, question_data):
+    """
+    Update an existing exam question 
+    
+    Args:
+        question_name (str): Name of the question to update
+        question_data (dict): JSON string of question data
+    """
+    # Check if user has Exam Manager role
+    if "Exam Manager" not in frappe.get_roles(frappe.session.user):
+        return {"success": False, "error": _("You are not authorized to access this page")}
+    
+    try:
+        if isinstance(question_data, str):
+            import json
+            question_data = json.loads(question_data)
+        
+        # Validate required fields
+        if not question_data.get("question"):
+            return {"success": False, "error": _("Question text is required")}
+        if not question_data.get("category"):
+            return {"success": False, "error": _("Category is required")}
+        if not question_data.get("type"):
+            return {"success": False, "error": _("Question type is required")}
+        
+        # For Choices questions, validate options
+        if question_data.get("type") == "Choices":
+            # Check if at least two options are provided
+            options_count = sum(1 for i in range(1, 5) if question_data.get(f"option_{i}"))
+            if options_count < 2:
+                return {"success": False, "error": _("At least two options are required")}
+            
+            # Check if at least one option is marked as correct
+            correct_count = sum(1 for i in range(1, 5) if question_data.get(f"is_correct_{i}"))
+            if correct_count == 0:
+                return {"success": False, "error": _("At least one correct answer must be selected")}
+        
+        # Get existing question doc
+        question = frappe.get_doc("Exam Question", question_name)
+        
+        # Update question fields
+        question.question = question_data.get("question")
+        question.category = question_data.get("category")
+        question.type = question_data.get("type")
+        question.mark = question_data.get("mark", 1)
+        
+        # Set description image if provided
+        if question_data.get("description_image"):
+            question.description_image = question_data.get("description_image")
+        
+        # Set options for Choices questions
+        if question_data.get("type") == "Choices":
+            for i in range(1, 5):
+                setattr(question, f"option_{i}", question_data.get(f"option_{i}", ""))
+                setattr(question, f"is_correct_{i}", question_data.get(f"is_correct_{i}", 0))
+                
+                if question_data.get(f"option_{i}_image"):
+                    setattr(question, f"option_{i}_image", question_data.get(f"option_{i}_image"))
+        
+        # For User Input questions, set possible answers
+        if question_data.get("type") == "User Input":
+            for i in range(1, 5):
+                setattr(question, f"possibility_{i}", question_data.get(f"possibility_{i}", ""))
+        
+        question.save(ignore_permissions=True)
+        frappe.db.commit()
+        
+        return {"success": True, "name": question.name}
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error updating question: {str(e)}")
+        return {"success": False, "error": str(e)}
