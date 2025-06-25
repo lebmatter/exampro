@@ -289,41 +289,49 @@ b∫∫∫∫bb
                             <h5 class="card-title">Step 4: Manage Registrations</h5>
                             
                             <div class="row mb-4">
-                                <div class="col-md-8">
-                                    <div class="form-group">
-                                        <label for="registration-email">Add User by Email</label>
-                                        <div class="input-group">
-                                            <input type="email" id="registration-email" class="form-control" placeholder="user@example.com">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-primary" type="button" id="add-registration">Add</button>
-                                            </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Available Users</h6>
+                                        </div>
+                                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                            <table class="table table-sm table-hover" id="available-users-table">
+                                                <thead class="sticky-top bg-white">
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Email</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Available users will be listed here -->
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="registration-search">Search Registered Users</label>
-                                        <input type="text" id="registration-search" class="form-control" placeholder="Search...">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Registered Users</h6>
+                                        </div>
+                                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                            <table class="table table-sm table-hover" id="registrations-table">
+                                                <thead class="sticky-top bg-white">
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Status</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Registered users will be listed here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="table-responsive">
-                                <table class="table" id="registrations-table">
-                                    <thead>
-                                        <tr>
-                                            <th>User</th>
-                                            <th>Email</th>
-                                            <th>Registration Date</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Registered users will be listed here -->
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </div>
@@ -439,6 +447,9 @@ b∫∫∫∫bb
         let registrationsData = [];
         let categoriesData = {};
         let selectedCategoriesData = [];
+        
+        // Store all users data
+        let allUsersData = [];
         
         // Initialize the page
         init();
@@ -634,21 +645,13 @@ b∫∫∫∫bb
                 addExaminerRow();
             });
             
-            // Add registration button
-            $('#add-registration').on('click', function() {
-                const email = $('#registration-email').val().trim();
-                if (email && validateEmail(email)) {
-                    addRegistration(email);
-                    $('#registration-email').val('');
-                } else {
-                    frappe.throw(__('Please enter a valid email address'));
-                }
+            // Handle add user buttons - delegated event handler
+            $(document).on('click', '.add-user', function() {
+                const user = JSON.parse($(this).data('user'));
+                addRegistration(user.email);
             });
             
-            // Search registrations
-            $('#registration-search').on('input', function() {
-                filterRegistrations($(this).val());
-            });
+            // No need for search functionality as we have two clean columns now
             
             // Navigation buttons
             $('#next-step').on('click', function() {
@@ -978,8 +981,69 @@ b∫∫∫∫bb
                     if (response.message) {
                         registrationsData = response.message;
                         renderRegistrationsTable();
+                        
+                        // Also load all users
+                        loadAllUsers();
                     }
                 }
+            });
+        }
+        
+        function loadAllUsers() {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_users',
+                callback: function(response) {
+                    if (response.message) {
+                        allUsersData = response.message;
+                        renderAvailableUsersTable();
+                    }
+                }
+            });
+        }
+        
+        function renderAvailableUsersTable() {
+            $('#available-users-table tbody').empty();
+            
+            if (allUsersData.length === 0) {
+                $('#available-users-table tbody').append(`
+                    <tr>
+                        <td colspan="3" class="text-center">No users found</td>
+                    </tr>
+                `);
+                return;
+            }
+            
+            // Filter out users who are already registered
+            const registeredUserIds = registrationsData.map(r => r.user);
+            const availableUsers = allUsersData.filter(user => !registeredUserIds.includes(user.name));
+            
+            if (availableUsers.length === 0) {
+                $('#available-users-table tbody').append(`
+                    <tr>
+                        <td colspan="3" class="text-center">All users are registered</td>
+                    </tr>
+                `);
+                return;
+            }
+            
+            availableUsers.forEach(user => {
+                const row = `<tr>
+                    <td>${user.full_name}</td>
+                    <td>${user.email}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success add-user" data-user='${JSON.stringify(user)}'>
+                            <i class="bi bi-plus-circle"></i>
+                        </button>
+                    </td>
+                </tr>`;
+                
+                $('#available-users-table tbody').append(row);
+            });
+            
+            // Bind add buttons
+            $('.add-user').off('click').on('click', function() {
+                const user = JSON.parse($(this).data('user'));
+                addRegistration(user.email);
             });
         }
         
@@ -1431,7 +1495,7 @@ b∫∫∫∫bb
             if (registrationsData.length === 0) {
                 $('#registrations-table tbody').append(`
                     <tr>
-                        <td colspan="5" class="text-center">No registrations found</td>
+                        <td colspan="3" class="text-center">No registrations found</td>
                     </tr>
                 `);
                 return;
@@ -1440,8 +1504,6 @@ b∫∫∫∫bb
             registrationsData.forEach(r => {
                 const row = `<tr>
                     <td>${r.user_name || r.user}</td>
-                    <td>${r.email}</td>
-                    <td>${r.creation}</td>
                     <td><span class="badge badge-${r.status === 'Registered' ? 'success' : 'secondary'}">${r.status}</span></td>
                     <td>
                         <button class="btn btn-sm btn-danger remove-registration" data-user="${r.user}">
@@ -1474,6 +1536,8 @@ b∫∫∫∫bb
                             if (response.message && response.message.success) {
                                 registrationsData = registrationsData.filter(r => r.user !== user);
                                 renderRegistrationsTable();
+                                // Also refresh the available users table
+                                renderAvailableUsersTable();
                                 frappe.show_alert({
                                     message: __('User removed successfully'),
                                     indicator: 'green'
@@ -1487,22 +1551,7 @@ b∫∫∫∫bb
             );
         }
         
-        function filterRegistrations(query) {
-            if (!query) {
-                $('#registrations-table tbody tr').show();
-                return;
-            }
-            
-            query = query.toLowerCase();
-            $('#registrations-table tbody tr').each(function() {
-                const text = $(this).text().toLowerCase();
-                if (text.includes(query)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
-            });
-        }
+        // No need for filterRegistrations function as we no longer have search functionality
         
         function saveAllData() {
             // Collect all data
