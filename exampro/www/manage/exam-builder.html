@@ -149,13 +149,14 @@ b∫∫∫∫bb
                         <div class="tab-pane fade" id="step2" role="tabpanel">
                             <h5 class="card-title">Step 2: Add Questions to Exam</h5>
                             
+                            <!-- Question Selection Type -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="question-type">Question Type</label>
-                                        <select id="question-type" class="form-control">
-                                            <option value="Fixed">Fixed Questions</option>
-                                            <option value="Random">Randomized Questions</option>
+                                        <label for="question-selection-type">Question order</label>
+                                        <select id="question-selection-type" class="form-control">
+                                            <option value="Fixed">Same order for all candidates</option>
+                                            <option value="Random">Random order for each candidate</option>
                                         </select>
                                     </div>
                                 </div>
@@ -166,32 +167,50 @@ b∫∫∫∫bb
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label for="question-search">Search Questions</label>
-                                        <input type="text" id="question-search" class="form-control" placeholder="Type to search...">
+
+                            <!-- Fixed Questions Section -->
+                            <div id="fixed-questions-section">
+                                <!-- Question Type Filter -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="question-type-filter">Question Type Filter</label>
+                                            <select id="question-type-filter" class="form-control">
+                                                <option value="Mixed">Mixed (Choices + User Input)</option>
+                                                <option value="Choices">Choices Only</option>
+                                                <option value="User Input">User Input Only</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>Available Questions</h6>
-                                    <div class="available-questions-container border rounded p-2" style="height: 300px; overflow-y: auto;">
-                                        <ul class="list-group" id="available-questions">
-                                            <!-- Questions will be loaded here -->
-                                        </ul>
+
+                                <!-- Categories Selection -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Available Categories</h6>
+                                        <div class="available-categories-container border rounded p-3" style="height: 400px; overflow-y: auto;">
+                                            <div id="available-categories">
+                                                <!-- Categories will be loaded here -->
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <h6>Selected Questions</h6>
-                                    <div class="selected-questions-container border rounded p-2" style="height: 300px; overflow-y: auto;">
-                                        <ul class="list-group" id="selected-questions">
-                                            <!-- Selected questions will appear here -->
-                                        </ul>
+                                    
+                                    <div class="col-md-6">
+                                        <h6>Selected Categories 
+                                            <span class="text-muted" id="selection-summary">
+                                                (Total: <span id="total-selected-questions">0</span> questions, 
+                                                <span id="total-selected-marks">0</span> marks)
+                                            </span>
+                                        </h6>
+                                        <div class="selected-categories-container border rounded p-3" style="height: 400px; overflow-y: auto;">
+                                            <div id="selected-categories">
+                                                <!-- Selected categories will appear here -->
+                                                <div class="text-center text-muted" id="no-selection-message">
+                                                    <p>No categories selected yet</p>
+                                                    <small>Select categories from the left panel to add questions</small>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -336,6 +355,50 @@ b∫∫∫∫bb
         background-color: transparent !important;
         color: #007bff;
     }
+
+    /* Category selection styles */
+    .category-section {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1rem;
+    }
+
+    .category-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        border-left: 3px solid #007bff;
+        padding-left: 0.5rem;
+    }
+
+    .category-item {
+        transition: all 0.2s;
+        border: 1px solid #e9ecef;
+    }
+
+    .category-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+    }
+
+    .selected-category-item {
+        border-left: 3px solid #28a745;
+    }
+
+    #selection-summary {
+        font-size: 0.875rem;
+    }
+
+    .available-categories-container,
+    .selected-categories-container {
+        background-color: #f8f9fa;
+    }
+
+    .modal-body p {
+        margin-bottom: 0.5rem;
+    }
+
+    .badge {
+        margin-right: 0.25rem;
+    }
 </style>
 {% endblock %}
 
@@ -348,13 +411,15 @@ b∫∫∫∫bb
         let scheduleData = {};
         let questionsData = [];
         let registrationsData = [];
+        let categoriesData = {};
+        let selectedCategoriesData = [];
         
         // Initialize the page
         init();
         
         function init() {
             bindEvents();
-            fetchAvailableQuestions();
+            fetchQuestionCategories();
             
             // Reset all step styles
             $('.nav-link').removeClass('active completed');
@@ -391,13 +456,20 @@ b∫∫∫∫bb
                 }
             });
             
-            // Question type change
-            $('#question-type').on('change', function() {
+            // Question selection type change
+            $('#question-selection-type').on('change', function() {
                 if ($(this).val() === 'Random') {
                     $('#random-questions-count').show();
+                    $('#fixed-questions-section').hide();
                 } else {
                     $('#random-questions-count').hide();
+                    $('#fixed-questions-section').show();
                 }
+            });
+
+            // Question type filter change
+            $('#question-type-filter').on('change', function() {
+                renderAvailableCategories();
             });
             
             // Schedule type change
@@ -441,11 +513,6 @@ b∫∫∫∫bb
                 } else {
                     frappe.throw(__('Please enter a valid email address'));
                 }
-            });
-            
-            // Search questions
-            $('#question-search').on('input', function() {
-                filterQuestions($(this).val());
             });
             
             // Search registrations
@@ -557,13 +624,13 @@ b∫∫∫∫bb
                     break;
                     
                 case 2:
-                    // For fixed questions, check if at least one question selected
-                    if ($('#question-type').val() === 'Fixed' && $('#selected-questions li').length === 0) {
-                        frappe.throw(__('Please select at least one question'));
+                    // For fixed questions, check if at least one category selected
+                    if ($('#question-selection-type').val() === 'Fixed' && selectedCategoriesData.length === 0) {
+                        frappe.throw(__('Please select at least one question category'));
                         return false;
                     }
                     // For random questions, check if count is set
-                    if ($('#question-type').val() === 'Random' && (!$('#total-questions').val() || $('#total-questions').val() <= 0)) {
+                    if ($('#question-selection-type').val() === 'Random' && (!$('#total-questions').val() || $('#total-questions').val() <= 0)) {
                         frappe.throw(__('Please specify the number of questions'));
                         return false;
                     }
@@ -688,66 +755,290 @@ b∫∫∫∫bb
             });
         }
         
-        function fetchAvailableQuestions() {
+        function fetchQuestionCategories() {
             frappe.call({
-                method: 'exampro.www.manage.exam_builder.get_available_questions',
+                method: 'exampro.www.manage.exam_builder.get_question_categories_with_counts',
                 callback: function(response) {
                     if (response.message) {
-                        renderAvailableQuestions(response.message);
+                        categoriesData = response.message;
+                        renderAvailableCategories();
                     }
                 }
             });
         }
-        
-        function renderAvailableQuestions(questions) {
-            $('#available-questions').empty();
+
+        function renderAvailableCategories() {
+            const container = $('#available-categories');
+            container.empty();
             
-            // Ensure questions is an array before using forEach
-            const questionArray = Array.isArray(questions) ? questions : [];
+            const typeFilter = $('#question-type-filter').val();
             
-            questionArray.forEach(q => {
-                const listItem = `<li class="list-group-item d-flex justify-content-between align-items-center" data-id="${q.name}">
-                    ${q.question_text}
-                    <div>
-                        <span class="badge badge-info badge-pill mr-2">${q.question_type}</span>
-                        <button class="btn btn-sm btn-primary add-question" data-id="${q.name}" data-text="${q.question_text}">
-                            <i class="bi bi-plus"></i>
-                        </button>
+            Object.keys(categoriesData).forEach(categoryName => {
+                const categoryItems = categoriesData[categoryName];
+                
+                // Filter by question type if not "Mixed"
+                const filteredItems = typeFilter === 'Mixed' 
+                    ? categoryItems 
+                    : categoryItems.filter(item => item.type === typeFilter);
+                
+                if (filteredItems.length === 0) return;
+                
+                // Create category section
+                const categoryDiv = $(`
+                    <div class="category-section mb-3">
+                        <h6 class="category-title text-primary">${categoryName}</h6>
+                        <div class="category-items"></div>
                     </div>
-                </li>`;
-                $('#available-questions').append(listItem);
+                `);
+                
+                const itemsContainer = categoryDiv.find('.category-items');
+                
+                filteredItems.forEach(item => {
+                    const itemDiv = $(`
+                        <div class="category-item card mb-2" style="cursor: pointer;">
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">${item.type}</small>
+                                        <div><strong>${item.question_count} questions</strong> × ${item.mark} mark(s)</div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary add-category-btn" 
+                                            data-category="${categoryName}"
+                                            data-type="${item.type}"
+                                            data-mark="${item.mark}"
+                                            data-count="${item.question_count}">
+                                        <i class="bi bi-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    
+                    itemsContainer.append(itemDiv);
+                });
+                
+                container.append(categoryDiv);
             });
             
-            // Bind add question event
-            $('.add-question').on('click', function() {
-                const questionId = $(this).data('id');
-                const questionText = $(this).data('text');
-                addSelectedQuestion(questionId, questionText);
+            // Bind add category events
+            $('.add-category-btn').on('click', function(e) {
+                e.stopPropagation();
+                const category = $(this).data('category');
+                const type = $(this).data('type');
+                const mark = $(this).data('mark');
+                const count = $(this).data('count');
+                
+                showQuestionSelectionModal(category, type, mark, count);
             });
         }
-        
-        function addSelectedQuestion(questionId, questionText) {
-            // Check if already selected
-            if ($(`#selected-questions li[data-id="${questionId}"]`).length > 0) {
-                frappe.throw(__('This question is already selected'));
+
+        function showQuestionSelectionModal(category, type, mark, totalCount) {
+            const modalHtml = `
+                <div class="modal fade" id="questionSelectionModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Select Questions</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Category:</strong> ${category}</p>
+                                <p><strong>Type:</strong> ${type}</p>
+                                <p><strong>Mark per question:</strong> ${mark}</p>
+                                <p><strong>Available questions:</strong> ${totalCount}</p>
+                                
+                                <div class="form-group">
+                                    <label for="question-count-input">Number of questions to select:</label>
+                                    <input type="number" id="question-count-input" class="form-control" 
+                                           min="1" max="${totalCount}" value="${totalCount}">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirm-selection">Add Selected</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            $('#questionSelectionModal').remove();
+            
+            // Add modal to body
+            $('body').append(modalHtml);
+            
+            // Show modal
+            $('#questionSelectionModal').modal('show');
+            
+            // Bind confirm button
+            $('#confirm-selection').on('click', function() {
+                const selectedCount = parseInt($('#question-count-input').val());
+                if (selectedCount > 0 && selectedCount <= totalCount) {
+                    addSelectedCategory(category, type, mark, selectedCount, totalCount);
+                    $('#questionSelectionModal').modal('hide');
+                } else {
+                    frappe.throw(__('Please enter a valid number of questions'));
+                }
+            });
+        }
+
+        function addSelectedCategory(category, type, mark, selectedCount, totalCount) {
+            // Check if this exact combination already exists
+            const existingIndex = selectedCategoriesData.findIndex(item => 
+                item.category === category && item.type === type && item.mark === mark
+            );
+            
+            if (existingIndex >= 0) {
+                frappe.throw(__('This category/type/mark combination is already selected'));
                 return;
             }
             
-            // Add to selected questions
-            const listItem = `<li class="list-group-item d-flex justify-content-between align-items-center" data-id="${questionId}">
-                ${questionText}
-                <div>
-                    <input type="number" class="form-control form-control-sm question-mark" style="width: 70px; display: inline-block;" value="1" min="0" placeholder="Mark">
-                    <button class="btn btn-sm btn-danger remove-question ml-2"><i class="bi bi-x"></i></button>
-                </div>
-            </li>`;
-            
-            $('#selected-questions').append(listItem);
-            
-            // Bind remove event
-            $('.remove-question').off('click').on('click', function() {
-                $(this).closest('li').remove();
+            // Add to selected data
+            selectedCategoriesData.push({
+                category: category,
+                type: type,
+                mark: mark,
+                selectedCount: selectedCount,
+                totalCount: totalCount
             });
+            
+            renderSelectedCategories();
+            updateSelectionSummary();
+        }
+
+        function renderSelectedCategories() {
+            const container = $('#selected-categories');
+            container.empty();
+            
+            if (selectedCategoriesData.length === 0) {
+                container.html(`
+                    <div class="text-center text-muted" id="no-selection-message">
+                        <p>No categories selected yet</p>
+                        <small>Select categories from the left panel to add questions</small>
+                    </div>
+                `);
+                return;
+            }
+            
+            selectedCategoriesData.forEach((item, index) => {
+                const itemDiv = $(`
+                    <div class="selected-category-item card mb-2">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${item.category}</strong>
+                                    <br>
+                                    <small class="text-muted">${item.type} • ${item.mark} mark(s) each</small>
+                                    <br>
+                                    <span class="badge badge-primary">${item.selectedCount} of ${item.totalCount} questions</span>
+                                    <span class="badge badge-success">${item.selectedCount * item.mark} marks</span>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary edit-selection-btn mr-1" 
+                                            data-index="${index}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger remove-selection-btn" 
+                                            data-index="${index}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                
+                container.append(itemDiv);
+            });
+            
+            // Bind edit and remove events
+            $('.edit-selection-btn').on('click', function() {
+                const index = $(this).data('index');
+                const item = selectedCategoriesData[index];
+                editSelectedCategory(index, item);
+            });
+            
+            $('.remove-selection-btn').on('click', function() {
+                const index = $(this).data('index');
+                removeSelectedCategory(index);
+            });
+        }
+
+        function editSelectedCategory(index, item) {
+            const modalHtml = `
+                <div class="modal fade" id="editSelectionModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Selection</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Category:</strong> ${item.category}</p>
+                                <p><strong>Type:</strong> ${item.type}</p>
+                                <p><strong>Mark per question:</strong> ${item.mark}</p>
+                                <p><strong>Available questions:</strong> ${item.totalCount}</p>
+                                
+                                <div class="form-group">
+                                    <label for="edit-question-count">Number of questions:</label>
+                                    <input type="number" id="edit-question-count" class="form-control" 
+                                           min="1" max="${item.totalCount}" value="${item.selectedCount}">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirm-edit">Update</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            $('#editSelectionModal').remove();
+            
+            // Add modal to body
+            $('body').append(modalHtml);
+            
+            // Show modal
+            $('#editSelectionModal').modal('show');
+            
+            // Bind confirm button
+            $('#confirm-edit').on('click', function() {
+                const newCount = parseInt($('#edit-question-count').val());
+                if (newCount > 0 && newCount <= item.totalCount) {
+                    selectedCategoriesData[index].selectedCount = newCount;
+                    renderSelectedCategories();
+                    updateSelectionSummary();
+                    $('#editSelectionModal').modal('hide');
+                } else {
+                    frappe.throw(__('Please enter a valid number of questions'));
+                }
+            });
+        }
+
+        function removeSelectedCategory(index) {
+            selectedCategoriesData.splice(index, 1);
+            renderSelectedCategories();
+            updateSelectionSummary();
+        }
+
+        function updateSelectionSummary() {
+            let totalQuestions = 0;
+            let totalMarks = 0;
+            
+            selectedCategoriesData.forEach(item => {
+                totalQuestions += item.selectedCount;
+                totalMarks += item.selectedCount * item.mark;
+            });
+            
+            $('#total-selected-questions').text(totalQuestions);
+            $('#total-selected-marks').text(totalMarks);
         }
         
         function addExaminerRow() {
@@ -798,23 +1089,6 @@ b∫∫∫∫bb
                             userSelect.append(`<option value="${user.name}">${user.full_name} (${user.name})</option>`);
                         });
                     }
-                }
-            });
-        }
-        
-        function filterQuestions(query) {
-            if (!query) {
-                $('#available-questions li').show();
-                return;
-            }
-            
-            query = query.toLowerCase();
-            $('#available-questions li').each(function() {
-                const questionText = $(this).text().toLowerCase();
-                if (questionText.includes(query)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
                 }
             });
         }
@@ -989,25 +1263,19 @@ b∫∫∫∫bb
         }
         
         function collectQuestionsData() {
-            const questionType = $('#question-type').val();
+            const questionSelectionType = $('#question-selection-type').val();
             
-            if (questionType === 'Random') {
+            if (questionSelectionType === 'Random') {
                 return {
                     type: 'Random',
                     total_questions: $('#total-questions').val()
                 };
             } else {
-                const questions = [];
-                $('#selected-questions li').each(function() {
-                    questions.push({
-                        exam_question: $(this).data('id'),
-                        mark: $(this).find('.question-mark').val() || 1
-                    });
-                });
-                
+                // For Fixed questions, return category-based selection
                 return {
                     type: 'Fixed',
-                    questions: questions
+                    question_type_filter: $('#question-type-filter').val(),
+                    categories: selectedCategoriesData
                 };
             }
         }

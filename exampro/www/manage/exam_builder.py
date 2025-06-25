@@ -122,8 +122,7 @@ def get_available_questions():
     try:
         questions = frappe.get_list(
             "Exam Question",
-            fields=["name", "question", "question_type", "marks", "published"],
-            filters={"published": 1},
+            fields=["name", "question", "question_type", "mark"],
             order_by="creation desc"
         )
         
@@ -133,7 +132,7 @@ def get_available_questions():
                 "name": q.name,
                 "question_text": q.question,
                 "question_type": q.question_type,
-                "marks": q.marks
+                "mark": q.mark
             })
         
         return result
@@ -323,8 +322,7 @@ def save_exam_builder_data(data):
                 
             exam_doc.video_link = data["exam"].get("video_link")
             # Note: Image would require additional processing
-            
-            exam_doc.published = data["exam"].get("published", 0)
+    
             exam_doc.upcoming = data["exam"].get("upcoming", 0)
             exam_doc.description = data["exam"]["description"]
             exam_doc.instructions = data["exam"].get("instructions")
@@ -357,22 +355,58 @@ def save_exam_builder_data(data):
                 # Remove existing questions from exam.added_questions table
                 exam_doc.added_questions = []
             
-            # Add selected questions
-            for q in data["questions"].get("questions", []):
-                exam_doc.append("added_questions", {
-                    "exam_question": q["exam_question"],
-                    "mark": q["mark"]
-                })
+            # Handle category-based question selection
+            if data["questions"].get("categories"):
+                total_marks = 0
+                
+                for category_data in data["questions"]["categories"]:
+                    category = category_data["category"]
+                    question_type = category_data["type"]
+                    mark = category_data["mark"]
+                    selected_count = category_data["selectedCount"]
+                    
+                    # Get actual questions for this category/type/mark combination
+                    questions = frappe.call(
+                        'exampro.www.manage.exam_builder.get_questions_for_exam',
+                        {
+                            'category': category,
+                            'question_type': question_type,
+                            'mark': mark,
+                            'limit': selected_count
+                        }
+                    )
+                    
+                    if questions.get('message'):
+                        for q in questions['message']:
+                            exam_doc.append("added_questions", {
+                                "exam_question": q["name"],
+                                "mark": mark
+                            })
+                            total_marks += float(mark)
+                            
+            # Add selected questions (backward compatibility)
+            elif data["questions"].get("questions"):
+                total_marks = 0
+                for q in data["questions"]["questions"]:
+                    exam_doc.append("added_questions", {
+                        "exam_question": q["exam_question"],
+                        "mark": q["mark"]
+                    })
+                    total_marks += float(q["mark"])
                 
             # Update question type
             exam_doc.question_type = "Fixed"
             
-            # Calculate total marks
-            total_marks = 0
-            for q in exam_doc.added_questions:
-                total_marks += float(q.mark)
+            # Ensure total_marks is set
+            if 'total_marks' in locals():
+                exam_doc.total_marks = total_marks
+            else:
+                # Calculate total marks from added questions
+                total_marks = 0
+                for q in exam_doc.added_questions:
+                    total_marks += float(q.mark)
+                exam_doc.total_marks = total_marks
                 
-            exam_doc.total_marks = total_marks
             exam_doc.save()
             
         elif data.get("questions", {}).get("type") == "Random" and exam_name:
@@ -418,4 +452,109 @@ def save_exam_builder_data(data):
         # Rollback on error
         frappe.db.rollback()
         frappe.log_error(frappe.get_traceback(), "Error saving exam builder data")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_question_categories_with_counts():
+    """
+    Get all question categories with question counts grouped by type and marks
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        # Get question counts grouped by category, type, and marks
+        questions_data = frappe.db.sql("""
+            SELECT 
+                category,
+                type,
+                mark,
+                COUNT(*) as question_count
+            FROM `tabExam Question`
+            GROUP BY category, type, mark
+            ORDER BY category, type, mark
+        """, as_dict=True)
+        
+        # Group by category for easier frontend handling
+        categories = {}
+        for item in questions_data:
+            category = item.category
+            if category not in categories:
+                categories[category] = []
+            
+            categories[category].append({
+                "type": item.type,
+                "mark": item.mark,
+                "question_count": item.question_count
+            })
+        
+        return categories
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error fetching question categories with counts")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_questions_by_category_and_type(question_type):
+    """
+    Get questions grouped by category and mark for a specific question type
+    
+    Args:
+        question_type (str): Question type (Choices/User Input)
+        
+    Returns:
+        list: List of dictionaries with category, mark, and no_of_qs
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        # Get question counts grouped by category and marks for the specific type
+        grouped_data = frappe.db.sql("""
+            SELECT 
+                category,
+                mark,
+                COUNT(*) as no_of_qs
+            FROM `tabExam Question`
+            WHERE type = %s
+            GROUP BY category, mark
+            ORDER BY category, mark
+        """, (question_type,), as_dict=True)
+        
+        return grouped_data
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error fetching questions for type {question_type}")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_questions_for_exam(category, question_type, mark, limit):
+    """
+    Get actual questions for adding to exam
+    
+    Args:
+        category (str): Question category
+        question_type (str): Question type (Choices/User Input)
+        mark (int): Mark value
+        limit (int): Maximum number of questions to return
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        filters = {
+            "category": category,
+            "type": question_type,
+            "mark": mark
+        }
+        
+        questions = frappe.get_list(
+            "Exam Question",
+            fields=["name", "question", "type", "mark", "category"],
+            filters=filters,
+            order_by="creation desc",
+            limit=limit
+        )
+        
+        return questions
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error fetching questions for exam")
         return {"success": False, "error": str(e)}
