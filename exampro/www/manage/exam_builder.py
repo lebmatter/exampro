@@ -22,7 +22,7 @@ def get_context(context):
 @frappe.whitelist()
 def get_exam_details(exam):
     """
-    Get detailed information about an exam
+    Get detailed information about an exam including question configuration
     
     Args:
         exam (str): Name of the exam to get details for
@@ -32,7 +32,26 @@ def get_exam_details(exam):
     
     try:
         exam_doc = frappe.get_doc("Exam", exam)
-        return exam_doc.as_dict()
+        exam_data = exam_doc.as_dict()
+        
+        # Get question configuration
+        question_config = {
+            "question_type": exam_doc.question_type,
+            "randomize_questions": exam_doc.randomize_questions,
+            "total_questions": exam_doc.total_questions,
+            "select_questions": []
+        }
+        
+        # Get category settings
+        for category_setting in exam_doc.select_questions:
+            question_config["select_questions"].append({
+                "question_category": category_setting.question_category,
+                "no_of_questions": category_setting.no_of_questions,
+                "mark_per_question": category_setting.mark_per_question
+            })
+        
+        exam_data["question_config"] = question_config
+        return exam_data
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), f"Error fetching exam details for {exam}")
         return {"success": False, "error": str(e)}
@@ -584,4 +603,115 @@ def get_questions_preview(category, question_type, mark):
         return questions
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching questions preview")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def save_exam_from_builder(exam_data):
+    """
+    Save or update exam from the exam builder
+    
+    Args:
+        exam_data (dict): Exam data from the builder
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        if exam_data.get("type") == "existing":
+            # Update existing exam
+            exam_name = exam_data.get("name")
+            exam_doc = frappe.get_doc("Exam", exam_name)
+            
+            # Update question configuration
+            if exam_data.get("questions"):
+                questions_config = exam_data["questions"]
+                
+                if questions_config.get("type") == "Random":
+                    exam_doc.randomize_questions = 1
+                    exam_doc.total_questions = questions_config.get("total_questions", 0)
+                    exam_doc.question_type = questions_config.get("question_type_filter", "Mixed")
+                    # Clear category settings for random questions
+                    exam_doc.select_questions = []
+                else:
+                    # Fixed questions
+                    exam_doc.randomize_questions = 0
+                    exam_doc.question_type = questions_config.get("question_type_filter", "Mixed")
+                    
+                    # Update category settings
+                    exam_doc.select_questions = []
+                    for category in questions_config.get("categories", []):
+                        exam_doc.append("select_questions", {
+                            "question_category": category["category"],
+                            "no_of_questions": category["selectedCount"],
+                            "mark_per_question": category["mark"]
+                        })
+                
+                exam_doc.save()
+                
+            return {"success": True, "exam_name": exam_name, "message": "Exam updated successfully"}
+            
+        else:
+            # Create new exam
+            exam_doc = frappe.new_doc("Exam")
+            exam_doc.title = exam_data.get("title")
+            exam_doc.duration = exam_data.get("duration")
+            exam_doc.pass_percentage = exam_data.get("pass_percentage")
+            exam_doc.description = exam_data.get("description")
+            exam_doc.instructions = exam_data.get("instructions", "")
+            
+            # Add examiners
+            if exam_data.get("examiners"):
+                for examiner_data in exam_data["examiners"]:
+                    exam_doc.append("examiners", {
+                        "examiner": examiner_data["examiner"],
+                        "can_proctor": examiner_data.get("can_proctor", 1),
+                        "can_evaluate": examiner_data.get("can_evaluate", 1)
+                    })
+            
+            # Add question configuration
+            if exam_data.get("questions"):
+                questions_config = exam_data["questions"]
+                
+                if questions_config.get("type") == "Random":
+                    exam_doc.randomize_questions = 1
+                    exam_doc.total_questions = questions_config.get("total_questions", 0)
+                    exam_doc.question_type = questions_config.get("question_type_filter", "Mixed")
+                else:
+                    # Fixed questions
+                    exam_doc.randomize_questions = 0
+                    exam_doc.question_type = questions_config.get("question_type_filter", "Mixed")
+                    
+                    # Add category settings
+                    for category in questions_config.get("categories", []):
+                        exam_doc.append("select_questions", {
+                            "question_category": category["category"],
+                            "no_of_questions": category["selectedCount"],
+                            "mark_per_question": category["mark"]
+                        })
+            
+            exam_doc.insert()
+            
+            return {"success": True, "exam_name": exam_doc.name, "message": "Exam created successfully"}
+            
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error saving exam from builder")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_exams():
+    """
+    Get list of exams for the exam builder
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        exams = frappe.get_list(
+            "Exam",
+            fields=["name", "title", "duration", "pass_percentage"],
+            order_by="modified desc"
+        )
+        return exams
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error fetching exams")
         return {"success": False, "error": str(e)}

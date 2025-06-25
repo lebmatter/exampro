@@ -419,6 +419,7 @@ b∫∫∫∫bb
         
         function init() {
             bindEvents();
+            populateDropdowns();
             fetchQuestionCategories();
             
             // Reset all step styles
@@ -429,6 +430,44 @@ b∫∫∫∫bb
             setTimeout(() => {
                 $('.nav-pills .nav-link.active').css('background-color', 'transparent');
             }, 100);
+        }
+        
+        function populateDropdowns() {
+            // Populate question type filter
+            const questionTypes = ['Mixed', 'Choices', 'User Input'];
+            const questionTypeSelect = $('#question-type-filter');
+            questionTypeSelect.empty();
+            
+            questionTypes.forEach(type => {
+                questionTypeSelect.append(`<option value="${type}">${type}</option>`);
+            });
+            
+            // Set default to Mixed
+            questionTypeSelect.val('Mixed');
+            
+            // Populate schedule type
+            const scheduleTypes = ['Fixed', 'Flexible'];
+            const scheduleTypeSelect = $('#schedule-type');
+            scheduleTypeSelect.empty();
+            
+            scheduleTypes.forEach(type => {
+                scheduleTypeSelect.append(`<option value="${type}">${type}</option>`);
+            });
+            
+            // Set default to Fixed
+            scheduleTypeSelect.val('Fixed');
+            
+            // Populate visibility
+            const visibilityOptions = ['Public', 'Private', 'Archived'];
+            const visibilitySelect = $('#schedule-visibility');
+            visibilitySelect.empty();
+            
+            visibilityOptions.forEach(option => {
+                visibilitySelect.append(`<option value="${option}">${option}</option>`);
+            });
+            
+            // Set default to Public
+            visibilitySelect.val('Public');
         }
         
         function bindEvents() {
@@ -523,7 +562,10 @@ b∫∫∫∫bb
             // Navigation buttons
             $('#next-step').on('click', function() {
                 if (validateCurrentStep()) {
-                    if (currentStep < 4) {
+                    if (currentStep === 2) {
+                        // Special handling for step 2 - save exam before proceeding
+                        saveExamWithConfirmation();
+                    } else if (currentStep < 4) {
                         navigateToStep(currentStep + 1);
                     } else {
                         saveAllData();
@@ -574,6 +616,12 @@ b∫∫∫∫bb
             
             $('.tab-pane').removeClass('show active');
             $(`#step${step}`).addClass('show active');
+            
+            // If navigating to step 2 and we have pending question config, populate it
+            if (step === 2 && examData.pendingQuestionConfig) {
+                populateStep2FromExam(examData.pendingQuestionConfig);
+                delete examData.pendingQuestionConfig; // Remove pending config
+            }
             
             // Update button states
             if (step === 1) {
@@ -669,10 +717,118 @@ b∫∫∫∫bb
                 callback: function(response) {
                     if (response.message) {
                         examData = response.message;
+                        
+                        console.log('Loaded exam data:', examData);
+                        
+                        // Populate step 2 with existing exam's question configuration
+                        if (examData.question_config) {
+                            // Store the question config for later use
+                            examData.pendingQuestionConfig = examData.question_config;
+                            
+                            // If we're already on step 2 or later, populate immediately
+                            if (currentStep >= 2) {
+                                populateStep2FromExam(examData.question_config);
+                            }
+                        }
+                        
                         loadExamQuestions(examId);
                     }
                 }
             });
+        }
+        
+        function populateStep2FromExam(questionConfig) {
+            console.log('Populating step 2 from exam:', questionConfig);
+            
+            // Set question selection type based on randomize_questions
+            if (questionConfig.randomize_questions) {
+                $('#question-selection-type').val('Random').trigger('change');
+                $('#total-questions').val(questionConfig.total_questions || '');
+            } else {
+                $('#question-selection-type').val('Fixed').trigger('change');
+                
+                // Convert select_questions to selectedCategoriesData format
+                selectedCategoriesData = [];
+                
+                if (questionConfig.select_questions && questionConfig.select_questions.length > 0) {
+                    // Set question type filter first
+                    $('#question-type-filter').val(questionConfig.question_type || 'Mixed');
+                    
+                    questionConfig.select_questions.forEach(setting => {
+                        // For existing exams, we'll use the exam's question_type
+                        // If it's Mixed, we'll try to determine the most appropriate type later
+                        const questionType = questionConfig.question_type || 'Mixed';
+                        
+                        selectedCategoriesData.push({
+                            category: setting.question_category,
+                            type: questionType,
+                            mark: setting.mark_per_question,
+                            selectedCount: setting.no_of_questions,
+                            totalCount: setting.no_of_questions, // Will be updated from available categories
+                            fromExistingExam: true // Flag to indicate this came from an existing exam
+                        });
+                    });
+                    
+                    console.log('Selected categories data:', selectedCategoriesData);
+                    
+                    // Render the selected categories immediately
+                    renderSelectedCategories();
+                    updateSelectionSummary();
+                    
+                    // If categories data is already loaded, update total counts now
+                    if (Object.keys(categoriesData).length > 0) {
+                        updateTotalCountsFromAvailableCategories();
+                    }
+                    // Otherwise, it will be called after fetchQuestionCategories completes
+                }
+            }
+        }
+        
+        function updateTotalCountsFromAvailableCategories() {
+            console.log('Updating total counts from available categories');
+            console.log('Selected categories data:', selectedCategoriesData);
+            console.log('Available categories data:', categoriesData);
+            
+            // This function will update the totalCount for selected categories
+            // based on the actual available questions in the system
+            selectedCategoriesData.forEach(selectedItem => {
+                if (categoriesData[selectedItem.category]) {
+                    const availableItems = categoriesData[selectedItem.category];
+                    
+                    // If this is from an existing exam and type is Mixed, find the best match
+                    if (selectedItem.fromExistingExam && selectedItem.type === 'Mixed') {
+                        // Find the item with the matching mark that has the most questions
+                        const matchingItems = availableItems.filter(item => item.mark === selectedItem.mark);
+                        if (matchingItems.length > 0) {
+                            // Sort by question count descending and take the first one
+                            matchingItems.sort((a, b) => b.question_count - a.question_count);
+                            const bestMatch = matchingItems[0];
+                            selectedItem.type = bestMatch.type;
+                            selectedItem.totalCount = bestMatch.question_count;
+                            console.log(`Updated ${selectedItem.category} from Mixed to ${bestMatch.type}`);
+                        }
+                    } else {
+                        // Normal case - exact match
+                        const matchingItem = availableItems.find(item => 
+                            item.type === selectedItem.type && item.mark === selectedItem.mark
+                        );
+                        if (matchingItem) {
+                            selectedItem.totalCount = matchingItem.question_count;
+                            console.log(`Updated ${selectedItem.category} total count to ${matchingItem.question_count}`);
+                        } else {
+                            console.log(`No matching item found for ${selectedItem.category} with type ${selectedItem.type} and mark ${selectedItem.mark}`);
+                        }
+                    }
+                } else {
+                    console.log(`Category ${selectedItem.category} not found in available categories`);
+                }
+            });
+            
+            console.log('Updated selected categories data:', selectedCategoriesData);
+            
+            // Re-render to show updated information
+            renderSelectedCategories();
+            updateSelectionSummary();
         }
         
         function loadExamQuestions(examId) {
@@ -756,12 +912,20 @@ b∫∫∫∫bb
         }
         
         function fetchQuestionCategories() {
+            console.log('Fetching question categories...');
             frappe.call({
                 method: 'exampro.www.manage.exam_builder.get_question_categories_with_counts',
                 callback: function(response) {
                     if (response.message) {
                         categoriesData = response.message;
+                        console.log('Fetched categories data:', categoriesData);
                         renderAvailableCategories();
+                        
+                        // If we have selected categories from an existing exam, update their total counts
+                        if (selectedCategoriesData.length > 0) {
+                            console.log('Updating total counts for existing selected categories');
+                            updateTotalCountsFromAvailableCategories();
+                        }
                     }
                 }
             });
@@ -1371,6 +1535,99 @@ b∫∫∫∫bb
         function validateEmail(email) {
             const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
             return re.test(String(email).toLowerCase());
+        }
+        
+        function saveExamWithConfirmation() {
+            const isExistingExam = $('input[name="exam-choice"]:checked').val() === 'existing';
+            const examTitle = isExistingExam ? 
+                $('#existing-exam option:selected').text() : 
+                $('#exam-title').val();
+            
+            const action = isExistingExam ? 'update' : 'create';
+            const message = isExistingExam ? 
+                `Are you sure you want to update the exam "${examTitle}" with the current question configuration?` :
+                `Are you sure you want to create the exam "${examTitle}" with the current configuration?`;
+            
+            frappe.confirm(
+                __(message),
+                function() {
+                    // User confirmed, proceed with saving
+                    saveExamData().then(() => {
+                        navigateToStep(3);
+                    }).catch((error) => {
+                        frappe.throw(error.message || 'Failed to save exam');
+                    });
+                },
+                function() {
+                    // User cancelled, do nothing
+                }
+            );
+        }
+        
+        function saveExamData() {
+            return new Promise((resolve, reject) => {
+                // Collect exam and questions data
+                const formExamData = collectExamData();
+                const questionsData = collectQuestionsData();
+                
+                const formData = {
+                    ...formExamData,
+                    questions: questionsData
+                };
+                
+                frappe.call({
+                    method: 'exampro.www.manage.exam_builder.save_exam_from_builder',
+                    args: {
+                        exam_data: formData
+                    },
+                    callback: function(response) {
+                        if (response.message && response.message.success) {
+                            frappe.show_alert({
+                                message: __(response.message.message),
+                                indicator: 'green'
+                            });
+                            
+                            // Update global examData with the saved exam name for future operations
+                            if (formExamData.type === 'new') {
+                                // Update global examData to reflect that this is now an existing exam
+                                examData.name = response.message.exam_name;
+                                
+                                // Update the existing exam dropdown and select the new exam
+                                updateExistingExamDropdown(response.message.exam_name);
+                            }
+                            
+                            resolve(response.message);
+                        } else {
+                            reject(new Error(response.message?.error || 'Failed to save exam'));
+                        }
+                    },
+                    error: function(error) {
+                        reject(error);
+                    }
+                });
+            });
+        }
+        
+        function updateExistingExamDropdown(examName) {
+            // Refresh the existing exam dropdown to include the newly created exam
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_exams',
+                callback: function(response) {
+                    if (response.message) {
+                        const existingExamSelect = $('#existing-exam');
+                        existingExamSelect.empty();
+                        existingExamSelect.append('<option value="">Select an exam...</option>');
+                        
+                        response.message.forEach(exam => {
+                            const selected = exam.name === examName ? 'selected' : '';
+                            existingExamSelect.append(`<option value="${exam.name}" ${selected}>${exam.title}</option>`);
+                        });
+                        
+                        // Switch to existing exam mode
+                        $('input[name="exam-choice"][value="existing"]').prop('checked', true).trigger('change');
+                    }
+                }
+            });
         }
     });
 </script>
