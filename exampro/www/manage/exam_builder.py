@@ -611,12 +611,19 @@ def save_exam_from_builder(exam_data):
     Save or update exam from the exam builder
     
     Args:
-        exam_data (dict): Exam data from the builder
+        exam_data (str): JSON string of exam data from the builder
     """
     if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
+        # Parse JSON string to dict
+        import json
+        if isinstance(exam_data, str):
+            exam_data = json.loads(exam_data)
+        
+        frappe.logger().info(f"Processing exam data: {exam_data}")
+        
         if exam_data.get("type") == "existing":
             # Update existing exam
             exam_name = exam_data.get("name")

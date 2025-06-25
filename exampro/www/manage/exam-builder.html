@@ -1570,15 +1570,20 @@ b∫∫∫∫bb
                 const formExamData = collectExamData();
                 const questionsData = collectQuestionsData();
                 
+                console.log('Form exam data:', formExamData);
+                console.log('Questions data:', questionsData);
+                
                 const formData = {
                     ...formExamData,
                     questions: questionsData
                 };
                 
+                console.log('Combined form data:', formData);
+                
                 frappe.call({
                     method: 'exampro.www.manage.exam_builder.save_exam_from_builder',
                     args: {
-                        exam_data: formData
+                        exam_data: JSON.stringify(formData)
                     },
                     callback: function(response) {
                         if (response.message && response.message.success) {
@@ -1602,6 +1607,7 @@ b∫∫∫∫bb
                         }
                     },
                     error: function(error) {
+                        console.error('Error saving exam:', error);
                         reject(error);
                     }
                 });
