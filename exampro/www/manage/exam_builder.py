@@ -162,22 +162,35 @@ def get_available_questions():
 @frappe.whitelist()
 def get_users():
     """
-    Get all users who can be assigned as examiners
+    Get all users who have Exam Candidate role
     """
     if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
+        # Get all users with Exam Candidate role
+        users_with_role = frappe.get_all(
+            "Has Role", 
+            filters={"role": "Exam Candidate", "parenttype": "User"},
+            fields=["parent as name"]
+        )
+        
+        # Get the user details for these users
+        user_names = [u.name for u in users_with_role]
+        if not user_names:
+            return []
+            
         users = frappe.get_list(
             "User",
             fields=["name", "full_name", "email"],
-            filters={"enabled": 1},
+            filters={"enabled": 1, "name": ["in", user_names]},
             order_by="full_name asc"
         )
         
         return users
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Error fetching users")
+        frappe.log_error(frappe.get_traceback(), "Error fetching users with Exam Candidate role")
+        return {"success": False, "error": str(e)}
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()

@@ -288,11 +288,18 @@ b∫∫∫∫bb
                         <div class="tab-pane fade" id="step4" role="tabpanel">
                             <h5 class="card-title">Step 4: Manage Registrations</h5>
                             
+                            <!-- Manage all users link -->
+                            <div class="d-flex justify-content-end mb-3">
+                                <a href="/manage/users" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-people"></i> Manage all users
+                                </a>
+                            </div>
+                            
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="card h-100">
                                         <div class="card-header">
-                                            <h6 class="mb-0">Available Users</h6>
+                                            <h6 class="mb-0">Available Users (Exam Candidates)</h6>
                                         </div>
                                         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                                             <table class="table table-sm table-hover" id="available-users-table">
@@ -647,8 +654,8 @@ b∫∫∫∫bb
             
             // Handle add user buttons - delegated event handler
             $(document).on('click', '.add-user', function() {
-                const user = JSON.parse($(this).data('user'));
-                addRegistration(user.email);
+                const email = $(this).data('email');
+                addRegistration(email);
             });
             
             // No need for search functionality as we have two clean columns now
@@ -1031,7 +1038,9 @@ b∫∫∫∫bb
                     <td>${user.full_name}</td>
                     <td>${user.email}</td>
                     <td>
-                        <button class="btn btn-sm btn-success add-user" data-user='${JSON.stringify(user)}'>
+                        <button class="btn btn-sm btn-success add-user" 
+                               data-email="${user.email}" 
+                               data-name="${user.name}">
                             <i class="bi bi-plus-circle"></i>
                         </button>
                     </td>
@@ -1042,8 +1051,8 @@ b∫∫∫∫bb
             
             // Bind add buttons
             $('.add-user').off('click').on('click', function() {
-                const user = JSON.parse($(this).data('user'));
-                addRegistration(user.email);
+                const email = $(this).data('email');
+                addRegistration(email);
             });
         }
         
