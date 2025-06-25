@@ -22,7 +22,7 @@ frappe.ready(function() {
         fetchQuestionCategories();
         
         // Reset all step styles and ensure we're at step 1
-        $('.nav-link').removeClass('active completed');
+        $('.step-navigation .nav-link').removeClass('active completed');
         $('#step1-tab').addClass('active');
         
         // Make sure tab panes are correctly set
@@ -34,7 +34,7 @@ frappe.ready(function() {
         
         // Fix any Bootstrap nav-pills styling conflicts
         setTimeout(() => {
-            $('.nav-pills .nav-link.active').css('background-color', 'transparent');
+            $('.step-navigation.nav-pills .nav-link.active').css('background-color', 'transparent');
         }, 100);
     }
     
@@ -246,7 +246,7 @@ frappe.ready(function() {
         });
         
         // Tab navigation - completely disabled, only Next button allowed
-        $('.nav-link').on('click', function(e) {
+        $('.step-navigation .nav-link').on('click', function(e) {
             e.preventDefault();
             return false;
         });
@@ -263,7 +263,7 @@ frappe.ready(function() {
         }
         
         // Update UI
-        $(`.nav-link`).removeClass('active');
+        $(`.step-navigation .nav-link`).removeClass('active');
         $(`#step${step}-tab`).addClass('active');
         
         $('.tab-pane').removeClass('show active');
