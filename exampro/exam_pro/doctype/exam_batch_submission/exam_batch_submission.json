@@ -30,6 +30,7 @@
   {
    "fieldname": "exam_batch",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Exam Batch",
    "options": "Exam Batch",
    "reqd": 1
@@ -37,6 +38,7 @@
   {
    "fieldname": "created_time",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Created Time"
   }
  ],
@@ -48,7 +50,7 @@
    "link_fieldname": "exam_batch"
   }
  ],
- "modified": "2025-06-25 23:19:50.070538",
+ "modified": "2025-06-26 00:00:53.110739",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Batch Submission",

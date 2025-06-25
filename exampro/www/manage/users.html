@@ -22,10 +22,18 @@
                     <option value="evaluator">Evaluators</option>
                 </select>
             </div>
-            <div class="col-md-4 mb-2 mb-md-0">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <select id="batch-filter" class="form-control rounded">
+                    <option value="all">All Batches</option>
+                    {% for batch in batches %}
+                    <option value="{{ batch.name }}">{{ batch.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-2 mb-md-0">
                 <input type="text" id="user-search" class="form-control rounded" placeholder="Search by email...">
             </div>
-            <div class="col-md-5 text-md-end">
+            <div class="col-md-3 text-md-end">
                 <div class="btn-toolbar justify-content-md-end">
                     <button id="save-changes-btn" class="btn btn-success me-2 mr-2">Save All Changes</button>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
@@ -50,6 +58,7 @@
                             <th>{{ _("Candidate") }}</th>
                             <th>{{ _("Can Proctor") }}</th>
                             <th>{{ _("Can Evaluate") }}</th>
+                            <th>{{ _("Batches") }}</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body">
@@ -93,6 +102,15 @@
                                            {% if user.is_evaluator %} checked {% endif %}>
                                     <label class="custom-control-label" for="evaluator-{{ user.name }}"></label>
                                 </div>
+                            </td>
+                            <td>
+                                {% if user.batches %}
+                                    {% for batch in user.batches %}
+                                        <span class="badge badge-info">{{ batch }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">None</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -214,6 +232,7 @@ frappe.ready(function() {
     function applyFilters() {
         var searchTerm = $("#user-search").val().toLowerCase();
         var roleFilter = $("#role-filter").val();
+        var batchFilter = $("#batch-filter").val();
         
         // Reset filtered users
         filteredUsers = [];
@@ -235,7 +254,13 @@ frappe.ready(function() {
                 }
             }
             
-            if (matchesSearch && matchesRole) {
+            var matchesBatch = true;
+            if (batchFilter !== 'all') {
+                var batchText = $row.find('td:last').text().toLowerCase();
+                matchesBatch = batchText.includes(batchFilter.toLowerCase());
+            }
+            
+            if (matchesSearch && matchesRole && matchesBatch) {
                 filteredUsers.push($row);
             }
         });
@@ -436,6 +461,11 @@ frappe.ready(function() {
     
     // Initialize pagination on page load
     initPagination();
+    
+    // Batch filter handler
+    $("#batch-filter").on("change", function() {
+        initPagination();
+    });
 });
 </script>
 {% endblock %}

@@ -1,8 +1,5 @@
 import frappe
 from frappe import _
-
-import frappe
-from frappe import _
 from frappe.utils import validate_email_address
 
 @frappe.whitelist()
@@ -141,42 +138,50 @@ def add_users(emails, role):
         frappe.log_error(frappe.get_traceback(), "Error adding users")
         return {"success": False, "error": str(e)}
 
-
 def get_users():
-    """Get all users with their role information"""
-    
-    # Check if user has permission to view Users
-    if not frappe.has_permission("User", "read"):
-        return []
-    
-    # Get all Website users (exclude system users)
+    """
+    Get all users with their roles
+    """
+    # Get all website users
     users = frappe.get_all(
-        "User",
-        filters={"user_type": "Website User"},
-        fields=["name", "email", "first_name", "last_name"]
+        "User", 
+        filters={"user_type": ["!=", "System User"]},
+        fields=["name", "email", "full_name", "first_name", "last_name", "enabled"]
     )
     
-    # Get role assignments for each user
+    # Add role information
     for user in users:
-        user_roles = frappe.get_all(
-            "Has Role",
-            filters={"parent": user.name},
-            fields=["role"]
-        )
-        
-        role_list = [r.role for r in user_roles]
-        
-        # Set flags for each role
-        user["is_candidate"] = "Exam Candidate" in role_list
-        user["is_proctor"] = "Exam Proctor" in role_list
-        user["is_evaluator"] = "Exam Evaluator" in role_list
-        
+        user_roles = frappe.get_roles(user["name"])
+        user["is_candidate"] = "Exam Candidate" in user_roles
+        user["is_proctor"] = "Exam Proctor" in user_roles
+        user["is_evaluator"] = "Exam Evaluator" in user_roles
+    
     return users
 
-def get_context(context):
-    """Setup page context"""
+@frappe.whitelist()
+def get_user_batches(user):
+    """
+    Get all batches a user belongs to
     
-    # Redirect guest users to login
+    Args:
+        user (str): User email/name
+        
+    Returns:
+        list: List of batch names
+    """
+    if not frappe.has_permission("Exam Batch User", "read"):
+        return []
+    
+    batch_users = frappe.get_all(
+        "Exam Batch User", 
+        filters={"candidate": user}, 
+        fields=["exam_batch"]
+    )
+    
+    batches = [bu.exam_batch for bu in batch_users]
+    return batches
+
+def get_context(context):
     if frappe.session.user == "Guest":
         frappe.local.flags.redirect_location = "/login"
         raise frappe.Redirect
@@ -185,9 +190,24 @@ def get_context(context):
     if not "Exam Manager" in frappe.get_roles(frappe.session.user):
         frappe.throw(_("You are not authorized to access this page"))
 
+    # Get all batches for filter dropdown
+    batches = frappe.get_all("Exam Batch", fields=["name"])
+    context.batches = batches
+    
     # Set page data
     context.no_cache = 1
-    context.users = get_users()
+    users = get_users()
+    
+    # Add batch information to each user
+    for user in users:
+        user_batches = frappe.get_all(
+            "Exam Batch User", 
+            filters={"candidate": user["name"]}, 
+            fields=["exam_batch"]
+        )
+        user["batches"] = [ub.exam_batch for ub in user_batches]
+    
+    context.users = users
     
     context.metatags = {
         "title": _("Manage Users"),

@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:batch_name",
  "creation": "2025-06-25 23:10:50.517816",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -14,7 +15,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Batch Name",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "description",
@@ -30,10 +32,11 @@
    "link_fieldname": "exam_batch"
   }
  ],
- "modified": "2025-06-25 23:19:06.863987",
+ "modified": "2025-06-25 23:58:07.889114",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Batch",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
