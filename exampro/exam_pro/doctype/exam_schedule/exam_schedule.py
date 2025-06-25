@@ -54,11 +54,11 @@ class ExamSchedule(Document):
 		self.validate_examiner_list()
 
 		# validate cert template
-		if self.certificate_template != "":
-			has_certification = frappe.db.get_value("Exam", self.exam, "enable_certification")
-			if not has_certification:
-				frappe.msgprint("Warning: Certification is not enabled in the exam.")
-				self.certificate_template = ""
+		# if self.certificate_template != "":
+		# 	has_certification = frappe.db.get_value("Exam", self.exam, "enable_certification")
+		# 	if not has_certification:
+		# 		frappe.msgprint("Warning: Certification is not enabled in the exam.")
+		# 		self.certificate_template = ""
 		
 		old_doc = self.get_doc_before_save()
 		if old_doc:
