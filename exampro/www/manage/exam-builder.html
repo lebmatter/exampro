@@ -399,6 +399,32 @@ b∫∫∫∫bb
     .badge {
         margin-right: 0.25rem;
     }
+    
+    /* Disable all step navigation */
+    .nav-link {
+        pointer-events: none;
+        cursor: default;
+    }
+    
+    /* Keep visual styling for current step */
+    .nav-link.active {
+        opacity: 1;
+    }
+    
+    /* Style for non-active steps */
+    .nav-link:not(.active) {
+        opacity: 0.6;
+    }
+    
+    /* Disable previous steps styling */
+    .nav-link.disabled-step {
+        opacity: 0.4;
+    }
+    
+    .nav-link.disabled-step .step-number {
+        background-color: #6c757d !important;
+        color: white !important;
+    }
 </style>
 {% endblock %}
 
@@ -573,30 +599,16 @@ b∫∫∫∫bb
                 }
             });
             
-            $('#prev-step').on('click', function() {
-                if (currentStep > 1) {
-                    navigateToStep(currentStep - 1);
-                }
+            // Disable previous step functionality
+            $('#prev-step').on('click', function(e) {
+                e.preventDefault();
+                return false;
             });
             
-            // Tab navigation - ensure form validation
+            // Tab navigation - completely disabled, only Next button allowed
             $('.nav-link').on('click', function(e) {
-                const targetStep = parseInt($(this).attr('id').replace('step', '').replace('-tab', ''));
-                if (targetStep > currentStep) {
-                    e.preventDefault();
-                    let canProceed = true;
-                    for (let i = 1; i < targetStep; i++) {
-                        if (!validateStep(i)) {
-                            canProceed = false;
-                            break;
-                        }
-                    }
-                    if (canProceed) {
-                        navigateToStep(targetStep);
-                    }
-                } else {
-                    navigateToStep(targetStep);
-                }
+                e.preventDefault();
+                return false;
             });
         }
         
@@ -624,11 +636,7 @@ b∫∫∫∫bb
             }
             
             // Update button states
-            if (step === 1) {
-                $('#prev-step').prop('disabled', true);
-            } else {
-                $('#prev-step').prop('disabled', false);
-            }
+            $('#prev-step').prop('disabled', true); // Always disable previous step
             
             if (step === 4) {
                 $('#next-step').text('Save & Finish');
