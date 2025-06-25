@@ -183,37 +183,39 @@ def get_users():
 @frappe.whitelist()
 def get_registrations(schedule):
     """
-    Get all registrations for a schedule
+    Get all exam submissions for a schedule
     
     Args:
-        schedule (str): Name of the schedule to get registrations for
+        schedule (str): Name of the schedule to get submissions for
     """
     if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
-        # Example query - adjust based on your actual schema
+        # Get submissions for this schedule
         registrations = frappe.get_list(
-            "Exam Registration", 
+            "Exam Submission", 
             filters={"exam_schedule": schedule},
-            fields=["name", "user", "email", "status", "creation"]
+            fields=["name", "candidate", "candidate_name", "status", "creation"]
         )
         
-        # Enrich with user info
+        # Convert to expected format for compatibility
         for reg in registrations:
-            if reg.user:
-                user_doc = frappe.get_doc("User", reg.user)
-                reg["user_name"] = user_doc.full_name
+            reg["user"] = reg.candidate
+            reg["user_name"] = reg.candidate_name
+            # Remove the extra fields to avoid confusion
+            del reg["candidate"]
+            del reg["candidate_name"]
                 
         return registrations
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), f"Error fetching registrations for schedule {schedule}")
+        frappe.log_error(frappe.get_traceback(), f"Error fetching exam submissions for schedule {schedule}")
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()
 def add_registration(schedule, email):
     """
-    Add a new registration to a schedule
+    Add a new exam submission to a schedule
     
     Args:
         schedule (str): Name of the schedule
@@ -241,20 +243,20 @@ def add_registration(schedule, email):
             
         # Check if already registered
         existing = frappe.get_list(
-            "Exam Registration",
-            filters={"exam_schedule": schedule, "user": user_name},
+            "Exam Submission",
+            filters={"exam_schedule": schedule, "candidate": user_name},
             limit=1
         )
         
         if existing:
             return {"success": False, "error": _("User is already registered for this exam")}
             
-        # Create registration
+        # Create submission
         reg_doc = frappe.get_doc({
-            "doctype": "Exam Registration",
+            "doctype": "Exam Submission",
             "exam_schedule": schedule,
-            "user": user_name,
-            "email": email,
+            "candidate": user_name,
+            "candidate_name": frappe.db.get_value("User", user_name, "full_name"),
             "status": "Registered"
         })
         reg_doc.insert()
@@ -267,44 +269,44 @@ def add_registration(schedule, email):
             "user": {
                 "user": user_name,
                 "user_name": user_details.full_name,
-                "email": email,
+                "candidate": user_name,
                 "status": "Registered",
                 "creation": reg_doc.creation
             }
         }
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), f"Error adding registration for {email} to schedule {schedule}")
+        frappe.log_error(frappe.get_traceback(), f"Error adding exam submission for {email} to schedule {schedule}")
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()
 def remove_registration(schedule, user):
     """
-    Remove a registration from a schedule
+    Remove an exam submission from a schedule
     
     Args:
         schedule (str): Name of the schedule
-        user (str): User to remove
+        user (str): User to remove (will be used as candidate)
     """
     if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
     
     try:
-        # Find registration
-        registrations = frappe.get_list(
-            "Exam Registration",
-            filters={"exam_schedule": schedule, "user": user}
+        # Find submission
+        submissions = frappe.get_list(
+            "Exam Submission",
+            filters={"exam_schedule": schedule, "candidate": user}
         )
         
-        if not registrations:
-            return {"success": False, "error": _("Registration not found")}
+        if not submissions:
+            return {"success": False, "error": _("Exam submission not found")}
             
-        # Delete registration
-        for reg in registrations:
-            frappe.delete_doc("Exam Registration", reg.name)
+        # Delete submission
+        for sub in submissions:
+            frappe.delete_doc("Exam Submission", sub.name)
             
         return {"success": True}
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), f"Error removing registration for user {user} from schedule {schedule}")
+        frappe.log_error(frappe.get_traceback(), f"Error removing exam submission for user {user} from schedule {schedule}")
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()
