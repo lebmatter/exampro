@@ -330,7 +330,7 @@ b∫∫∫∫bb
                     
                     <!-- Navigation buttons -->
                     <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-secondary" id="prev-step" disabled>Previous</button>
+                        <button type="button" class="btn btn-secondary" id="refresh-step"><i class="bi bi-arrow-clockwise"></i> Restart</button>
                         <button type="button" class="btn btn-primary" id="next-step">Next</button>
                     </div>
                 </div>
@@ -664,10 +664,11 @@ b∫∫∫∫bb
                 }
             });
             
-            // Disable previous step functionality
-            $('#prev-step').on('click', function(e) {
+            // Refresh button functionality
+            $('#refresh-step').on('click', function(e) {
                 e.preventDefault();
-                return false;
+                // Reload the current window
+                window.location.reload();
             });
             
             // Tab navigation - completely disabled, only Next button allowed
@@ -700,9 +701,7 @@ b∫∫∫∫bb
                 delete examData.pendingQuestionConfig; // Remove pending config
             }
             
-            // Update button states
-            $('#prev-step').prop('disabled', true); // Always disable previous step
-            
+
             if (step === 4) {
                 $('#next-step').text('Save & Finish');
             } else {
