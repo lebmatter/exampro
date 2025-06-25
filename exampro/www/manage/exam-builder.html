@@ -835,7 +835,7 @@ b∫∫∫∫bb
         function showQuestionSelectionModal(category, type, mark, totalCount) {
             const modalHtml = `
                 <div class="modal fade" id="questionSelectionModal" tabindex="-1" role="dialog">
-                    <div class="modal-dialog" role="document">
+                    <div class="modal-dialog modal-lg" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Select Questions</h5>
@@ -848,6 +848,31 @@ b∫∫∫∫bb
                                 <p><strong>Type:</strong> ${type}</p>
                                 <p><strong>Mark per question:</strong> ${mark}</p>
                                 <p><strong>Available questions:</strong> ${totalCount}</p>
+                                
+                                <!-- View Questions Section -->
+                                <div class="mb-4">
+                                    <h6>View Questions</h6>
+                                    <div class="border rounded" style="height: 300px; overflow-y: auto;">
+                                        <table class="table table-sm table-striped mb-0" id="questions-preview-table">
+                                            <thead class="thead-light sticky-top">
+                                                <tr>
+                                                    <th style="width: 60px;">#</th>
+                                                    <th>Question</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="2" class="text-center">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="sr-only">Loading...</span>
+                                                        </div>
+                                                        Loading questions...
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                                 
                                 <div class="form-group">
                                     <label for="question-count-input">Number of questions to select:</label>
@@ -873,6 +898,9 @@ b∫∫∫∫bb
             // Show modal
             $('#questionSelectionModal').modal('show');
             
+            // Load questions preview
+            loadQuestionsPreview(category, type, mark);
+            
             // Bind confirm button
             $('#confirm-selection').on('click', function() {
                 const selectedCount = parseInt($('#question-count-input').val());
@@ -881,6 +909,52 @@ b∫∫∫∫bb
                     $('#questionSelectionModal').modal('hide');
                 } else {
                     frappe.throw(__('Please enter a valid number of questions'));
+                }
+            });
+        }
+
+        function loadQuestionsPreview(category, type, mark) {
+            frappe.call({
+                method: 'exampro.www.manage.exam_builder.get_questions_preview',
+                args: {
+                    category: category,
+                    question_type: type,
+                    mark: mark
+                },
+                callback: function(response) {
+                    const tbody = $('#questions-preview-table tbody');
+                    tbody.empty();
+                    
+                    if (response.message && response.message.length > 0) {
+                        response.message.forEach((question, index) => {
+                            const row = `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td class="text-truncate" style="max-width: 400px;" title="${question.question}">
+                                        ${question.question}
+                                    </td>
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+                    } else {
+                        tbody.append(`
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">
+                                    No questions found
+                                </td>
+                            </tr>
+                        `);
+                    }
+                },
+                error: function() {
+                    $('#questions-preview-table tbody').html(`
+                        <tr>
+                            <td colspan="2" class="text-center text-danger">
+                                Error loading questions
+                            </td>
+                        </tr>
+                    `);
                 }
             });
         }

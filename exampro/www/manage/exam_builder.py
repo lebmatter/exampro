@@ -553,3 +553,35 @@ def get_questions_for_exam(category, question_type, mark, limit):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching questions for exam")
         return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_questions_preview(category, question_type, mark):
+    """
+    Get questions for preview in the selection modal
+    
+    Args:
+        category (str): Question category
+        question_type (str): Question type (Choices/User Input)
+        mark (int): Mark value
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        filters = {
+            "category": category,
+            "type": question_type,
+            "mark": mark
+        }
+        
+        questions = frappe.get_list(
+            "Exam Question",
+            fields=["name", "question"],
+            filters=filters,
+            order_by="creation desc"
+        )
+        
+        return questions
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error fetching questions preview")
+        return {"success": False, "error": str(e)}
