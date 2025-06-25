@@ -21,9 +21,16 @@ frappe.ready(function() {
         populateDropdowns();
         fetchQuestionCategories();
         
-        // Reset all step styles
+        // Reset all step styles and ensure we're at step 1
         $('.nav-link').removeClass('active completed');
         $('#step1-tab').addClass('active');
+        
+        // Make sure tab panes are correctly set
+        $('.tab-pane').removeClass('show active');
+        $('#step1').addClass('show active');
+        
+        // Reset current step to 1
+        currentStep = 1;
         
         // Fix any Bootstrap nav-pills styling conflicts
         setTimeout(() => {
@@ -33,7 +40,7 @@ frappe.ready(function() {
     
     function resetFormToInitialState() {
         // Clear global variables
-        examData = {};
+        examData = {}; // This will clear pendingQuestionConfig as well
         scheduleData = {};
         questionsData = [];
         registrationsData = [];
@@ -231,8 +238,10 @@ frappe.ready(function() {
         // Refresh button functionality
         $('#refresh-step').on('click', function(e) {
             e.preventDefault();
-            // Reload the current window
-            window.location.reload();
+            // Reset the form state instead of reloading the page
+            resetFormToInitialState();
+            // Re-initialize the page elements
+            init();
         });
         
         // Tab navigation - completely disabled, only Next button allowed
@@ -260,9 +269,16 @@ frappe.ready(function() {
         $(`#step${step}`).addClass('show active');
         
         // If navigating to step 2 and we have pending question config, populate it
-        if (step === 2 && examData.pendingQuestionConfig) {
-            populateStep2FromExam(examData.pendingQuestionConfig);
-            delete examData.pendingQuestionConfig; // Remove pending config
+        if (step === 2) {
+            // Check if we have a selected exam and question config
+            if (examData.pendingQuestionConfig) {
+                populateStep2FromExam(examData.pendingQuestionConfig);
+                // Keep the pending config in case we need to repopulate on refresh
+                // Don't delete examData.pendingQuestionConfig so it's available if needed again
+            } else if ($('input[name="exam-choice"]:checked').val() === 'existing' && $('#existing-exam').val()) {
+                // If we're using an existing exam but don't have question data yet, try to load it
+                loadExamDetails($('#existing-exam').val());
+            }
         }
         
 
@@ -361,7 +377,8 @@ frappe.ready(function() {
                         // Store the question config for later use
                         examData.pendingQuestionConfig = examData.question_config;
                         
-                        // If we're already on step 2 or later, populate immediately
+                        // Always prepare question config data regardless of current step
+                        // This ensures consistent behavior after refresh or when selecting a new exam
                         if (currentStep >= 2) {
                             populateStep2FromExam(examData.question_config);
                         }
