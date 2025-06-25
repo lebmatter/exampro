@@ -13,6 +13,7 @@
   "exam",
   "new_user",
   "reset_password_key",
+  "exam_batch",
   "column_break_ngvn",
   "status",
   "exam_started_time",
@@ -187,6 +188,12 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Reset password key"
+  },
+  {
+   "fieldname": "exam_batch",
+   "fieldtype": "Link",
+   "label": "Exam Batch",
+   "options": "Exam Batch"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -200,7 +207,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-01-29 14:46:21.191982",
+ "modified": "2025-06-25 23:17:33.624845",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Submission",
@@ -221,6 +228,7 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
