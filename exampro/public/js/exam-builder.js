@@ -230,7 +230,8 @@ frappe.ready(function() {
                 } else if (currentStep < 4) {
                     navigateToStep(currentStep + 1);
                 } else {
-                    saveAllData();
+                    // refresh page
+                    window.location.reload();
                 }
             }
         });
@@ -283,7 +284,7 @@ frappe.ready(function() {
         
 
         if (step === 4) {
-            $('#next-step').text('Save & Finish');
+            $('#next-step').text('Finish');
         } else {
             $('#next-step').text('Next');
         }
@@ -1129,38 +1130,6 @@ frappe.ready(function() {
                 });
             }
         );
-    }
-    
-    // No need for filterRegistrations function as we no longer have search functionality
-    
-    function saveAllData() {
-        // Collect all data
-        const formData = {
-            exam: collectExamData(),
-            questions: collectQuestionsData(),
-            schedule: collectScheduleData()
-        };
-        
-        frappe.call({
-            method: 'exampro.www.manage.exam_builder.save_exam_builder_data',
-            args: {
-                data: formData
-            },
-            callback: function(response) {
-                if (response.message && response.message.success) {
-                    frappe.show_alert({
-                        message: __('Exam and schedule saved successfully'),
-                        indicator: 'green'
-                    });
-                    
-                    setTimeout(function() {
-                        window.location.href = '/manage/exams';
-                    }, 1000);
-                } else {
-                    frappe.throw(response.message.error || __('Failed to save data'));
-                }
-            }
-        });
     }
     
     function collectExamData() {
