@@ -9,12 +9,9 @@
   "section_break_wkvo",
   "duration",
   "pass_percentage",
-  "candidates_per_exam",
   "image",
-  "video_link",
   "column_break_vleg",
   "published",
-  "upcoming",
   "start_time_type",
   "flexible_time_ends_in",
   "column_break_10",
@@ -58,11 +55,6 @@
    "width": "200"
   },
   {
-   "fieldname": "video_link",
-   "fieldtype": "Data",
-   "label": "Video Embed Link"
-  },
-  {
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "label": "Preview Image"
@@ -76,12 +68,6 @@
   {
    "fieldname": "column_break_10",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "fieldname": "upcoming",
-   "fieldtype": "Check",
-   "label": "Upcoming"
   },
   {
    "fieldname": "section_break_18",
@@ -133,13 +119,6 @@
    "fieldtype": "Currency",
    "label": "Certificate Price",
    "mandatory_depends_on": "paid_certificate"
-  },
-  {
-   "default": "25",
-   "fieldname": "candidates_per_exam",
-   "fieldtype": "Int",
-   "label": "Candidates per Exam",
-   "non_negative": 1
   },
   {
    "fieldname": "instructions",
@@ -195,6 +174,7 @@
    "label": "Randomize Questions"
   },
   {
+   "default": "50.00",
    "fieldname": "pass_percentage",
    "fieldtype": "Float",
    "label": "Pass Percentage",
@@ -269,7 +249,7 @@
    "non_negative": 1
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "enable_video_proctoring",
    "fieldtype": "Check",
    "label": "Enable Video Proctoring"
@@ -318,7 +298,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-06-19 14:08:42.644839",
+ "modified": "2025-06-25 11:27:38.992363",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",
@@ -334,6 +314,13 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Exam Manager",
    "write": 1
   }
  ],

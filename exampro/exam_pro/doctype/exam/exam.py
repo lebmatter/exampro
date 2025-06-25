@@ -53,7 +53,6 @@ def slugify(title, used_slugs=None):
 class Exam(Document):
 
 	def validate(self):
-		self.validate_video_link()
 		self.validate_status()
 		self.image = validate_image(self.image)
 
@@ -74,12 +73,8 @@ class Exam(Document):
 		
 		settings = frappe.get_single("Exam Settings")
 		if self.enable_video_proctoring and not settings.validate_video_settings():
-			frappe.throw("Please provide a video link for proctoring.")
+			frappe.throw("Video storage is not configured for proctoring.")
 
-
-	def validate_video_link(self):
-		if self.video_link and "/" in self.video_link:
-			self.video_link = self.video_link.split("/")[-1]
 
 	def validate_status(self):
 		if self.published:

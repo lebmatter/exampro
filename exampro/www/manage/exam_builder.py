@@ -316,11 +316,6 @@ def save_exam_builder_data(data):
             exam_doc.title = data["exam"]["title"]
             exam_doc.duration = data["exam"]["duration"]
             exam_doc.pass_percentage = data["exam"]["pass_percentage"]
-            
-            if data["exam"].get("candidates_per_exam"):
-                exam_doc.candidates_per_exam = data["exam"]["candidates_per_exam"]
-                
-            exam_doc.video_link = data["exam"].get("video_link")
             # Note: Image would require additional processing
     
             exam_doc.upcoming = data["exam"].get("upcoming", 0)
