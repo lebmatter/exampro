@@ -204,7 +204,7 @@ def get_users():
 @frappe.whitelist()
 def get_registrations(schedule):
     """
-    Get all exam submissions for a schedule
+    Get all users with Exam Candidate role with their registration status and batch info
     
     Args:
         schedule (str): Name of the schedule to get submissions for
@@ -213,30 +213,92 @@ def get_registrations(schedule):
         return {"success": False, "error": _("Not permitted")}
     
     try:
-        # Get submissions for this schedule
+        # Get all users with Exam Candidate role
+        users_with_role = frappe.get_all(
+            "Has Role", 
+            filters={"role": "Exam Candidate", "parenttype": "User"},
+            fields=["parent as name"]
+        )
+        
+        user_names = [u.name for u in users_with_role]
+        if not user_names:
+            return []
+            
+        # Get all user details
+        users = frappe.get_list(
+            "User",
+            fields=["name", "full_name", "email"],
+            filters={"enabled": 1, "name": ["in", user_names]},
+            order_by="full_name asc"
+        )
+        
+        # Get existing registrations for this schedule
         registrations = frappe.get_list(
             "Exam Submission", 
             filters={"exam_schedule": schedule},
-            fields=["name", "candidate", "candidate_name", "status", "creation"]
+            fields=["name as submission_id", "candidate", "status", "creation"]
         )
         
-        # Convert to expected format for compatibility
+        # Create registration status lookup
+        registered_users = {}
         for reg in registrations:
-            # Get user email
-            email = frappe.db.get_value("User", reg.candidate, "email")
+            registered_users[reg.candidate] = {
+                "registered": True,
+                "status": reg.status,
+                "submission_id": reg.submission_id,
+                "creation": reg.creation
+            }
+        
+        # Get batch information for all users
+        user_batches = {}
+        batch_entries = frappe.get_all(
+            "Exam Batch User",
+            filters={"candidate": ["in", user_names]},
+            fields=["candidate", "exam_batch"]
+        )
+        
+        # Organize batch data by user
+        for entry in batch_entries:
+            if entry.candidate not in user_batches:
+                user_batches[entry.candidate] = []
             
-            # Add required fields
-            reg["user"] = reg.candidate
-            reg["user_name"] = reg.candidate_name
-            reg["email"] = email
+            batch_name = frappe.get_value("Exam Batch", entry.exam_batch, "batch_name")
+            user_batches[entry.candidate].append({
+                "id": entry.exam_batch,
+                "name": batch_name or entry.exam_batch
+            })
+        
+        # Merge all data
+        result = []
+        for user in users:
+            # Get registration status
+            registration_info = registered_users.get(user.name, {
+                "registered": False,
+                "status": "Not Registered",
+                "submission_id": None,
+                "creation": None
+            })
             
-            # Remove the extra fields to avoid confusion
-            del reg["candidate"]
-            del reg["candidate_name"]
+            # Get batch info
+            batches = user_batches.get(user.name, [])
+            
+            # Create combined user object
+            user_data = {
+                "name": user.name,
+                "full_name": user.full_name,
+                "email": user.email,
+                "registered": registration_info["registered"],
+                "status": registration_info["status"],
+                "submission_id": registration_info["submission_id"],
+                "creation": registration_info["creation"],
+                "batches": batches
+            }
+            
+            result.append(user_data)
                 
-        return registrations
+        return result
     except Exception as e:
-        frappe.log_error(frappe.get_traceback(), f"Error fetching exam submissions for schedule {schedule}")
+        frappe.log_error(frappe.get_traceback(), f"Error fetching users with registration status for schedule {schedule}")
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()

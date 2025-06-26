@@ -8,8 +8,7 @@ frappe.ready(function() {
     let categoriesData = {};
     let selectedCategoriesData = [];
     
-    // Store all users and batches data
-    let allUsersData = [];
+    // Store batches data and selected batch
     let examBatches = [];
     let selectedBatch = 'all';
     
@@ -288,7 +287,7 @@ frappe.ready(function() {
         // Batch filter change
         $('#batch-filter').on('change', function() {
             selectedBatch = $(this).val();
-            renderAvailableUsersTable();
+            renderUsersTable();
         });
         
         // Add event handler for bulk registration
@@ -328,6 +327,8 @@ frappe.ready(function() {
 
         if (step === 4) {
             $('#next-step').text('Finish');
+            // Load registrations which now contains all users with status
+            loadRegistrations(scheduleData.name);
         } else {
             $('#next-step').text('Next');
         }
@@ -601,7 +602,7 @@ frappe.ready(function() {
             },
             callback: function(response) {
                 if (response.message && !response.message.error) {
-                    // The email is now included in the response from the server
+                    // The response now includes all users with their registration status
                     registrationsData = response.message;
                     renderUsersTable();
                 } else if (response.message && response.message.error) {
@@ -611,17 +612,7 @@ frappe.ready(function() {
         });
     }
     
-    function loadAllUsers() {
-        frappe.call({
-            method: 'exampro.www.manage.exam_builder.get_users',
-            callback: function(response) {
-                if (response.message) {
-                    allUsersData = response.message;
-                    renderAvailableUsersTable();
-                }
-            }
-        });
-    }
+    // We don't need loadAllUsers anymore as get_registrations will handle this
     
     function loadExamBatches() {
         frappe.call({
@@ -654,23 +645,20 @@ frappe.ready(function() {
 
         // Filter users based on selected batch
         const filteredUsers = selectedBatch === 'all' 
-            ? allUsersData 
-            : allUsersData.filter(user => user.batches.includes(selectedBatch));
+            ? registrationsData 
+            : registrationsData.filter(user => user.batches.some(batch => batch.id === selectedBatch));
 
         filteredUsers.forEach(user => {
-            const isRegistered = registrationsData.some(reg => reg.candidate === user.name);
             const isPendingAdd = pendingChanges.add.includes(user.email);
             const isPendingRemove = pendingChanges.remove.includes(user.email);
             
-            const batchNames = user.batches.map(batchId => {
-                const batch = examBatches.find(b => b.name === batchId);
-                return batch ? batch.batch_name : batchId;
-            }).join(', ');
+            // Format batch names for display
+            const batchNames = user.batches.map(batch => batch.name).join(', ');
 
             let status, actionButton;
             
-            if (isRegistered && !isPendingRemove) {
-                status = '<span class="badge badge-success">Registered</span>';
+            if (user.registered && !isPendingRemove) {
+                status = `<span class="badge badge-success">${user.status || 'Registered'}</span>`;
                 actionButton = `
                     <button class="btn btn-sm btn-danger remove-user" 
                             data-user="${user.name}" 
@@ -713,8 +701,20 @@ frappe.ready(function() {
                 </tr>`;
             tbody.append(row);
         });
+        
+        // If no users found after filtering
+        if (filteredUsers.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="5" class="text-center">No users found for the selected batch</td>
+                </tr>
+            `);
+        }
     }
 
+    // IMPORTANT: renderRegistrationsTable is obsolete since we've consolidated into a single table
+    // All functionality should use renderUsersTable instead
+    
     function fetchQuestionCategories() {
         console.log('Fetching question categories...');
         frappe.call({
@@ -1144,8 +1144,13 @@ frappe.ready(function() {
             },
             callback: function(response) {
                 if (response.message && response.message.success) {
-                    registrationsData.push(response.message.user);
-                    renderRegistrationsTable();
+                    // Find user in registrationsData and update status
+                    const userIndex = registrationsData.findIndex(r => r.email === email);
+                    if (userIndex !== -1) {
+                        registrationsData[userIndex].registered = true;
+                        registrationsData[userIndex].status = "Registered";
+                    }
+                    renderUsersTable();
                     frappe.show_alert({
                         message: __('User added successfully'),
                         indicator: 'green'
@@ -1157,38 +1162,7 @@ frappe.ready(function() {
         });
     }
     
-    function renderRegistrationsTable() {
-        $('#registrations-table tbody').empty();
-        
-        if (registrationsData.length === 0) {
-            $('#registrations-table tbody').append(`
-                <tr>
-                    <td colspan="3" class="text-center">No registrations found</td>
-                </tr>
-            `);
-            return;
-        }
-        
-        registrationsData.forEach(r => {
-            const row = `<tr>
-                <td>${r.user_name || r.user}</td>
-                <td><span class="badge badge-${r.status === 'Registered' ? 'success' : 'secondary'}">${r.status}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-danger remove-registration" data-user="${r.user}">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            </tr>`;
-            
-            $('#registrations-table tbody').append(row);
-        });
-        
-        // Bind remove buttons
-        $('.remove-registration').off('click').on('click', function() {
-            const user = $(this).data('user');
-            removeRegistration(user);
-        });
-    }
+    // We don't need renderRegistrationsTable anymore as get_registrations will directly update registrationsData
     
     function removeRegistration(user) {
         frappe.confirm(
@@ -1202,10 +1176,14 @@ frappe.ready(function() {
                     },
                     callback: function(response) {
                         if (response.message && response.message.success) {
-                            registrationsData = registrationsData.filter(r => r.user !== user);
-                            renderRegistrationsTable();
-                            // Also refresh the available users table
-                            renderAvailableUsersTable();
+                            // Update users in registrationsData to mark as not registered
+                            const userIndex = registrationsData.findIndex(r => r.name === user);
+                            if (userIndex !== -1) {
+                                registrationsData[userIndex].registered = false;
+                                registrationsData[userIndex].status = "Not Registered";
+                            }
+                            // Render the combined user table
+                            renderUsersTable();
                             frappe.show_alert({
                                 message: __('User removed successfully'),
                                 indicator: 'green'
