@@ -1,4 +1,3 @@
-
 frappe.ready(function() {
     // Global variables
     let currentStep = 1;
@@ -9,8 +8,10 @@ frappe.ready(function() {
     let categoriesData = {};
     let selectedCategoriesData = [];
     
-    // Store all users data
+    // Store all users and batches data
     let allUsersData = [];
+    let examBatches = [];
+    let selectedBatch = 'all';
     
     // Initialize the page
     init();
@@ -20,6 +21,7 @@ frappe.ready(function() {
         bindEvents();
         populateDropdowns();
         fetchQuestionCategories();
+        loadExamBatches();
         
         // Reset all step styles and ensure we're at step 1
         $('.step-navigation .nav-link').removeClass('active completed');
@@ -34,7 +36,7 @@ frappe.ready(function() {
         
         // Fix any Bootstrap nav-pills styling conflicts
         setTimeout(() => {
-            $('.step-navigation.nav-pills .nav-link.active').css('background-color', 'transparent');
+            $('.nav-pills .nav-link.active').css('background-color', 'transparent');
         }, 100);
     }
     
@@ -249,6 +251,12 @@ frappe.ready(function() {
         $('.step-navigation .nav-link').on('click', function(e) {
             e.preventDefault();
             return false;
+        });
+        
+        // Batch filter change
+        $('#batch-filter').on('change', function() {
+            selectedBatch = $(this).val();
+            renderAvailableUsersTable();
         });
     }
     
@@ -580,54 +588,64 @@ frappe.ready(function() {
         });
     }
     
-    function renderAvailableUsersTable() {
-        $('#available-users-table tbody').empty();
-        
-        if (allUsersData.length === 0) {
-            $('#available-users-table tbody').append(`
-                <tr>
-                    <td colspan="3" class="text-center">No users found</td>
-                </tr>
-            `);
-            return;
-        }
-        
-        // Filter out users who are already registered
-        const registeredUserIds = registrationsData.map(r => r.user);
-        const availableUsers = allUsersData.filter(user => !registeredUserIds.includes(user.name));
-        
-        if (availableUsers.length === 0) {
-            $('#available-users-table tbody').append(`
-                <tr>
-                    <td colspan="3" class="text-center">All users are registered</td>
-                </tr>
-            `);
-            return;
-        }
-        
-        availableUsers.forEach(user => {
-            const row = `<tr>
-                <td>${user.full_name}</td>
-                <td>${user.email}</td>
-                <td>
-                    <button class="btn btn-sm btn-success add-user" 
-                            data-email="${user.email}" 
-                            data-name="${user.name}">
-                        <i class="bi bi-plus-circle"></i>
-                    </button>
-                </td>
-            </tr>`;
-            
-            $('#available-users-table tbody').append(row);
-        });
-        
-        // Bind add buttons
-        $('.add-user').off('click').on('click', function() {
-            const email = $(this).data('email');
-            addRegistration(email);
+    function loadExamBatches() {
+        frappe.call({
+            method: 'exampro.www.manage.exam_builder.get_exam_batches',
+            callback: function(response) {
+                if (response.message && !response.message.error) {
+                    examBatches = response.message;
+                    populateBatchFilter();
+                }
+            }
         });
     }
-    
+
+    function populateBatchFilter() {
+        const batchFilter = $('#batch-filter');
+        batchFilter.empty();
+        batchFilter.append('<option value="all">All Batches</option>');
+        
+        examBatches.forEach(batch => {
+            batchFilter.append(`<option value="${batch.name}">${batch.batch_name}</option>`);
+        });
+    }
+
+    function renderAvailableUsersTable() {
+        const tbody = $('#available-users-table tbody');
+        tbody.empty();
+
+        // Filter users based on selected batch
+        const filteredUsers = selectedBatch === 'all' 
+            ? allUsersData 
+            : allUsersData.filter(user => user.batches.includes(selectedBatch));
+
+        filteredUsers.forEach(user => {
+            // Check if user is already registered
+            const isRegistered = registrationsData.some(reg => reg.candidate === user.name);
+            if (!isRegistered) {
+                const batchNames = user.batches.map(batchId => {
+                    const batch = examBatches.find(b => b.name === batchId);
+                    return batch ? batch.batch_name : batchId;
+                }).join(', ');
+
+                const row = `
+                    <tr>
+                        <td>${frappe.utils.escape_html(user.full_name)}</td>
+                        <td>${frappe.utils.escape_html(user.email)}</td>
+                        <td>${frappe.utils.escape_html(batchNames)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary add-user" 
+                                    data-user="${user.name}" 
+                                    data-email="${user.email}">
+                                Add
+                            </button>
+                        </td>
+                    </tr>`;
+                tbody.append(row);
+            }
+        });
+    }
+
     function fetchQuestionCategories() {
         console.log('Fetching question categories...');
         frappe.call({

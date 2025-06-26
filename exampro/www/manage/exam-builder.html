@@ -290,51 +290,59 @@
                             <!-- Manage all users link -->
                             <div class="d-flex justify-content-end mb-3">
                                 <a href="/manage/users" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-people"></i> Manage all users
+                                    <i class="bi bi-people"></i> Manage All Users
                                 </a>
                             </div>
                             
                             <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <div class="card h-100">
-                                        <div class="card-header">
-                                            <h6 class="mb-0">Available Users (Exam Candidates)</h6>
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">Available Users</h6>
+                                            <div class="form-inline">
+                                                <label class="mr-2" for="batch-filter">Batch:</label>
+                                                <select class="form-control form-control-sm" id="batch-filter">
+                                                    <option value="all">All Batches</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                                            <table class="table table-sm table-hover" id="available-users-table">
-                                                <thead class="sticky-top bg-white">
-                                                    <tr>
-                                                        <th>User</th>
-                                                        <th>Email</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Available users will be listed here -->
-                                                </tbody>
-                                            </table>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover" id="available-users-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Name</th>
+                                                            <th>Email</th>
+                                                            <th>Batches</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <div class="card h-100">
+                                    <div class="card">
                                         <div class="card-header">
                                             <h6 class="mb-0">Registered Users</h6>
                                         </div>
-                                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                                            <table class="table table-sm table-hover" id="registrations-table">
-                                                <thead class="sticky-top bg-white">
-                                                    <tr>
-                                                        <th>User</th>
-                                                        <th>Status</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Registered users will be listed here -->
-                                                </tbody>
-                                            </table>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover" id="registrations-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Name</th>
+                                                            <th>Email</th>
+                                                            <th>Status</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

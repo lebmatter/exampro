@@ -162,7 +162,7 @@ def get_available_questions():
 @frappe.whitelist()
 def get_users():
     """
-    Get all users who have Exam Candidate role
+    Get all users who have Exam Candidate role along with their batch info
     """
     if not has_exam_manager_role():
         return {"success": False, "error": _("Not permitted")}
@@ -187,14 +187,18 @@ def get_users():
             order_by="full_name asc"
         )
         
+        # Get batch information for each user
         for user in users:
-            batches = frappe.get_all("Exam Batch User", filters={"candidate": user.name}, fields=["exam_batch"])
-            user["batches"] = [b.exam_batch for b in batches]
+            batch_links = frappe.get_all(
+                "Exam Batch User",
+                filters={"candidate": user.name},
+                fields=["exam_batch"]
+            )
+            user.batches = [b.exam_batch for b in batch_links]
 
         return users
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching users with Exam Candidate role")
-        return {"success": False, "error": str(e)}
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()
@@ -579,4 +583,23 @@ def get_exams():
         return exams
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching exams")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_exam_batches():
+    """
+    Get list of all exam batches
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        batches = frappe.get_list(
+            "Exam Batch",
+            fields=["name", "batch_name"],
+            order_by="batch_name asc"
+        )
+        return batches
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error fetching exam batches")
         return {"success": False, "error": str(e)}
