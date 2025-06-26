@@ -187,6 +187,10 @@ def get_users():
             order_by="full_name asc"
         )
         
+        for user in users:
+            batches = frappe.get_all("Exam Batch User", filters={"candidate": user.name}, fields=["exam_batch"])
+            user["batches"] = [b.exam_batch for b in batches]
+
         return users
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching users with Exam Candidate role")
