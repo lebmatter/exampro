@@ -222,8 +222,14 @@ def get_registrations(schedule):
         
         # Convert to expected format for compatibility
         for reg in registrations:
+            # Get user email
+            email = frappe.db.get_value("User", reg.candidate, "email")
+            
+            # Add required fields
             reg["user"] = reg.candidate
             reg["user_name"] = reg.candidate_name
+            reg["email"] = email
+            
             # Remove the extra fields to avoid confusion
             del reg["candidate"]
             del reg["candidate_name"]
@@ -602,4 +608,71 @@ def get_exam_batches():
         return batches
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching exam batches")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def add_registrations(schedule, users):
+    """
+    Add multiple exam submissions to a schedule
+    
+    Args:
+        schedule (str): Name of the schedule
+        users (str): JSON string of user emails to register
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        users_list = json.loads(users)
+        results = []
+        errors = []
+        
+        for email in users_list:
+            # Check if user exists
+            user = frappe.get_list("User", filters={"email": email}, limit=1)
+            
+            if not user:
+                errors.append(f"User not found: {email}")
+                continue
+                
+            user_name = user[0].name
+            
+            # Check if already registered
+            existing = frappe.get_list(
+                "Exam Submission",
+                filters={"exam_schedule": schedule, "candidate": user_name},
+                limit=1
+            )
+            
+            if existing:
+                continue
+            
+            # Create submission
+            reg_doc = frappe.get_doc({
+                "doctype": "Exam Submission",
+                "exam_schedule": schedule,
+                "candidate": user_name,
+                "candidate_name": frappe.db.get_value("User", user_name, "full_name"),
+                "status": "Registered"
+            })
+            reg_doc.insert()
+            
+            # Get user details for the response
+            user_details = frappe.get_doc("User", user_name)
+            results.append({
+                "user": user_name,
+                "user_name": user_details.full_name,
+                "candidate": user_name,
+                "status": "Registered",
+                "creation": reg_doc.creation
+            })
+        
+        return {
+            "success": True,
+            "results": results,
+            "errors": errors
+        }
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error in bulk registration for schedule {schedule}")
         return {"success": False, "error": str(e)}

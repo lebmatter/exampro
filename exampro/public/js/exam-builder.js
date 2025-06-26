@@ -13,6 +13,12 @@ frappe.ready(function() {
     let examBatches = [];
     let selectedBatch = 'all';
     
+    // Store pending changes
+    let pendingChanges = {
+        add: [],
+        remove: []
+    };
+    
     // Initialize the page
     init();
     
@@ -218,10 +224,36 @@ frappe.ready(function() {
         // Handle add user buttons - delegated event handler
         $(document).on('click', '.add-user', function() {
             const email = $(this).data('email');
-            addRegistration(email);
+            pendingChanges.add.push(email);
+            if (pendingChanges.remove.includes(email)) {
+                pendingChanges.remove = pendingChanges.remove.filter(e => e !== email);
+            }
+            renderUsersTable();
         });
         
-        // No need for search functionality as we have two clean columns now
+        // Handle remove user
+        $(document).on('click', '.remove-user', function() {
+            const email = $(this).data('email');
+            pendingChanges.remove.push(email);
+            if (pendingChanges.add.includes(email)) {
+                pendingChanges.add = pendingChanges.add.filter(e => e !== email);
+            }
+            renderUsersTable();
+        });
+        
+        // Handle cancel add
+        $(document).on('click', '.cancel-add', function() {
+            const email = $(this).data('email');
+            pendingChanges.add = pendingChanges.add.filter(e => e !== email);
+            renderUsersTable();
+        });
+        
+        // Handle cancel remove
+        $(document).on('click', '.cancel-remove', function() {
+            const email = $(this).data('email');
+            pendingChanges.remove = pendingChanges.remove.filter(e => e !== email);
+            renderUsersTable();
+        });
         
         // Navigation buttons
         $('#next-step').on('click', function() {
@@ -258,6 +290,9 @@ frappe.ready(function() {
             selectedBatch = $(this).val();
             renderAvailableUsersTable();
         });
+        
+        // Add event handler for bulk registration
+        $('#finish-registration').on('click', applyRegistrationChanges);
     }
     
     function navigateToStep(step) {
@@ -565,12 +600,12 @@ frappe.ready(function() {
                 schedule: scheduleId
             },
             callback: function(response) {
-                if (response.message) {
+                if (response.message && !response.message.error) {
+                    // The email is now included in the response from the server
                     registrationsData = response.message;
-                    renderRegistrationsTable();
-                    
-                    // Also load all users
-                    loadAllUsers();
+                    renderUsersTable();
+                } else if (response.message && response.message.error) {
+                    frappe.msgprint(__('Error loading registrations: ' + response.message.error));
                 }
             }
         });
@@ -610,9 +645,12 @@ frappe.ready(function() {
         });
     }
 
-    function renderAvailableUsersTable() {
-        const tbody = $('#available-users-table tbody');
+    function renderUsersTable() {
+        const tbody = $('#users-table tbody');
         tbody.empty();
+
+        // Get pending changes
+        const pendingChanges = getPendingChanges();
 
         // Filter users based on selected batch
         const filteredUsers = selectedBatch === 'all' 
@@ -620,29 +658,60 @@ frappe.ready(function() {
             : allUsersData.filter(user => user.batches.includes(selectedBatch));
 
         filteredUsers.forEach(user => {
-            // Check if user is already registered
             const isRegistered = registrationsData.some(reg => reg.candidate === user.name);
-            if (!isRegistered) {
-                const batchNames = user.batches.map(batchId => {
-                    const batch = examBatches.find(b => b.name === batchId);
-                    return batch ? batch.batch_name : batchId;
-                }).join(', ');
+            const isPendingAdd = pendingChanges.add.includes(user.email);
+            const isPendingRemove = pendingChanges.remove.includes(user.email);
+            
+            const batchNames = user.batches.map(batchId => {
+                const batch = examBatches.find(b => b.name === batchId);
+                return batch ? batch.batch_name : batchId;
+            }).join(', ');
 
-                const row = `
-                    <tr>
-                        <td>${frappe.utils.escape_html(user.full_name)}</td>
-                        <td>${frappe.utils.escape_html(user.email)}</td>
-                        <td>${frappe.utils.escape_html(batchNames)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary add-user" 
-                                    data-user="${user.name}" 
-                                    data-email="${user.email}">
-                                Add
-                            </button>
-                        </td>
-                    </tr>`;
-                tbody.append(row);
+            let status, actionButton;
+            
+            if (isRegistered && !isPendingRemove) {
+                status = '<span class="badge badge-success">Registered</span>';
+                actionButton = `
+                    <button class="btn btn-sm btn-danger remove-user" 
+                            data-user="${user.name}" 
+                            data-email="${user.email}">
+                        Remove
+                    </button>`;
+            } else if (isPendingAdd) {
+                status = '<span class="badge badge-warning">Pending Registration</span>';
+                actionButton = `
+                    <button class="btn btn-sm btn-secondary cancel-add" 
+                            data-user="${user.name}" 
+                            data-email="${user.email}">
+                        Cancel
+                    </button>`;
+            } else if (isPendingRemove) {
+                status = '<span class="badge badge-warning">Pending Removal</span>';
+                actionButton = `
+                    <button class="btn btn-sm btn-secondary cancel-remove" 
+                            data-user="${user.name}" 
+                            data-email="${user.email}">
+                        Cancel
+                    </button>`;
+            } else {
+                status = '<span class="badge badge-secondary">Not Registered</span>';
+                actionButton = `
+                    <button class="btn btn-sm btn-primary add-user" 
+                            data-user="${user.name}" 
+                            data-email="${user.email}">
+                        Add
+                    </button>`;
             }
+
+            const row = `
+                <tr>
+                    <td>${frappe.utils.escape_html(user.full_name)}</td>
+                    <td>${frappe.utils.escape_html(user.email)}</td>
+                    <td>${frappe.utils.escape_html(batchNames)}</td>
+                    <td>${status}</td>
+                    <td>${actionButton}</td>
+                </tr>`;
+            tbody.append(row);
         });
     }
 
@@ -1322,5 +1391,86 @@ frappe.ready(function() {
                 }
             }
         });
+    }
+    
+    function getPendingChanges() {
+        return pendingChanges;
+    }
+
+    function applyRegistrationChanges() {
+        if (pendingChanges.add.length === 0 && pendingChanges.remove.length === 0) {
+            frappe.show_alert({
+                message: __('No changes to apply'),
+                indicator: 'orange'
+            });
+            return;
+        }
+
+        let message = '';
+        if (pendingChanges.add.length > 0) {
+            message += `Add ${pendingChanges.add.length} users\n`;
+        }
+        if (pendingChanges.remove.length > 0) {
+            message += `Remove ${pendingChanges.remove.length} users\n`;
+        }
+
+        frappe.confirm(
+            __('Are you sure you want to apply the following changes?\n\n' + message),
+            async () => {
+                try {
+                    // Handle additions
+                    if (pendingChanges.add.length > 0) {
+                        const result = await frappe.call({
+                            method: 'exampro.www.manage.exam_builder.add_registrations',
+                            args: {
+                                schedule: scheduleData.name,
+                                users: JSON.stringify(pendingChanges.add)
+                            }
+                        });
+
+                        if (result.message.success) {
+                            // Update registrationsData with new registrations
+                            registrationsData = [...registrationsData, ...result.message.results];
+                        } else {
+                            frappe.throw(result.message.error);
+                        }
+                    }
+
+                    // Handle removals
+                    if (pendingChanges.remove.length > 0) {
+                        const removePromises = pendingChanges.remove.map(email => 
+                            frappe.call({
+                                method: 'exampro.www.manage.exam_builder.remove_registration',
+                                args: {
+                                    schedule: scheduleData.name,
+                                    user: email
+                                }
+                            })
+                        );
+
+                        await Promise.all(removePromises);
+                        
+                        // Update registrationsData by removing the users
+                        registrationsData = registrationsData.filter(reg => 
+                            !pendingChanges.remove.includes(reg.email)
+                        );
+                    }
+
+                    // Reset pending changes
+                    pendingChanges = { add: [], remove: [] };
+                    
+                    // Refresh the table
+                    renderUsersTable();
+
+                    frappe.show_alert({
+                        message: __('Changes applied successfully'),
+                        indicator: 'green'
+                    });
+
+                } catch (error) {
+                    frappe.throw(__('Error applying changes: ') + error.message);
+                }
+            }
+        );
     }
 });
