@@ -263,8 +263,7 @@ frappe.ready(function() {
                 } else if (currentStep < 4) {
                     navigateToStep(currentStep + 1);
                 } else {
-                    // refresh page
-                    window.location.reload();
+                    window.location.href = '/manage/exams';
                 }
             }
         });
