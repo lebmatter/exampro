@@ -287,6 +287,7 @@ frappe.ready(function() {
         // Batch filter change
         $('#batch-filter').on('change', function() {
             selectedBatch = $(this).val();
+            console.log('Batch filter changed to:', selectedBatch);
             renderUsersTable();
         });
         
@@ -604,10 +605,17 @@ frappe.ready(function() {
                 if (response.message && !response.message.error) {
                     // The response now includes all users with their registration status
                     registrationsData = response.message;
+                    console.log('Loaded registrations data:', registrationsData);
                     renderUsersTable();
                 } else if (response.message && response.message.error) {
                     frappe.msgprint(__('Error loading registrations: ' + response.message.error));
+                } else {
+                    console.error('Invalid response format:', response);
                 }
+            },
+            error: function(error) {
+                console.error('Failed to load registrations:', error);
+                frappe.msgprint(__('Failed to load registrations'));
             }
         });
     }
@@ -642,18 +650,41 @@ frappe.ready(function() {
 
         // Get pending changes
         const pendingChanges = getPendingChanges();
+        
+        console.log('Rendering users table with data:', registrationsData);
+        console.log('Selected batch:', selectedBatch);
+        console.log('Pending changes:', pendingChanges);
 
         // Filter users based on selected batch
         const filteredUsers = selectedBatch === 'all' 
             ? registrationsData 
-            : registrationsData.filter(user => user.batches.some(batch => batch.id === selectedBatch));
+            : registrationsData.filter(user => {
+                // Handle case where batches might not exist or be empty
+                if (!user.batches || !Array.isArray(user.batches)) {
+                    console.log('User has no batches:', user.email);
+                    return false;
+                }
+                return user.batches.some(batch => {
+                    // Handle different possible batch structure
+                    const batchId = batch.id || batch.name || batch;
+                    return batchId === selectedBatch;
+                });
+            });
+
+        console.log('Filtered users:', filteredUsers);
 
         filteredUsers.forEach(user => {
             const isPendingAdd = pendingChanges.add.includes(user.email);
             const isPendingRemove = pendingChanges.remove.includes(user.email);
             
-            // Format batch names for display
-            const batchNames = user.batches.map(batch => batch.name).join(', ');
+            // Format batch names for display - handle missing batches
+            let batchNames = '';
+            if (user.batches && Array.isArray(user.batches) && user.batches.length > 0) {
+                batchNames = user.batches.map(batch => {
+                    // Handle different possible batch structure
+                    return batch.name || batch.batch_name || batch.id || batch;
+                }).join(', ');
+            }
 
             let status, actionButton;
             
@@ -682,7 +713,7 @@ frappe.ready(function() {
                         Cancel
                     </button>`;
             } else {
-                status = '<span class="badge badge-secondary">Not Registered</span>';
+                status = 'Not Registered';
                 actionButton = `
                     <button class="btn btn-sm btn-primary add-user" 
                             data-user="${user.name}" 
@@ -693,9 +724,9 @@ frappe.ready(function() {
 
             const row = `
                 <tr>
-                    <td>${frappe.utils.escape_html(user.full_name)}</td>
-                    <td>${frappe.utils.escape_html(user.email)}</td>
-                    <td>${frappe.utils.escape_html(batchNames)}</td>
+                    <td>${(frappe.utils && frappe.utils.escape_html) ? frappe.utils.escape_html(user.full_name) : (user.full_name || '')}</td>
+                    <td>${(frappe.utils && frappe.utils.escape_html) ? frappe.utils.escape_html(user.email) : (user.email || '')}</td>
+                    <td>${(frappe.utils && frappe.utils.escape_html) ? frappe.utils.escape_html(batchNames) : batchNames}</td>
                     <td>${status}</td>
                     <td>${actionButton}</td>
                 </tr>`;
@@ -1406,11 +1437,18 @@ frappe.ready(function() {
                             }
                         });
 
-                        if (result.message.success) {
+                        if (result.message && result.message.success) {
                             // Update registrationsData with new registrations
-                            registrationsData = [...registrationsData, ...result.message.results];
+                            // Update the existing users' registration status
+                            pendingChanges.add.forEach(email => {
+                                const userIndex = registrationsData.findIndex(user => user.email === email);
+                                if (userIndex !== -1) {
+                                    registrationsData[userIndex].registered = true;
+                                    registrationsData[userIndex].status = 'Registered';
+                                }
+                            });
                         } else {
-                            frappe.throw(result.message.error);
+                            throw new Error(result.message ? result.message.error : 'Failed to add registrations');
                         }
                     }
 
@@ -1428,10 +1466,14 @@ frappe.ready(function() {
 
                         await Promise.all(removePromises);
                         
-                        // Update registrationsData by removing the users
-                        registrationsData = registrationsData.filter(reg => 
-                            !pendingChanges.remove.includes(reg.email)
-                        );
+                        // Update registrationsData by changing status instead of removing users
+                        pendingChanges.remove.forEach(email => {
+                            const userIndex = registrationsData.findIndex(user => user.email === email);
+                            if (userIndex !== -1) {
+                                registrationsData[userIndex].registered = false;
+                                registrationsData[userIndex].status = 'Not Registered';
+                            }
+                        });
                     }
 
                     // Reset pending changes
@@ -1446,6 +1488,7 @@ frappe.ready(function() {
                     });
 
                 } catch (error) {
+                    console.error('Error applying changes:', error);
                     frappe.throw(__('Error applying changes: ') + error.message);
                 }
             }
