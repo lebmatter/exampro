@@ -433,15 +433,13 @@ function displayQuestion(current_qs) {
                     optImgHtml = `<div class="option-image"><img src="${optImg}" class="img-fluid" alt="" ></div>`
                 }
                 choicesHtml += `
-                    <div class="mb-2">
-                        <div class="custom-checkbox">
-                            <label class="option-row">
-                                <input class="option" value="${key}" type="${inputType}" name="qs_${currentQuestion["key"]}" ${checked}>
-                                <div class="option-text">${value}</div>
-                            </label>
+                    <div class="option-item ${checked ? 'selected' : ''}">
+                        <div class="d-flex align-items-center">
+                            <input class="option" value="${key}" type="${inputType}" name="qs_${currentQuestion["key"]}" ${checked} id="option_${currentQuestion["key"]}_${key}">
+                            <label class="option-text mb-0" for="option_${currentQuestion["key"]}_${key}">${value}</label>
                         </div>
-                        ${explanationHtml}
                         ${optImgHtml}
+                        ${explanationHtml}
                     </div>`;
             }
         });
@@ -451,6 +449,18 @@ function displayQuestion(current_qs) {
         $('#examTextInput').hide();
         $('#choices').html('');
         $('#choices').append(choicesHtml);
+        
+        // Add event handler to update selected class
+        $('.option').on('change', function() {
+            if (currentQuestion["multiple"]) {
+                // For checkboxes (multiple choice)
+                $(this).closest('.option-item').toggleClass('selected', $(this).is(':checked'));
+            } else {
+                // For radio buttons (single choice)
+                $('.option-item').removeClass('selected');
+                $(this).closest('.option-item').addClass('selected');
+            }
+        });
 
     } else {
         $('#choices').hide();
