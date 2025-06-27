@@ -205,19 +205,6 @@ def evaluation_values(exam, submitted_answers):
 		result_status = "NA"
 	
 	return total_marks, eval_pending, result_status
-
-def rebuild_cache(exam_submission):
-	"""
-	If the system restarts/crashes in while an ongoing exam,
-	Restart it
-	"""
-	doc = frappe.get_doc("Exam Submission", exam_submission)
-	doc.can_start_exam()
-	if doc.status != "Started":
-		return
-	cached_exam = frappe.cache().hget(exam_submission, "exam")
-	if cached_exam:
-		return
 	
 
 @frappe.whitelist()
