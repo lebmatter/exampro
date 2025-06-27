@@ -226,9 +226,7 @@ after_request = ["exampro.exam_pro.utils.cleanup_request"]
 # ]
 
 website_route_rules = [
-    {"from_route": "/exam/scorecard/<exam_submission>", "to_route": "exam/scorecard"},
-	{"from_route": "/exam/finished/<exam_submission>", "to_route": "exam/finished"},
-    {"from_route": "/exam/terminated/<exam_submission>", "to_route": "exam/terminated"},
+    {"from_route": "/exam/<exam_submission>", "to_route": "exam/result"},
     {"from_route": "/manage", "to_route": "manage/users"}
 ]
 
