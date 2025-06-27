@@ -26,7 +26,6 @@ def get_website_context(context):
                 {"label": "Users", "url": "/manage/users"},
                 {"label": "Batches", "url": "/manage/batches"},
                 {"label": "Exams", "url": "/manage/exams"},
-                {"label": "Schedules", "url": "/manage/schedules"},
                 {"label": "Questions", "url": "/manage/questions"}
             ]
         })
