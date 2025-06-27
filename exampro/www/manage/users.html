@@ -35,10 +35,14 @@
             </div>
             <div class="col-md-3 text-md-end">
                 <div class="btn-toolbar justify-content-md-end">
-                    <button id="save-changes-btn" class="btn btn-success me-2 mr-2">Save All Changes</button>
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
-                        <i class="bi bi-plus-circle mr-1"></i> Add Users
-                    </button>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
+                            <i class="bi bi-plus-circle mr-1"></i> Add Users
+                        </button>
+                        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#addBatchModal">
+                            <i class="bi bi-people mr-1"></i> Add Batch
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -464,8 +468,253 @@ frappe.ready(function() {
     
     // Batch filter handler
     $("#batch-filter").on("change", function() {
+        var selectedBatch = $(this).val();
+        
+        // If a specific batch is selected, show the batch action buttons
+        if (selectedBatch !== 'all') {
+            // Show batch action buttons if they don't exist
+            if ($("#batch-actions").length === 0) {
+                $(this).after(`
+                    <div id="batch-actions" class="mt-2">
+                        <button id="manage-batch-users-btn" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-people"></i> Manage Users in Batch
+                        </button>
+                    </div>
+                `);
+                
+                // Add click handler for the manage batch users button
+                $("#manage-batch-users-btn").on("click", function() {
+                    var batchName = $("#batch-filter").val();
+                    if (batchName === 'all') {
+                        frappe.show_alert({
+                            message: 'Please select a specific batch first',
+                            indicator: 'red'
+                        }, 3);
+                        return;
+                    }
+                    
+                    // Open the batch management modal
+                    $("#manageUserBatchesModal").data("batch", batchName);
+                    $("#modal-batch-name").text(batchName);
+                    
+                    // Load users for this batch
+                    loadBatchUsers(batchName);
+                });
+            }
+        } else {
+            // Remove batch action buttons if they exist
+            $("#batch-actions").remove();
+        }
+        
+        // Update the table filter
         initPagination();
+    });
+    
+    // Add Batch button click
+    $("#add-batch-btn").click(function() {
+        var batchName = $("#batch-name").val().trim();
+        
+        if (!batchName) {
+            frappe.msgprint("Please enter a batch name");
+            return;
+        }
+        
+        frappe.call({
+            method: "exampro.www.manage.batches.create_batch",
+            args: {
+                batch_name: batchName
+            },
+            callback: function(response) {
+                if (response.message && response.message.success) {
+                    frappe.show_alert({
+                        message: "Batch created successfully",
+                        indicator: 'green'
+                    }, 3);
+                    $("#batch-name").val("");
+                    $("#addBatchModal").modal("hide");
+                    
+                    // Add the new batch to the select dropdown
+                    $("#batch-filter").append(`<option value="${batchName}">${batchName}</option>`);
+                    
+                    // Optional: Select the new batch
+                    $("#batch-filter").val(batchName).trigger('change');
+                } else {
+                    frappe.show_alert({
+                        message: response.message.error || "Failed to create batch",
+                        indicator: 'red'
+                    }, 5);
+                }
+            }
+        });
+    });
+    
+    // Load users for a specific batch
+    function loadBatchUsers(batchName) {
+        frappe.call({
+            method: "exampro.www.manage.batches.get_users_batch_status",
+            args: {
+                batch_name: batchName
+            },
+            callback: function(response) {
+                if (response.message) {
+                    var users = response.message;
+                    var html = '';
+                    
+                    if (users.length === 0) {
+                        html = '<tr><td colspan="3" class="text-center py-4">No users found</td></tr>';
+                    } else {
+                        users.forEach(function(user, index) {
+                            html += `
+                            <tr>
+                                <td>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input batch-user-checkbox" 
+                                               id="user-${index}" 
+                                               data-user="${user.email}"
+                                               ${user.in_batch ? 'checked' : ''}>
+                                        <label class="custom-control-label" for="user-${index}"></label>
+                                    </div>
+                                </td>
+                                <td>${user.email}</td>
+                                <td>${user.in_batch ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-secondary">No</span>'}</td>
+                            </tr>`;
+                        });
+                    }
+                    
+                    // Update modal content
+                    $("#batch-users-table-body").html(html);
+                    
+                    // Show the modal
+                    $("#manageUserBatchesModal").modal("show");
+                } else {
+                    frappe.show_alert({
+                        message: 'Failed to fetch user data',
+                        indicator: 'red'
+                    }, 5);
+                }
+            }
+        });
+    }
+    
+    // Filter users in batch modal
+    $("#batch-user-search").on("keyup", function() {
+        var searchTerm = $(this).val().toLowerCase();
+        
+        $("#batch-users-table-body tr").each(function() {
+            var email = $(this).find("td:eq(1)").text().toLowerCase();
+            if (email.indexOf(searchTerm) > -1) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Save batch user assignments
+    $("#save-batch-users-btn").click(function() {
+        var batchName = $("#manageUserBatchesModal").data("batch");
+        var userAssignments = [];
+        
+        // Collect all checked user checkboxes
+        $(".batch-user-checkbox").each(function() {
+            userAssignments.push({
+                user: $(this).data("user"),
+                in_batch: $(this).prop("checked")
+            });
+        });
+        
+        // Update user assignments via AJAX
+        frappe.call({
+            method: "exampro.www.manage.batches.update_batch_user_assignments",
+            args: {
+                batch: batchName,
+                assignments: userAssignments
+            },
+            callback: function(response) {
+                if (response.message && response.message.success) {
+                    frappe.show_alert({
+                        message: 'Batch user assignments updated successfully',
+                        indicator: 'green'
+                    }, 3);
+                    
+                    // Close the modal and refresh the page
+                    $("#manageUserBatchesModal").modal("hide");
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    frappe.show_alert({
+                        message: response.message.error || 'Failed to update batch user assignments',
+                        indicator: 'red'
+                    }, 5);
+                }
+            }
+        });
     });
 });
 </script>
+
+<!-- Add Batch Modal -->
+<div class="modal fade" id="addBatchModal" tabindex="-1" role="dialog" aria-labelledby="addBatchModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBatchModalLabel">Add New Batch</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="batch-name">Batch Name</label>
+                    <input type="text" id="batch-name" class="form-control" placeholder="Enter batch name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="add-batch-btn" type="button" class="btn btn-primary">Create Batch</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Batch Users Modal -->
+<div class="modal fade" id="manageUserBatchesModal" tabindex="-1" role="dialog" aria-labelledby="manageUserBatchesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageUserBatchesModalLabel">Manage Batch Users</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="batch-info mb-3">
+                    <strong>Batch:</strong> <span id="modal-batch-name"></span>
+                </div>
+                <div class="form-group mb-3">
+                    <input type="text" id="batch-user-search" class="form-control" placeholder="Search users...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{{ _("Select") }}</th>
+                                <th>{{ _("Email") }}</th>
+                                <th>{{ _("In Batch") }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batch-users-table-body">
+                            <!-- Users will be loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="save-batch-users-btn" type="button" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

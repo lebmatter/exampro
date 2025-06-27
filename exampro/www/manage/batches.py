@@ -53,6 +53,83 @@ def delete_batch(batch_name):
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()
+def get_all_batches_with_user_assignments(user):
+    """
+    Get all batches and whether the user is assigned to them
+    
+    Args:
+        user (str): User email
+    """
+    if not frappe.has_permission("Exam Batch", "read"):
+        return []
+    
+    try:
+        # Get all batches
+        all_batches = frappe.get_all("Exam Batch", fields=["name"])
+        
+        # Get user's batch assignments
+        user_batches = frappe.get_all(
+            "Exam Batch User", 
+            filters={"user": user},
+            fields=["exam_batch"]
+        )
+        
+        user_batch_names = [ub.exam_batch for ub in user_batches]
+        
+        # Add is_member flag to each batch
+        for batch in all_batches:
+            batch["is_member"] = batch.name in user_batch_names
+            
+        return all_batches
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), f"Error getting batch data for user {user}")
+        return []
+
+@frappe.whitelist()
+def update_user_batch_assignments(user, assignments):
+    """
+    Update a user's batch assignments
+    
+    Args:
+        user (str): User email
+        assignments (list): List of dict with batch name and is_member flag
+    """
+    if not frappe.has_permission("Exam Batch User", "write"):
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        assignments = frappe.parse_json(assignments)
+        
+        for assignment in assignments:
+            batch_name = assignment.get("batch")
+            is_member = assignment.get("is_member")
+            
+            # Check if user is already in this batch
+            existing = frappe.get_all(
+                "Exam Batch User",
+                filters={"user": user, "exam_batch": batch_name}
+            )
+            
+            if is_member and not existing:
+                # Add user to batch
+                batch_user = frappe.new_doc("Exam Batch User")
+                batch_user.exam_batch = batch_name
+                batch_user.user = user
+                batch_user.insert(ignore_permissions=True)
+            
+            elif not is_member and existing:
+                # Remove user from batch
+                for entry in existing:
+                    frappe.delete_doc("Exam Batch User", entry.name, ignore_permissions=True)
+        
+        frappe.db.commit()
+        return {"success": True}
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error updating batch assignments for user {user}")
+        return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
 def get_batch_users(batch_name):
     """
     Get all users in a batch
@@ -198,6 +275,85 @@ def get_user_batches(user):
     
     batches = [bu.exam_batch for bu in batch_users]
     return batches
+
+@frappe.whitelist()
+def get_users_batch_status(batch_name):
+    """
+    Get all users and their status in a specific batch
+    
+    Args:
+        batch_name (str): Name of the batch
+    """
+    if not frappe.has_permission("Exam Batch", "read"):
+        return []
+    
+    try:
+        # Get all users in the system
+        all_users = frappe.get_all("User", 
+                                   fields=["name", "email", "full_name"],
+                                   filters={"enabled": 1, "name": ["!=", "Administrator"]})
+        
+        # Get users in this batch
+        batch_users = frappe.get_all(
+            "Exam Batch User", 
+            filters={"exam_batch": batch_name},
+            fields=["user"]
+        )
+        
+        batch_user_emails = [bu.user for bu in batch_users]
+        
+        # Add in_batch flag to each user
+        for user in all_users:
+            user["in_batch"] = user.name in batch_user_emails
+            
+        return all_users
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), f"Error getting users for batch {batch_name}")
+        return []
+
+@frappe.whitelist()
+def update_batch_user_assignments(batch, assignments):
+    """
+    Update batch user assignments
+    
+    Args:
+        batch (str): Batch name
+        assignments (list): List of dict with user email and in_batch flag
+    """
+    if not frappe.has_permission("Exam Batch User", "write"):
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        assignments = frappe.parse_json(assignments)
+        
+        for assignment in assignments:
+            user = assignment.get("user")
+            in_batch = assignment.get("in_batch")
+            
+            # Check if user is already in this batch
+            existing = frappe.get_all(
+                "Exam Batch User",
+                filters={"user": user, "exam_batch": batch}
+            )
+            
+            if in_batch and not existing:
+                # Add user to batch
+                batch_user = frappe.new_doc("Exam Batch User")
+                batch_user.exam_batch = batch
+                batch_user.user = user
+                batch_user.insert(ignore_permissions=True)
+            
+            elif not in_batch and existing:
+                # Remove user from batch
+                for entry in existing:
+                    frappe.delete_doc("Exam Batch User", entry.name, ignore_permissions=True)
+        
+        frappe.db.commit()
+        return {"success": True}
+    
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error updating user assignments for batch {batch}")
+        return {"success": False, "error": str(e)}
 
 def get_context(context):
     if not frappe.has_permission("Exam Batch", "read"):
