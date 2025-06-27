@@ -15,6 +15,44 @@ from werkzeug.utils import secure_filename
 import boto3
 from botocore.client import Config
 
+def get_s3_client():
+    """
+    Get or create an S3 client from the connection pool.
+    Stores the client in frappe.local for reuse within the same request.
+    
+    Returns:
+        boto3.client: S3 client with appropriate configuration
+    """
+    # Check if we already have a client in the current request
+    if hasattr(frappe.local, "s3_client"):
+        return frappe.local.s3_client
+        
+    # Get settings
+    settings = frappe.get_single("Exam Settings")
+    cfdomain = settings.get_storage_endpoint()
+    if not cfdomain:
+        frappe.throw(_("Storage endpoint is not configured. Please check Exam Settings."))
+        
+    # Create a new client
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=cfdomain,
+        aws_access_key_id=settings.aws_key,
+        aws_secret_access_key=settings.get_password("aws_secret"),
+        config=Config(
+            signature_version='s3v4',
+            # Add connection pooling settings
+            max_pool_connections=50,  # Reuse connections
+            connect_timeout=5,        # Connection timeout
+            read_timeout=60           # Read timeout for uploads
+        )
+    )
+    
+    # Store in frappe.local for this request
+    frappe.local.s3_client = s3_client
+    
+    return s3_client
+
 def create_website_user(full_name, email):
     # Check if the user already exists
     if frappe.db.exists("User", email):
@@ -289,6 +327,10 @@ def rebuild_exam_trackers():
     This preserves the cache entries that track ongoing exam sessions.
     Called from on_app_init hook.
     """
+    # Clear any existing S3 client
+    if hasattr(frappe.local, "s3_client"):
+        delattr(frappe.local, "s3_client")
+    
     # Get all ongoing exams (status = "Started")
     ongoing_exams = frappe.get_all(
         "Exam Submission", 
@@ -704,17 +746,7 @@ def get_videos(exam_submission, ttl=None):
 	Get list of videos. Optional cache the urls with ttl
 	"""
 	settings = frappe.get_single("Exam Settings")
-	cfdomain = settings.get_storage_endpoint()
-	if not cfdomain:
-		frappe.throw(_("Storage endpoint is not configured. Please check Exam Settings."))
-
-	s3_client = boto3.client(
-		's3', 
-		endpoint_url = cfdomain,
-		aws_access_key_id=settings.aws_key, 
-		aws_secret_access_key=settings.get_password("aws_secret"),
-		config=Config(signature_version='s3v4')
-	)
+	s3_client = get_s3_client()
 	res = {"videos": {}}
 
 	# Paginator to handle buckets with many objects
@@ -786,8 +818,8 @@ def proctor_video_list(exam_submission=None):
 @frappe.whitelist()
 def upload_video(exam_submission=None):
 	"""
-	Get the list of videos from s3
-	TODO Add a caching layer to avoid creating boto3 connections/req
+	Upload video to S3 storage and notify proctor
+	Uses connection pooling for better performance with multiple uploads
 	"""
 	assert exam_submission
 	if frappe.session.user == "Guest":
@@ -801,16 +833,8 @@ def upload_video(exam_submission=None):
 		raise frappe.PermissionError(_("Exam does not belongs to the user."))
 	
 	settings = frappe.get_single("Exam Settings")
-	cfdomain = 'https://{}.r2.cloudflarestorage.com'.format(
-		settings.aws_account_id
-	)
-	s3_client = boto3.client(
-		's3',
-		endpoint_url = cfdomain,
-		aws_access_key_id=settings.aws_key, 
-		aws_secret_access_key=settings.get_password("aws_secret"),
-		config=Config(signature_version='s3v4')
-	)
+	s3_client = get_s3_client()
+	
 	if 'file' not in frappe.request.files:
 		return {"status": False}
 

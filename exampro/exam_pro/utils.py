@@ -4,6 +4,16 @@ def redirect_to_exams_list():
     frappe.local.flags.redirect_location = "/my-exams"
     raise frappe.Redirect
 
+def cleanup_request():
+    """
+    Clean up resources at the end of a request.
+    This function cleans up any resources that were used during the request.
+    Currently, it:
+    1. Clears the S3 client from frappe.local to prevent memory leaks
+    """
+    if hasattr(frappe.local, "s3_client"):
+        delattr(frappe.local, "s3_client")
+
 def get_website_context(context):
     user_roles = frappe.get_roles(frappe.session.user)
     top_bar_items = []

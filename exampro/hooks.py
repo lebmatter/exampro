@@ -187,7 +187,7 @@ website_user_home_page = "/my-exams"
 # Request Events
 # ----------------
 # before_request = ["exampro.utils.before_request"]
-# after_request = ["exampro.utils.after_request"]
+after_request = ["exampro.exam_pro.utils.cleanup_request"]
 
 # Job Events
 # ----------
