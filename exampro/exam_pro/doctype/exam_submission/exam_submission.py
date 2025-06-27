@@ -282,6 +282,101 @@ def start_exam(exam_submission=None):
 
 	return True
 
+
+def rebuild_exam_trackers():
+    """
+    Rebuild tracker keys and exam data for ongoing exams in case of app restart.
+    This preserves the cache entries that track ongoing exam sessions.
+    Called from on_app_init hook.
+    """
+    # Get all ongoing exams (status = "Started")
+    ongoing_exams = frappe.get_all(
+        "Exam Submission", 
+        filters={"status": "Started"}, 
+        fields=["name", "exam", "exam_schedule", "exam_started_time", "additional_time_given", 
+                "candidate", "assigned_evaluator", "assigned_proctor"]
+    )
+    
+    rebuilt_count = 0
+    for exam in ongoing_exams:
+        # Check if the tracker key exists
+        if frappe.cache().get("{}:tracker".format(exam.name)):
+            continue
+        
+        try:
+            # Get required values to calculate expiration time
+            start_date_time, duration = frappe.get_cached_value(
+                "Exam Schedule", exam.exam_schedule, ["start_date_time", "duration"]
+            )
+            
+            # Calculate end time (same logic as in start_exam)
+            end_time = start_date_time + timedelta(minutes=duration) + \
+                    timedelta(minutes=exam.additional_time_given)
+            
+            # Calculate remaining time
+            current_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
+            remaining_seconds = max(0, int((end_time - current_time).total_seconds()))
+            
+            # Only rebuild if exam is still in progress (has remaining time)
+            if remaining_seconds > 0:
+                # Rebuild the tracker key with remaining time
+                frappe.cache().setex("{}:tracker".format(exam.name), remaining_seconds, 1)
+                
+                # Rebuild all exam cache data
+                exam_doc = frappe.get_doc("Exam Submission", exam.name)
+                
+                # Cache submission details (similar to start_exam function)
+                data = {
+                    "candidate": exam.candidate,
+                    "exam_schedule": exam.exam_schedule,
+                    "exam": exam.exam,
+                    "total_questions": str(frappe.get_cached_value(
+                        "Exam", exam.exam, "total_questions"
+                    )),
+                    "status": "Started",
+                    "exam_started_time": exam.exam_started_time.isoformat(),
+                    "exam_end_time": end_time.isoformat(),
+                    "additional_time_given": str(exam.additional_time_given),
+                    "assigned_evaluator": exam.assigned_evaluator or "",
+                    "assigned_proctor": exam.assigned_proctor or "",
+                    "warning_count": 0,
+                }
+                
+                # Get question data
+                submitted_answers = frappe.get_all(
+                    "Exam Answer", 
+                    filters={"parent": exam.name},
+                    fields=["seq_no", "exam_question", "evaluation_status"]
+                )
+                
+                # Cache question data
+                for ans in submitted_answers:
+                    data[f"qs:{ans.seq_no}"] = f"{ans.exam_question}:{ans.evaluation_status}"
+                
+                # Set all cache entries
+                for k, v in data.items():
+                    frappe.cache().hset(exam.name, k, v)
+                
+                rebuilt_count += 1
+                
+                # Log for monitoring purposes
+                frappe.logger().info(f"Rebuilt cache for exam submission: {exam.name} with {remaining_seconds} seconds remaining")
+            else:
+                # If the exam has expired, mark it as submitted
+                exam_doc = frappe.get_doc("Exam Submission", exam.name)
+                if exam_doc.status == "Started":
+                    exam_doc.status = "Submitted"
+                    exam_doc.exam_submitted_time = datetime.now()
+                    exam_doc.save(ignore_permissions=True)
+                    frappe.logger().info(f"Marked expired exam as submitted: {exam.name}")
+                
+        except Exception as error:
+            frappe.logger().error(f"Failed to rebuild cache for exam {exam.name}: {str(error)}")
+    
+    frappe.logger().info(f"Rebuilt cache for {rebuilt_count} ongoing exams")
+    return rebuilt_count
+
+
 @frappe.whitelist()
 def end_exam(exam_submission=None):
 	"""
@@ -555,7 +650,7 @@ def exam_messages(exam_submission=None):
 		}, fields=["creation", "from", "message", "type_of_message"],
 		ignore_permissions=True
 	)
-	for idx, _ in enumerate(res):
+	for idx, msg in enumerate(res):
 		res[idx]["creation"] = res[idx]["creation"].isoformat()
 
 	# sort by datetime
@@ -734,7 +829,7 @@ def upload_video(exam_submission=None):
 	try:
 		# Stream the file directly to S3
 		s3_client.upload_fileobj(file, bucket_name, object_name)
-	except Exception as e:
+	except Exception:
 		# return str(e), 500
 		return {"status": False}
 	else:
