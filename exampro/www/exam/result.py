@@ -35,7 +35,7 @@ def set_exam_context(context, exmsubmn):
 	# Get exam data
 	exam_data = frappe.db.get_value(
 		"Exam", exam_submission.exam,
-		["total_marks", "show_result", "show_result_after_date", "passing_marks"],
+		["total_marks", "show_result", "show_result_after_date", "total_marks"],
 		as_dict=True
 	)
 	

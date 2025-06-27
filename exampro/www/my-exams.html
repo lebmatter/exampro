@@ -68,7 +68,7 @@
                                     {% elif exam.status == "Started" %}
                                         <a href="/exam" class="btn btn-sm btn-primary">Continue Exam</a>
                                     {% elif exam.status == "Submitted" %}
-                                        <a href="/exam/result?exam_submission={{ exam.submission }}" 
+                                        <a href="/exam/{{ exam.submission }}" 
                                            class="btn btn-sm btn-outline-secondary">View Result</a>
                                     {% endif %}
                                 </td>

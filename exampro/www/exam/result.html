@@ -153,7 +153,7 @@
             <div class="exam-details">
                 <p><strong>Exam:</strong> {{ exam_submission.exam }}</p>
                 <p><strong>Candidate:</strong> {{ exam_submission.candidate }}</p>
-                <p><strong>Passing Marks:</strong> {{ exam_data.passing_marks }}</p>
+                <p><strong>Passing Marks:</strong> {{ exam_data.total_marks }}</p>
                 <p><strong>Date Completed:</strong> {{ exam_submission.modified.strftime('%d %b %Y, %I:%M %p') }}</p>
             </div>
         {% elif result_type == "pending" %}

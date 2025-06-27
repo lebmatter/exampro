@@ -550,7 +550,7 @@ function endExam() {
             },
             callback: (data) => {
                 if (data.message.show_result === 1) {
-                    window.location.href = "/exam/result?exam_submission=" + exam.exam_submission;
+                    window.location.href = "/exam/" + exam.exam_submission;
                 } else {
                     window.location.reload();
                 }
