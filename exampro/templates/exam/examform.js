@@ -583,30 +583,32 @@ function showSubmitConfirmPage() {
         $("#quiz-title").html();
         $('#quiz-box').removeClass("text-center");
         let messageHtml = `
+            <div class="d-flex justify-content-center">
             <div class="card" style="max-width: 30rem;">
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="bi bi-clock me-2"></i>
-                        <h6 class="mb-0">Time Remaining: <span class="ml-10 timer">--:--</span></h6>
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class=" mr-10">Total Questions</span>
-                            <span>${examOverview.total_questions}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="  mr-10">Total Answered</span>
-                            <span>${examOverview.total_answered}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="  mr-10">Marked for Review</span>
-                            <span>${examOverview.total_marked_for_later}</span>
-                        </li>
-                    </ul>
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-clock me-2"></i>
+                    <h6 class="mb-0">Time Remaining: <span class="ml-10 timer">--:--</span></h6>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="mr-10">Total Questions</span>
+                    <span>${examOverview.total_questions}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="mr-10">Total Answered</span>
+                    <span>${examOverview.total_answered}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="mr-10">Marked for Review</span>
+                    <span>${examOverview.total_marked_for_later}</span>
+                    </li>
+                </ul>
                 </div>
                 <div class="card-footer">
-                    <button class="btn btn-success w-100" id="quizSubmit" onClick=endExam();>Submit Exam</button>
+                <button class="btn btn-success w-100" id="quizSubmit" onClick=endExam();>Submit Exam</button>
                 </div>
+            </div>
             </div>
             `
         $("#quiz-box").html(messageHtml);
