@@ -324,20 +324,42 @@ function updateOverviewMap() {
                 $("#button-grid").html('');
             }
             for (let i = 1; i <= data.message.total_questions; i++) {
-                btnCls = "btn-outline-dark";
-                // create a new button
+                let btnCls = "btn-outline-secondary";
+                let btnStyle = "";
+                
+                // Determine button style based on question status
+                if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
+                    btnCls = "btn-outline-warning";
+                    btnStyle = "border-width: 2px;";
+                } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
+                    btnCls = "btn-outline-success";
+                    btnStyle = "border-width: 2px;";
+                }
+                
+                // If this is the current question, highlight it
+                if (currentQuestion && i === currentQuestion["no"]) {
+                    btnCls = "btn-primary";
+                }
+                
+                // Create a new button
                 const button = $("<button></button>");
-                button.text(i);
-                button.addClass("exam-map-btn btn " + btnCls + " m-1 btn-sm");
+                button.addClass("exam-map-btn btn " + btnCls);
                 button.attr("id", "button-" + i);
+                button.attr("style", btnStyle);
+                
+                // Set the button content based on question status
                 if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
                     button.html(answrLater + ' ' + i);
                 } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
                     button.html(answrdCheck + ' ' + i);
+                } else {
+                    button.text(i);
                 }
-                // append the button and label to the row
-                // buttonRow.append(button, label);
+                
+                // Append the button to the grid
                 $("#button-grid").append(button);
+                
+                // Add click event handler
                 button.click((e) => {
                     getQuestion(i);
                 });
@@ -397,11 +419,12 @@ function displayQuestion(current_qs) {
     } else {
         instruction = "Enter the correct answer";
     }
-    $('#question-number').text(`Question ${currentQuestion["no"]}: ${instruction}`);
+    $('#question-number').html(`<span class="question-number-text">Question ${currentQuestion["no"]}</span> <span class="question-instruction">${instruction}</span>`);
 
     // Set question text
     $('#question-text').html('');
-    $('#question-text').append(currentQuestion["question"]);
+    // Wrap the question content in a div for better styling
+    $('#question-text').append(`<div class="question-content">${currentQuestion["question"]}</div>`);
 
     // Populate choices or show input based on question type
     if (currentQuestion["type"] === "Choices") {
