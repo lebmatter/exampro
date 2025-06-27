@@ -1,0 +1,554 @@
+{% extends "exampro/templates/exam_base.html" %}
+
+{% block title %}
+{{ _('Manage Exams & Schedules') }}
+{% endblock %}
+
+{% block page_content %}
+<div class="container">
+    <div class="row mb-5">
+        <div class="col">
+            <h4>📝 Manage Exams & Schedules</h4>
+        </div>
+    </div>
+    
+    <!-- Filter, Search and Buttons in a single row -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-3 mb-2 mb-md-0">
+            <select id="status-filter" class="form-control rounded">
+                <option value="all">All Items</option>
+                <option value="published">Published Exams</option>
+                <option value="unpublished">Unpublished Exams</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="ongoing">Ongoing Schedules</option>
+                <option value="completed">Completed Schedules</option>
+            </select>
+        </div>
+        <div class="col-md-5 mb-2 mb-md-0">
+            <input type="text" id="item-search" class="form-control rounded" placeholder="Search by title or name...">
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="btn-toolbar justify-content-md-end">
+                <button id="create-schedule-btn" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-plus-circle me-1"></i> New Schedule
+                </button>
+                <button id="create-exam-btn" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i> New Exam
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Tree Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="exam-schedules-table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width: 30%">{{ _("Title/Name") }}</th>
+                            <th>{{ _("Duration (min)") }}</th>
+                            <th>{{ _("Questions") }}</th>
+                            <th>{{ _("Start Time") }}</th>
+                            <th>{{ _("Status") }}</th>
+                            <th>{{ _("Actions") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="exam-schedules-table-body">
+                        {% if not exams %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                {{ _("No exams found") }}
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% for exam in exams %}
+                        <!-- Exam Row -->
+                        <tr class="exam-row" data-exam="{{ exam.name }}" data-row-type="exam">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="toggle-schedules me-2" data-exam="{{ exam.name }}">
+                                        <i class="bi bi-caret-right-fill"></i>
+                                    </span>
+                                    <strong>{{ exam.title }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ exam.duration }}</td>
+                            <td>{{ exam.total_questions }}</td>
+                            <td>-</td>
+                            <td>
+                                {% if exam.published %}
+                                    <span class="badge bg-success">Published</span>
+                                    {% if exam.upcoming %}
+                                        <span class="badge bg-info">Upcoming</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">Draft</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/app/exam/{{ exam.name }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary duplicate-exam" data-exam="{{ exam.name }}">Duplicate</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-exam" data-exam="{{ exam.name }}" data-title="{{ exam.title }}">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Schedule Rows for this Exam - Initially Hidden -->
+                        {% for schedule in exam.schedules %}
+                        <tr class="schedule-row schedule-for-{{ exam.name }}" data-schedule="{{ schedule.name }}" data-parent-exam="{{ exam.name }}" style="display: none; background-color: rgba(0,0,0,0.03);" data-row-type="schedule">
+                            <td>
+                                <div class="d-flex align-items-center ps-4">
+                                    <i class="bi bi-calendar-event me-2"></i>
+                                    {{ schedule.name }}
+                                </div>
+                            </td>
+                            <td>{{ schedule.duration }}</td>
+                            <td>-</td>
+                            <td>{{ schedule.start_date_time }}</td>
+                            <td>
+                                {% if schedule.status == "Upcoming" %}
+                                    <span class="badge bg-info">Upcoming</span>
+                                {% elif schedule.status == "Ongoing" %}
+                                    <span class="badge bg-warning">Ongoing</span>
+                                {% elif schedule.status == "Completed" %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ schedule.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/app/exam-schedule/{{ schedule.name }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary duplicate-schedule" data-schedule="{{ schedule.name }}">Duplicate</button>
+                                    {% if schedule.status == "Upcoming" %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-schedule" data-schedule="{{ schedule.name }}" data-name="{{ schedule.name }}">Delete</button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="row">
+                <div class="col">
+                    <span id="item-count">Total: {{ exams|length }} exams, {{ total_schedules }} schedules</span>
+                </div>
+                <div class="col">
+                    <nav>
+                        <ul class="pagination justify-content-end pagination-sm mb-0" id="pagination-container">
+                            <!-- Pagination will be inserted here by JS -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.8em;
+}
+.table td, .table th {
+    padding: 1rem;
+    vertical-align: middle;
+}
+.toggle-schedules {
+    cursor: pointer;
+    width: 20px;
+    text-align: center;
+    display: inline-block;
+}
+.toggle-schedules i {
+    transition: transform 0.2s ease-in-out;
+}
+.toggle-schedules.rotated i {
+    transform: rotate(90deg);
+    display: inline-block;
+}
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+}
+.schedule-row td {
+    border-top: none;
+    border-bottom: 1px solid #dee2e6;
+}
+</style>
+
+<script>
+frappe.ready(function() {
+    // Pagination variables
+    var currentPage = 1;
+    var rowsPerPage = 50;
+    var filteredItems = [];
+    var allExamRows = $(".exam-row");
+    var allScheduleRows = $(".schedule-row");
+    
+    // Toggle schedules visibility
+    $(document).on("click", ".toggle-schedules", function() {
+        var examName = $(this).data('exam');
+        var $toggleElement = $(this);
+        var $schedules = $(".schedule-for-" + examName);
+        
+        if ($schedules.first().is(":visible")) {
+            $schedules.hide();
+            $toggleElement.removeClass("rotated");
+        } else {
+            $schedules.show();
+            $toggleElement.addClass("rotated");
+        }
+    });
+    
+    // Initialize pagination
+    function initPagination() {
+        // Get filtered items
+        applyFilters();
+        
+        // Calculate the number of pages
+        var visibleItems = $(".exam-row:visible, .schedule-row:visible");
+        var numPages = Math.ceil(visibleItems.length / rowsPerPage);
+        
+        // Create pagination controls
+        updatePagination(numPages);
+        
+        // Display the first page
+        displayPage(1);
+        
+        // Update item count
+        updateItemCount();
+    }
+    
+    // Apply filters to the table
+    function applyFilters() {
+        var searchTerm = $("#item-search").val().toLowerCase();
+        var statusFilter = $("#status-filter").val();
+        
+        // Reset visibility and rotation state
+        allExamRows.hide();
+        allScheduleRows.hide();
+        $(".toggle-schedules").removeClass("rotated");
+        
+        // Filter exams
+        allExamRows.each(function() {
+            var $examRow = $(this);
+            var examName = $examRow.data('exam');
+            var title = $examRow.find('td:first strong').text().toLowerCase();
+            var matchesSearch = !searchTerm || title.indexOf(searchTerm) > -1;
+            
+            var matchesStatus = true;
+            if (statusFilter !== 'all') {
+                var isPublished = $examRow.find('.badge.bg-success').length > 0;
+                var isUpcoming = $examRow.find('.badge.bg-info').length > 0;
+                
+                if (statusFilter === 'published') {
+                    matchesStatus = isPublished;
+                } else if (statusFilter === 'unpublished') {
+                    matchesStatus = !isPublished;
+                } else if (statusFilter === 'upcoming') {
+                    matchesStatus = isUpcoming;
+                } else if (statusFilter === 'ongoing' || statusFilter === 'completed') {
+                    matchesStatus = false; // These are schedule statuses
+                }
+            }
+            
+            if (matchesSearch && matchesStatus) {
+                $examRow.show();
+            }
+        });
+        
+        // Filter schedules
+        allScheduleRows.each(function() {
+            var $scheduleRow = $(this);
+            var scheduleName = $scheduleRow.data('schedule');
+            var parentExam = $scheduleRow.data('parent-exam');
+            var name = $scheduleRow.find('td:first').text().toLowerCase();
+            var matchesSearch = !searchTerm || name.indexOf(searchTerm) > -1;
+            
+            var matchesStatus = true;
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'ongoing') {
+                    matchesStatus = $scheduleRow.find('.badge.bg-warning').length > 0;
+                } else if (statusFilter === 'completed') {
+                    matchesStatus = $scheduleRow.find('.badge.bg-success').length > 0;
+                } else if (statusFilter === 'upcoming') {
+                    matchesStatus = $scheduleRow.find('.badge.bg-info').length > 0;
+                } else if (statusFilter === 'published' || statusFilter === 'unpublished') {
+                    matchesStatus = false; // These are exam statuses
+                }
+            }
+            
+            if (matchesSearch && matchesStatus) {
+                $scheduleRow.show();
+                // Also show parent exam
+                $(".exam-row[data-exam='" + parentExam + "']").show();
+                // Add rotated class to parent's toggle element
+                $(".toggle-schedules[data-exam='" + parentExam + "']").addClass("rotated");
+            }
+        });
+    }
+    
+    // Update pagination controls
+    function updatePagination(numPages) {
+        var $pagination = $("#pagination-container");
+        $pagination.empty();
+        
+        // Don't show pagination if only one page
+        if (numPages <= 1) {
+            return;
+        }
+        
+        // Previous button
+        $pagination.append(`
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="prev">&laquo;</a>
+            </li>
+        `);
+        
+        // Page numbers
+        var startPage = Math.max(1, currentPage - 2);
+        var endPage = Math.min(numPages, startPage + 4);
+        
+        for (var i = startPage; i <= endPage; i++) {
+            $pagination.append(`
+                <li class="page-item ${currentPage === i ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        // Next button
+        $pagination.append(`
+            <li class="page-item ${currentPage === numPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="next">&raquo;</a>
+            </li>
+        `);
+        
+        // Handle pagination clicks
+        $(".page-link").on("click", function(e) {
+            e.preventDefault();
+            
+            var page = $(this).data('page');
+            if (page === 'prev') {
+                if (currentPage > 1) {
+                    displayPage(currentPage - 1);
+                }
+            } else if (page === 'next') {
+                var visibleItems = $(".exam-row:visible, .schedule-row:visible");
+                var numPages = Math.ceil(visibleItems.length / rowsPerPage);
+                if (currentPage < numPages) {
+                    displayPage(currentPage + 1);
+                }
+            } else {
+                displayPage(page);
+            }
+        });
+    }
+    
+    // Display a specific page
+    function displayPage(page) {
+        currentPage = page;
+        
+        // Get all visible rows
+        var visibleItems = $(".exam-row:visible, .schedule-row:visible");
+        
+        // Calculate indexes
+        var startIndex = (page - 1) * rowsPerPage;
+        var endIndex = Math.min(startIndex + rowsPerPage, visibleItems.length);
+        
+        // Hide all rows
+        visibleItems.addClass('pagination-hidden');
+        
+        // Show only the rows for the current page
+        for (var i = startIndex; i < endIndex; i++) {
+            $(visibleItems[i]).removeClass('pagination-hidden');
+        }
+        
+        // Update pagination controls
+        var numPages = Math.ceil(visibleItems.length / rowsPerPage);
+        updatePagination(numPages);
+    }
+    
+    // Update item count display
+    function updateItemCount() {
+        var visibleExams = $(".exam-row:visible").length;
+        var visibleSchedules = $(".schedule-row:visible").length;
+        $("#item-count").text(`Showing: ${visibleExams} exams, ${visibleSchedules} schedules`);
+    }
+    
+    // Handle item search
+    $("#item-search").on("keyup", function() {
+        currentPage = 1;
+        initPagination();
+    });
+    
+    // Handle status filter
+    $("#status-filter").on("change", function() {
+        currentPage = 1;
+        initPagination();
+    });
+    
+    // Handle create exam button
+    $("#create-exam-btn").on("click", function() {
+        window.location.href = "/app/exam/new-exam";
+    });
+    
+    // Handle create schedule button
+    $("#create-schedule-btn").on("click", function() {
+        window.location.href = "/app/exam-schedule/new-exam-schedule";
+    });
+    
+    // Handle duplicate exam
+    $(document).on("click", ".duplicate-exam", function() {
+        var examName = $(this).data('exam');
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.duplicate_exam',
+            args: {
+                exam: examName
+            },
+            callback: function(response) {
+                if (response.message && response.message.success) {
+                    frappe.show_alert({
+                        message: 'Exam duplicated successfully',
+                        indicator: 'green'
+                    }, 3);
+                    
+                    // Refresh the page
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    frappe.show_alert({
+                        message: response.message.error || 'Failed to duplicate exam',
+                        indicator: 'red'
+                    }, 5);
+                }
+            }
+        });
+    });
+    
+    // Handle delete exam
+    $(document).on("click", ".delete-exam", function() {
+        var examName = $(this).data('exam');
+        var examTitle = $(this).data('title');
+        
+        frappe.confirm(`Are you sure you want to delete exam "${examTitle}"? This will also delete all associated schedules. This action cannot be undone.`,
+            function() {
+                frappe.call({
+                    method: 'exampro.www.manage.exams.delete_exam',
+                    args: {
+                        exam: examName
+                    },
+                    callback: function(response) {
+                        if (response.message && response.message.success) {
+                            frappe.show_alert({
+                                message: 'Exam deleted successfully',
+                                indicator: 'green'
+                            }, 3);
+                            
+                            // Remove the rows and refresh pagination
+                            $(`.exam-row[data-exam="${examName}"]`).remove();
+                            $(`.schedule-row[data-parent-exam="${examName}"]`).remove();
+                            allExamRows = $(".exam-row");
+                            allScheduleRows = $(".schedule-row");
+                            initPagination();
+                        } else {
+                            frappe.show_alert({
+                                message: response.message.error || 'Failed to delete exam',
+                                indicator: 'red'
+                            }, 5);
+                        }
+                    }
+                });
+            }
+        );
+    });
+    
+    // Handle duplicate schedule
+    $(document).on("click", ".duplicate-schedule", function() {
+        var scheduleName = $(this).data('schedule');
+        
+        frappe.call({
+            method: 'exampro.www.manage.schedules.duplicate_schedule',
+            args: {
+                schedule: scheduleName
+            },
+            callback: function(response) {
+                if (response.message && response.message.success) {
+                    frappe.show_alert({
+                        message: 'Schedule duplicated successfully',
+                        indicator: 'green'
+                    }, 3);
+                    
+                    // Refresh the page
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    frappe.show_alert({
+                        message: response.message.error || 'Failed to duplicate schedule',
+                        indicator: 'red'
+                    }, 5);
+                }
+            }
+        });
+    });
+    
+    // Handle delete schedule
+    $(document).on("click", ".delete-schedule", function() {
+        var scheduleName = $(this).data('schedule');
+        var scheduleName = $(this).data('name');
+        
+        frappe.confirm(`Are you sure you want to delete schedule "${scheduleName}"? This action cannot be undone.`,
+            function() {
+                frappe.call({
+                    method: 'exampro.www.manage.schedules.delete_schedule',
+                    args: {
+                        schedule: scheduleName
+                    },
+                    callback: function(response) {
+                        if (response.message && response.message.success) {
+                            frappe.show_alert({
+                                message: 'Schedule deleted successfully',
+                                indicator: 'green'
+                            }, 3);
+                            
+                            // Remove the row and refresh pagination
+                            $(`.schedule-row[data-schedule="${scheduleName}"]`).remove();
+                            allScheduleRows = $(".schedule-row");
+                            initPagination();
+                        } else {
+                            frappe.show_alert({
+                                message: response.message.error || 'Failed to delete schedule',
+                                indicator: 'red'
+                            }, 5);
+                        }
+                    }
+                });
+            }
+        );
+    });
+    
+    // Add CSS for pagination hidden class
+    $("<style>")
+        .prop("type", "text/css")
+        .html(`
+            .pagination-hidden {
+                display: none !important;
+            }
+        `)
+        .appendTo("head");
+    
+    // Initialize pagination on page load
+    initPagination();
+});
+</script>
+{% endblock %}
