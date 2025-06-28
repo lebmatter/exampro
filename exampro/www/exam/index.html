@@ -22,17 +22,38 @@ Alert!
         font-size: 16px;
     }
 
-    /* Zerodha-style chat container */
+    /* Common styling from examform.html */
+    .bold-heading {
+        font-weight: 600;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: #212529;
+    }
+
+    .common-card-style {
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: none;
+        margin-bottom: 2rem;
+    }
+
+    .column-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Zerodha-style chat container with updated styling */
     #messages {
         max-height: 400px;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
+        border-radius: 5px;
         background-color: #f9f9f9;
         padding: 10px;
         font-size: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    /* Zerodha-style chat bubble */
+    /* Chat bubble styling */
     .chat-bubble {
         padding: 8px 12px;
         margin-bottom: 8px;
@@ -54,16 +75,16 @@ Alert!
 
     .chat-timestamp-right {
         font-size: 11px;
-        color: #999;
+        color: #6c757d;
         margin-bottom: 2px;
         align-self: flex-end;
         margin-left: auto;
     }
 
-    /* Zerodha-style timestamp */
+    /* Timestamp styling */
     .chat-timestamp {
         font-size: 11px;
-        color: #999;
+        color: #6c757d;
         margin-bottom: 2px;
     }
 
@@ -85,18 +106,18 @@ Alert!
         padding-top: 10px;
     }
 
-    /* Zerodha-style input box */
+    /* Input box styling */
     #chat-input {
-        border: 1px solid #e0e0e0;
+        border: 1px solid #dee2e6;
         border-radius: 4px 0 0 4px;
         padding: 8px;
         font-size: 14px;
         height: 38px;
     }
 
-    /* Zerodha-style send button */
+    /* Send button styling */
     #send-message {
-        background-color: #387ed1;
+        background-color: #0d6efd;
         color: white;
         border: none;
         border-radius: 0 4px 4px 0;
@@ -104,6 +125,7 @@ Alert!
         font-size: 14px;
         height: 38px;
         line-height: 22px;
+        transition: all 0.2s ease;
     }
 
     /* Adjust input group */
@@ -120,16 +142,139 @@ Alert!
     }
 
     #send-message:hover {
-        background-color: #2c6cb2;
+        background-color: #0b5ed7;
     }
+    
     .focus-ring {
-      outline: 1px solid #007bff; /* Blue outline, can be customized */
+      outline: 2px solid #0d6efd;
+      outline-offset: 2px;
     }
-    .calcBtn:active, .calcBtn.active {
-    background-image: none;
-    outline: 0;
-    box-shadow: none;
-}
+    
+    /* Navigation tabs styling */
+    .nav-tabs {
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .nav-tabs .nav-item .nav-link {
+        border: none;
+        color: #495057;
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-tabs .nav-item .nav-link.active {
+        color: #0d6efd;
+        background-color: transparent;
+        border-bottom: 2px solid #0d6efd;
+    }
+    
+    .tab-content {
+        padding: 1.5rem 0;
+    }
+    
+    /* Badge styling */
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.7em;
+    }
+    
+    .badge-pill {
+        border-radius: 50rem;
+    }
+    
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    /* Button styling */
+    .btn {
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .btn-info {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+        color: #000;
+    }
+    
+    .btn-info:hover {
+        background-color: #31d2f2;
+        border-color: #25cff2;
+    }
+    
+    .btn-light {
+        background-color: #f8f9fa;
+        border-color: #f8f9fa;
+        color: #212529;
+    }
+    
+    .btn-light:hover {
+        background-color: #e2e6ea;
+        border-color: #dae0e5;
+    }
+    
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+    
+    .btn-outline-info {
+        color: #0dcaf0;
+        border-color: #0dcaf0;
+    }
+    
+    .btn-outline-info:hover {
+        background-color: #0dcaf0;
+        color: #000;
+    }
+    
+    /* Alert styling */
+    .alert-info {
+        color: #055160;
+        background-color: #cff4fc;
+        border-color: #b6effb;
+        border-left: 4px solid #0dcaf0;
+    }
+    
+    /* Card styling */
+    .card {
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 1rem;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .card-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid rgba(0,0,0,0.1);
+        padding: 0.75rem 1.25rem;
+    }
 </style>
 {% endblock %}
 
@@ -139,9 +284,9 @@ Alert!
     {% if alert %}
     <div class="row justify-content-center mt-10 mb-10">
         <div class="col-md-6">
-            <div class="card">
+            <div class="common-card-style">
                 <div class="card-body text-center">
-                    <h5 class="card-title">{{ alert.title }}</h5>
+                    <h5 class="bold-heading">{{ alert.title }}</h5>
                     <p class="card-text">{{ alert.text }}</p>
                 </div>
             </div>
@@ -157,19 +302,36 @@ Alert!
             <!-- Bootstrap Navigation -->
             <ul class="nav nav-tabs">
                 <li class="nav-item">
-                    <a class="nav-link active" data-toggle="tab" href="#messages">Messages
-                        {% if exam.enable_chat %}
-                        <span class="badge badge-pill badge-warning" id="msgCount"></span>
-                        {% endif %}
+                    <a class="nav-link active" data-toggle="tab" href="#messages">
+                        <span class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                class="bi bi-chat-text me-2" viewBox="0 0 16 16">
+                                <path d="M2.678 11.894a1 1 0 0 1 .287.801 10.97 10.97 0 0 1-.398 2c1.395-.323 2.247-.697 2.634-.893a1 1 0 0 1 .71-.074A8.06 8.06 0 0 0 8 14c3.996 0 7-2.807 7-6 0-3.192-3.004-6-7-6S1 4.808 1 8c0 1.468.617 2.83 1.678 3.894zm-.493 3.905a21.682 21.682 0 0 1-.713.129c-.2.032-.352-.176-.273-.362a9.68 9.68 0 0 0 .244-.637l.003-.01c.248-.72.45-1.548.524-2.319C.743 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.52.263-1.639.742-3.468 1.105z"/>
+                                <path d="M4 5.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8zm0 2.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"/>
+                            </svg>
+                            Messages
+                            {% if exam.enable_chat %}
+                            <span class="badge badge-pill badge-warning ms-2" id="msgCount"></span>
+                            {% endif %}
+                        </span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" href="#calculator">Calculator</a>
+                    <a class="nav-link" data-toggle="tab" href="#calculator">
+                        <span class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                class="bi bi-calculator me-2" viewBox="0 0 16 16">
+                                <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/>
+                                <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/>
+                            </svg>
+                            Calculator
+                        </span>
+                    </a>
                 </li>
             </ul>
 
             <!-- Tab Content -->
-            <div class="tab-content mt-5">
+            <div class="tab-content mt-3">
                 
                 <div id="messages" class="tab-pane fade show active">
                     {% if exam.enable_chat %}
@@ -181,7 +343,15 @@ Alert!
                         <div class="input-group">
                             <input type="text" id="chat-input" class="form-control" placeholder="Type your message...">
                             <div class="input-group-append">
-                                <button class="btn" type="button" id="send-message">Send</button>
+                                <button class="btn" type="button" id="send-message">
+                                    <span class="d-flex align-items-center">
+                                        Send
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                            class="bi bi-send ms-2" viewBox="0 0 16 16">
+                                            <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
+                                        </svg>
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -200,22 +370,28 @@ Alert!
                     {% endif %}
                 </div>
             </div>
-            <div class="card  mt-5">
+            <div class="common-card-style mt-4">
                 <div class="collapse show" id="videoCollapse">
                     <div class="card-body">
                         {% if exam.enable_video_proctoring %}
-                        <video id="webcam-stream" autoplay style="max-width: 100%;"></video>
+                        <video id="webcam-stream" autoplay style="max-width: 100%; border-radius: 4px;"></video>
                         {% else %}
                         <p class="card-text">Video proctoring disabled.</p>
                         {% endif %}
                     </div>
                 </div>
                 {% if exam.enable_video_proctoring %}
-                <div class="card-footer">
-                    <button class="btn  btn-outline-info btn-sm" type="button" data-toggle="collapse"
+                <div class="card-footer d-flex justify-content-end">
+                    <button class="btn btn-sm btn-outline-info" type="button" data-toggle="collapse"
                         data-target="#videoCollapse" aria-expanded="true" aria-controls="videoCollapse"
                         id="toggleButton">
-                        Hide Video
+                        <span class="d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                class="bi bi-camera-video me-2" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2V5zm11.5 5.175 3.5 1.556V4.269l-3.5 1.556v4.35zM2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H2z"/>
+                            </svg>
+                            Hide Video
+                        </span>
                     </button>
                 </div>
                 {% endif %}
@@ -226,25 +402,54 @@ Alert!
             <div class="row">
                 <div class="col-md-6">
                     <div class="d-flex justify-content-start">
-                        <button class="btn btn-info btn-sm mr-2" id="toggleInstruction">Hide instructions</button>
-                        <button class="btn btn-light btn-sm" id="submitTopBtn">Submit</button>
+                        <button class="btn btn-info btn-sm me-2" id="toggleInstruction">
+                            <span class="d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                    class="bi bi-info-circle me-2" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                </svg>
+                                Hide instructions
+                            </span>
+                        </button>
+                        <button class="btn btn-light btn-sm" id="submitTopBtn">
+                            <span class="d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                    class="bi bi-check2-circle me-2" viewBox="0 0 16 16">
+                                    <path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0z"/>
+                                    <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"/>
+                                </svg>
+                                Submit
+                            </span>
+                        </button>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="d-flex justify-content-end" id="timerdiv">
                         <!-- Right-aligned element -->
-                        <button class="btn btn-info btn-sm" id="showTimer" style="display: none;">Show
-                            timer</button>
-                        <a class="btn btn-link"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off"
-                                id="toggleTimer">
-                                <path
-                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                </path>
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                            </svg>
-                            <span class="badge badge-pill badge-warning timer">--:--</span>
+                        <button class="btn btn-info btn-sm" id="showTimer" style="display: none;">
+                            <span class="d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                    class="bi bi-clock me-2" viewBox="0 0 16 16">
+                                    <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                                </svg>
+                                Show timer
+                            </span>
+                        </button>
+                        <a class="btn btn-link">
+                            <span class="d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off me-2"
+                                    id="toggleTimer">
+                                    <path
+                                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                    </path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                                <span class="badge badge-pill bg-warning timer">--:--</span>
+                            </span>
                         </a>
                     </div>
                 </div>
@@ -261,7 +466,7 @@ Alert!
         </div>
     </div>
     {% endif %}
-    <!-- Bootstrap Modal -->
+    <!-- Bootstrap Modal with updated styling -->
     <div class="modal" id="examAlert">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -277,6 +482,34 @@ Alert!
             </div>
         </div>
     </div>
+</div>
+
+<!-- Additional helper classes -->
+<style>
+.me-2 {
+    margin-right: 0.5rem !important;
+}
+
+.ms-2 {
+    margin-left: 0.5rem !important;
+}
+
+.d-flex {
+    display: flex !important;
+}
+
+.align-items-center {
+    align-items: center !important;
+}
+
+.justify-content-end {
+    justify-content: flex-end !important;
+}
+
+.justify-content-start {
+    justify-content: flex-start !important;
+}
+</style>
     {% endblock %}
 
     <!-- Scripts -->
@@ -295,8 +528,12 @@ Alert!
         $(document).ready(function () {
             $('#toggleInstruction').click(function () {
                 $('#instruction').toggle();
-                $(this).text(function (i, text) {
-                    return text === "Show instructions" ? "Hide instructions" : "Show instructions";
+                $(this).html(function (i, html) {
+                    if (html.includes("Hide instructions")) {
+                        return '<span class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>Show instructions</span>';
+                    } else {
+                        return '<span class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>Hide instructions</span>';
+                    }
                 });
             });
             $('#toggleTimer').click(function () {
@@ -321,6 +558,15 @@ Alert!
                 if(e.which == 13) {
                     sendChatMessage();
                     return false;
+                }
+            });
+            
+            // Toggle button for video
+            $('#toggleButton').click(function() {
+                if ($(this).text().trim() === 'Hide Video') {
+                    $(this).html('<span class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-camera-video me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2V5zm11.5 5.175 3.5 1.556V4.269l-3.5 1.556v4.35zM2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H2z"/></svg>Show Video</span>');
+                } else {
+                    $(this).html('<span class="d-flex align-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-camera-video me-2" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M0 5a2 2 0 0 1 2-2h7.5a2 2 0 0 1 1.983 1.738l3.11-1.382A1 1 0 0 1 16 4.269v7.462a1 1 0 0 1-1.406.913l-3.111-1.382A2 2 0 0 1 9.5 13H2a2 2 0 0 1-2-2V5zm11.5 5.175 3.5 1.556V4.269l-3.5 1.556v4.35zM2 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H2z"/></svg>Hide Video</span>');
                 }
             });
         });
