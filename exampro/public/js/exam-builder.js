@@ -260,6 +260,13 @@ frappe.ready(function() {
                 if (currentStep === 2) {
                     // Special handling for step 2 - save exam before proceeding
                     saveExamWithConfirmation();
+                } else if (currentStep === 3) {
+                    // Special handling for step 3 - save schedule before proceeding
+                    if ($('input[name="schedule-choice"]:checked').val() === 'new') {
+                        saveScheduleWithConfirmation();
+                    } else {
+                        navigateToStep(currentStep + 1);
+                    }
                 } else if (currentStep < 4) {
                     navigateToStep(currentStep + 1);
                 } else {
@@ -1492,5 +1499,170 @@ frappe.ready(function() {
                 }
             }
         );
+    }
+    
+    /**
+     * Collect schedule data from the form
+     */
+    function collectScheduleData() {
+        // Get exam name - either the selected existing exam or the newly created one
+        const examName = examData.name;
+        if (!examName) {
+            throw new Error('No exam selected or created');
+        }
+        
+        // Get schedule data
+        const scheduleType = $('input[name="schedule-choice"]:checked').val();
+        let scheduleData = {
+            exam: examName,
+            type: scheduleType
+        };
+        
+        if (scheduleType === 'existing') {
+            const existingScheduleId = $('#existing-schedule').val();
+            if (!existingScheduleId) {
+                throw new Error('No existing schedule selected');
+            }
+            scheduleData.name = existingScheduleId;
+        } else {
+            const scheduleName = $('#schedule-name').val();
+            if (!scheduleName) {
+                throw new Error('Schedule name is required');
+            }
+            
+            // Get start datetime and validate it
+            const startDateTime = $('#schedule-start-datetime').val();
+            if (!startDateTime) {
+                throw new Error('Start date and time are required');
+            }
+            
+            // For new schedules, we only need to send the name for the schedule
+            // The server will generate a unique document ID
+            scheduleData.schedule_name = scheduleName;
+            scheduleData.start_datetime = startDateTime; // This is in YYYY-MM-DDTHH:MM format from the datetime-local input
+            scheduleData.schedule_type = $('#schedule-type').val();
+            scheduleData.visibility = $('#schedule-visibility').val();
+            
+            // Only add expire days if it's recurring
+            if ($('#schedule-type').val() === 'Recurring' && $('#schedule-expire-days').val()) {
+                scheduleData.expire_days = $('#schedule-expire-days').val();
+            }
+            
+            console.log('Collected schedule data with start_datetime:', scheduleData.start_datetime);
+        }
+        
+        return scheduleData;
+    }
+    
+    /**
+     * Save schedule with confirmation dialog
+     */
+    function saveScheduleWithConfirmation() {
+        const scheduleName = $('#schedule-name').val();
+        
+        frappe.confirm(
+            __(`Are you sure you want to create the schedule "${scheduleName}" for the selected exam?`),
+            function() {
+                // User confirmed, proceed with saving
+                saveScheduleData().then(() => {
+                    navigateToStep(4);
+                }).catch((error) => {
+                    frappe.throw(error.message || 'Failed to save schedule');
+                });
+            },
+            function() {
+                // User cancelled, do nothing
+            }
+        );
+    }
+    
+    /**
+     * Save schedule data to the server
+     */
+    function saveScheduleData() {
+        return new Promise((resolve, reject) => {
+            try {
+                // Collect schedule data
+                const scheduleFormData = collectScheduleData();
+                
+                console.log('Schedule data to save:', scheduleFormData);
+                
+                // Validate essential data before sending
+                if (scheduleFormData.type === 'new') {
+                    if (!scheduleFormData.exam) {
+                        throw new Error('Missing exam reference');
+                    }
+                    if (!scheduleFormData.schedule_name) {
+                        throw new Error('Schedule name is required');
+                    }
+                    if (!scheduleFormData.start_datetime) {
+                        throw new Error('Start date and time are required');
+                    }
+                    
+                    // Extra validation for start_datetime format
+                    const dtRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+                    if (!dtRegex.test(scheduleFormData.start_datetime)) {
+                        throw new Error('Invalid date/time format. Expected YYYY-MM-DDTHH:MM');
+                    }
+                    
+                    // Add extra fields that might be required by the doctype
+                    const parts = scheduleFormData.start_datetime.split('T');
+                    if (parts.length === 2) {
+                        scheduleFormData.schedule_date = parts[0];
+                        scheduleFormData.schedule_time = parts[1] + ':00';
+                    }
+                    
+                } else if (scheduleFormData.type === 'existing') {
+                    if (!scheduleFormData.name) {
+                        throw new Error('No existing schedule selected');
+                    }
+                }
+                
+                frappe.call({
+                    method: 'exampro.www.manage.exam_builder.save_schedule_from_builder',
+                    args: {
+                        schedule_data: JSON.stringify(scheduleFormData)
+                    },
+                    freeze: true,
+                    freeze_message: __("Creating schedule..."),
+                    callback: function(response) {
+                        if (response.message && response.message.success) {
+                            frappe.show_alert({
+                                message: __(response.message.message),
+                                indicator: 'green'
+                            });
+                            
+                            // Update global scheduleData with the saved schedule name for future operations
+                            scheduleData = {
+                                name: response.message.schedule_name,
+                                exam: scheduleFormData.exam,
+                                schedule_name: scheduleFormData.schedule_name
+                            };
+                            
+                            console.log('Updated schedule data:', scheduleData);
+                            
+                            // Load registrations for the new schedule
+                            if (scheduleData.name) {
+                                setTimeout(() => {
+                                    loadRegistrations(scheduleData.name);
+                                }, 500); // Short delay to ensure database is updated
+                            }
+                            
+                            resolve(response.message);
+                        } else {
+                            console.error('Server returned error:', response);
+                            reject(new Error(response.message?.error || 'Failed to save schedule'));
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error saving schedule:', error);
+                        reject(error);
+                    }
+                });
+            } catch (error) {
+                console.error('Error preparing schedule data:', error);
+                reject(error);
+            }
+        });
     }
 });

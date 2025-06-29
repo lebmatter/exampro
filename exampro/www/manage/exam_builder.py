@@ -738,3 +738,128 @@ def add_registrations(schedule, users):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), f"Error in bulk registration for schedule {schedule}")
         return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def save_schedule_from_builder(schedule_data):
+    """
+    Save or update schedule from the exam builder
+    
+    Args:
+        schedule_data (str): JSON string of schedule data from the builder
+    """
+    if not has_exam_manager_role():
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        # Parse JSON string to dict
+        import json
+        from datetime import datetime
+        if isinstance(schedule_data, str):
+            schedule_data = json.loads(schedule_data)
+        
+        frappe.logger().info(f"Processing schedule data: {schedule_data}")
+        
+        if schedule_data.get("type") == "existing":
+            # Return existing schedule info
+            schedule_name = schedule_data.get("name")
+            return {"success": True, "schedule_name": schedule_name, "message": "Using existing schedule"}
+            
+        else:
+            # Extract required data
+            exam = schedule_data.get("exam")
+            schedule_name = schedule_data.get("schedule_name")
+            
+            if not exam or not schedule_name:
+                return {"success": False, "error": "Missing required fields: exam or schedule_name"}
+                
+            if not schedule_data.get("start_datetime"):
+                return {"success": False, "error": "Start date and time are required"}
+            
+            # Create a unique name for the document
+            # This is important for Frappe document creation
+            unique_id = frappe.generate_hash(length=10)
+            doc_name = f"{exam}_{schedule_name}_{unique_id}"
+            
+            # Create new schedule with explicit name
+            schedule_doc = frappe.new_doc("Exam Schedule")
+            schedule_doc.name = doc_name
+            schedule_doc.exam = exam
+            schedule_doc.schedule_name = schedule_name
+            
+            # First, get the actual field structure of Exam Schedule
+            fields_meta = frappe.get_meta("Exam Schedule").get("fields")
+            field_names = [f.fieldname for f in fields_meta]
+            frappe.logger().info(f"Exam Schedule fields: {field_names}")
+            
+            # Parse date and time from start_datetime
+            if schedule_data.get("start_datetime"):
+                try:
+                    # Handle the start_datetime format from HTML datetime-local input
+                    dt_str = schedule_data.get("start_datetime")
+                    
+                    # Parse datetime string
+                    dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M")
+                    formatted_datetime = dt.strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    # Set all possible date/time fields that might exist in the doctype
+                    if "start_date_time" in field_names:
+                        schedule_doc.start_date_time = formatted_datetime
+                    
+                    # From error message, it seems the field is actually just "start_date"
+                    if "start_date" in field_names:
+                        schedule_doc.start_date = dt.date()
+                        
+                    # Alternate format as a string
+                    if "start_time" in field_names:
+                        schedule_doc.start_time = dt.time().strftime("%H:%M:%S")
+                        
+                    # Individual date and time fields
+                    if "schedule_date" in field_names:
+                        schedule_doc.schedule_date = dt.date()
+                        
+                    if "schedule_time" in field_names:
+                        schedule_doc.schedule_time = dt.time().strftime("%H:%M:%S")
+                    
+                except Exception as e:
+                    frappe.logger().error(f"Error parsing datetime: {e}")
+                    return {"success": False, "error": f"Invalid date format: {e}"}
+            
+            schedule_doc.schedule_type = schedule_data.get("schedule_type")
+            schedule_doc.visibility = schedule_data.get("visibility")
+            
+            # Add expire_days if it exists for recurring schedules
+            if schedule_data.get("schedule_type") == "Recurring" and schedule_data.get("expire_days"):
+                schedule_doc.expire_after = schedule_data.get("expire_days")
+            
+            # Insert with explicit naming
+            frappe.logger().info(f"Inserting schedule document: {schedule_doc.as_dict()}")
+            schedule_doc.insert(ignore_permissions=True)
+            frappe.db.commit()
+            
+            return {
+                "success": True, 
+                "schedule_name": schedule_doc.name, 
+                "message": "Schedule created successfully"
+            }
+            
+            schedule_doc.schedule_type = schedule_data.get("schedule_type")
+            schedule_doc.visibility = schedule_data.get("visibility")
+            
+            # Add expire_days if it exists for recurring schedules
+            if schedule_data.get("schedule_type") == "Recurring" and schedule_data.get("expire_days"):
+                schedule_doc.expire_after = schedule_data.get("expire_days")
+            
+            # Insert with explicit naming
+            frappe.logger().info(f"Inserting schedule document: {schedule_doc.as_dict()}")
+            schedule_doc.insert(ignore_permissions=True)
+            frappe.db.commit()
+            
+            return {
+                "success": True, 
+                "schedule_name": schedule_doc.name, 
+                "message": "Schedule created successfully"
+            }
+            
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error saving schedule from builder")
+        return {"success": False, "error": str(e)}
