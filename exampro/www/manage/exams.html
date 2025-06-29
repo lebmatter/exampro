@@ -79,12 +79,12 @@
                             <td>-</td>
                             <td>
                                 {% if exam.published %}
-                                    <span class="badge bg-success">Published</span>
+                                    <span class="badge bg-success text-white">Published</span>
                                     {% if exam.upcoming %}
-                                        <span class="badge bg-info">Upcoming</span>
+                                        <span class="badge bg-info text-white">Upcoming</span>
                                     {% endif %}
                                 {% else %}
-                                    <span class="badge bg-secondary">Draft</span>
+                                    <span class="badge bg-secondary text-white">Draft</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -110,13 +110,13 @@
                             <td>{{ schedule.start_date_time }}</td>
                             <td>
                                 {% if schedule.status == "Upcoming" %}
-                                    <span class="badge bg-info">Upcoming</span>
+                                    <span class="badge bg-info text-white">Upcoming</span>
                                 {% elif schedule.status == "Ongoing" %}
-                                    <span class="badge bg-warning">Ongoing</span>
+                                    <span class="badge bg-warning text-white">Ongoing</span>
                                 {% elif schedule.status == "Completed" %}
-                                    <span class="badge bg-success">Completed</span>
+                                    <span class="badge bg-success text-white">Completed</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">{{ schedule.status }}</span>
+                                    <span class="badge bg-secondary text-white">{{ schedule.status }}</span>
                                 {% endif %}
                             </td>
                             <td>

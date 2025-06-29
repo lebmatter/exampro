@@ -146,7 +146,8 @@ def get_schedule_status(start_time, duration):
     if start_time > current_time:
         return "Upcoming"
     
-    end_time = start_time.replace(minute=start_time.minute + duration)
+    # Calculate end_time by adding duration minutes to start_time
+    end_time = start_time + frappe.utils.datetime.timedelta(minutes=duration)
     
     if start_time <= current_time <= end_time:
         return "Ongoing"
