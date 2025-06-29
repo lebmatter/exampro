@@ -4,6 +4,10 @@
 {{ _('My Exams') }}
 {% endblock %}
 
+{% block head_include %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% endblock %}
+
 {% block page_content %}
 <div class="container">
 	<div class="row mb-5">
@@ -11,6 +15,36 @@
 			<h4 class="bold-heading">📝 My Exams</h4>
 		</div>
 	</div>
+
+    {% if next_exam %}
+    <div class="row mb-4">
+        <div class="col">
+            <div class="alert alert-info next-exam-banner" role="alert">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="bi bi-calendar-event me-2"></i>
+                        <strong>{{ _("Next Exam: ") }}</strong>
+                        {{ next_exam_message }}
+                    </div>
+                    <a href="{{ next_exam_link }}" class="btn btn-info btn-sm">
+                        {{ next_exam_link_text }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row mb-4">
+        <div class="col">
+            <div class="alert alert-secondary" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    {{ _("You don't have any upcoming exams scheduled at this time.") }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
         <div class="common-card-style">
             <div class="card-body p-0">
@@ -179,6 +213,39 @@
 
 .alert-info {
     border-left: 4px solid #17a2b8;
+    background-color: rgba(23, 162, 184, 0.1);
+    border: none;
+    padding: 1rem;
+}
+
+.next-exam-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.next-exam-banner i {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+    color: white;
+}
+
+.alert-secondary {
+    background-color: #f8f9fa;
+    border: none;
+    border-left: 4px solid #6c757d;
+    padding: 1rem;
 }
 </style>
 {% endblock %}
