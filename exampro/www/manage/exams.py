@@ -175,10 +175,10 @@ def get_exams_with_schedules():
                 "duration"
             ]
         )
-        
-        for schedule in schedules:
-            schedule["status"] = schedule.get_status()
-        
+        # update status in schedules
+        for sched in schedules:
+            sched_doc = frappe.get_doc("Exam Schedule", sched.name)
+            sched["status"] = sched_doc.get_status()        
         exam["schedules"] = schedules
         total_schedules += len(schedules)
     
