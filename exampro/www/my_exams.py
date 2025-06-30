@@ -58,7 +58,7 @@ def get_user_exams(member=None):
 		# checks if current time is between schedule start and end time
 		# ongoing exams can be in Not started, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-		if schedule.start_date_time <= tnow <= end_time and schedule.schedule_type == "Fixed":
+		if schedule.start_date_time <= tnow <= end_time and schedule.schedule_type == "Fixed" and submission["status"] in ["Registered", "Started"]:
 			frappe.local.flags.redirect_location = "/exam"
 			raise frappe.Redirect
 		if schedule.start_date_time <= tnow <= end_time and schedule.schedule_type == "Flexible":

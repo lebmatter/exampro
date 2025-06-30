@@ -66,8 +66,11 @@ def get_live_exam(member=None):
 		# checks if current time is between schedule start and end time
 		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-		if schedule.start_date_time <= tnow <= end_time:
+		if schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"]:
 			exam_details["live_status"] = "Live"
+			return exam_details
+		if schedule.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":
+			exam_details["live_status"] = "Submitted"
 			return exam_details
 		elif tnow <= schedule.start_date_time:
 			exam_details["live_status"] = "Upcoming"
@@ -79,7 +82,7 @@ def get_live_exam(member=None):
 				doc.status == "Submitted"
 				doc.save(ignore_permissions=True)
 
-			return {}
+			return exam_details
 
 	return exam_details
 
@@ -100,11 +103,11 @@ def get_context(context):
 			"title": "No exams scheduled.",
 			"text": "You do not have any live or upcoming exams."
 		}
-	# elif exam_details["submission_status"] in ["Submitted", "Terminated"]:
-	# 	frappe.local.flags.redirect_location = f"/exam/result?exam_submission={exam_details['exam_submission']}"
-	# 	raise frappe.Redirect
+	elif exam_details["submission_status"] in ["Submitted", "Terminated"]:
+		frappe.local.flags.redirect_location = f"/exam/{exam_details['exam_submission']}"
+		raise frappe.Redirect
 	
-	elif exam_details["live_status"] == "Live":
+	elif exam_details["live_status"] in "Live":
 		context.alert = {}
 		exam = frappe.db.get_value(
 			"Exam", exam_details["exam"], ["name","title", "instructions"], as_dict=True
