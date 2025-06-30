@@ -75,7 +75,17 @@
                                 <td>{{ exam.exam_name }}</td>
                                 <td>{{ exam.schedule_time }}</td>
                                 <td>{{ exam.duration }}</td>
-                                <td>{{ exam.schedule_status }}</td>
+                                <td>
+                                    {% if exam.schedule_status == "Upcoming" %}
+                                        <span class="badge bg-primary text-white">{{ exam.schedule_status }}</span>
+                                    {% elif exam.schedule_status == "Ongoing" %}
+                                        <span class="badge bg-warning text-dark">{{ exam.schedule_status }}</span>
+                                    {% elif exam.schedule_status == "Completed" %}
+                                        <span class="badge bg-success text-white">{{ exam.schedule_status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-white">{{ exam.schedule_status }}</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if exam.status == "Upcoming" %}
                                         <span class="badge bg-info text-white">{{ exam.status }}</span>
@@ -246,6 +256,45 @@
     border: none;
     border-left: 4px solid #6c757d;
     padding: 1rem;
+}
+
+/* Badge styling */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    font-size: 0.75rem;
+}
+
+.bg-primary {
+    background-color: #0d6efd !important;
+}
+
+.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.bg-success {
+    background-color: #198754 !important;
+}
+
+.bg-info {
+    background-color: #0dcaf0 !important;
+}
+
+.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.text-white {
+    color: #fff !important;
+}
+
+.text-dark {
+    color: #212529 !important;
 }
 </style>
 {% endblock %}
