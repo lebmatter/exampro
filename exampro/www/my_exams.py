@@ -42,7 +42,7 @@ def get_user_exams(member=None):
 			"status": submission["status"],  # Added for template
 			"duration": f"{schedule.duration} min",  # Format duration as "X min"
 			"enable_calculator": exam.enable_calculator,
-			"schedule_status": "Upcoming",
+			"schedule_status": "",
 			"schedule_type": schedule.schedule_type,
 			"enable_video_proctoring": exam.enable_video_proctoring,
 			"enable_chat": exam.enable_chat,
@@ -61,8 +61,11 @@ def get_user_exams(member=None):
 		if schedule.start_date_time <= tnow <= end_time and schedule.schedule_type == "Fixed" and submission["status"] in ["Registered", "Started"]:
 			frappe.local.flags.redirect_location = "/exam"
 			raise frappe.Redirect
-		if schedule.start_date_time <= tnow <= end_time and schedule.schedule_type == "Flexible":
-			exam_details["schedule_status"] = "Ongoing. Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
+		if schedule.start_date_time <= tnow <= end_time:
+			if schedule.schedule_type == "Flexible":
+				exam_details["schedule_status"] = "Ongoing. Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
+			else:
+				exam_details["schedule_status"] = "Ongoing"
 		elif tnow <= schedule.start_date_time and schedule.schedule_type == "Fixed":
 			exam_details["schedule_status"] = "Upcoming"
 		elif tnow > end_time:
@@ -132,6 +135,10 @@ def get_context(context):
 	if frappe.session.user == "Guest":
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
+
+	# if user has system manager or Exam manager role. call end_all_pending_schedules()
+	if "System Manager" in frappe.get_roles() or "Exam Manager" in frappe.get_roles():
+		end_all_pending_schedules()
 
 	context.no_cache = 1
 	context.exams = exams = get_user_exams()

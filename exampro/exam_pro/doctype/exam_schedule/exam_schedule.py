@@ -7,6 +7,7 @@ import frappe
 
 from frappe.utils import now
 from frappe.model.document import Document
+from datetime import datetime
 
 @frappe.whitelist()
 def upcoming_schedules():
@@ -103,13 +104,16 @@ class ExamSchedule(Document):
 				frappe.db.set_value("Examiner", examiner.name, "notification_sent", 1)
 	
 	def can_end_schedule(self):
+		current_time = datetime.fromisoformat(now().split(".")[0])
+		
 		if self.schedule_type == "Fixed":
-			end_time = self.start_date_time + timedelta(minutes=self.duration +0)
+			end_time = self.start_date_time + timedelta(minutes=self.duration)
 		else:
-			# For flexible schedules, we consider the end time as start time + duration + 5 min buffer
+			# For flexible schedules, we consider the end time as start time + duration + days
 			end_time = self.start_date_time + timedelta(minutes=self.duration, days=self.schedule_expire_in_days)
-		if now < end_time:
-			frappe.msgprint("Can't end the schedule before {} (end time + 5 min buffer).".format(end_time.isoformat()))
+		
+		if current_time < end_time:
+			frappe.msgprint("Can't end the schedule before {} (end time).".format(end_time.isoformat()))
 			return False
 		 
 		return True
