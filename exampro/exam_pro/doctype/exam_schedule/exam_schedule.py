@@ -12,6 +12,11 @@ from datetime import datetime
 
 class ExamSchedule(Document):
 
+	# Add status to standard fields
+	_standard_fieldnames = ['name', 'owner', 'creation', 'modified', 'modified_by',
+		'parent', 'parentfield', 'parenttype', 'idx', 'docstatus',
+		'naming_series', 'status']
+
 	def _validate_user_role(self, user_id, role_name):
 		"""
 		Check if the user has the specified role and assign it if needed
@@ -73,18 +78,44 @@ class ExamSchedule(Document):
 		"""
 		current_time = datetime.fromisoformat(now().split(".")[0])
 		
+		# Ensure start_date_time is a datetime object
+		start_time = self.start_date_time
+		if not isinstance(start_time, datetime):
+			start_time = parse(start_time) if start_time else current_time
+		
+		# Calculate end time based on schedule type
 		if self.schedule_type == "Fixed":
-			end_time = self.start_date_time + timedelta(minutes=self.duration)
+			end_time = start_time + timedelta(minutes=self.duration or 0)
 		else:
 			# For flexible schedules, we consider the end time as start time + duration + days
-			end_time = self.start_date_time + timedelta(minutes=self.duration, days=self.schedule_expire_in_days)
+			days = self.schedule_expire_in_days or 0
+			end_time = start_time + timedelta(minutes=self.duration or 0, days=days)
 		
-		if current_time < self.start_date_time:
-			return "Upcoming"
-		elif self.start_date_time <= current_time <= end_time:
-			return "Ongoing"
+		# Debug log
+		frappe.logger().debug(f"Status calculation for {self.name}:")
+		frappe.logger().debug(f"- current_time: {current_time}")
+		frappe.logger().debug(f"- start_time: {start_time}")
+		frappe.logger().debug(f"- end_time: {end_time}")
+		
+		# Determine status
+		status = None
+		if current_time < start_time:
+			status = "Upcoming"
+		elif start_time <= current_time <= end_time:
+			status = "Ongoing"
 		else:
-			return "Completed"
+			status = "Completed"
+			
+		frappe.logger().debug(f"- status: {status}")
+		return status
+
+	@frappe.whitelist()
+	def get_exam_schedule_status(self):
+		"""
+		Returns the status of the exam schedule for list view and form view.
+		This is a wrapper around get_status that can be called via frappe.call.
+		"""
+		return self.get_status()
 
 	def send_proctor_emails(self):
 		for examiner in self.examiners:
@@ -111,11 +142,16 @@ class ExamSchedule(Document):
 	def can_end_schedule(self):
 		current_time = datetime.fromisoformat(now().split(".")[0])
 		
+		# Ensure start_date_time is a datetime object
+		start_time = self.start_date_time
+		if not isinstance(start_time, datetime):
+			start_time = parse(start_time) if start_time else current_time
+		
 		if self.schedule_type == "Fixed":
-			end_time = self.start_date_time + timedelta(minutes=self.duration)
+			end_time = start_time + timedelta(minutes=self.duration)
 		else:
 			# For flexible schedules, we consider the end time as start time + duration + days
-			end_time = self.start_date_time + timedelta(minutes=self.duration, days=self.schedule_expire_in_days)
+			end_time = start_time + timedelta(minutes=self.duration, days=self.schedule_expire_in_days)
 		
 		if current_time < end_time:
 			frappe.msgprint("Can't end the schedule before {} (end time).".format(end_time.isoformat()))
@@ -135,7 +171,7 @@ class ExamSchedule(Document):
 		if not self.examiners:
 			return
 		
-		if type(self.start_date_time) != datetime:
+		if not isinstance(self.start_date_time, datetime):
 			exam_start = parse(self.start_date_time)
 		else:
 			exam_start = self.start_date_time
@@ -167,6 +203,14 @@ class ExamSchedule(Document):
 							overlap, exam2["name"]
 						))
 			
+	def as_dict(self, no_nulls=False):
+		"""Convert the document to a dict for the list view, including the status"""
+		d = super(ExamSchedule, self).as_dict(no_nulls=no_nulls)
+		status = self.get_status()
+		d['status'] = status
+		d['_server_status'] = status  # Special field for JavaScript to use
+		return d
+	
 def check_overlap(start_time1, end_time1, start_time2, end_time2):
 	assert isinstance(start_time1, datetime), "start_time1 must be a datetime object"
 	assert isinstance(end_time1, datetime), "end_time1 must be a datetime object"
@@ -247,3 +291,15 @@ def send_certificates(docname):
 		_send_certificates(docname)
 
 	return "Success"
+
+@frappe.whitelist()
+def get_server_status(schedule_name):
+	"""Get the status of an exam schedule for the list view"""
+	try:
+		doc = frappe.get_doc("Exam Schedule", schedule_name)
+		status = doc.get_status()
+		frappe.logger().info(f"get_server_status for {schedule_name}: {status}")
+		return status
+	except Exception as e:
+		frappe.logger().error(f"Error in get_server_status for {schedule_name}: {str(e)}")
+		return "Error"
