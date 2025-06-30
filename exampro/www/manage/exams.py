@@ -139,21 +139,6 @@ def delete_schedule(schedule):
         frappe.log_error(frappe.get_traceback(), f"Error deleting schedule {schedule}")
         return {"success": False, "error": str(e)}
 
-def get_schedule_status(start_time, duration):
-    """Determine schedule status based on start time and duration"""
-    current_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-    
-    if start_time > current_time:
-        return "Upcoming"
-    
-    # Calculate end_time by adding duration minutes to start_time
-    end_time = start_time + frappe.utils.datetime.timedelta(minutes=duration)
-    
-    if start_time <= current_time <= end_time:
-        return "Ongoing"
-    else:
-        return "Completed"
-
 def get_exams_with_schedules():
     """Get all exams with their associated schedules"""
     
@@ -191,12 +176,8 @@ def get_exams_with_schedules():
             ]
         )
         
-        # Add status based on time
         for schedule in schedules:
-            schedule["status"] = get_schedule_status(
-                schedule.start_date_time,
-                schedule.duration
-            )
+            schedule["status"] = schedule.get_status()
         
         exam["schedules"] = schedules
         total_schedules += len(schedules)
