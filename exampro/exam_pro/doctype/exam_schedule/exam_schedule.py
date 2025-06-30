@@ -134,14 +134,6 @@ class ExamSchedule(Document):
 		"""
 		if not self.examiners:
 			return
-			
-		# Check for appropriate roles for each examiner based on flags
-		for examiner in self.examiners:
-			if examiner.can_proctor:
-				self._validate_user_role(examiner.examiner, "Exam Proctor")
-				
-			if examiner.can_evaluate:
-				self._validate_user_role(examiner.examiner, "Exam Evaluator")
 		
 		if type(self.start_date_time) != datetime:
 			exam_start = parse(self.start_date_time)
