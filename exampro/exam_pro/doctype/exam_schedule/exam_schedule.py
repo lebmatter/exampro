@@ -9,20 +9,6 @@ from frappe.utils import now
 from frappe.model.document import Document
 from datetime import datetime
 
-@frappe.whitelist()
-def upcoming_schedules():
-	schedules = frappe.get_all(
-		"Exam Schedule",
-		filters=[
-			["start_date_time", ">", datetime.now()],
-			["visibility", "=", "Public"],
-			["status", "=", "Scheduled"]
-		],
-		fields=["name", "exam"]
-	)
-
-	return {"upcoming_schedules": schedules}
-
 
 class ExamSchedule(Document):
 
@@ -80,6 +66,25 @@ class ExamSchedule(Document):
 
 	def after_save(self):
 		self.send_proctor_emails()
+	
+	def get_status(self):
+		"""
+		Returns the status of the exam schedule based on the current time and start date time.
+		"""
+		current_time = datetime.fromisoformat(now().split(".")[0])
+		
+		if self.schedule_type == "Fixed":
+			end_time = self.start_date_time + timedelta(minutes=self.duration)
+		else:
+			# For flexible schedules, we consider the end time as start time + duration + days
+			end_time = self.start_date_time + timedelta(minutes=self.duration, days=self.schedule_expire_in_days)
+		
+		if current_time < self.start_date_time:
+			return "Upcoming"
+		elif self.start_date_time <= current_time <= end_time:
+			return "Ongoing"
+		else:
+			return "Completed"
 
 	def send_proctor_emails(self):
 		for examiner in self.examiners:
@@ -234,12 +239,12 @@ def _send_certificates(schedule_name):
 			new_cert.insert()
 
 @frappe.whitelist()
-def end_schedule(docname):
-	"""
-	Check if the schedule can be ended
-	Submit all unsubmitted exams
-	Send certificated if applicable
-	"""
+def send_certificates(docname):
+	# check user has system manager or exam manager role
+	user_roles = frappe.get_roles()
+	if "System Manager" not in user_roles and "Exam Manager" not in user_roles:
+		frappe.throw("You do not have permission to send certificates.")
+
 	doc = frappe.get_doc("Exam Schedule", docname)
 	if not doc.can_end_schedule():
 		return
@@ -249,7 +254,4 @@ def end_schedule(docname):
 	if has_certification:
 		_send_certificates(docname)
 
-	doc.reload()
-	doc.status = 'Ended'
-	doc.save()
 	return "Success"

@@ -42,7 +42,7 @@ def get_user_exams(member=None):
 			"status": submission["status"],  # Added for template
 			"duration": f"{schedule.duration} min",  # Format duration as "X min"
 			"enable_calculator": exam.enable_calculator,
-			"schedule_status": "",
+			"schedule_status": schedule.get_status(),
 			"schedule_type": schedule.schedule_type,
 			"enable_video_proctoring": exam.enable_video_proctoring,
 			"enable_chat": exam.enable_chat,
@@ -58,23 +58,16 @@ def get_user_exams(member=None):
 		# checks if current time is between schedule start and end time
 		# ongoing exams can be in Not started, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-		if schedule.start_date_time <= tnow <= end_time and schedule.schedule_type == "Fixed" and submission["status"] in ["Registered", "Started"]:
+		if exam_details["schedule_status"] == "Ongoing" and schedule.schedule_type == "Fixed" and submission["status"] in ["Registered", "Started"]:
 			frappe.local.flags.redirect_location = "/exam"
 			raise frappe.Redirect
-		if schedule.start_date_time <= tnow <= end_time:
-			if schedule.schedule_type == "Flexible":
-				exam_details["schedule_status"] = "Ongoing. Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
-			else:
-				exam_details["schedule_status"] = "Ongoing"
-		elif tnow <= schedule.start_date_time and schedule.schedule_type == "Fixed":
-			exam_details["schedule_status"] = "Upcoming"
-		elif tnow > end_time:
-			exam_details["schedule_status"] = "Ended"
-			# if time is over, submit if applicable
-			if submission["status"] != "Submitted":
-				doc = frappe.get_doc("Exam Submission", submission["name"])
-				doc.status = "Submitted"
-				doc.save(ignore_permissions=True)
+		if exam_details["schedule_status"] == "Ongoing" and schedule.schedule_type == "Flexible":
+			exam_details["schedule_status"] = "Ongoing. Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
+		# if time is over, submit if applicable
+		if submission["status"] != "Submitted" and exam_details["schedule_status"] == "Completed":
+			doc = frappe.get_doc("Exam Submission", submission["name"])
+			doc.status = "Submitted"
+			doc.save(ignore_permissions=True)
 				
 		# Set status field to match template expectations
 		if submission["status"] == "Not Started":
@@ -135,10 +128,6 @@ def get_context(context):
 	if frappe.session.user == "Guest":
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
-
-	# if user has system manager or Exam manager role. call end_all_pending_schedules()
-	if "System Manager" in frappe.get_roles() or "Exam Manager" in frappe.get_roles():
-		end_all_pending_schedules()
 
 	context.no_cache = 1
 	context.exams = exams = get_user_exams()

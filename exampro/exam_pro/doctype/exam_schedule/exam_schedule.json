@@ -14,7 +14,6 @@
   "column_break_3",
   "question_type",
   "duration",
-  "status",
   "certificate_template",
   "exam_settings_section",
   "column_break_5bke",
@@ -82,15 +81,6 @@
    "read_only": 1
   },
   {
-   "default": "Scheduled",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Status",
-   "options": "Scheduled\nEnded",
-   "read_only": 1
-  },
-  {
    "fetch_from": ".certificate_template",
    "fieldname": "certificate_template",
    "fieldtype": "Link",
@@ -121,8 +111,8 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-06-24 17:04:42.931720",
- "modified_by": "Administrator",
+ "modified": "2025-06-30 15:43:52.450159",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",
  "naming_rule": "Set by user",

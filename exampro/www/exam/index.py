@@ -51,11 +51,10 @@ def get_live_exam(member=None):
 			"submission_status": submission["status"],
 			"duration": schedule.duration,
 			"enable_calculator": exam.enable_calculator,
-			"live_status": "",
-			"submission_status": submission["status"],
+			"is_live": False,
 			"enable_video_proctoring": exam.enable_video_proctoring,
 			"enable_chat": exam.enable_chat,
-			"enable_calculator": exam.enable_calculator
+			"schedule_status": schedule.get_status(),
 		}
 
 		# make datetime in isoformat
@@ -67,13 +66,13 @@ def get_live_exam(member=None):
 		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
 		if schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"]:
-			exam_details["live_status"] = "Live"
+			exam_details["is_live"] = True
 			return exam_details
 		if schedule.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":
-			exam_details["live_status"] = "Submitted"
+			exam_details["is_live"] = False
 			return exam_details
 		elif tnow <= schedule.start_date_time:
-			exam_details["live_status"] = "Upcoming"
+			exam_details["is_live"] = False
 			return exam_details
 		elif tnow > end_time:
 			# if time is over, submit if applicable
@@ -107,7 +106,7 @@ def get_context(context):
 		frappe.local.flags.redirect_location = f"/exam/{exam_details['exam_submission']}"
 		raise frappe.Redirect
 	
-	elif exam_details["live_status"] in "Live":
+	elif exam_details["is_live"]:
 		context.alert = {}
 		exam = frappe.db.get_value(
 			"Exam", exam_details["exam"], ["name","title", "instructions"], as_dict=True
@@ -132,7 +131,7 @@ def get_context(context):
 		}
 
 
-	elif exam_details["live_status"] == "Upcoming":
+	elif exam_details["schedule_status"] == "Upcoming":
 		context.exam = {}
 		context.alert = {
 			"title": "You have an upcoming exam.",
