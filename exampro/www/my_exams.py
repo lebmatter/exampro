@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import frappe
 from frappe.utils import now, format_datetime
-from frappe import _
 
 def get_user_exams(member=None):
 	"""
@@ -116,7 +115,7 @@ def get_time_until(target_datetime_str):
 	
 	days = diff.days
 	hours, remainder = divmod(diff.seconds, 3600)
-	minutes, _ = divmod(remainder, 60)
+	minutes, seconds = divmod(remainder, 60)
 	
 	if days > 0:
 		return f"{days} days, {hours} hours"
@@ -141,23 +140,23 @@ def get_context(context):
 	context.next_exam = next_exam = get_next_exam(exams)
 	if next_exam:
 		if next_exam["submission_status"] == "Started":
-			context.next_exam_message = _("You have an exam in progress. Continue where you left off.")
+			context.next_exam_message = "You have an exam in progress. Continue where you left off."
 			context.next_exam_link = "/exam"
-			context.next_exam_link_text = _("Continue Exam")
+			context.next_exam_link_text = "Continue Exam"
 		elif next_exam["schedule_type"] == "Fixed" and next_exam["schedule_status"] == "Upcoming":
 			time_until = get_time_until(next_exam["start_time"])
-			context.next_exam_message = _("Your next exam '{}' is scheduled to start in {}.").format(next_exam["exam_name"], time_until)
+			context.next_exam_message = "Your next exam '{}' is scheduled to start in {}.".format(next_exam["exam_name"], time_until)
 			context.next_exam_link = "/exam"
-			context.next_exam_link_text = _("View Details")
+			context.next_exam_link_text = "View Details"
 		elif next_exam["schedule_type"] == "Flexible":
-			context.next_exam_message = _("Your flexible schedule exam '{}' is available. {}").format(
+			context.next_exam_message = "Your flexible schedule exam '{}' is available. {}".format(
 				next_exam["exam_name"], 
 				next_exam["schedule_status"]
 			)
 			context.next_exam_link = "/exam"
-			context.next_exam_link_text = _("Start Exam")
+			context.next_exam_link_text = "Start Exam"
 	
 	context.metatags = {
-		"title": _("My Exams"),
+		"title": "My Exams",
 		"description": "View your upcoming and past exams"
 	}

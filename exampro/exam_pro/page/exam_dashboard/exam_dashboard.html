@@ -1,0 +1,43 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("Exam Dashboard") }}{% endblock %}
+
+{% block page_content %}
+<div class="exam-dashboard-container">
+    <!-- The dashboard will be rendered here by the JS -->
+</div>
+
+<style>
+    .exam-dashboard-container {
+        padding: 15px;
+    }
+    
+    .metrics-container {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .chart-container {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .chart-box {
+        margin-bottom: 20px;
+    }
+    
+    @media (max-width: 767px) {
+        .chart-box {
+            width: 100% !important;
+            margin: 0 0 20px 0 !important;
+        }
+        
+        .metric-card {
+            width: 100% !important;
+            margin: 0 0 10px 0 !important;
+        }
+    }
+</style>
+{% endblock %}

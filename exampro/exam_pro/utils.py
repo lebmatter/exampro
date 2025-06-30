@@ -39,5 +39,12 @@ def get_website_context(context):
             ]
         })
     
+    if "System Manager" in user_roles:
+        top_bar_items.append({
+            "label": "Dashboard",
+            "url": "/app/exam-dashboard",
+            "right": True
+        })
+    
     context.top_bar_items = top_bar_items
     return context

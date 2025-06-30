@@ -1,0 +1,21 @@
+{
+    "doctype": "Page",
+    "icon": "graph-bar",
+    "idx": 0,
+    "modified": "2025-06-30 14:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Exam Pro",
+    "name": "exam-dashboard",
+    "owner": "Administrator",
+    "page_name": "exam-dashboard",
+    "roles": [
+        {
+            "role": "System Manager"
+        },
+        {
+            "role": "Examiner"
+        }
+    ],
+    "standard": "Yes",
+    "title": "Exam Dashboard"
+}
