@@ -60,11 +60,13 @@
   },
   {
    "allow_in_quick_entry": 1,
+   "description": "Set once. Cannot modify later.",
    "fieldname": "start_date_time",
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Start Date Time",
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fetch_from": "exam.question_type",
@@ -111,7 +113,7 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-06-30 15:43:52.450159",
+ "modified": "2025-06-30 16:05:00.628185",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",
