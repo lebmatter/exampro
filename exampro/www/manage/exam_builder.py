@@ -565,7 +565,7 @@ def save_exam_from_builder(exam_data):
                 
                 if questions_config.get("type") == "Random":
                     exam_doc.randomize_questions = 1
-                    exam_doc.total_questions = questions_config.get("total_questions", 0)
+                    exam_doc.total_questions = int(questions_config.get("total_questions", 0))
                     exam_doc.question_type = questions_config.get("question_type_filter", "Mixed")
                     # Clear category settings for random questions
                     exam_doc.select_questions = []
@@ -579,8 +579,8 @@ def save_exam_from_builder(exam_data):
                     for category in questions_config.get("categories", []):
                         exam_doc.append("select_questions", {
                             "question_category": category["category"],
-                            "no_of_questions": category["selectedCount"],
-                            "mark_per_question": category["mark"]
+                            "no_of_questions": int(category["selectedCount"]),
+                            "mark_per_question": int(category["mark"])
                         })
                 
                 exam_doc.save()
@@ -591,8 +591,8 @@ def save_exam_from_builder(exam_data):
             # Create new exam
             exam_doc = frappe.new_doc("Exam")
             exam_doc.title = exam_data.get("title")
-            exam_doc.duration = exam_data.get("duration")
-            exam_doc.pass_percentage = exam_data.get("pass_percentage")
+            exam_doc.duration = int(exam_data.get("duration", 0))
+            exam_doc.pass_percentage = float(exam_data.get("pass_percentage", 0))
             exam_doc.description = exam_data.get("description")
             exam_doc.instructions = exam_data.get("instructions", "")
             
@@ -611,7 +611,7 @@ def save_exam_from_builder(exam_data):
                 
                 if questions_config.get("type") == "Random":
                     exam_doc.randomize_questions = 1
-                    exam_doc.total_questions = questions_config.get("total_questions", 0)
+                    exam_doc.total_questions = int(questions_config.get("total_questions", 0))
                     exam_doc.question_type = questions_config.get("question_type_filter", "Mixed")
                 else:
                     # Fixed questions
@@ -622,8 +622,8 @@ def save_exam_from_builder(exam_data):
                     for category in questions_config.get("categories", []):
                         exam_doc.append("select_questions", {
                             "question_category": category["category"],
-                            "no_of_questions": category["selectedCount"],
-                            "mark_per_question": category["mark"]
+                            "no_of_questions": int(category["selectedCount"]),
+                            "mark_per_question": int(category["mark"])
                         })
             
             exam_doc.insert()

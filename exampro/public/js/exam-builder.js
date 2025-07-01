@@ -975,13 +975,18 @@ frappe.ready(function() {
             return;
         }
         
+        // Parse numeric values to ensure they're integers, not strings
+        const parsedMark = parseInt(mark, 10);
+        const parsedSelectedCount = parseInt(selectedCount, 10);
+        const parsedTotalCount = parseInt(totalCount, 10);
+        
         // Add to selected data
         selectedCategoriesData.push({
             category: category,
             type: type,
-            mark: mark,
-            selectedCount: selectedCount,
-            totalCount: totalCount
+            mark: parsedMark,
+            selectedCount: parsedSelectedCount,
+            totalCount: parsedTotalCount
         });
         
         renderSelectedCategories();
@@ -1258,8 +1263,8 @@ frappe.ready(function() {
             return {
                 type: 'new',
                 title: $('#exam-title').val(),
-                duration: $('#exam-duration').val(),
-                pass_percentage: $('#exam-pass-percentage').val(),
+                duration: parseInt($('#exam-duration').val(), 10) || 0,
+                pass_percentage: parseFloat($('#exam-pass-percentage').val()) || 0,
                 image: $('#exam-image').val(), // Note: File handling will be different
                 description: $('#exam-description').val(),
                 instructions: $('#exam-instructions').val(),
@@ -1274,14 +1279,19 @@ frappe.ready(function() {
         if (questionSelectionType === 'Random') {
             return {
                 type: 'Random',
-                total_questions: $('#total-questions').val()
+                total_questions: parseInt($('#total-questions').val(), 10) || 0
             };
         } else {
             // For Fixed questions, return category-based selection
             return {
                 type: 'Fixed',
                 question_type_filter: $('#question-type-filter').val(),
-                categories: selectedCategoriesData
+                categories: selectedCategoriesData.map(category => ({
+                    ...category,
+                    mark: parseInt(category.mark, 10),
+                    selectedCount: parseInt(category.selectedCount, 10),
+                    totalCount: parseInt(category.totalCount, 10)
+                }))
             };
         }
     }
