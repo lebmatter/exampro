@@ -246,6 +246,15 @@ frappe.ready(function() {
                 if (currentStep === 2) {
                     // Special handling for step 2 - save exam before proceeding
                     saveExamWithConfirmation();
+                } else if (currentStep === 1) {
+                    // First check if this is an existing exam
+                    if ($('input[name="exam-choice"]:checked').val() === 'existing') {
+                        // Make sure we always navigate to step 2 for question selection
+                        navigateToStep(currentStep + 1);
+                    } else {
+                        // For new exams, proceed as normal
+                        navigateToStep(currentStep + 1);
+                    }
                 } else if (currentStep === 3) {
                     // Special handling for step 3 - save schedule before proceeding
                     if ($('input[name="schedule-choice"]:checked').val() === 'new') {
@@ -314,6 +323,13 @@ frappe.ready(function() {
             } else if ($('input[name="exam-choice"]:checked').val() === 'existing' && $('#existing-exam').val()) {
                 // If we're using an existing exam but don't have question data yet, try to load it
                 loadExamDetails($('#existing-exam').val());
+                
+                // Give the system some time to load exam details before populating step 2
+                setTimeout(() => {
+                    if (examData.pendingQuestionConfig) {
+                        populateStep2FromExam(examData.pendingQuestionConfig);
+                    }
+                }, 1000);
             }
         }
         
@@ -412,9 +428,8 @@ frappe.ready(function() {
                         
                         // Always prepare question config data regardless of current step
                         // This ensures consistent behavior after refresh or when selecting a new exam
-                        if (currentStep >= 2) {
-                            populateStep2FromExam(examData.question_config);
-                        }
+                        // Note: We'll populate step 2 data even if not on step 2, to ensure it's ready when the user navigates there
+                        populateStep2FromExam(examData.question_config);
                     }
                     
                     loadExamQuestions(examId);
@@ -460,7 +475,7 @@ frappe.ready(function() {
                 }
                 // Otherwise, it will be called after fetchQuestionCategories completes
             }
-    },
+    }
     
     function updateTotalCountsFromAvailableCategories() {
         console.log('Updating total counts from available categories');
@@ -1161,7 +1176,7 @@ frappe.ready(function() {
                 if (response.message && response.message.success) {
                     // Find user in registrationsData and update status
                     const userIndex = registrationsData.findIndex(r => r.email === email);
-                    if userIndex !== -1) {
+                    if (userIndex !== -1) {
                         registrationsData[userIndex].registered = true;
                         registrationsData[userIndex].status = "Registered";
                     }
