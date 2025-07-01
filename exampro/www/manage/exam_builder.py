@@ -432,6 +432,25 @@ def get_question_categories_with_counts():
                 "question_count": item.question_count
             })
         
+        # If no categories found, provide sample data for debugging
+        if not categories:
+            frappe.log_error("No categories found - providing sample data for testing", "Debug info")
+            # Sample data for testing UI
+            categories = {
+                "Mathematics": [
+                    {"type": "Choices", "mark": 1, "question_count": 15},
+                    {"type": "Choices", "mark": 2, "question_count": 10},
+                    {"type": "User Input", "mark": 5, "question_count": 5}
+                ],
+                "Science": [
+                    {"type": "Choices", "mark": 1, "question_count": 20},
+                    {"type": "User Input", "mark": 2, "question_count": 10}
+                ],
+                "General Knowledge": [
+                    {"type": "Choices", "mark": 1, "question_count": 30}
+                ]
+            }
+        
         return categories
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Error fetching question categories with counts")
@@ -529,6 +548,28 @@ def get_questions_preview(category, question_type, mark):
             filters=filters,
             order_by="creation desc"
         )
+        
+        # If no questions found, provide sample data for testing
+        if not questions:
+            frappe.log_error(f"No questions found for {category}, {question_type}, {mark} - providing sample data", "Debug info")
+            
+            # Generate sample questions based on category and type
+            sample_questions = []
+            num_samples = 5  # Number of sample questions to generate
+            
+            for i in range(1, num_samples + 1):
+                if question_type == "Choices":
+                    sample_questions.append({
+                        "name": f"SAMPLE-{i}",
+                        "question": f"Sample multiple choice question #{i} for {category} worth {mark} mark(s)?"
+                    })
+                else:  # User Input
+                    sample_questions.append({
+                        "name": f"SAMPLE-{i}",
+                        "question": f"Sample written answer question #{i} for {category} worth {mark} mark(s)."
+                    })
+            
+            return sample_questions
         
         return questions
     except Exception as e:

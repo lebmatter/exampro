@@ -164,30 +164,42 @@
                                     </div>
                                 </div>
 
-                                <!-- Categories Selection -->
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <h6>Available Categories</h6>
-                                        <div class="available-categories-container border rounded p-3" style="height: 400px; overflow-y: auto;">
-                                            <div id="available-categories">
-                                                <!-- Categories will be loaded here -->
-                                            </div>
+                                    <!-- Unified Categories Table -->
+                                    <div class="col-md-8">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered" id="categories-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Category</th>
+                                                        <th>Type</th>
+                                                        <th>Marks/Question</th>
+                                                        <th>Available</th>
+                                                        <th style="width: 150px;">Select # Questions</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Categories will be loaded here -->
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-md-6">
-                                        <h6>Selected Categories 
-                                            <span class="text-muted" id="selection-summary">
-                                                (Total: <span id="total-selected-questions">0</span> questions, 
-                                                <span id="total-selected-marks">0</span> marks)
-                                            </span>
-                                        </h6>
-                                        <div class="selected-categories-container border rounded p-3" style="height: 400px; overflow-y: auto;">
-                                            <div id="selected-categories">
-                                                <!-- Selected categories will appear here -->
-                                                <div class="text-center text-muted" id="no-selection-message">
-                                                    <p>No categories selected yet</p>
-                                                    <small>Select categories from the left panel to add questions</small>
+                                    <!-- Summary Card -->
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="card-title mb-0">Selection Summary</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="summary-item mb-3">
+                                                    <h6>Total Selected Questions</h6>
+                                                    <h3 id="total-selected-questions">0</h3>
+                                                </div>
+                                                <div class="summary-item">
+                                                    <h6>Total Marks</h6>
+                                                    <h3 id="total-selected-marks">0</h3>
                                                 </div>
                                             </div>
                                         </div>

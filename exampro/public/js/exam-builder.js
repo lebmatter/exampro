@@ -378,9 +378,19 @@ frappe.ready(function() {
                 break;
                 
             case 2:
-                // Check if at least one category selected
-                if (selectedCategoriesData.length === 0) {
-                    frappe.throw(__('Please select at least one question category'));
+                // Check if at least one category has questions selected
+                const hasSelectedQuestions = selectedCategoriesData.some(item => item.selectedCount > 0);
+                if (!hasSelectedQuestions) {
+                    frappe.throw(__('Please select at least one question category and specify the number of questions'));
+                    return false;
+                }
+                
+                // Check that no selected category has more questions than available
+                const invalidSelection = selectedCategoriesData.find(item => 
+                    item.selectedCount > item.totalCount
+                );
+                if (invalidSelection) {
+                    frappe.throw(__(`Cannot select more questions than available for ${invalidSelection.category}`));
                     return false;
                 }
                 break;
@@ -465,8 +475,8 @@ frappe.ready(function() {
                 
                 console.log('Selected categories data:', selectedCategoriesData);
                 
-                // Render the selected categories immediately
-                renderSelectedCategories();
+                // We will render categories in the table after fetching available categories
+                // Just update the summary for now
                 updateSelectionSummary();
                 
                 // If categories data is already loaded, update total counts now
@@ -519,8 +529,8 @@ frappe.ready(function() {
         
         console.log('Updated selected categories data:', selectedCategoriesData);
         
-        // Re-render to show updated information
-        renderSelectedCategories();
+        // Re-render the table with the updated data
+        renderAvailableCategories();
         updateSelectionSummary();
     }
     
@@ -745,166 +755,271 @@ frappe.ready(function() {
         frappe.call({
             method: 'exampro.www.manage.exam_builder.get_question_categories_with_counts',
             callback: function(response) {
+                console.log('Question categories API response:', response);
+                
                 if (response.message) {
                     categoriesData = response.message;
                     console.log('Fetched categories data:', categoriesData);
-                    renderAvailableCategories();
                     
-                    // If we have selected categories from an existing exam, update their total counts
-                    if (selectedCategoriesData.length > 0) {
-                        console.log('Updating total counts for existing selected categories');
-                        updateTotalCountsFromAvailableCategories();
+                    // Check if categoriesData is empty
+                    if (Object.keys(categoriesData).length === 0) {
+                        console.warn('Warning: No category data received from API!');
+                        
+                        // Add a default empty message to the table
+                        const tbody = $('#categories-table tbody');
+                        tbody.empty();
+                        tbody.append(`
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    No question categories found. Please add question categories first.
+                                </td>
+                            </tr>
+                        `);
+                    } else {
+                        // We have data, render the table
+                        renderAvailableCategories();
+                        
+                        // If we have selected categories from an existing exam, update their total counts
+                        if (selectedCategoriesData.length > 0) {
+                            console.log('Updating total counts for existing selected categories');
+                            updateTotalCountsFromAvailableCategories();
+                        }
                     }
+                } else {
+                    console.error('Error: No message in API response');
+                    // Show error message in the table
+                    const tbody = $('#categories-table tbody');
+                    tbody.empty();
+                    tbody.append(`
+                        <tr>
+                            <td colspan="6" class="text-center text-danger py-4">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Error loading question categories. Please try refreshing the page.
+                            </td>
+                        </tr>
+                    `);
                 }
+            },
+            error: function(err) {
+                console.error('Failed to fetch question categories:', err);
+                // Show error message in the table
+                const tbody = $('#categories-table tbody');
+                tbody.empty();
+                tbody.append(`
+                    <tr>
+                        <td colspan="6" class="text-center text-danger py-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Error loading question categories. Please try refreshing the page.
+                        </td>
+                    </tr>
+                `);
             }
         });
     }
 
     function renderAvailableCategories() {
-        const container = $('#available-categories');
-        container.empty();
+        console.log('Rendering available categories...');
+        console.log('Current categoriesData:', categoriesData);
+        
+        const tbody = $('#categories-table tbody');
+        tbody.empty();
+        
+        // If no categories data available or empty object
+        if (!categoriesData || Object.keys(categoriesData).length === 0) {
+            console.warn('No categories data available to render');
+            tbody.append(`
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No question categories found. Please add question categories first.
+                    </td>
+                </tr>
+            `);
+            return;
+        }
         
         const typeFilter = $('#question-type-filter').val();
+        console.log('Current type filter:', typeFilter);
         
+        // First, create a map of already selected items for quick lookup
+        const selectedMap = {};
+        selectedCategoriesData.forEach(item => {
+            const key = `${item.category}_${item.type}_${item.mark}`;
+            selectedMap[key] = item;
+        });
+        console.log('Selected items map:', selectedMap);
+        
+        // Track if we've added any rows
+        let rowsAdded = 0;
+        
+        // Then render all categories in the unified table
         Object.keys(categoriesData).forEach(categoryName => {
             const categoryItems = categoriesData[categoryName];
+            
+            if (!Array.isArray(categoryItems)) {
+                console.warn(`Invalid category items for ${categoryName}:`, categoryItems);
+                return;
+            }
             
             // Filter by question type if not "Mixed"
             const filteredItems = typeFilter === 'Mixed' 
                 ? categoryItems 
                 : categoryItems.filter(item => item.type === typeFilter);
             
+            console.log(`Category ${categoryName} filtered items:`, filteredItems);
+            
             if (filteredItems.length === 0) return;
             
-            // Create category section
-            const categoryDiv = $(`
-                <div class="category-section mb-3">
-                    <h6 class="category-title text-primary">${categoryName}</h6>
-                    <div class="category-items"></div>
-                </div>
-            `);
-            
-            const itemsContainer = categoryDiv.find('.category-items');
-            
+            // Add each category item as a row
             filteredItems.forEach(item => {
-                const itemDiv = $(`
-                    <div class="category-item card mb-2" style="cursor: pointer;">
-                        <div class="card-body p-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <small class="text-muted">${item.type}</small>
-                                    <div><strong>${item.question_count} questions</strong> × ${item.mark} mark(s)</div>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary add-category-btn" 
-                                        data-category="${categoryName}"
-                                        data-type="${item.type}"
-                                        data-mark="${item.mark}"
-                                        data-count="${item.question_count}">
-                                    <i class="bi bi-plus"></i> Add
+                // Check if this item is already selected
+                const key = `${categoryName}_${item.type}_${item.mark}`;
+                const isSelected = key in selectedMap;
+                const selectedItem = selectedMap[key];
+                const selectedCount = isSelected ? selectedItem.selectedCount : 0;
+                
+                // Create row
+                const row = $(`
+                    <tr data-category="${categoryName}" data-type="${item.type}" data-mark="${item.mark}">
+                        <td>${categoryName}</td>
+                        <td>${item.type}</td>
+                        <td>${item.mark}</td>
+                        <td>${item.question_count}</td>
+                        <td>
+                            <div class="input-group">
+                                <input type="number" class="form-control question-count-input" 
+                                    min="0" max="${item.question_count}" 
+                                    value="${selectedCount}" 
+                                    ${!isSelected ? 'disabled' : ''}
+                                    data-category="${categoryName}"
+                                    data-type="${item.type}"
+                                    data-mark="${item.mark}"
+                                    data-max="${item.question_count}">
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-info view-questions-btn" 
+                                    data-category="${categoryName}"
+                                    data-type="${item.type}"
+                                    data-mark="${item.mark}">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                                <button class="btn btn-sm ${isSelected ? 'btn-danger deselect-btn' : 'btn-success select-btn'}" 
+                                    data-category="${categoryName}"
+                                    data-type="${item.type}"
+                                    data-mark="${item.mark}"
+                                    data-count="${item.question_count}">
+                                    ${isSelected ? '<i class="bi bi-x"></i> Remove' : '<i class="bi bi-check"></i> Select'}
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </td>
+                    </tr>
                 `);
                 
-                itemsContainer.append(itemDiv);
+                tbody.append(row);
+                rowsAdded++;
             });
-            
-            container.append(categoryDiv);
         });
         
-        // Bind add category events
-        $('.add-category-btn').on('click', function(e) {
-            e.stopPropagation();
+        // If no rows were added after filtering, show a message
+        if (rowsAdded === 0) {
+            let message = '';
+            if (typeFilter !== 'Mixed') {
+                message = `No question categories found with type "${typeFilter}". Try selecting a different filter.`;
+            } else {
+                message = 'No question categories found. Please add question categories first.';
+            }
+            
+            tbody.append(`
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        ${message}
+                    </td>
+                </tr>
+            `);
+        }
+        
+        // Bind events for the table
+        
+        // View questions button
+        $('.view-questions-btn').on('click', function(e) {
+            e.preventDefault();
+            const category = $(this).data('category');
+            const type = $(this).data('type');
+            const mark = $(this).data('mark');
+            
+            showQuestionsPreviewModal(category, type, mark);
+        });
+        
+        // Select button
+        $('.select-btn').on('click', function(e) {
+            e.preventDefault();
             const category = $(this).data('category');
             const type = $(this).data('type');
             const mark = $(this).data('mark');
             const count = $(this).data('count');
             
-            showQuestionSelectionModal(category, type, mark, count);
+            // Add to selected categories
+            addSelectedCategory(category, type, mark, count, count);
+            
+            // Refresh the table to show updated state
+            renderAvailableCategories();
         });
-    }
-
-    function showQuestionSelectionModal(category, type, mark, totalCount) {
-        const modalHtml = `
-            <div class="modal fade" id="questionSelectionModal" tabindex="-1" role="dialog">
-                <div class="modal-dialog modal-lg" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Select Questions</h5>
-                            <button type="button" class="close" data-dismiss="modal">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <p><strong>Category:</strong> ${category}</p>
-                            <p><strong>Type:</strong> ${type}</p>
-                            <p><strong>Mark per question:</strong> ${mark}</p>
-                            <p><strong>Available questions:</strong> ${totalCount}</p>
-                            
-                            <!-- View Questions Section -->
-                            <div class="mb-4">
-                                <h6>View Questions</h6>
-                                <div class="border rounded" style="height: 300px; overflow-y: auto;">
-                                    <table class="table table-sm table-striped mb-0" id="questions-preview-table">
-                                        <thead class="thead-light sticky-top">
-                                            <tr>
-                                                <th style="width: 60px;">#</th>
-                                                <th>Question</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="2" class="text-center">
-                                                    <div class="spinner-border spinner-border-sm" role="status">
-                                                        <span class="sr-only">Loading...</span>
-                                                    </div>
-                                                    Loading questions...
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="question-count-input">Number of questions to select:</label>
-                                <input type="number" id="question-count-input" class="form-control" 
-                                        min="1" max="${totalCount}" value="${totalCount}">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirm-selection">Add Selected</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
         
-        // Remove existing modal if any
-        $('#questionSelectionModal').remove();
-        
-        // Add modal to body
-        $('body').append(modalHtml);
-        
-        // Show modal
-        $('#questionSelectionModal').modal('show');
-        
-        // Load questions preview
-        loadQuestionsPreview(category, type, mark);
-        
-        // Bind confirm button
-        $('#confirm-selection').on('click', function() {
-            const selectedCount = parseInt($('#question-count-input').val());
-            if (selectedCount > 0 && selectedCount <= totalCount) {
-                addSelectedCategory(category, type, mark, selectedCount, totalCount);
-                $('#questionSelectionModal').modal('hide');
-            } else {
-                frappe.throw(__('Please enter a valid number of questions'));
+        // Deselect button
+        $('.deselect-btn').on('click', function(e) {
+            e.preventDefault();
+            const category = $(this).data('category');
+            const type = $(this).data('type');
+            const mark = $(this).data('mark');
+            
+            // Find and remove from selected categories
+            const index = selectedCategoriesData.findIndex(item => 
+                item.category === category && item.type === type && item.mark === mark
+            );
+            
+            if (index >= 0) {
+                selectedCategoriesData.splice(index, 1);
+                updateSelectionSummary();
+                renderAvailableCategories();
             }
         });
+        
+        // Question count input change
+        $('.question-count-input').on('change', function() {
+            const category = $(this).data('category');
+            const type = $(this).data('type');
+            const mark = $(this).data('mark');
+            const maxCount = parseInt($(this).data('max'));
+            let newCount = parseInt($(this).val());
+            
+            // Validate input
+            if (isNaN(newCount) || newCount < 0) {
+                newCount = 0;
+                $(this).val(0);
+            } else if (newCount > maxCount) {
+                newCount = maxCount;
+                $(this).val(maxCount);
+            }
+            
+            // Update selected categories data
+            const index = selectedCategoriesData.findIndex(item => 
+                item.category === category && item.type === type && item.mark === mark
+            );
+            
+            if (index >= 0) {
+                selectedCategoriesData[index].selectedCount = newCount;
+                updateSelectionSummary();
+            }
+        });
+        
+        console.log('Finished rendering available categories. Rows added:', rowsAdded);
     }
+    
+    // This function has been replaced by direct table interaction and showQuestionsPreviewModal
 
     function loadQuestionsPreview(category, type, mark) {
         frappe.call({
@@ -959,7 +1074,10 @@ frappe.ready(function() {
         );
         
         if (existingIndex >= 0) {
-            frappe.throw(__('This category/type/mark combination is already selected'));
+            // We no longer need to throw an error since our UI now handles existing selections
+            // Just enable the input field and set its value
+            const inputField = $(`#categories-table tbody tr[data-category="${category}"][data-type="${type}"][data-mark="${mark}"] .question-count-input`);
+            inputField.val(selectedCount).prop('disabled', false);
             return;
         }
         
@@ -977,128 +1095,15 @@ frappe.ready(function() {
             totalCount: parsedTotalCount
         });
         
-        renderSelectedCategories();
+        // Update summary directly instead of rendering selected categories separately
         updateSelectionSummary();
     }
 
-    function renderSelectedCategories() {
-        const container = $('#selected-categories');
-        container.empty();
-        
-        if (selectedCategoriesData.length === 0) {
-            container.html(`
-                <div class="text-center text-muted" id="no-selection-message">
-                    <p>No categories selected yet</p>
-                    <small>Select categories from the left panel to add questions</small>
-                </div>
-            `);
-            return;
-        }
-        
-        selectedCategoriesData.forEach((item, index) => {
-            const itemDiv = $(`
-                <div class="selected-category-item card mb-2">
-                    <div class="card-body p-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>${item.category}</strong>
-                                <br>
-                                <small class="text-muted">${item.type} • ${item.mark} mark(s) each</small>
-                                <br>
-                                <span class="badge badge-primary">${item.selectedCount} of ${item.totalCount} questions</span>
-                                <span class="badge badge-success">${item.selectedCount * item.mark} marks</span>
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-outline-secondary edit-selection-btn mr-1" 
-                                        data-index="${index}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger remove-selection-btn" 
-                                        data-index="${index}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `);
-            
-            container.append(itemDiv);
-        });
-        
-        // Bind edit and remove events
-        $('.edit-selection-btn').on('click', function() {
-            const index = $(this).data('index');
-            const item = selectedCategoriesData[index];
-            editSelectedCategory(index, item);
-        });
-        
-        $('.remove-selection-btn').on('click', function() {
-            const index = $(this).data('index');
-            removeSelectedCategory(index);
-        });
-    }
+    // This function has been replaced by the unified table rendering in renderAvailableCategories
 
-    function editSelectedCategory(index, item) {
-        const modalHtml = `
-            <div class="modal fade" id="editSelectionModal" tabindex="-1" role="dialog">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Edit Selection</h5>
-                            <button type="button" class="close" data-dismiss="modal">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <p><strong>Category:</strong> ${item.category}</p>
-                            <p><strong>Type:</strong> ${item.type}</p>
-                            <p><strong>Mark per question:</strong> ${item.mark}</p>
-                            <p><strong>Available questions:</strong> ${item.totalCount}</p>
-                            
-                            <div class="form-group">
-                                <label for="edit-question-count">Number of questions:</label>
-                                <input type="number" id="edit-question-count" class="form-control" 
-                                        min="1" max="${item.totalCount}" value="${item.selectedCount}">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirm-edit">Update</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Remove existing modal if any
-        $('#editSelectionModal').remove();
-        
-        // Add modal to body
-        $('body').append(modalHtml);
-        
-        // Show modal
-        $('#editSelectionModal').modal('show');
-        
-        // Bind confirm button
-        $('#confirm-edit').on('click', function() {
-            const newCount = parseInt($('#edit-question-count').val());
-            if (newCount > 0 && newCount <= item.totalCount) {
-                selectedCategoriesData[index].selectedCount = newCount;
-                renderSelectedCategories();
-                updateSelectionSummary();
-                $('#editSelectionModal').modal('hide');
-            } else {
-                frappe.throw(__('Please enter a valid number of questions'));
-            }
-        });
-    }
+    // This function has been replaced by direct editing in the table inputs
 
-    function removeSelectedCategory(index) {
-        selectedCategoriesData.splice(index, 1);
-        renderSelectedCategories();
-        updateSelectionSummary();
-    }
+    // This function has been replaced by the deselect button functionality in renderAvailableCategories
 
     function updateSelectionSummary() {
         let totalQuestions = 0;
@@ -1109,8 +1114,15 @@ frappe.ready(function() {
             totalMarks += item.selectedCount * item.mark;
         });
         
+        // Update the summary card with counts and total marks
         $('#total-selected-questions').text(totalQuestions);
         $('#total-selected-marks').text(totalMarks);
+        
+        // Highlight summary card to indicate change
+        $('.card-header').addClass('bg-success');
+        setTimeout(() => {
+            $('.card-header').removeClass('bg-success').addClass('bg-primary');
+        }, 500);
     }
     
     function addExaminerRow() {
@@ -1266,12 +1278,15 @@ frappe.ready(function() {
         return {
             type: 'Fixed',
             question_type_filter: $('#question-type-filter').val(),
-            categories: selectedCategoriesData.map(category => ({
-                ...category,
-                mark: parseInt(category.mark, 10),
-                selectedCount: parseInt(category.selectedCount, 10),
-                totalCount: parseInt(category.totalCount, 10)
-            }))
+            categories: selectedCategoriesData
+                .filter(category => category.selectedCount > 0) // Only include categories with selected questions
+                .map(category => ({
+                    category: category.category,
+                    type: category.type,
+                    mark: parseInt(category.mark, 10),
+                    selectedCount: parseInt(category.selectedCount, 10),
+                    totalCount: parseInt(category.totalCount, 10)
+                }))
         };
     }
     
@@ -1685,5 +1700,63 @@ frappe.ready(function() {
                 reject(error);
             }
         });
+    }
+    
+    function showQuestionsPreviewModal(category, type, mark) {
+        const modalHtml = `
+            <div class="modal fade" id="questionsPreviewModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Questions Preview</h5>
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Category:</strong> ${category}</p>
+                            <p><strong>Type:</strong> ${type}</p>
+                            <p><strong>Mark per question:</strong> ${mark}</p>
+                            
+                            <div class="border rounded" style="height: 400px; overflow-y: auto;">
+                                <table class="table table-sm table-striped mb-0" id="questions-preview-table">
+                                    <thead class="thead-light sticky-top">
+                                        <tr>
+                                            <th style="width: 60px;">#</th>
+                                            <th>Question</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="2" class="text-center">
+                                                <div class="spinner-border spinner-border-sm" role="status">
+                                                    <span class="sr-only">Loading...</span>
+                                                </div>
+                                                Loading questions...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        $('#questionsPreviewModal').remove();
+        
+        // Add modal to body
+        $('body').append(modalHtml);
+        
+        // Show modal
+        $('#questionsPreviewModal').modal('show');
+        
+        // Load questions
+        loadQuestionsPreview(category, type, mark);
     }
 });
