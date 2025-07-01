@@ -878,7 +878,8 @@ frappe.ready(function() {
                 const isSelected = key in selectedMap;
                 const selectedItem = selectedMap[key];
                 const selectedCount = isSelected ? selectedItem.selectedCount : 0;
-                
+                // Calculate marks for this row
+                const rowMarks = selectedCount * item.mark;
                 // Create row
                 const row = $(`
                     <tr data-category="${categoryName}" data-type="${item.type}" data-mark="${item.mark}">
@@ -898,6 +899,7 @@ frappe.ready(function() {
                                     data-max="${item.question_count}">
                             </div>
                         </td>
+                        <td class="marks-col">${rowMarks}</td>
                         <td>
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-info view-questions-btn" 
@@ -917,7 +919,6 @@ frappe.ready(function() {
                         </td>
                     </tr>
                 `);
-                
                 tbody.append(row);
                 rowsAdded++;
             });
@@ -1108,21 +1109,13 @@ frappe.ready(function() {
     function updateSelectionSummary() {
         let totalQuestions = 0;
         let totalMarks = 0;
-        
         selectedCategoriesData.forEach(item => {
             totalQuestions += item.selectedCount;
             totalMarks += item.selectedCount * item.mark;
         });
-        
-        // Update the summary card with counts and total marks
+        // Update the summary row in the table footer
         $('#total-selected-questions').text(totalQuestions);
         $('#total-selected-marks').text(totalMarks);
-        
-        // Highlight summary card to indicate change
-        $('.card-header').addClass('bg-success');
-        setTimeout(() => {
-            $('.card-header').removeClass('bg-success').addClass('bg-primary');
-        }, 500);
     }
     
     function addExaminerRow() {
