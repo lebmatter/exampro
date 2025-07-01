@@ -456,14 +456,16 @@ function displayQuestion(current_qs) {
                     optImgHtml = `<div class="option-image"><img src="${optImg}" class="img-fluid" alt="" ></div>`
                 }
                 choicesHtml += `
-                    <div class="option-item ${checked ? 'selected' : ''}">
-                        <div class="d-flex align-items-center">
-                            <input class="option" value="${key}" type="${inputType}" name="qs_${currentQuestion["key"]}" ${checked} id="option_${currentQuestion["key"]}_${key}">
-                            <label class="option-text mb-0" for="option_${currentQuestion["key"]}_${key}">${value}</label>
+                    <label for="option_${currentQuestion["key"]}_${key}" class="w-100 mb-0" style="cursor: pointer;">
+                        <div class="option-item ${checked ? 'selected' : ''}">
+                            <div class="d-flex align-items-center">
+                                <input class="option" value="${key}" type="${inputType}" name="qs_${currentQuestion["key"]}" ${checked} id="option_${currentQuestion["key"]}_${key}">
+                                <span class="option-text mb-0">${value}</span>
+                            </div>
+                            ${optImgHtml}
+                            ${explanationHtml}
                         </div>
-                        ${optImgHtml}
-                        ${explanationHtml}
-                    </div>`;
+                    </label>`;
             }
         });
         if (currentQuestion["marked_for_later"]) {
