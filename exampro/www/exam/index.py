@@ -105,6 +105,15 @@ def get_context(context):
 	elif exam_details["submission_status"] in ["Submitted", "Terminated"]:
 		frappe.local.flags.redirect_location = f"/exam/{exam_details['exam_submission']}"
 		raise frappe.Redirect
+
+	elif exam_details["schedule_status"] == "Upcoming":
+		context.exam = {}
+		context.alert = {
+			"title": "You have an upcoming exam.",
+			"text": "{} exam starts at {}".format(
+				exam_details["exam"],
+				exam_details["start_time"]
+		)}
 	
 	elif exam_details["is_live"]:
 		context.alert = {}
@@ -129,13 +138,10 @@ def get_context(context):
 			"keywords": exam.title,
 			"og:type": "website",
 		}
-
-
-	elif exam_details["schedule_status"] == "Upcoming":
+	elif not exam_details["is_live"]:
 		context.exam = {}
 		context.alert = {
-			"title": "You have an upcoming exam.",
-			"text": "{} exam starts at {}".format(
-				exam_details["exam"],
-				exam_details["start_time"]
-		)}
+			"title": "No exams scheduled.",
+			"text": "You do not have any live or upcoming exams."
+		}
+
