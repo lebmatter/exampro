@@ -26,12 +26,14 @@ def get_proctor_live_exams(proctor=None):
 			"exam_submitted_time",
 			"additional_time_given"
 	])
-	schedule_status = {s["exam_schedule"]: frappe.get_doc("Exam Schedule", s["exam_schedule"]).get_status() for s in submissions}
 	for submission in submissions:
 		if submission["status"] in ["Registration Cancelled", "Aborted"]:
 			continue
 
-		if schedule_status[submission["exam_schedule"]] == "Completed":
+		sched_status = frappe.db.get_value(
+			"Exam Schedule", submission.exam_schedule, "status"
+		)
+		if sched_status == "Completed":
 			continue
 
 		schedule_start_dt, sched_duration = frappe.db.get_value(
@@ -77,6 +79,12 @@ def get_latest_messages(proctor=None):
 			order_by="creation desc",
 			limit=1
 		)
+
+		sched_status = frappe.db.get_value(
+			"Exam Schedule", submission.exam_schedule, "status"
+		)
+		if sched_status == "Completed":
+			continue
 
 		msg_text = "Exam not started"
 		if submission.status == "Started":
