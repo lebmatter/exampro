@@ -11,7 +11,6 @@
   "pass_percentage",
   "image",
   "column_break_vleg",
-  "published",
   "start_time_type",
   "flexible_time_ends_in",
   "column_break_10",
@@ -58,12 +57,6 @@
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "label": "Preview Image"
-  },
-  {
-   "default": "0",
-   "fieldname": "published",
-   "fieldtype": "Check",
-   "label": "Published"
   },
   {
    "fieldname": "column_break_10",
@@ -298,8 +291,8 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-06-25 11:27:38.992363",
- "modified_by": "Administrator",
+ "modified": "2025-07-01 14:26:53.465183",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",
  "owner": "Administrator",

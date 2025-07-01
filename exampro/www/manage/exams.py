@@ -21,7 +21,6 @@ def duplicate_exam(exam):
         # Create a new exam with the same properties
         new_exam = frappe.copy_doc(source)
         new_exam.title = f"{source.title} (Copy)"
-        new_exam.published = 0  # Set as unpublished by default
         new_exam.insert()
         
         # Copy the question references
@@ -154,8 +153,7 @@ def get_exams_with_schedules():
             "title", 
             "duration", 
             "total_questions", 
-            "total_marks", 
-            "published",
+            "total_marks",
             "upcoming"
         ]
     )

@@ -53,7 +53,6 @@ def slugify(title, used_slugs=None):
 class Exam(Document):
 
 	def validate(self):
-		self.validate_status()
 		self.image = validate_image(self.image)
 
 		if self.duration <= 0:
@@ -74,11 +73,6 @@ class Exam(Document):
 		settings = frappe.get_single("Exam Settings")
 		if self.enable_video_proctoring and not settings.validate_video_settings():
 			frappe.throw("Video storage is not configured for proctoring.")
-
-
-	def validate_status(self):
-		if self.published:
-			self.status = "Approved"
 
 
 	def autoname(self):
@@ -155,7 +149,6 @@ class Exam(Document):
 def search_exam(text):
 	exams = frappe.get_all(
 		"Exam",
-		filters={"published": True},
 		or_filters={
 			"title": ["like", f"%{text}%"],
 			"tags": ["like", f"%{text}%"],
