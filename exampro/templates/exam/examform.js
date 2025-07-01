@@ -329,8 +329,8 @@ function updateOverviewMap() {
                 
                 // Determine button style based on question status
                 if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
-                    btnCls = "btn-outline-warning";
-                    btnStyle = "border-width: 2px;";
+                    btnCls = "btn-warning text-white";
+                    btnStyle = "";
                 } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
                     btnCls = "btn-outline-success";
                     btnStyle = "border-width: 2px;";
