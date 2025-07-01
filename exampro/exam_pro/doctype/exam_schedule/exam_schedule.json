@@ -7,7 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "exam",
-  "visibility",
   "start_date_time",
   "schedule_type",
   "schedule_expire_in_days",
@@ -23,14 +22,6 @@
   {
    "fieldname": "column_break_3",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "Public",
-   "fieldname": "visibility",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Visibility",
-   "options": "Public\nPrivate\nArchived"
   },
   {
    "fieldname": "exam",
@@ -113,7 +104,7 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-06-30 16:05:00.628185",
+ "modified": "2025-07-01 20:46:39.400309",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",

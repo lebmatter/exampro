@@ -130,18 +130,6 @@ frappe.ready(function() {
         
         // Set default to Fixed
         scheduleTypeSelect.val('Fixed');
-        
-        // Populate visibility
-        const visibilityOptions = ['Public', 'Private', 'Archived'];
-        const visibilitySelect = $('#schedule-visibility');
-        visibilitySelect.empty();
-        
-        visibilityOptions.forEach(option => {
-            visibilitySelect.append(`<option value="${option}">${option}</option>`);
-        });
-        
-        // Set default to Public
-        visibilitySelect.val('Public');
     }
     
     function bindEvents() {
@@ -1320,7 +1308,6 @@ frappe.ready(function() {
             scheduleData.schedule_name = scheduleName;
             scheduleData.start_datetime = startDateTime; // This is in YYYY-MM-DDTHH:MM format from the datetime-local input
             scheduleData.schedule_type = $('#schedule-type').val();
-            scheduleData.visibility = $('#schedule-visibility').val();
             
             // Only add expire days if it's recurring
             if ($('#schedule-type').val() === 'Recurring' && $('#schedule-expire-days').val()) {
@@ -1570,7 +1557,6 @@ frappe.ready(function() {
             scheduleData.schedule_name = scheduleName;
             scheduleData.start_datetime = startDateTime; // This is in YYYY-MM-DDTHH:MM format from the datetime-local input
             scheduleData.schedule_type = $('#schedule-type').val();
-            scheduleData.visibility = $('#schedule-visibility').val();
             
             // Only add expire days if it's recurring
             if ($('#schedule-type').val() === 'Recurring' && $('#schedule-expire-days').val()) {

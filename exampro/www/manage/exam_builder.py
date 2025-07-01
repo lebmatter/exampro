@@ -99,7 +99,7 @@ def get_exam_schedules(exam):
         schedules = frappe.get_list(
             "Exam Schedule",
             filters={"exam": exam},
-            fields=["name", "start_date_time", "visibility", "status"],
+            fields=["name", "start_date_time", "status"],
             order_by="creation desc"
         )
         
@@ -865,8 +865,8 @@ def save_schedule_from_builder(schedule_data):
                     frappe.logger().error(f"Error parsing datetime: {e}")
                     return {"success": False, "error": f"Invalid date format: {e}"}
             
-            schedule_doc.schedule_type = schedule_data.get("schedule_type")
-            schedule_doc.visibility = schedule_data.get("visibility")
+            # Remove visibility and related fields
+            # schedule_doc.visibility = schedule_data.get("visibility")
             
             # Add expire_days if it exists for recurring schedules
             if schedule_data.get("schedule_type") == "Recurring" and schedule_data.get("expire_days"):
@@ -884,7 +884,7 @@ def save_schedule_from_builder(schedule_data):
             }
             
             schedule_doc.schedule_type = schedule_data.get("schedule_type")
-            schedule_doc.visibility = schedule_data.get("visibility")
+            # schedule_doc.visibility = schedule_data.get("visibility")
             
             # Add expire_days if it exists for recurring schedules
             if schedule_data.get("schedule_type") == "Recurring" and schedule_data.get("expire_days"):
