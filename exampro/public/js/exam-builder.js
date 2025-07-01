@@ -73,8 +73,7 @@ frappe.ready(function() {
         // Clear examiners table
         $('#examiners-table tbody').empty();
         
-        // Reset question selection to Fixed
-        $('#question-selection-type').val('Fixed').trigger('change');
+        // Clear total questions
         $('#total-questions').val('');
         
         // Clear selected categories
@@ -102,8 +101,6 @@ frappe.ready(function() {
         $('#existing-exam-form').hide();
         $('#new-schedule-form').show();
         $('#existing-schedule-form').hide();
-        $('#fixed-questions-section').show();
-        $('#random-questions-count').hide();
         $('#schedule-expire-days-container').hide();
         
         console.log('Form reset to initial state');
@@ -169,17 +166,6 @@ frappe.ready(function() {
             } else {
                 $('#existing-schedule-form').hide();
                 $('#new-schedule-form').show();
-            }
-        });
-        
-        // Question selection type change
-        $('#question-selection-type').on('change', function() {
-            if ($(this).val() === 'Random') {
-                $('#random-questions-count').show();
-                $('#fixed-questions-section').hide();
-            } else {
-                $('#random-questions-count').hide();
-                $('#fixed-questions-section').show();
             }
         });
 
@@ -376,14 +362,9 @@ frappe.ready(function() {
                 break;
                 
             case 2:
-                // For fixed questions, check if at least one category selected
-                if ($('#question-selection-type').val() === 'Fixed' && selectedCategoriesData.length === 0) {
+                // Check if at least one category selected
+                if (selectedCategoriesData.length === 0) {
                     frappe.throw(__('Please select at least one question category'));
-                    return false;
-                }
-                // For random questions, check if count is set
-                if ($('#question-selection-type').val() === 'Random' && (!$('#total-questions').val() || $('#total-questions').val() <= 0)) {
-                    frappe.throw(__('Please specify the number of questions'));
                     return false;
                 }
                 break;
@@ -445,24 +426,17 @@ frappe.ready(function() {
     function populateStep2FromExam(questionConfig) {
         console.log('Populating step 2 from exam:', questionConfig);
         
-        // Set question selection type based on randomize_questions
-        if (questionConfig.randomize_questions) {
-            $('#question-selection-type').val('Random').trigger('change');
-            $('#total-questions').val(questionConfig.total_questions || '');
-        } else {
-            $('#question-selection-type').val('Fixed').trigger('change');
+        // Convert select_questions to selectedCategoriesData format
+        selectedCategoriesData = [];
+        
+        if (questionConfig.select_questions && questionConfig.select_questions.length > 0) {
+            // Set question type filter first
+            $('#question-type-filter').val(questionConfig.question_type || 'Mixed');
             
-            // Convert select_questions to selectedCategoriesData format
-            selectedCategoriesData = [];
-            
-            if (questionConfig.select_questions && questionConfig.select_questions.length > 0) {
-                // Set question type filter first
-                $('#question-type-filter').val(questionConfig.question_type || 'Mixed');
-                
-                questionConfig.select_questions.forEach(setting => {
-                    // For existing exams, we'll use the exam's question_type
-                    // If it's Mixed, we'll try to determine the most appropriate type later
-                    const questionType = questionConfig.question_type || 'Mixed';
+            questionConfig.select_questions.forEach(setting => {
+                // For existing exams, we'll use the exam's question_type
+                // If it's Mixed, we'll try to determine the most appropriate type later
+                const questionType = questionConfig.question_type || 'Mixed';
                     
                     selectedCategoriesData.push({
                         category: setting.question_category,
@@ -486,8 +460,7 @@ frappe.ready(function() {
                 }
                 // Otherwise, it will be called after fetchQuestionCategories completes
             }
-        }
-    }
+    },
     
     function updateTotalCountsFromAvailableCategories() {
         console.log('Updating total counts from available categories');
@@ -1188,7 +1161,7 @@ frappe.ready(function() {
                 if (response.message && response.message.success) {
                     // Find user in registrationsData and update status
                     const userIndex = registrationsData.findIndex(r => r.email === email);
-                    if (userIndex !== -1) {
+                    if userIndex !== -1) {
                         registrationsData[userIndex].registered = true;
                         registrationsData[userIndex].status = "Registered";
                     }
@@ -1274,44 +1247,67 @@ frappe.ready(function() {
     }
     
     function collectQuestionsData() {
-        const questionSelectionType = $('#question-selection-type').val();
-        
-        if (questionSelectionType === 'Random') {
-            return {
-                type: 'Random',
-                total_questions: parseInt($('#total-questions').val(), 10) || 0
-            };
-        } else {
-            // For Fixed questions, return category-based selection
-            return {
-                type: 'Fixed',
-                question_type_filter: $('#question-type-filter').val(),
-                categories: selectedCategoriesData.map(category => ({
-                    ...category,
-                    mark: parseInt(category.mark, 10),
-                    selectedCount: parseInt(category.selectedCount, 10),
-                    totalCount: parseInt(category.totalCount, 10)
-                }))
-            };
-        }
+        // Return category-based selection (Fixed type only)
+        return {
+            type: 'Fixed',
+            question_type_filter: $('#question-type-filter').val(),
+            categories: selectedCategoriesData.map(category => ({
+                ...category,
+                mark: parseInt(category.mark, 10),
+                selectedCount: parseInt(category.selectedCount, 10),
+                totalCount: parseInt(category.totalCount, 10)
+            }))
+        };
     }
     
     function collectScheduleData() {
-        if ($('input[name="schedule-choice"]:checked').val() === 'existing') {
-            return {
-                type: 'existing',
-                name: $('#existing-schedule').val()
-            };
-        } else {
-            return {
-                type: 'new',
-                name: $('#schedule-name').val(),
-                start_date_time: $('#schedule-start-datetime').val(),
-                schedule_type: $('#schedule-type').val(),
-                schedule_expire_in_days: $('#schedule-expire-days').val(),
-                visibility: $('#schedule-visibility').val()
-            };
+        // Get exam name - either the selected existing exam or the newly created one
+        const examName = examData.name;
+        if (!examName) {
+            throw new Error('No exam selected or created');
         }
+        
+        // Get schedule data
+        const scheduleType = $('input[name="schedule-choice"]:checked').val();
+        let scheduleData = {
+            exam: examName,
+            type: scheduleType
+        };
+        
+        if (scheduleType === 'existing') {
+            const existingScheduleId = $('#existing-schedule').val();
+            if (!existingScheduleId) {
+                throw new Error('No existing schedule selected');
+            }
+            scheduleData.name = existingScheduleId;
+        } else {
+            const scheduleName = $('#schedule-name').val();
+            if (!scheduleName) {
+                throw new Error('Schedule name is required');
+            }
+            
+            // Get start datetime and validate it
+            const startDateTime = $('#schedule-start-datetime').val();
+            if (!startDateTime) {
+                throw new Error('Start date and time are required');
+            }
+            
+            // For new schedules, we only need to send the name for the schedule
+            // The server will generate a unique document ID
+            scheduleData.schedule_name = scheduleName;
+            scheduleData.start_datetime = startDateTime; // This is in YYYY-MM-DDTHH:MM format from the datetime-local input
+            scheduleData.schedule_type = $('#schedule-type').val();
+            scheduleData.visibility = $('#schedule-visibility').val();
+            
+            // Only add expire days if it's recurring
+            if ($('#schedule-type').val() === 'Recurring' && $('#schedule-expire-days').val()) {
+                scheduleData.expire_days = $('#schedule-expire-days').val();
+            }
+            
+            console.log('Collected schedule data with start_datetime:', scheduleData.start_datetime);
+        }
+        
+        return scheduleData;
     }
     
     function validateEmail(email) {
