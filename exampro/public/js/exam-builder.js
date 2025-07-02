@@ -25,8 +25,6 @@ frappe.ready(function() {
         resetFormToInitialState();
         bindEvents();
         populateDropdowns();
-        fetchQuestionCategories();
-        loadExamBatches();
         
         // Reset all step styles and ensure we're at step 1
         $('.step-navigation .nav-link').removeClass('active completed');
@@ -303,6 +301,9 @@ frappe.ready(function() {
         
         // If navigating to step 2 and we have pending question config, populate it
         if (step === 2) {
+            // Load question categories when step 2 is accessed
+            fetchQuestionCategories();
+            
             // Check if we have a selected exam and question config
             if (examData.pendingQuestionConfig) {
                 populateStep2FromExam(examData.pendingQuestionConfig);
@@ -321,11 +322,12 @@ frappe.ready(function() {
             }
         }
         
-
         if (step === 4) {
             $('#next-step').text('Finish');
             // Load registrations which now contains all users with status
             loadRegistrations(scheduleData.name);
+            // Load user batches only when step 4 is accessed since batches are only related to users
+            loadUserBatches();
         } else {
             $('#next-step').text('Next');
         }
@@ -614,7 +616,7 @@ frappe.ready(function() {
     
     // We don't need loadAllUsers anymore as get_registrations will handle this
     
-    function loadExamBatches() {
+    function loadUserBatches() {
         frappe.call({
             method: 'exampro.www.manage.exam_builder.get_exam_batches',
             callback: function(response) {
