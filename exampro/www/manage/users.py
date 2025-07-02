@@ -155,6 +155,74 @@ def add_users(emails, role, batch=None):
         frappe.log_error(frappe.get_traceback(), "Error adding users")
         return {"success": False, "error": str(e)}
 
+@frappe.whitelist()
+def get_filtered_users(search='', role='', batch=''):
+    """
+    Get users with filtering applied server-side
+    
+    Args:
+        search (str): Search term for filtering by email/name
+        role (str): Filter by specific role (candidate, proctor, evaluator)
+        batch (str): Filter by specific batch name
+        
+    Returns:
+        dict: Dictionary with filtered users
+    """
+    if not frappe.has_permission("User", "read"):
+        return {"success": False, "error": _("Not permitted")}
+    
+    try:
+        # Get all non-system users
+        users = frappe.get_all(
+            "User", 
+            filters={"user_type": ["!=", "System User"]},
+            fields=["name", "email", "full_name", "first_name", "last_name", "enabled"]
+        )
+        
+        # Add role information
+        for user in users:
+            user_roles = frappe.get_roles(user["name"])
+            user["is_candidate"] = "Exam Candidate" in user_roles
+            user["is_proctor"] = "Exam Proctor" in user_roles
+            user["is_evaluator"] = "Exam Evaluator" in user_roles
+            
+            # Add batch information
+            user_batches = frappe.get_all(
+                "Exam Batch User", 
+                filters={"candidate": user["name"]}, 
+                fields=["exam_batch"]
+            )
+            user["batches"] = [ub.exam_batch for ub in user_batches]
+        
+        # Apply filters
+        filtered_users = []
+        for user in users:
+            # Search filter
+            if search and search.lower() not in user["email"].lower():
+                continue
+                
+            # Role filter
+            if role:
+                if role == 'candidate' and not user["is_candidate"]:
+                    continue
+                elif role == 'proctor' and not user["is_proctor"]:
+                    continue
+                elif role == 'evaluator' and not user["is_evaluator"]:
+                    continue
+            
+            # Batch filter
+            if batch and batch not in user["batches"]:
+                continue
+                
+            # User passed all filters
+            filtered_users.append(user)
+            
+        return {"success": True, "users": filtered_users}
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Error getting filtered users")
+        return {"success": False, "error": str(e)}
+
 def get_users():
     """
     Get all users with their roles
@@ -213,18 +281,9 @@ def get_context(context):
     
     # Set page data
     context.no_cache = 1
-    users = get_users()
     
-    # Add batch information to each user
-    for user in users:
-        user_batches = frappe.get_all(
-            "Exam Batch User", 
-            filters={"candidate": user["name"]}, 
-            fields=["exam_batch"]
-        )
-        user["batches"] = [ub.exam_batch for ub in user_batches]
-    
-    context.users = users
+    # Users will be loaded via AJAX
+    # We're no longer preloading user data in the context
     
     context.metatags = {
         "title": _("Manage Users"),

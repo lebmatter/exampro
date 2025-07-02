@@ -12,112 +12,137 @@
             </div>
         </div>
 
-        <!-- Filter, Search and Buttons in a single row -->
-        <div class="row mb-4 align-items-center">
-            <div class="col-md-3 mb-2 mb-md-0">
-                <select id="role-filter" class="form-control rounded">
-                    <option value="all">All Users</option>
-                    <option value="candidate">Candidates</option>
-                    <option value="proctor">Proctors</option>
-                    <option value="evaluator">Evaluators</option>
-                </select>
-            </div>
-            <div class="col-md-3 mb-2 mb-md-0">
-                <select id="batch-filter" class="form-control rounded">
-                    <option value="all">All Batches</option>
-                    {% for batch in batches %}
-                    <option value="{{ batch.name }}">{{ batch.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3 mb-2 mb-md-0">
-                <input type="text" id="user-search" class="form-control rounded" placeholder="Search by email...">
-            </div>
-            <div class="col-md-3 text-md-end">
-                <div class="btn-toolbar justify-content-md-end">
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
-                            <i class="bi bi-plus-circle mr-1"></i> Add Users
-                        </button>
-                        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#addBatchModal">
-                            <i class="bi bi-people mr-1"></i> Add Batch
+        <div x-data="usersApp">
+            <!-- Filter, Search and Buttons in a single row -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select x-model="roleFilter" class="form-control rounded" @change="filterUsers()">
+                        <option value="all">All Users</option>
+                        <option value="candidate">Candidates</option>
+                        <option value="proctor">Proctors</option>
+                        <option value="evaluator">Evaluators</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select x-model="batchFilter" class="form-control rounded" @change="handleBatchFilterChange()">
+                        <option value="all">All Batches</option>
+                        {% for batch in batches %}
+                        <option value="{{ batch.name }}">{{ batch.name }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <!-- Batch actions -->
+                    <div id="batch-actions" class="mt-2" x-show="batchFilter !== 'all'">
+                        <button id="manage-batch-users-btn" class="btn btn-sm btn-outline-primary" @click="openBatchManagement()">
+                            <i class="bi bi-people"></i> Manage Users in Batch
                         </button>
                     </div>
                 </div>
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <input type="text" x-model="searchTerm" @input="filterUsers()" class="form-control rounded" placeholder="Search by email...">
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <div class="btn-toolbar justify-content-md-end">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUsersModal">
+                                <i class="bi bi-plus-circle mr-1"></i> Add Users
+                            </button>
+                            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#addBatchModal">
+                                <i class="bi bi-people mr-1"></i> Add Batch
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-
+        
 
     <!-- Users Table -->
     <div class="card">
         <!-- <div class="card-header bg-light">
             <h5 class="mb-0">User Permissions</h5>
         </div> -->
-        <div class="card-body p-0">
+        <div x-show="isLoading && !paginatedUsers.length" class="card-body text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading users...</span>
+            </div>
+            <p class="mt-2">Loading users...</p>
+        </div>
+        <div class="card-body p-0" x-show="!isLoading || paginatedUsers.length > 0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover mb-0 w-100">
                     <thead class="thead-light">
                         <tr>
-                            <th>{{ _("Email") }}</th>
-                            <th>{{ _("Candidate") }}</th>
-                            <th>{{ _("Can Proctor") }}</th>
-                            <th>{{ _("Can Evaluate") }}</th>
+                            <th style="min-width: 250px">{{ _("Email") }}</th>
+                            <th class="text-center">{{ _("Candidate") }}</th>
+                            <th class="text-center">{{ _("Can Proctor") }}</th>
+                            <th class="text-center">{{ _("Can Evaluate") }}</th>
                             <th>{{ _("Batches") }}</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body">
-                        {% if not users %}
-                        <tr>
-                            <td colspan="4" class="text-center py-4">
-                                {{ _("No users found") }}
-                            </td>
-                        </tr>
-                        {% endif %}
+                        <template x-if="isLoading">
+                            <tr data-placeholder="true">
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="d-flex justify-content-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                        <template x-if="!isLoading && filteredUsers.length === 0">
+                            <tr data-placeholder="true">
+                                <td colspan="5" class="text-center py-4">
+                                    No users match the current filters
+                                </td>
+                            </tr>
+                        </template>
 
-                        {% for user in users %}
-                        <tr data-user="{{ user.name }}">
-                            <td>{{ user.email }}</td>
-                            <td>
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input role-checkbox" 
-                                           id="candidate-{{ user.name }}" 
-                                           data-role="Candidate"
-                                           data-user="{{ user.name }}"
-                                           {% if user.is_candidate %} checked {% endif %}>
-                                    <label class="custom-control-label" for="candidate-{{ user.name }}"></label>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input role-checkbox" 
-                                           id="proctor-{{ user.name }}" 
-                                           data-role="Proctor"
-                                           data-user="{{ user.name }}"
-                                           {% if user.is_proctor %} checked {% endif %}>
-                                    <label class="custom-control-label" for="proctor-{{ user.name }}"></label>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input role-checkbox" 
-                                           id="evaluator-{{ user.name }}" 
-                                           data-role="Evaluator"
-                                           data-user="{{ user.name }}"
-                                           {% if user.is_evaluator %} checked {% endif %}>
-                                    <label class="custom-control-label" for="evaluator-{{ user.name }}"></label>
-                                </div>
-                            </td>
-                            <td>
-                                {% if user.batches %}
-                                    {% for batch in user.batches %}
-                                        <span class="badge badge-info">{{ batch }}</span>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-muted">None</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
+                        <template x-for="(user, index) in paginatedUsers" :key="user.name">
+                            <tr :data-user="user.name">
+                                <td x-text="user.email"></td>
+                                <td>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" 
+                                               :id="'candidate-' + user.name" 
+                                               :checked="user.is_candidate"
+                                               @change="updateRole(user.name, 'Candidate', $event.target.checked)">
+                                        <label class="custom-control-label" :for="'candidate-' + user.name"></label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" 
+                                               :id="'proctor-' + user.name" 
+                                               :checked="user.is_proctor"
+                                               @change="updateRole(user.name, 'Proctor', $event.target.checked)">
+                                        <label class="custom-control-label" :for="'proctor-' + user.name"></label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" 
+                                               :id="'evaluator-' + user.name" 
+                                               :checked="user.is_evaluator"
+                                               @change="updateRole(user.name, 'Evaluator', $event.target.checked)">
+                                        <label class="custom-control-label" :for="'evaluator-' + user.name"></label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <template x-if="user.batches && user.batches.length">
+                                        <div>
+                                            <template x-for="(batch, bIndex) in user.batches" :key="bIndex">
+                                                <span class="badge badge-info mr-1 mb-1" x-text="batch"></span>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template x-if="!user.batches || user.batches.length === 0">
+                                        <span class="text-muted">None</span>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
@@ -125,22 +150,38 @@
         <div class="card-footer">
             <div class="row">
                 <div class="col">
-                    <span id="user-count">Total Users: {{ users|length }}</span>
+                    <span id="user-count" x-text="`Total Users: ${filteredUsers.length} of ${allUsers.length}`"></span>
                 </div>
                 <div class="col">
-                    <nav>
-                        <ul class="pagination justify-content-end pagination-sm mb-0" id="pagination-container">
-                            <!-- Pagination will be inserted here by JS -->
+                    <nav x-show="totalPages > 1">
+                        <ul class="pagination justify-content-end pagination-sm mb-0">
+                            <!-- Previous button -->
+                            <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                                <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">&laquo;</a>
+                            </li>
+                            
+                            <!-- Page numbers -->
+                            <template x-for="pageNum in pageNumbers" :key="pageNum">
+                                <li class="page-item" :class="{ 'active': currentPage === pageNum }">
+                                    <a class="page-link" href="#" @click.prevent="changePage(pageNum)" x-text="pageNum"></a>
+                                </li>
+                            </template>
+                            
+                            <!-- Next button -->
+                            <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                                <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">&raquo;</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
             </div>
         </div>
     </div>
+        </div>
     </div>
     
     <!-- Add Users Modal -->
-    <div class="modal fade" id="addUsersModal" tabindex="-1" role="dialog" aria-labelledby="addUsersModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addUsersModal" tabindex="-1" role="dialog" aria-labelledby="addUsersModalLabel" aria-hidden="true" x-data="addUsersModal()">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -152,19 +193,19 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="user-emails">Email Addresses (comma separated)</label>
-                        <textarea id="user-emails" class="form-control" rows="3" placeholder="user1@example.com, user2@example.com"></textarea>
+                        <textarea x-model="emails" class="form-control" rows="3" placeholder="user1@example.com, user2@example.com"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="role-select">Assign Role</label>
-                        <select id="role-select" class="form-control">
+                        <select x-model="role" class="form-control" @change="toggleBatchContainer()">
                             <option value="Exam Candidate">Exam Candidate</option>
                             <option value="Exam Proctor">Exam Proctor</option>
                             <option value="Exam Evaluator">Exam Evaluator</option>
                         </select>
                     </div>
-                    <div class="form-group batch-select-container" style="display: block;">
+                    <div class="form-group batch-select-container" x-show="role === 'Exam Candidate'">
                         <label for="batch-select">Assign to Batch (optional, only applies to Candidates)</label>
-                        <select id="batch-select" class="form-control">
+                        <select x-model="batch" class="form-control">
                             <option value="">No Batch</option>
                             {% for batch in batches %}
                             <option value="{{ batch.name }}">{{ batch.name }}</option>
@@ -174,10 +215,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button id="add-users-btn" type="button" class="btn btn-primary">Add Users</button>
+                    <button type="button" class="btn btn-primary" @click="addUsers()">Add Users</button>
                 </div>
-            </div>
-        </div>
             </div>
         </div>
     </div>
@@ -192,9 +231,16 @@
     padding: 1rem;
     vertical-align: middle;
 }
+.table {
+    width: 100%;
+    table-layout: auto;
+}
 .custom-control {
     display: flex;
     justify-content: center;
+}
+.card-body {
+    width: 100%;
 }
 /* Sidebar styles */
 .sidebar {
@@ -219,476 +265,340 @@
 </style>
 
 <script>
-frappe.ready(function() {
-    // Pagination variables
-    var currentPage = 1;
-    var rowsPerPage = 50;
-    var filteredUsers = [];
-    var allRows = $("#users-table-body tr").not('[data-placeholder="true"]');
-    
-    // Initialize pagination
-    function initPagination() {
-        // Get filtered users
-        applyFilters();
+document.addEventListener('alpine:init', () => {
+    Alpine.data('usersApp', () => ({
+        allUsers: [],
+        filteredUsers: [],
+        paginatedUsers: [],
+        currentPage: 1,
+        rowsPerPage: 50,
+        searchTerm: '',
+        roleFilter: 'all',
+        batchFilter: 'all',
+        isLoading: true,
         
-        // Calculate the number of pages
-        var numPages = Math.ceil(filteredUsers.length / rowsPerPage);
+        init() {
+            // Fetch users from API on load
+            this.fetchAndFilterUsers();
+        },
         
-        // Create the pagination controls
-        updatePagination(numPages);
-        
-        // Display the first page
-        displayPage(1);
-    }
-    
-    // Apply filters to the table
-    function applyFilters() {
-        var searchTerm = $("#user-search").val().toLowerCase();
-        var roleFilter = $("#role-filter").val();
-        var batchFilter = $("#batch-filter").val();
-        
-        // Reset filtered users
-        filteredUsers = [];
-        
-        // Apply filters
-        allRows.each(function() {
-            var $row = $(this);
-            var email = $row.find('td:first').text().toLowerCase();
-            var matchesSearch = !searchTerm || email.indexOf(searchTerm) > -1;
+        fetchAndFilterUsers() {
+            this.isLoading = true;
             
-            var matchesRole = true;
-            if (roleFilter !== 'all') {
-                if (roleFilter === 'candidate') {
-                    matchesRole = $row.find('input[data-role="Candidate"]').prop('checked');
-                } else if (roleFilter === 'proctor') {
-                    matchesRole = $row.find('input[data-role="Proctor"]').prop('checked');
-                } else if (roleFilter === 'evaluator') {
-                    matchesRole = $row.find('input[data-role="Evaluator"]').prop('checked');
-                }
-            }
+            // Build query parameters for filtering
+            const params = new URLSearchParams();
+            if (this.searchTerm) params.append('search', this.searchTerm);
+            if (this.roleFilter !== 'all') params.append('role', this.roleFilter);
+            if (this.batchFilter !== 'all') params.append('batch', this.batchFilter);
             
-            var matchesBatch = true;
-            if (batchFilter !== 'all') {
-                var batchText = $row.find('td:last').text().toLowerCase();
-                matchesBatch = batchText.includes(batchFilter.toLowerCase());
-            }
-            
-            if (matchesSearch && matchesRole && matchesBatch) {
-                filteredUsers.push($row);
-            }
-        });
-        
-        // Update user count
-        $("#user-count").text(`Total Users: ${filteredUsers.length} of ${allRows.length}`);
-    }
-    
-    // Update pagination controls
-    function updatePagination(numPages) {
-        var $pagination = $("#pagination-container");
-        $pagination.empty();
-        
-        // Don't show pagination if only one page
-        if (numPages <= 1) {
-            return;
-        }
-        
-        // Previous button
-        $pagination.append(`
-            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="prev">&laquo;</a>
-            </li>
-        `);
-        
-        // Page numbers
-        var startPage = Math.max(1, currentPage - 2);
-        var endPage = Math.min(numPages, startPage + 4);
-        
-        for (var i = startPage; i <= endPage; i++) {
-            $pagination.append(`
-                <li class="page-item ${currentPage === i ? 'active' : ''}">
-                    <a class="page-link" href="#" data-page="${i}">${i}</a>
-                </li>
-            `);
-        }
-        
-        // Next button
-        $pagination.append(`
-            <li class="page-item ${currentPage === numPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="next">&raquo;</a>
-            </li>
-        `);
-        
-        // Handle pagination clicks
-        $(".page-link").on("click", function(e) {
-            e.preventDefault();
-            
-            var page = $(this).data('page');
-            if (page === 'prev') {
-                if (currentPage > 1) {
-                    displayPage(currentPage - 1);
-                }
-            } else if (page === 'next') {
-                var numPages = Math.ceil(filteredUsers.length / rowsPerPage);
-                if (currentPage < numPages) {
-                    displayPage(currentPage + 1);
-                }
-            } else {
-                displayPage(page);
-            }
-        });
-    }
-    
-    // Display a specific page
-    function displayPage(page) {
-        currentPage = page;
-        
-        // Calculate indexes
-        var startIndex = (page - 1) * rowsPerPage;
-        var endIndex = Math.min(startIndex + rowsPerPage, filteredUsers.length);
-        
-        // Hide all rows
-        allRows.hide();
-        
-        // Show only the rows for the current page
-        for (var i = startIndex; i < endIndex; i++) {
-            $(filteredUsers[i]).show();
-        }
-        
-        // Update pagination controls
-        var numPages = Math.ceil(filteredUsers.length / rowsPerPage);
-        updatePagination(numPages);
-        
-        // Show no results message if needed
-        if (filteredUsers.length === 0) {
-            var colSpan = $("#users-table-body tr:first td").length || 4;
-            
-            // Remove any existing placeholder row
-            $("#users-table-body tr[data-placeholder='true']").remove();
-            
-            // Add placeholder row
-            $("#users-table-body").append(`
-                <tr data-placeholder="true">
-                    <td colspan="${colSpan}" class="text-center py-4">
-                        No users match the current filters
-                    </td>
-                </tr>
-            `);
-        } else {
-            // Remove placeholder if it exists
-            $("#users-table-body tr[data-placeholder='true']").remove();
-        }
-    }
-    
-    // Handle user search
-    $("#user-search").on("keyup", function() {
-        currentPage = 1;
-        initPagination();
-    });
-    
-    // Handle role filter
-    $("#role-filter").on("change", function() {
-        currentPage = 1;
-        initPagination();
-    });
-    
-    // Handle individual role checkbox changes
-    $(document).on("change", ".role-checkbox", function() {
-        var $checkbox = $(this);
-        var user = $checkbox.data('user');
-        var role = $checkbox.data('role');
-        var isChecked = $checkbox.prop('checked');
-        
-        frappe.call({
-            method: 'exampro.www.manage.users.update_user_role',
-            args: {
-                user: user,
-                role: role, 
-                action: isChecked ? 'add' : 'remove'
-            },
-            callback: function(response) {
-                if (response.message && response.message.success) {
-                    frappe.show_alert({
-                        message: `${role} role ${isChecked ? 'added to' : 'removed from'} ${user}`,
-                        indicator: 'green'
-                    }, 3);
-                    
-                    // Refresh the filter if we're using a role filter
-                    if ($("#role-filter").val() !== 'all') {
-                        initPagination();
-                    }
-                } else {
-                    // If error, revert the checkbox
-                    $checkbox.prop('checked', !isChecked);
-                    frappe.show_alert({
-                        message: response.message.error || 'Failed to update role',
-                        indicator: 'red'
-                    }, 5);
-                }
-            }
-        });
-    });
-    
-    // Toggle batch selector visibility based on role selection
-    $("#role-select").on("change", function() {
-        var selectedRole = $(this).val();
-        if (selectedRole === "Exam Candidate") {
-            $(".batch-select-container").show();
-        } else {
-            $(".batch-select-container").hide();
-            // Reset selection when not a candidate
-            $("#batch-select").val("");
-        }
-    });
-    
-    // Initialize batch selector visibility on page load
-    $(document).ready(function() {
-        var selectedRole = $("#role-select").val();
-        if (selectedRole === "Exam Candidate") {
-            $(".batch-select-container").show();
-        } else {
-            $(".batch-select-container").hide();
-        }
-    });
-    
-    // Handle adding users
-    $("#add-users-btn").on("click", function() {
-        var emails = $("#user-emails").val();
-        var role = "Exam " + $("#role-select").val();
-        var batch = $("#batch-select").val();
-        
-        if (!emails) {
-            frappe.show_alert({
-                message: 'Please enter at least one email address',
-                indicator: 'red'
-            }, 3);
-            return;
-        }
-        
-        frappe.call({
-            method: 'exampro.www.manage.users.add_users',
-            args: {
-                emails: emails,
-                role: role,
-                batch: batch
-            },
-            callback: function(response) {
-                if (response.message && response.message.success) {
-                    frappe.show_alert({
-                        message: response.message.message || 'Users added successfully',
-                        indicator: 'green'
-                    }, 3);
-                    
-                    // Close the modal
-                    $("#addUsersModal").modal('hide');
-                    
-                    // Clear the input and refresh the page
-                    $("#user-emails").val('');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    frappe.show_alert({
-                        message: response.message.error || 'Failed to add users',
-                        indicator: 'red'
-                    }, 5);
-                }
-            }
-        });
-    });
-    
-    // Initialize pagination on page load
-    initPagination();
-    
-    // Batch filter handler
-    $("#batch-filter").on("change", function() {
-        var selectedBatch = $(this).val();
-        
-        // If a specific batch is selected, show the batch action buttons
-        if (selectedBatch !== 'all') {
-            // Show batch action buttons if they don't exist
-            if ($("#batch-actions").length === 0) {
-                $(this).after(`
-                    <div id="batch-actions" class="mt-2">
-                        <button id="manage-batch-users-btn" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-people"></i> Manage Users in Batch
-                        </button>
-                    </div>
-                `);
-                
-                // Add click handler for the manage batch users button
-                $("#manage-batch-users-btn").on("click", function() {
-                    var batchName = $("#batch-filter").val();
-                    if (batchName === 'all') {
-                        frappe.show_alert({
-                            message: 'Please select a specific batch first',
-                            indicator: 'red'
-                        }, 3);
-                        return;
-                    }
-                    
-                    // Open the batch management modal
-                    $("#manageUserBatchesModal").data("batch", batchName);
-                    $("#modal-batch-name").text(batchName);
-                    
-                    // Load users for this batch
-                    loadBatchUsers(batchName);
-                });
-            }
-        } else {
-            // Remove batch action buttons if they exist
-            $("#batch-actions").remove();
-        }
-        
-        // Update the table filter
-        initPagination();
-    });
-    
-    // Add Batch button click
-    $("#add-batch-btn").click(function() {
-        var batchName = $("#batch-name").val().trim();
-        
-        if (!batchName) {
-            frappe.msgprint("Please enter a batch name");
-            return;
-        }
-        
-        frappe.call({
-            method: "exampro.www.manage.batches.create_batch",
-            args: {
-                batch_name: batchName
-            },
-            callback: function(response) {
-                if (response.message && response.message.success) {
-                    frappe.show_alert({
-                        message: "Batch created successfully",
-                        indicator: 'green'
-                    }, 3);
-                    $("#batch-name").val("");
-                    $("#addBatchModal").modal("hide");
-                    
-                    // Add the new batch to the select dropdown
-                    $("#batch-filter").append(`<option value="${batchName}">${batchName}</option>`);
-                    
-                    // Optional: Select the new batch
-                    $("#batch-filter").val(batchName).trigger('change');
-                } else {
-                    frappe.show_alert({
-                        message: response.message.error || "Failed to create batch",
-                        indicator: 'red'
-                    }, 5);
-                }
-            }
-        });
-    });
-    
-    // Load users for a specific batch
-    function loadBatchUsers(batchName) {
-        frappe.call({
-            method: "exampro.www.manage.batches.get_users_batch_status",
-            args: {
-                batch_name: batchName
-            },
-            callback: function(response) {
-                if (response.message) {
-                    var users = response.message;
-                    var html = '';
-                    
-                    if (users.length === 0) {
-                        html = '<tr><td colspan="3" class="text-center py-4">No users found</td></tr>';
-                    } else {
-                        users.forEach(function(user, index) {
-                            html += `
-                            <tr>
-                                <td>
-                                    <div class="custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input batch-user-checkbox" 
-                                               id="user-${index}" 
-                                               data-user="${user.email}"
-                                               ${user.in_batch ? 'checked' : ''}>
-                                        <label class="custom-control-label" for="user-${index}"></label>
-                                    </div>
-                                </td>
-                                <td>${user.email}</td>
-                                <td>${user.in_batch ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-secondary">No</span>'}</td>
-                            </tr>`;
-                        });
-                    }
-                    
-                    // Update modal content
-                    $("#batch-users-table-body").html(html);
-                    
-                    // Show the modal
-                    $("#manageUserBatchesModal").modal("show");
-                } else {
-                    frappe.show_alert({
-                        message: 'Failed to fetch user data',
-                        indicator: 'red'
-                    }, 5);
-                }
-            }
-        });
-    }
-    
-    // Filter users in batch modal
-    $("#batch-user-search").on("keyup", function() {
-        var searchTerm = $(this).val().toLowerCase();
-        
-        $("#batch-users-table-body tr").each(function() {
-            var email = $(this).find("td:eq(1)").text().toLowerCase();
-            if (email.indexOf(searchTerm) > -1) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    });
-    
-    // Save batch user assignments
-    $("#save-batch-users-btn").click(function() {
-        var batchName = $("#manageUserBatchesModal").data("batch");
-        var userAssignments = [];
-        
-        // Collect all checked user checkboxes
-        $(".batch-user-checkbox").each(function() {
-            userAssignments.push({
-                user: $(this).data("user"),
-                in_batch: $(this).prop("checked")
+            console.log('Fetching users with filters:', {
+                search: this.searchTerm || '',
+                role: this.roleFilter !== 'all' ? this.roleFilter : '',
+                batch: this.batchFilter !== 'all' ? this.batchFilter : ''
             });
-        });
-        
-        // Update user assignments via AJAX
-        frappe.call({
-            method: "exampro.www.manage.batches.update_batch_user_assignments",
-            args: {
-                batch: batchName,
-                assignments: userAssignments
-            },
-            callback: function(response) {
-                if (response.message && response.message.success) {
-                    frappe.show_alert({
-                        message: 'Batch user assignments updated successfully',
-                        indicator: 'green'
-                    }, 3);
-                    
-                    // Close the modal and refresh the page
-                    $("#manageUserBatchesModal").modal("hide");
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    frappe.show_alert({
-                        message: response.message.error || 'Failed to update batch user assignments',
-                        indicator: 'red'
-                    }, 5);
+            
+            // Call the API to get filtered users
+            frappe.call({
+                method: 'exampro.www.manage.users.get_filtered_users',
+                args: {
+                    search: this.searchTerm || '',
+                    role: this.roleFilter !== 'all' ? this.roleFilter : '',
+                    batch: this.batchFilter !== 'all' ? this.batchFilter : ''
+                },
+                callback: (response) => {
+                    this.isLoading = false;
+                    if (response.message && response.message.success) {
+                        console.log('Received users:', response.message.users.length);
+                        this.allUsers = response.message.users;
+                        this.filteredUsers = [...this.allUsers];
+                        this.currentPage = 1;
+                        this.updatePaginatedUsers();
+                    } else {
+                        console.error('Failed to fetch user data:', response);
+                        frappe.show_alert({
+                            message: response.message?.error || 'Failed to fetch user data',
+                            indicator: 'red'
+                        }, 5);
+                    }
                 }
+            });
+        },
+        
+        get totalPages() {
+            return Math.ceil(this.filteredUsers.length / this.rowsPerPage);
+        },
+        
+        get pageNumbers() {
+            const startPage = Math.max(1, this.currentPage - 2);
+            const endPage = Math.min(this.totalPages, startPage + 4);
+            return Array.from({length: endPage - startPage + 1}, (_, i) => startPage + i);
+        },
+        
+        changePage(page) {
+            if (page < 1 || page > this.totalPages) {
+                return;
             }
-        });
+            this.currentPage = page;
+            this.updatePaginatedUsers();
+        },
+        
+        updatePaginatedUsers() {
+            const startIndex = (this.currentPage - 1) * this.rowsPerPage;
+            const endIndex = Math.min(startIndex + this.rowsPerPage, this.filteredUsers.length);
+            this.paginatedUsers = this.filteredUsers.slice(startIndex, endIndex);
+        },
+        
+        filterUsers() {
+            // Fetch filtered data from API instead of filtering locally
+            this.fetchAndFilterUsers();
+        },
+        
+        updateRole(user, role, isChecked) {
+            frappe.call({
+                method: 'exampro.www.manage.users.update_user_role',
+                args: {
+                    user: user,
+                    role: role,
+                    action: isChecked ? 'add' : 'remove'
+                },
+                callback: (response) => {
+                    if (response.message && response.message.success) {
+                        frappe.show_alert({
+                            message: `${role} role ${isChecked ? 'added to' : 'removed from'} ${user}`,
+                            indicator: 'green'
+                        }, 3);
+                        
+                        // Update local data
+                        const userObj = this.allUsers.find(u => u.name === user);
+                        if (userObj) {
+                            if (role === 'Candidate') {
+                                userObj.is_candidate = isChecked;
+                            } else if (role === 'Proctor') {
+                                userObj.is_proctor = isChecked;
+                            } else if (role === 'Evaluator') {
+                                userObj.is_evaluator = isChecked;
+                            }
+                        }
+                        
+                        // Re-apply filters if we're using a role filter
+                        if (this.roleFilter !== 'all') {
+                            this.filterUsers();
+                        }
+                    } else {
+                        // Revert the checkbox
+                        frappe.show_alert({
+                            message: response.message.error || 'Failed to update role',
+                            indicator: 'red'
+                        }, 5);
+                    }
+                }
+            });
+        },
+        
+        handleBatchFilterChange() {
+            this.filterUsers();
+        },
+        
+        openBatchManagement() {
+            if (this.batchFilter === 'all') {
+                frappe.show_alert({
+                    message: 'Please select a specific batch first',
+                    indicator: 'red'
+                }, 3);
+                return;
+            }
+            
+            // Set batch name in the modal
+            Alpine.store('batchUsers').batchName = this.batchFilter;
+            
+            // Load users for this batch
+            Alpine.store('batchUsers').loadBatchUsers();
+            
+            // Show the modal
+            $('#manageUserBatchesModal').modal('show');
+        }
+    }));
+    
+    // Store for sharing batch user data between components
+    Alpine.store('batchUsers', {
+        batchUsers: [],
+        batchName: ''
     });
+    
+    Alpine.data('batchUsersModal', () => ({
+        batchUsers: [],
+        filteredBatchUsers: [],
+        batchName: '',
+        batchUserSearch: '',
+        
+        init() {
+            // Initialize from the store
+            this.$watch('$store.batchUsers.batchName', (value) => {
+                this.batchName = value;
+            });
+        },
+        
+        loadBatchUsers() {
+            frappe.call({
+                method: "exampro.www.manage.batches.get_users_batch_status",
+                args: {
+                    batch_name: this.batchName
+                },
+                callback: (response) => {
+                    if (response.message) {
+                        this.batchUsers = response.message;
+                        this.filteredBatchUsers = [...this.batchUsers];
+                    } else {
+                        frappe.show_alert({
+                            message: 'Failed to fetch user data',
+                            indicator: 'red'
+                        }, 5);
+                    }
+                }
+            });
+        },
+        
+        filterBatchUsers() {
+            if (!this.batchUserSearch) {
+                this.filteredBatchUsers = [...this.batchUsers];
+                return;
+            }
+            
+            const searchTerm = this.batchUserSearch.toLowerCase();
+            this.filteredBatchUsers = this.batchUsers.filter(user => 
+                user.email.toLowerCase().includes(searchTerm)
+            );
+        },
+        
+        saveBatchUserAssignments() {
+            const userAssignments = this.batchUsers.map(user => ({
+                user: user.email,
+                in_batch: user.in_batch
+            }));
+            
+            frappe.call({
+                method: "exampro.www.manage.batches.update_batch_user_assignments",
+                args: {
+                    batch: this.batchName,
+                    assignments: userAssignments
+                },
+                callback: (response) => {
+                    if (response.message && response.message.success) {
+                        frappe.show_alert({
+                            message: 'Batch user assignments updated successfully',
+                            indicator: 'green'
+                        }, 3);
+                        
+                        // Close the modal and refresh the page
+                        $('#manageUserBatchesModal').modal('hide');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        frappe.show_alert({
+                            message: response.message.error || 'Failed to update batch user assignments',
+                            indicator: 'red'
+                        }, 5);
+                    }
+                }
+            });
+        }
+    }));
+    
+    Alpine.data('addUsersModal', () => ({
+        emails: '',
+        role: 'Exam Candidate',
+        batch: '',
+        
+        toggleBatchContainer() {
+            // No need to do anything as x-show handles visibility automatically
+        },
+        
+        addUsers() {
+            if (!this.emails) {
+                frappe.show_alert({
+                    message: 'Please enter at least one email address',
+                    indicator: 'red'
+                }, 3);
+                return;
+            }
+            
+            frappe.call({
+                method: 'exampro.www.manage.users.add_users',
+                args: {
+                    emails: this.emails,
+                    role: this.role,
+                    batch: this.batch
+                },
+                callback: (response) => {
+                    if (response.message && response.message.success) {
+                        frappe.show_alert({
+                            message: response.message.message || 'Users added successfully',
+                            indicator: 'green'
+                        }, 3);
+                        
+                        // Close the modal
+                        $('#addUsersModal').modal('hide');
+                        
+                        // Clear the input and refresh the page
+                        this.emails = '';
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        frappe.show_alert({
+                            message: response.message.error || 'Failed to add users',
+                            indicator: 'red'
+                        }, 5);
+                    }
+                }
+            });
+        }
+    }));
+    
+    // Add batch modal component
+    Alpine.data('addBatchModal', () => ({
+        batchName: '',
+        
+        createBatch() {
+            if (!this.batchName) {
+                frappe.msgprint("Please enter a batch name");
+                return;
+            }
+            
+            frappe.call({
+                method: "exampro.www.manage.batches.create_batch",
+                args: {
+                    batch_name: this.batchName
+                },
+                callback: (response) => {
+                    if (response.message && response.message.success) {
+                        frappe.show_alert({
+                            message: "Batch created successfully",
+                            indicator: 'green'
+                        }, 3);
+                        this.batchName = '';
+                        $('#addBatchModal').modal('hide');
+                        
+                        // Reload the page to update batch options
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        frappe.show_alert({
+                            message: response.message.error || "Failed to create batch",
+                            indicator: 'red'
+                        }, 5);
+                    }
+                }
+            });
+        }
+    }));
 });
 </script>
 
 <!-- Add Batch Modal -->
-<div class="modal fade" id="addBatchModal" tabindex="-1" role="dialog" aria-labelledby="addBatchModalLabel" aria-hidden="true">
+<div class="modal fade" id="addBatchModal" tabindex="-1" role="dialog" aria-labelledby="addBatchModalLabel" aria-hidden="true" x-data="addBatchModal()">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -700,19 +610,19 @@ frappe.ready(function() {
             <div class="modal-body">
                 <div class="form-group">
                     <label for="batch-name">Batch Name</label>
-                    <input type="text" id="batch-name" class="form-control" placeholder="Enter batch name">
+                    <input type="text" x-model="batchName" class="form-control" placeholder="Enter batch name">
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button id="add-batch-btn" type="button" class="btn btn-primary">Create Batch</button>
+                <button type="button" class="btn btn-primary" @click="createBatch()">Create Batch</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Manage Batch Users Modal -->
-<div class="modal fade" id="manageUserBatchesModal" tabindex="-1" role="dialog" aria-labelledby="manageUserBatchesModalLabel" aria-hidden="true">
+<div class="modal fade" id="manageUserBatchesModal" tabindex="-1" role="dialog" aria-labelledby="manageUserBatchesModalLabel" aria-hidden="true" x-data="batchUsersModal()">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -723,29 +633,50 @@ frappe.ready(function() {
             </div>
             <div class="modal-body">
                 <div class="batch-info mb-3">
-                    <strong>Batch:</strong> <span id="modal-batch-name"></span>
+                    <strong>Batch:</strong> <span x-text="batchName"></span>
                 </div>
                 <div class="form-group mb-3">
-                    <input type="text" id="batch-user-search" class="form-control" placeholder="Search users...">
+                    <input type="text" x-model="batchUserSearch" @input="filterBatchUsers()" class="form-control" placeholder="Search users...">
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover w-100">
                         <thead>
                             <tr>
-                                <th>{{ _("Select") }}</th>
+                                <th class="text-center" style="width: 80px">{{ _("Select") }}</th>
                                 <th>{{ _("Email") }}</th>
-                                <th>{{ _("In Batch") }}</th>
+                                <th class="text-center" style="width: 100px">{{ _("In Batch") }}</th>
                             </tr>
                         </thead>
                         <tbody id="batch-users-table-body">
-                            <!-- Users will be loaded dynamically -->
+                            <template x-if="filteredBatchUsers.length === 0">
+                                <tr>
+                                    <td colspan="3" class="text-center py-4">No users found</td>
+                                </tr>
+                            </template>
+                            <template x-for="(user, index) in filteredBatchUsers" :key="index">
+                                <tr>
+                                    <td>
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" 
+                                                   :id="'batch-user-' + index" 
+                                                   x-model="user.in_batch">
+                                            <label class="custom-control-label" :for="'batch-user-' + index"></label>
+                                        </div>
+                                    </td>
+                                    <td x-text="user.email"></td>
+                                    <td>
+                                        <span :class="user.in_batch ? 'badge badge-success' : 'badge badge-secondary'"
+                                              x-text="user.in_batch ? 'Yes' : 'No'"></span>
+                                    </td>
+                                </tr>
+                            </template>
                         </tbody>
                     </table>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button id="save-batch-users-btn" type="button" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-primary" @click="saveBatchUserAssignments()">Save Changes</button>
             </div>
         </div>
     </div>
