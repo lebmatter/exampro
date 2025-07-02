@@ -291,7 +291,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-01 14:26:53.465183",
+ "modified": "2025-07-02 11:18:58.649656",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",
@@ -314,6 +314,7 @@
    "delete": 1,
    "read": 1,
    "role": "Exam Manager",
+   "select": 1,
    "write": 1
   }
  ],

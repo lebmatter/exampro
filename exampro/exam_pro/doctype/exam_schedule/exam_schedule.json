@@ -104,7 +104,7 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-07-01 20:46:39.400309",
+ "modified": "2025-07-02 11:19:09.435676",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",
@@ -128,6 +128,7 @@
    "delete": 1,
    "read": 1,
    "role": "Exam Manager",
+   "select": 1,
    "write": 1
   }
  ],

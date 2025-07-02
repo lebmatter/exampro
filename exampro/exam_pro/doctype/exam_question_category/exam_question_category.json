@@ -23,8 +23,8 @@
    "link_fieldname": "category"
   }
  ],
- "modified": "2024-12-05 14:13:14.916435",
- "modified_by": "Administrator",
+ "modified": "2025-07-02 11:20:39.365333",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Question Category",
  "naming_rule": "By fieldname",
@@ -41,9 +41,23 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Exam Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
