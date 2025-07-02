@@ -2,19 +2,23 @@ from datetime import datetime, timedelta
 import frappe
 from frappe.utils import now, format_datetime
 
-def submit_pending_examss(member=None):
+def submit_pending_exams(member=None):
 	"""
 	Submit any pending exams for the user.
 	This is useful for exams that are not submitted automatically.
 	"""
 	submissions = frappe.get_all(
 		"Exam Submission",
-		{"candidate": member or frappe.session.user, "status": "Started"}, ["name", "exam_schedule"]
+		{
+			"candidate": member or frappe.session.user,
+			"status": ["in", ["Registered", "Started"]]
+		}, 
+		["name", "exam_schedule", "status", "additional_time_given"]
 	)
 	for submission in submissions:
 		sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
 		if sched.get_status() == "Completed":
-			doc = frappe.get_doc("Exam Submission", submission["name"])
+			doc = frappe.get_doc("Exam Submission", submission["name"], additional_time=submission["additional_time_given"])
 			doc.status = "Submitted"
 			doc.save(ignore_permissions=True)
 
@@ -144,7 +148,7 @@ def get_context(context):
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
 
-	submit_pending_examss()
+	submit_pending_exams()
 	context.no_cache = 1
 	context.exams = exams = get_user_exams()
 	

@@ -72,9 +72,14 @@ class ExamSchedule(Document):
 	def after_save(self):
 		self.send_proctor_emails()
 	
-	def get_status(self):
+	def get_status(self, additional_time=0):
 		"""
+		Calculate and return the status of the exam schedule.
+		:param additional_time: Optional minutes to adjust the end time for status calculation.
 		Returns the status of the exam schedule based on the current time and start date time.
+		- "Upcoming" if the current time is before the start date time.
+		- "Ongoing" if the current time is between the start date time and end date time.
+		- "Completed" if the current time is after the end date time.
 		"""
 		current_time = datetime.fromisoformat(now().split(".")[0])
 		
@@ -90,6 +95,10 @@ class ExamSchedule(Document):
 			# For flexible schedules, we consider the end time as start time + duration + days
 			days = self.schedule_expire_in_days or 0
 			end_time = start_time + timedelta(minutes=self.duration or 0, days=days)
+		
+		# If additional_time is provided, adjust the end time
+		if additional_time:
+			end_time += timedelta(minutes=additional_time)
 		
 		# Debug log
 		frappe.logger().debug(f"Status calculation for {self.name}:")
