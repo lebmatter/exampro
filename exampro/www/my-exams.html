@@ -77,13 +77,13 @@
                                 <td>{{ exam.duration }}</td>
                                 <td>
                                     {% if exam.schedule_status == "Upcoming" %}
-                                        <span class="badge bg-primary text-white">{{ exam.schedule_status }}</span>
+                                        <span class="badge bg-primary-light text-primary">{{ exam.schedule_status }}</span>
                                     {% elif exam.schedule_status == "Ongoing" %}
-                                        <span class="badge bg-warning text-dark">{{ exam.schedule_status }}</span>
+                                        <span class="badge bg-warning-light text-warning">{{ exam.schedule_status }}</span>
                                     {% elif exam.schedule_status == "Completed" %}
-                                        <span class="badge bg-success text-white">{{ exam.schedule_status }}</span>
+                                        <span class="badge bg-success-light text-success">{{ exam.schedule_status }}</span>
                                     {% else %}
-                                        <span class="badge bg-secondary text-white">{{ exam.schedule_status }}</span>
+                                        <span class="badge bg-secondary-light text-secondary">{{ exam.schedule_status }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
