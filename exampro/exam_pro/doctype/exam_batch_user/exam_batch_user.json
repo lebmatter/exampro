@@ -29,8 +29,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-25 23:14:30.610719",
- "modified_by": "Administrator",
+ "modified": "2025-07-02 10:43:54.728718",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Batch User",
  "owner": "Administrator",
@@ -44,6 +44,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Exam Manager",
    "share": 1,
    "write": 1
   }
