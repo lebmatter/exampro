@@ -157,9 +157,18 @@
                     <div class="form-group">
                         <label for="role-select">Assign Role</label>
                         <select id="role-select" class="form-control">
-                            <option value="Candidate">Candidate</option>
-                            <option value="Proctor">Proctor</option>
-                            <option value="Evaluator">Evaluator</option>
+                            <option value="Exam Candidate">Exam Candidate</option>
+                            <option value="Exam Proctor">Exam Proctor</option>
+                            <option value="Exam Evaluator">Exam Evaluator</option>
+                        </select>
+                    </div>
+                    <div class="form-group batch-select-container" style="display: block;">
+                        <label for="batch-select">Assign to Batch (optional, only applies to Candidates)</label>
+                        <select id="batch-select" class="form-control">
+                            <option value="">No Batch</option>
+                            {% for batch in batches %}
+                            <option value="{{ batch.name }}">{{ batch.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
@@ -419,10 +428,33 @@ frappe.ready(function() {
         });
     });
     
+    // Toggle batch selector visibility based on role selection
+    $("#role-select").on("change", function() {
+        var selectedRole = $(this).val();
+        if (selectedRole === "Exam Candidate") {
+            $(".batch-select-container").show();
+        } else {
+            $(".batch-select-container").hide();
+            // Reset selection when not a candidate
+            $("#batch-select").val("");
+        }
+    });
+    
+    // Initialize batch selector visibility on page load
+    $(document).ready(function() {
+        var selectedRole = $("#role-select").val();
+        if (selectedRole === "Exam Candidate") {
+            $(".batch-select-container").show();
+        } else {
+            $(".batch-select-container").hide();
+        }
+    });
+    
     // Handle adding users
     $("#add-users-btn").on("click", function() {
         var emails = $("#user-emails").val();
-        var role = $("#role-select").val();
+        var role = "Exam " + $("#role-select").val();
+        var batch = $("#batch-select").val();
         
         if (!emails) {
             frappe.show_alert({
@@ -436,7 +468,8 @@ frappe.ready(function() {
             method: 'exampro.www.manage.users.add_users',
             args: {
                 emails: emails,
-                role: role
+                role: role,
+                batch: batch
             },
             callback: function(response) {
                 if (response.message && response.message.success) {

@@ -56,24 +56,25 @@ def update_user_role(user, role, action):
         return {"success": False, "error": str(e)}
 
 @frappe.whitelist()
-def add_users(emails, role):
+def add_users(emails, role, batch=None):
     """
-    Add new users and assign the specified role
+    Add new users and assign the specified role and optionally add to a batch
     
     Args:
         emails (str): Comma-separated list of email addresses
-        role (str): Role to assign (Candidate, Proctor, Evaluator)
+        role (str): Role to assign (Exam Candidate, Exam Proctor, Exam Evaluator)
+        batch (str, optional): Exam batch to assign users to (only applies to Exam Candidate)
     """
     if not frappe.has_permission("User", "write"):
         return {"success": False, "error": _("Not permitted")}
     
     try:
         # Validate role
-        if role not in ["Candidate", "Proctor", "Evaluator"]:
+        if role not in ["Exam Candidate", "Exam Proctor", "Exam Evaluator"]:
             return {"success": False, "error": _("Invalid role")}
         
-        # Format role name according to application standards
-        role_name = f"Exam {role}"
+        # Use the role name directly
+        role_name = role
         
         # Parse emails
         email_list = [email.strip() for email in emails.split(',')]
@@ -119,6 +120,22 @@ def add_users(emails, role):
             if not has_role:
                 user_doc.append("roles", {"role": role_name})
                 user_doc.save(ignore_permissions=True)
+            
+            # Add user to batch if specified and role is Exam Candidate
+            if batch and role == "Exam Candidate":
+                # Check if user is already in the batch
+                batch_user_exists = frappe.db.exists(
+                    "Exam Batch User", 
+                    {"candidate": user_doc.name, "exam_batch": batch}
+                )
+                
+                if not batch_user_exists:
+                    batch_user = frappe.get_doc({
+                        "doctype": "Exam Batch User",
+                        "candidate": user_doc.name,
+                        "exam_batch": batch
+                    })
+                    batch_user.insert(ignore_permissions=True)
             
             added_count += 1
         
@@ -187,7 +204,7 @@ def get_context(context):
         raise frappe.Redirect
     
     # Check if user has Exam Manager role
-    if not "Exam Manager" in frappe.get_roles(frappe.session.user):
+    if "Exam Manager" not in frappe.get_roles(frappe.session.user):
         frappe.throw(_("You are not authorized to access this page"))
 
     # Get all batches for filter dropdown
