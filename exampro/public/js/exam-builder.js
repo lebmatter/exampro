@@ -170,9 +170,9 @@ frappe.ready(function() {
         });
         
         // Handle the select button on exam cards
-        $(document).on('click', '.select-exam-btn', function(e) {
+        $(document).on('click', '.exam-card', function(e) {
             e.stopPropagation(); // Prevent triggering the card click
-            const examId = $(this).closest('.exam-card').data('exam-id');
+            const examId = $(this).data('exam-id');
             $('#selected-exam-id').val(examId);
             
             // Visual feedback
@@ -183,9 +183,12 @@ frappe.ready(function() {
             loadExamDetails(examId);
             loadExamSchedules(examId);
             
-            // Proceed to next step
+            // Proceed to next step when clicking an exam card
+            // This is what users expect when selecting an exam
             if (validateCurrentStep()) {
-                navigateToStep(currentStep + 1);
+                // Always navigate to step 2 to ensure questions are properly shown
+                // This ensures we never skip step 2, even after a restart
+                navigateToStep(2);
             }
         });
         
@@ -314,6 +317,13 @@ frappe.ready(function() {
         // Tab navigation - completely disabled, only Next button allowed
         $('.step-navigation .nav-link').on('click', function(e) {
             e.preventDefault();
+            
+            // Special case for step2 - allow direct navigation to step2 if an exam is selected
+            if ($(this).attr('id') === 'step2-tab' && $('#selected-exam-id').val()) {
+                navigateToStep(2);
+                return true;
+            }
+            
             return false;
         });
         
@@ -347,6 +357,20 @@ frappe.ready(function() {
         
         // If navigating to step 2 and we have pending question config, populate it
         if (step === 2) {
+            // Display selected exam title and duration if available
+            if (examData.title && examData.duration) {
+                $('#step2-exam-info').html(`<strong>Selected Exam:</strong> ${examData.title} (Duration: ${examData.duration} minutes)`);
+            } else {
+                // For new exams
+                const title = $('#exam-title').val();
+                const duration = $('#exam-duration').val();
+                if (title && duration) {
+                    $('#step2-exam-info').html(`<strong>Selected Exam:</strong> ${title} (Duration: ${duration} minutes)`);
+                } else {
+                    $('#step2-exam-info').html('');
+                }
+            }
+
             // Load question categories when step 2 is accessed
             fetchQuestionCategories();
             
@@ -355,9 +379,9 @@ frappe.ready(function() {
                 populateStep2FromExam(examData.pendingQuestionConfig);
                 // Keep the pending config in case we need to repopulate on refresh
                 // Don't delete examData.pendingQuestionConfig so it's available if needed again
-            } else if ($('input[name="exam-choice"]:checked').val() === 'existing' && $('#existing-exam').val()) {
+            } else if ($('input[name="exam-choice"]:checked').val() === 'existing' && $('#selected-exam-id').val()) {
                 // If we're using an existing exam but don't have question data yet, try to load it
-                loadExamDetails($('#existing-exam').val());
+                loadExamDetails($('#selected-exam-id').val());
                 
                 // Give the system some time to load exam details before populating step 2
                 setTimeout(() => {
@@ -419,8 +443,13 @@ frappe.ready(function() {
                 // Check if at least one category has questions selected
                 const hasSelectedQuestions = selectedCategoriesData.some(item => item.selectedCount > 0);
                 if (!hasSelectedQuestions) {
-                    frappe.throw(__('Please select at least one question category and specify the number of questions'));
-                    return false;
+                    // Allow proceeding even without questions but show a warning
+                    frappe.show_alert({
+                        message: __('Warning: No questions selected. You may need to add questions later.'),
+                        indicator: 'orange'
+                    }, 5);
+                    // Return true to allow navigation, user has been warned
+                    return true;
                 }
                 
                 // Check that no selected category has more questions than available
@@ -468,6 +497,11 @@ frappe.ready(function() {
                     examData = response.message;
                     
                     console.log('Loaded exam data:', examData);
+                    
+                    // Update exam info display if we're on step 2
+                    if (currentStep === 2 && examData.title && examData.duration) {
+                        $('#step2-exam-info').html(`<strong>Selected Exam:</strong> ${examData.title} (Duration: ${examData.duration} minutes)`);
+                    }
                     
                     // Populate step 2 with existing exam's question configuration
                     if (examData.question_config) {

@@ -182,3 +182,7 @@ body .step-navigation .nav-link.active {
 .pagination-hidden {
     display: none !important;
 }
+
+.nav-tabs {
+    border-bottom: none;
+}
