@@ -157,3 +157,28 @@ body .step-navigation .nav-link.active {
 .nav-pills .show > .nav-link {
     background-color: transparent !important;
 }
+
+.step-navigation .nav-link.disabled-step .step-number {
+    background-color: #6c757d !important;
+    color: white !important;
+}
+
+/* Style for non-active steps */
+.step-navigation .nav-link:not(.active) {
+    opacity: 0.6;
+}
+
+/* Keep visual styling for current step */
+.step-navigation .nav-link.active {
+    opacity: 1;
+}
+
+/* Disable previous steps styling */
+.step-navigation .nav-link.disabled-step {
+    opacity: 0.4;
+}
+
+/* Pagination styles */
+.pagination-hidden {
+    display: none !important;
+}
