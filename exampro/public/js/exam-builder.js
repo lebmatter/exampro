@@ -18,6 +18,11 @@ frappe.ready(function() {
         remove: []
     };
     
+    // Ensure Existing Exams tab is shown on page load
+    $(document).ready(function() {
+        $('#examOptionTabs a[href="#existing-exams"]').tab('show');
+    });
+    
     // Initialize the page
     init();
     
@@ -33,6 +38,13 @@ frappe.ready(function() {
         // Make sure tab panes are correctly set
         $('.tab-pane').removeClass('show active');
         $('#step1').addClass('show active');
+        
+        // Explicitly set the "Existing Exams" tab as active
+        $('#examOptionTabs a[href="#existing-exams"]').tab('show');
+        $('#existing-exams-tab').addClass('active');
+        $('#new-exam-tab').removeClass('active');
+        $('#existing-exams').addClass('show active');
+        $('#new-exam').removeClass('show active');
         
         // Reset current step to 1
         currentStep = 1;
@@ -54,11 +66,12 @@ frappe.ready(function() {
         // Reset to step 1
         currentStep = 1;
         
-        // Reset exam choice to create new exam
-        $('input[name="exam-choice"][value="new"]').prop('checked', true).trigger('change');
+        // Reset to the "Existing Exams" tab by default
+        $('#examOptionTabs a[href="#existing-exams"]').tab('show');
         
-        // Clear existing exam dropdown
-        $('#existing-exam').val('').trigger('change');
+        // Clear any selected exam card
+        $('.exam-card').removeClass('selected');
+        $('#selected-exam-id').val('');
         
         // Clear new exam form fields
         $('#exam-title').val('');
@@ -95,8 +108,6 @@ frappe.ready(function() {
         $('#registrations-table tbody').empty();
         
         // Show appropriate form sections
-        $('#new-exam-form').show();
-        $('#existing-exam-form').hide();
         $('#new-schedule-form').show();
         $('#existing-schedule-form').hide();
         $('#schedule-expire-days-container').hide();
@@ -131,15 +142,50 @@ frappe.ready(function() {
     }
     
     function bindEvents() {
-        // Exam choice toggle
-        $('input[name="exam-choice"]').on('change', function() {
-            const choice = $('input[name="exam-choice"]:checked').val();
-            if (choice === 'existing') {
-                $('#existing-exam-form').show();
-                $('#new-exam-form').hide();
+        // Exam tab handling
+        $('#examOptionTabs a').on('click', function (e) {
+            e.preventDefault();
+            $(this).tab('show');
+            
+            // Update internal state to track which tab is active
+            if ($(this).attr('id') === 'existing-exams-tab') {
+                $('input[name="exam-choice"][value="existing"]').prop('checked', true);
             } else {
-                $('#existing-exam-form').hide();
-                $('#new-exam-form').show();
+                $('input[name="exam-choice"][value="new"]').prop('checked', true);
+            }
+        });
+        
+        // Handle clicking on exam cards
+        $(document).on('click', '.exam-card', function() {
+            const examId = $(this).data('exam-id');
+            $('#selected-exam-id').val(examId);
+            
+            // Visual feedback
+            $('.exam-card').removeClass('selected');
+            $(this).addClass('selected');
+            
+            // Load exam details
+            loadExamDetails(examId);
+            loadExamSchedules(examId);
+        });
+        
+        // Handle the select button on exam cards
+        $(document).on('click', '.select-exam-btn', function(e) {
+            e.stopPropagation(); // Prevent triggering the card click
+            const examId = $(this).closest('.exam-card').data('exam-id');
+            $('#selected-exam-id').val(examId);
+            
+            // Visual feedback
+            $('.exam-card').removeClass('selected');
+            $(this).closest('.exam-card').addClass('selected');
+            
+            // Load exam details
+            loadExamDetails(examId);
+            loadExamSchedules(examId);
+            
+            // Proceed to next step
+            if (validateCurrentStep()) {
+                navigateToStep(currentStep + 1);
             }
         });
         
@@ -166,15 +212,6 @@ frappe.ready(function() {
                 $('#schedule-expire-days-container').show();
             } else {
                 $('#schedule-expire-days-container').hide();
-            }
-        });
-        
-        // Existing exam change
-        $('#existing-exam').on('change', function() {
-            const examId = $(this).val();
-            if (examId) {
-                loadExamDetails(examId);
-                loadExamSchedules(examId);
             }
         });
         
@@ -233,9 +270,15 @@ frappe.ready(function() {
                     // Special handling for step 2 - save exam before proceeding
                     saveExamWithConfirmation();
                 } else if (currentStep === 1) {
-                    // First check if this is an existing exam
-                    if ($('input[name="exam-choice"]:checked').val() === 'existing') {
-                        // Make sure we always navigate to step 2 for question selection
+                    // Check which tab is active
+                    if ($('#existing-exams-tab').hasClass('active')) {
+                        // Make sure an exam is selected
+                        const selectedExamId = $('#selected-exam-id').val();
+                        if (!selectedExamId) {
+                            frappe.throw(__('Please select an exam'));
+                            return false;
+                        }
+                        // Navigate to step 2 for question selection
                         navigateToStep(currentStep + 1);
                     } else {
                         // For new exams, proceed as normal
@@ -263,6 +306,9 @@ frappe.ready(function() {
             resetFormToInitialState();
             // Re-initialize the page elements
             init();
+            
+            // Explicitly ensure Existing Exams tab is shown
+            $('#examOptionTabs a[href="#existing-exams"]').tab('show');
         });
         
         // Tab navigation - completely disabled, only Next button allowed
@@ -340,9 +386,11 @@ frappe.ready(function() {
     function validateStep(step) {
         switch (step) {
             case 1:
-                // Check if existing exam selected or new exam form filled
-                if ($('input[name="exam-choice"]:checked').val() === 'existing') {
-                    if (!$('#existing-exam').val()) {
+                // Check which tab is active
+                if ($('#existing-exams-tab').hasClass('active')) {
+                    // Check if an exam card is selected
+                    const selectedExamId = $('#selected-exam-id').val();
+                    if (!selectedExamId) {
                         frappe.throw(__('Please select an exam'));
                         return false;
                     }

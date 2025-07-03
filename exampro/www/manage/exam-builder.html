@@ -60,92 +60,120 @@
                         <div class="tab-pane fade show active" id="step1" role="tabpanel">
                             <h5 class="card-title mb-5">Step 1: Select or Create Exam</h5>
                             
-                            <div class="form-group mb-4">
-                                <div class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" id="select-existing-exam" name="exam-choice" class="custom-control-input" value="existing" checked>
-                                    <label class="custom-control-label" for="select-existing-exam">Select Existing Exam</label>
+                            <!-- Tabs for existing/new exam choice -->
+                            <ul class="nav nav-tabs mb-4" id="examOptionTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link active" id="existing-exams-tab" data-toggle="tab" href="#existing-exams" role="tab" aria-controls="existing-exams" aria-selected="true">Existing Exams</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="new-exam-tab" data-toggle="tab" href="#new-exam" role="tab" aria-controls="new-exam" aria-selected="false">Create New Exam</a>
+                                </li>
+                            </ul>
+                            
+                            <!-- Tab content -->
+                            <div class="tab-content" id="examOptionsTabContent">
+                                <!-- Existing Exams Tab -->
+                                <div class="tab-pane fade show active" id="existing-exams" role="tabpanel" aria-labelledby="existing-exams-tab">
+                                    <div class="row" id="existing-exams-cards">
+                                        {% if exams %}
+                                            {% for exam in exams %}
+                                            <div class="col-md-4 mb-4">
+                                                <div class="card exam-card" data-exam-id="{{ exam.name }}">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">{{ exam.title }}</h5>
+                                                        <p class="card-text text-muted">
+                                                            {% if exam.description %}
+                                                                {{ exam.description[:100] }}{% if exam.description|length > 100 %}...{% endif %}
+                                                            {% else %}
+                                                                No description available
+                                                            {% endif %}
+                                                        </p>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <small class="text-muted">Duration: {{ exam.duration }} mins</small>
+                                                            <button class="btn btn-sm btn-outline-primary select-exam-btn">Select</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                No exams available. Please create a new exam.
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <div class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" id="create-new-exam" name="exam-choice" class="custom-control-input" value="new">
-                                    <label class="custom-control-label" for="create-new-exam">Create New Exam</label>
+                                
+                                <!-- Create New Exam Tab -->
+                                <div class="tab-pane fade" id="new-exam" role="tabpanel" aria-labelledby="new-exam-tab">
+                                    <div id="new-exam-form">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="exam-title">Title <span class="text-danger">*</span></label>
+                                                    <input type="text" id="exam-title" class="form-control" required>
+                                                </div>
+                                                
+                                                <div class="form-group">
+                                                    <label for="exam-duration">Duration (minutes) <span class="text-danger">*</span></label>
+                                                    <input type="number" id="exam-duration" class="form-control" min="1" required>
+                                                </div>
+                                                
+                                                <div class="form-group">
+                                                    <label for="exam-pass-percentage">Pass Percentage <span class="text-danger">*</span></label>
+                                                    <input type="number" id="exam-pass-percentage" class="form-control" min="0" max="100" required>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="exam-description">Description <span class="text-danger">*</span></label>
+                                                    <textarea id="exam-description" class="form-control" rows="3" required></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="exam-instructions">Instructions</label>
+                                                    <textarea id="exam-instructions" class="form-control" rows="3"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <h6>Examiners</h6>
+                                                <table class="table table-sm" id="examiners-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Examiner</th>
+                                                            <th>Can Proctor</th>
+                                                            <th>Can Evaluate</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <!-- Rows will be added dynamically -->
+                                                    </tbody>
+                                                </table>
+                                                <button type="button" id="add-examiner" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-plus"></i> Add Examiner
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <!-- Select Existing Exam Form -->
-                            <div id="existing-exam-form" class="mt-4">
-                                <div class="form-group">
-                                    <label for="existing-exam">Select Exam</label>
-                                    <select id="existing-exam" class="form-control">
-                                        <option value="">Select an exam...</option>
-                                        {% for exam in exams %}
-                                        <option value="{{ exam.name }}">{{ exam.title }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <!-- Create New Exam Form -->
-                            <div id="new-exam-form" class="mt-4" style="display: none;">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="exam-title">Title <span class="text-danger">*</span></label>
-                                            <input type="text" id="exam-title" class="form-control" required>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label for="exam-duration">Duration (minutes) <span class="text-danger">*</span></label>
-                                            <input type="number" id="exam-duration" class="form-control" min="1" required>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label for="exam-pass-percentage">Pass Percentage <span class="text-danger">*</span></label>
-                                            <input type="number" id="exam-pass-percentage" class="form-control" min="0" max="100" required>
-                                        </div>
-                                        
-                                    </div>
-                                </div>
-                                
-                                <div class="row mt-3">
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <label for="exam-description">Description <span class="text-danger">*</span></label>
-                                            <textarea id="exam-description" class="form-control" rows="3" required></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row mt-3">
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <label for="exam-instructions">Instructions</label>
-                                            <textarea id="exam-instructions" class="form-control" rows="3"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row mt-3">
-                                    <div class="col-md-12">
-                                        <h6>Examiners</h6>
-                                        <table class="table table-sm" id="examiners-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Examiner</th>
-                                                    <th>Can Proctor</th>
-                                                    <th>Can Evaluate</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <!-- Rows will be added dynamically -->
-                                            </tbody>
-                                        </table>
-                                        <button type="button" id="add-examiner" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-plus"></i> Add Examiner
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- Hidden field to store the selected exam -->
+                            <input type="hidden" id="selected-exam-id" value="">
                         </div>
                         
                         <!-- Step 2: Add Questions -->
@@ -305,8 +333,8 @@
                     
                     <!-- Navigation buttons -->
                     <div class="d-flex justify-content-between mt-4">
-                        <button type="button" class="btn btn-secondary" id="refresh-step"><i class="bi bi-arrow-clockwise"></i> Restart</button>
-                        <button type="button" class="btn btn-primary" id="next-step">Next</button>
+                        <button type="button" class="btn btn-outline-secondary" id="refresh-step"><i class="bi bi-arrow-clockwise"></i> Restart</button>
+                        <button type="button" class="btn btn-primary" id="next-step">Next <i class="bi bi-arrow-right"></i></button>
                     </div>
                 </div>
             </div>

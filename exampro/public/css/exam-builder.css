@@ -108,6 +108,50 @@
     background-color: rgba(0, 123, 255, 0.05);
 }
 
+/* Exam Cards Styling */
+.exam-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    height: 100%;
+    border: 1px solid #dee2e6;
+}
+
+.exam-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
+    border-color: #007bff;
+}
+
+.exam-card.selected {
+    border: 2px solid #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.exam-card .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.exam-card .card-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.exam-card .card-text {
+    flex-grow: 1;
+    font-size: 0.9rem;
+}
+
+.exam-card .select-exam-btn {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.exam-card:hover .select-exam-btn {
+    opacity: 1;
+}
+
 /* Form buttons */
 .form-navigation-buttons {
     margin-top: 30px;
