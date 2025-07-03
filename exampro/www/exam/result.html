@@ -10,54 +10,74 @@
 {% endblock %}
 
 {% block page_content %}
-<div class="exam-result-card">
-    <div class="card-header header-{{ result_type }}">
-        {% if result_type == "scorecard" %}
-            Exam Score Card
-        {% elif result_type == "pending" %}
-            Exam Completion
-        {% elif result_type == "terminated" %}
-            Exam Terminated
-        {% endif %}
-    </div>
-    
-    <div class="card-body">
-        {% if result_type == "scorecard" %}
-            <div class="score-circle {% if exam_submission.result_status == 'Passed' %}circle-passed{% else %}circle-failed{% endif %}">
-                {{ exam_submission.total_marks }}/{{ exam_data.total_marks }}
-            </div>
-            <div class="result-status status-{{ exam_submission.result_status|lower }}">
-                Result: {{ exam_submission.result_status }}
-            </div>
-            <div class="exam-details">
-                <p><strong>Exam:</strong> {{ exam_submission.exam }}</p>
-                <p><strong>Candidate:</strong> {{ exam_submission.candidate }}</p>
-                <p><strong>Passing Marks:</strong> {{ exam_data.total_marks }}</p>
-                <p><strong>Date Completed:</strong> {{ exam_submission.modified.strftime('%d %b %Y, %I:%M %p') }}</p>
-            </div>
-        {% elif result_type == "pending" %}
-            <div class="result-icon">
-                <i class="fas fa-hourglass-half icon-pending"></i>
-            </div>
-            <div class="result-status status-pending">
-                Exam Completed
-            </div>
-            <div class="message-box box-pending">
-                <p>{{ message }}</p>
-            </div>
-        {% elif result_type == "terminated" %}
-            <div class="result-icon">
-                <i class="fas fa-exclamation-triangle icon-terminated"></i>
-            </div>
-            <div class="result-status status-terminated">
-                Exam Terminated
-            </div>
-            <div class="message-box box-terminated">
-                <p><strong>Reason:</strong> {{ message }}</p>
-            </div>
-        {% endif %}
+<div class="container mt-4 mb-4">
+    <div class="card exam-result-card">
+        <div class="card-header header-{{ result_type }}">
+            <h4 class="mb-0">
+                {% if result_type == "scorecard" %}
+                    <i class="fas fa-award"></i> Exam Score Card
+                {% elif result_type == "pending" %}
+                    <i class="fas fa-hourglass-half"></i> Exam Completion
+                {% elif result_type == "terminated" %}
+                    <i class="fas fa-exclamation-triangle"></i> Exam Terminated
+                {% endif %}
+            </h4>
+        </div>
         
-        <a href="/my-exams" class="back-button">Back to Exams</a>
+        <div class="card-body">
+            {% if result_type == "scorecard" %}
+                <div class="text-center mb-4">
+                    <div class="score-circle {% if exam_submission.result_status == 'Passed' %}circle-passed{% else %}circle-failed{% endif %}">
+                        {{ exam_submission.total_marks }}/{{ exam_data.total_marks }}
+                    </div>
+                    <div class="result-status status-{{ exam_submission.result_status|lower }}">
+                        Result: {{ exam_submission.result_status }}
+                    </div>
+                </div>
+                <div class="exam-details">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Exam:</strong> {{ exam_submission.exam }}</p>
+                            <p><strong>Candidate:</strong> {{ exam_submission.candidate }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Passing Marks:</strong> {{ exam_data.total_marks }}</p>
+                            <p><strong>Date Completed:</strong> {{ exam_submission.modified.strftime('%d %b %Y, %I:%M %p') }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% elif result_type == "pending" %}
+                <div class="text-center mb-4">
+                    <div class="result-icon">
+                        <i class="fas fa-hourglass-half icon-pending"></i>
+                    </div>
+                    <div class="result-status status-pending">
+                        Exam Completed
+                    </div>
+                </div>
+                <div class="message-box box-pending">
+                    <p>{{ message }}</p>
+                </div>
+            {% elif result_type == "terminated" %}
+                <div class="text-center mb-4">
+                    <div class="result-icon">
+                        <i class="fas fa-exclamation-triangle icon-terminated"></i>
+                    </div>
+                    <div class="result-status status-terminated">
+                        Exam Terminated
+                    </div>
+                </div>
+                <div class="message-box box-terminated">
+                    <p><strong>Reason:</strong> {{ message }}</p>
+                </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="/my-exams" class="btn btn-primary back-button">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Exams
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
