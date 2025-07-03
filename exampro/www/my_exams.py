@@ -21,6 +21,7 @@ def submit_pending_exams(member=None):
 			doc = frappe.get_doc("Exam Submission", submission["name"], additional_time=submission["additional_time_given"])
 			doc.status = "Submitted"
 			doc.save(ignore_permissions=True)
+			frappe.db.commit()
 
 def get_user_exams(member=None):
 	"""

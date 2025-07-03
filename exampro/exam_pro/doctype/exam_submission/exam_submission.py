@@ -221,7 +221,7 @@ def get_current_qs(exam_submission):
 
 
 def evaluation_values(exam, submitted_answers):
-	# add marks and evalualtion oending count is applicable
+	# add marks and evalualtion pending count if applicable
 	total_marks = 0
 	eval_pending = 0
 	result_status = "NA"
