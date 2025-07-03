@@ -1,0 +1,159 @@
+/* Common styles for all manage pages */
+
+/* Badge styles */
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.8em;
+    margin-right: 0.25rem;
+}
+
+/* Table styles */
+.table td, .table th {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.table {
+    width: 100%;
+    table-layout: auto;
+}
+
+/* Custom control */
+.custom-control {
+    display: flex;
+    justify-content: center;
+}
+
+/* Button styles */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+}
+
+/* Sidebar styles */
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 60px);
+    padding-top: 20px;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: .75rem 1rem;
+}
+
+.sidebar .nav-link.active {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.sidebar .nav-link:hover {
+    color: #007bff;
+}
+
+/* Card styles */
+.card-body {
+    width: 100%;
+}
+
+/* Exam schedules styles */
+.toggle-schedules {
+    cursor: pointer;
+    width: 20px;
+    text-align: center;
+    display: inline-block;
+}
+
+.toggle-schedules i {
+    transition: transform 0.2s ease-in-out;
+}
+
+.toggle-schedules.rotated i {
+    transform: rotate(90deg);
+    display: inline-block;
+}
+
+.schedule-row td {
+    border-top: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Question styles */
+.question-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+}
+
+/* Question preview styles */
+.question-preview {
+    padding: 1rem;
+}
+
+.option-item {
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    padding: 0.5rem !important;
+}
+
+.option-item.border-success {
+    border-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+/* Step navigation styling */
+.step-navigation.nav-pills .nav-link.active,
+body .step-navigation .nav-link.active {
+    background-color: transparent !important;
+    color: #007bff;
+}
+
+.step-navigation .nav-link {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* Category selection styles */
+.category-section {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 1rem;
+}
+
+.category-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #007bff;
+    padding-left: 0.5rem;
+}
+
+.category-item {
+    transition: all 0.2s;
+    border: 1px solid #e9ecef;
+}
+
+.category-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+}
+
+.selected-category-item {
+    border-left: 3px solid #28a745;
+}
+
+#selection-summary {
+    font-size: 0.875rem;
+}
+
+.available-categories-container,
+.selected-categories-container {
+    background-color: #f8f9fa;
+}
+
+/* Force override Bootstrap nav pill styling */
+.nav-pills .nav-link.active, 
+.nav-pills .show > .nav-link {
+    background-color: transparent !important;
+}

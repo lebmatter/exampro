@@ -3,6 +3,10 @@
 {% block title %}
 {{ _('Exam Builder') }}
 {% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/exampro/css/manage.css">
+{% endblock %}
 {% block page_content %}
 <div class="container">
     <div class="row mb-4">
@@ -313,69 +317,7 @@
 
 {% block style %}
 <link rel="stylesheet" href="/assets/exampro/css/exam-builder.css">
-<style>
-    /* Force override Bootstrap nav pill styling */
-    .nav-pills .nav-link.active, 
-    .nav-pills .show > .nav-link {
-        background-color: transparent !important;
-    }
-    
-    /* Additional specificity to ensure our styles take precedence */
-    .step-navigation.nav-pills .nav-link.active,
-    body .step-navigation .nav-link.active {
-        background-color: transparent !important;
-        color: #007bff;
-    }
 
-    /* Category selection styles */
-    .category-section {
-        border-bottom: 1px solid #e9ecef;
-        padding-bottom: 1rem;
-    }
-
-    .category-title {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        border-left: 3px solid #007bff;
-        padding-left: 0.5rem;
-    }
-
-    .category-item {
-        transition: all 0.2s;
-        border: 1px solid #e9ecef;
-    }
-
-    .category-item:hover {
-        border-color: #007bff;
-        box-shadow: 0 2px 4px rgba(0,123,255,0.1);
-    }
-
-    .selected-category-item {
-        border-left: 3px solid #28a745;
-    }
-
-    #selection-summary {
-        font-size: 0.875rem;
-    }
-
-    .available-categories-container,
-    .selected-categories-container {
-        background-color: #f8f9fa;
-    }
-
-    .modal-body p {
-        margin-bottom: 0.5rem;
-    }
-
-    .badge {
-        margin-right: 0.25rem;
-    }
-    
-    /* Disable step navigation only */
-    .step-navigation .nav-link {
-        pointer-events: none;
-        cursor: default;
-    }
     
     /* Keep visual styling for current step */
     .step-navigation .nav-link.active {

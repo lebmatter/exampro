@@ -4,6 +4,10 @@
 {{ _('Manage Exams & Schedules') }}
 {% endblock %}
 
+{% block head_include %}
+<link rel="stylesheet" href="/assets/exampro/css/manage.css">
+{% endblock %}
+
 {% block page_content %}
 <div class="container">
     <div class="row mb-5">
@@ -153,36 +157,7 @@
     </div>
 </div>
 
-<style>
-.badge {
-    font-weight: 500;
-    padding: 0.4em 0.8em;
-}
-.table td, .table th {
-    padding: 1rem;
-    vertical-align: middle;
-}
-.toggle-schedules {
-    cursor: pointer;
-    width: 20px;
-    text-align: center;
-    display: inline-block;
-}
-.toggle-schedules i {
-    transition: transform 0.2s ease-in-out;
-}
-.toggle-schedules.rotated i {
-    transform: rotate(90deg);
-    display: inline-block;
-}
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-}
-.schedule-row td {
-    border-top: none;
-    border-bottom: 1px solid #dee2e6;
-}
-</style>
+
 
 <script>
 frappe.ready(function() {

@@ -4,6 +4,10 @@
 {{ _('Manage Users') }}
 {% endblock %}
 
+{% block head_include %}
+<link rel="stylesheet" href="/assets/exampro/css/manage.css">
+{% endblock %}
+
 {% block page_content %}
     <div class="container">
         <div class="row mb-5">
@@ -222,32 +226,7 @@
     </div>
 </div>
 
-<style>
-.badge {
-    font-weight: 500;
-    padding: 0.4em 0.8em;
-}
-.table td, .table th {
-    padding: 1rem;
-    vertical-align: middle;
-}
-.table {
-    width: 100%;
-    table-layout: auto;
-}
-.custom-control {
-    display: flex;
-    justify-content: center;
-}
-.card-body {
-    width: 100%;
-}
-/* Sidebar styles */
-.sidebar {
-    position: sticky;
-    top: 0;
-    height: calc(100vh - 60px);
-    padding-top: 20px;
+
     box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
 }
 .sidebar .nav-link {
