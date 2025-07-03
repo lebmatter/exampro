@@ -27,7 +27,6 @@ frappe.ready(function() {
     init();
     
     function init() {
-        resetFormToInitialState();
         bindEvents();
         populateDropdowns();
         
@@ -53,66 +52,6 @@ frappe.ready(function() {
         setTimeout(() => {
             $('.nav-pills .nav-link.active').css('background-color', 'transparent');
         }, 100);
-    }
-    
-    function resetFormToInitialState() {
-        // Clear global variables
-        examData = {}; // This will clear pendingQuestionConfig as well
-        scheduleData = {};
-        questionsData = [];
-        registrationsData = [];
-        selectedCategoriesData = [];
-        
-        // Reset to step 1
-        currentStep = 1;
-        
-        // Reset to the "Existing Exams" tab by default
-        $('#examOptionTabs a[href="#existing-exams"]').tab('show');
-        
-        // Clear any selected exam card
-        $('.exam-card').removeClass('selected');
-        $('#selected-exam-id').val('');
-        
-        // Clear new exam form fields
-        $('#exam-title').val('');
-        $('#exam-duration').val('');
-        $('#exam-pass-percentage').val('');
-        $('#exam-description').val('');
-        $('#exam-instructions').val('');
-        $('#exam-image').val('');
-        
-        // Clear examiners table
-        $('#examiners-table tbody').empty();
-        
-        // Clear total questions
-        $('#total-questions').val('');
-        
-        // Clear selected categories
-        $('#selected-categories').empty();
-        
-        // Update selection summary to show 0
-        updateSelectionSummary();
-        
-        // Reset schedule choice to create new
-        $('input[name="schedule-choice"][value="new"]').prop('checked', true).trigger('change');
-        
-        // Clear schedule form fields
-        $('#schedule-name').val('');
-        $('#schedule-start-datetime').val('');
-        $('#schedule-expire-days').val('');
-        $('#existing-schedule').val('');
-        
-        // Clear registration fields
-        $('#registration-email').val('');
-        $('#registration-search').val('');
-        $('#registrations-table tbody').empty();
-        
-        // Show appropriate form sections
-        $('#new-schedule-form').show();
-        $('#existing-schedule-form').hide();
-        $('#schedule-expire-days-container').hide();
-        
-        console.log('Form reset to initial state');
     }
     
     function populateDropdowns() {
@@ -300,18 +239,6 @@ frappe.ready(function() {
                     window.location.href = '/manage/exams';
                 }
             }
-        });
-        
-        // Refresh button functionality
-        $('#refresh-step').on('click', function(e) {
-            e.preventDefault();
-            // Reset the form state instead of reloading the page
-            resetFormToInitialState();
-            // Re-initialize the page elements
-            init();
-            
-            // Explicitly ensure Existing Exams tab is shown
-            $('#examOptionTabs a[href="#existing-exams"]').tab('show');
         });
         
         // Tab navigation - completely disabled, only Next button allowed
