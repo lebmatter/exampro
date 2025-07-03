@@ -783,14 +783,12 @@ def exam_video_list(exam_submission):
 	if frappe.session.user == "Guest":
 		raise frappe.PermissionError(_("Please login to access this page."))
 
-	required_roles = ["Class Evaluator", "System Manager"]
-	user_roles = frappe.get_roles(frappe.session.user)
-	has_role = any(item in user_roles for item in required_roles)
-	if not has_role:
-		raise frappe.PermissionError(_("No permission to access this page."))
-
-	res = get_videos(exam_submission)
-
+	try:
+		res = get_videos(exam_submission)
+	except Exception:
+		frappe.log_error("Error retrieving videos for exam submission", "exam_video_list error")
+		res = {"videos": {}}
+	
 	return res
 
 #########################
