@@ -16,7 +16,34 @@ def get_context(context):
     if not has_exam_manager_role():
         frappe.throw(_("Not permitted"), frappe.PermissionError)
         
-    context.exams = frappe.get_list("Exam", fields=["name", "title"], order_by="creation desc")
+    # Get basic exam info
+    exams = frappe.get_list("Exam", fields=["name", "title", "description", "duration"], order_by="creation desc")
+    
+    # Enhance with additional counts
+    for exam in exams:
+        # Count upcoming exam schedules
+        upcoming_schedules = frappe.get_all(
+            "Exam Schedule",
+            filters={
+                "exam": exam.name,
+                "start_date_time": [">", frappe.utils.now()],
+                "status": ["!=", "Completed"]
+            },
+            as_list=True
+        )
+        exam.upcoming_schedules = len(upcoming_schedules)
+        
+        # Count registered users across all schedules for this exam
+        registered_users = frappe.db.sql("""
+            SELECT COUNT(DISTINCT es.candidate) 
+            FROM `tabExam Submission` es
+            JOIN `tabExam Schedule` esc ON es.exam_schedule = esc.name
+            WHERE esc.exam = %s
+        """, (exam.name,))[0][0]
+        
+        exam.registered_users = registered_users or 0
+    
+    context.exams = exams
     return context
 
 @frappe.whitelist()
