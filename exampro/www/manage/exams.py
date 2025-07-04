@@ -488,3 +488,286 @@ def update_exam_questions(exam, category_config):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), f"Error updating questions for exam {exam}")
         return {"success": False, "error": str(e)}
+
+@frappe.whitelist()
+def get_all_schedules():
+    """
+    Get all exam schedules with minimal information for the dropdown.
+    """
+    if not frappe.has_permission("Exam Schedule", "read"):
+        return {"success": False, "error": _("Not permitted to view exam schedules"), "schedules": []}
+    
+    try:
+        # Get all schedules with relevant info
+        schedules = frappe.db.sql("""
+            SELECT 
+                es.name, 
+                es.exam,
+                es.start_date_time,
+                e.title as exam_title
+            FROM 
+                `tabExam Schedule` es
+            LEFT JOIN
+                `tabExam` e ON es.exam = e.name
+            WHERE
+                es.start_date_time >= NOW()
+            ORDER BY 
+                es.start_date_time DESC
+        """, as_dict=True)
+        
+        return {
+            "success": True,
+            "schedules": schedules
+        }
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error getting all schedules: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "schedules": []
+        }
+
+@frappe.whitelist()
+def get_assigned_users(schedule):
+    """
+    Get users assigned to a specific exam schedule.
+    
+    Args:
+        schedule (str): Name of the schedule to get users for
+    """
+    if not frappe.has_permission("Exam Submission", "read"):
+        return {"success": False, "error": _("Not permitted to view exam submissions"), "users": []}
+    
+    try:
+        # Get submissions for this schedule with user info
+        submissions = frappe.db.sql("""
+            SELECT 
+                es.user,
+                es.status,
+                u.full_name as user_name,
+                u.email
+            FROM 
+                `tabExam Submission` es
+            LEFT JOIN
+                `tabUser` u ON es.user = u.name
+            WHERE
+                es.exam_schedule = %s
+            ORDER BY 
+                u.full_name
+        """, schedule, as_dict=True)
+        
+        return {
+            "success": True,
+            "users": submissions
+        }
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error getting assigned users for schedule {schedule}: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "users": []
+        }
+
+@frappe.whitelist()
+def get_available_batches():
+    """
+    Get all available exam batches for the batch assign feature.
+    """
+    if not frappe.has_permission("Exam Batch", "read"):
+        return {"success": False, "error": _("Not permitted to view exam batches"), "batches": []}
+    
+    try:
+        # Get all batches with user count
+        batches = frappe.db.sql("""
+            SELECT 
+                eb.name,
+                COUNT(ebu.name) as user_count
+            FROM 
+                `tabExam Batch` eb
+            LEFT JOIN
+                `tabExam Batch User` ebu ON eb.name = ebu.parent
+            GROUP BY 
+                eb.name
+            ORDER BY 
+                eb.name
+        """, as_dict=True)
+        
+        return {
+            "success": True,
+            "batches": batches
+        }
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error getting available batches: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "batches": []
+        }
+
+@frappe.whitelist()
+def get_batch_users(batch, schedule):
+    """
+    Get users in a specific batch, flagging those already assigned to the schedule.
+    
+    Args:
+        batch (str): Name of the batch to get users from
+        schedule (str): Name of the schedule to check against
+    """
+    if not frappe.has_permission("Exam Batch", "read"):
+        return {"success": False, "error": _("Not permitted to view exam batches"), "users": []}
+    
+    try:
+        # Get users in this batch
+        batch_users = frappe.db.sql("""
+            SELECT 
+                ebu.user,
+                u.full_name as user_name,
+                u.email
+            FROM 
+                `tabExam Batch User` ebu
+            LEFT JOIN
+                `tabUser` u ON ebu.user = u.name
+            WHERE
+                ebu.parent = %s
+            ORDER BY 
+                u.full_name
+        """, batch, as_dict=True)
+        
+        # Check which users are already assigned to this schedule
+        for user in batch_users:
+            user_submission = frappe.get_all(
+                "Exam Submission",
+                filters={
+                    "exam_schedule": schedule,
+                    "user": user.user
+                }
+            )
+            user["already_assigned"] = len(user_submission) > 0
+        
+        return {
+            "success": True,
+            "users": batch_users
+        }
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error getting batch users for batch {batch}: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "users": []
+        }
+
+@frappe.whitelist()
+def assign_users_to_schedule(schedule, users):
+    """
+    Assign users to an exam schedule.
+    
+    Args:
+        schedule (str): Name of the schedule to assign users to
+        users (list): List of user IDs to assign
+    """
+    if not frappe.has_permission("Exam Submission", "create"):
+        return {"success": False, "error": _("Not permitted to create exam submissions")}
+    
+    try:
+        # Parse users if it's a string
+        if isinstance(users, str):
+            import json
+            users = json.loads(users)
+        
+        # Get the schedule info
+        schedule_doc = frappe.get_doc("Exam Schedule", schedule)
+        
+        assigned_count = 0
+        
+        for user in users:
+            # Check if user is already assigned
+            existing = frappe.get_all(
+                "Exam Submission",
+                filters={
+                    "exam_schedule": schedule,
+                    "user": user
+                }
+            )
+            
+            # Skip if already assigned
+            if existing:
+                continue
+            
+            # Create a new submission for this user
+            submission = frappe.new_doc("Exam Submission")
+            submission.user = user
+            submission.exam = schedule_doc.exam
+            submission.exam_schedule = schedule
+            submission.status = "Not Started"
+            submission.insert(ignore_permissions=True)
+            assigned_count += 1
+        
+        frappe.db.commit()
+        
+        return {
+            "success": True,
+            "assigned_count": assigned_count
+        }
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error assigning users to schedule {schedule}: {str(e)}")
+        frappe.db.rollback()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@frappe.whitelist()
+def remove_user_from_schedule(schedule, user):
+    """
+    Remove a user from an exam schedule by deleting their submission.
+    
+    Args:
+        schedule (str): Name of the schedule to remove user from
+        user (str): User ID to remove
+    """
+    if not frappe.has_permission("Exam Submission", "delete"):
+        return {"success": False, "error": _("Not permitted to delete exam submissions")}
+    
+    try:
+        # Find the submission
+        submissions = frappe.get_all(
+            "Exam Submission",
+            filters={
+                "exam_schedule": schedule,
+                "user": user
+            }
+        )
+        
+        if not submissions:
+            return {
+                "success": False,
+                "error": _("User is not assigned to this schedule")
+            }
+        
+        # Check if the exam has been started
+        submission_doc = frappe.get_doc("Exam Submission", submissions[0].name)
+        if submission_doc.status != "Not Started":
+            return {
+                "success": False,
+                "error": _("Cannot remove user who has already started the exam")
+            }
+        
+        # Delete the submission
+        frappe.delete_doc("Exam Submission", submissions[0].name)
+        frappe.db.commit()
+        
+        return {
+            "success": True
+        }
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), f"Error removing user {user} from schedule {schedule}: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }

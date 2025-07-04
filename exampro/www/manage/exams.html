@@ -7,6 +7,7 @@
 {% block head_include %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <link rel="stylesheet" href="/assets/exampro/css/manage.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -32,14 +33,21 @@
         <div class="col-md-5 mb-2 mb-md-0">
             <input type="text" id="item-search" class="form-control rounded" placeholder="Search by title or name...">
         </div>
-        <div class="col-md-4 text-md-end">
-            <div class="btn-toolbar justify-content-md-end">
-                <a href="/app/exam-schedule/new-exam-schedule" class="btn btn-outline-primary me-2">
-                    <i class="bi bi-plus-circle me-1"></i> New Schedule
-                </a>
-                <a href="/app/exam/new-exam" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-1"></i> New Exam
-                </a>
+        <div class="col-md-2">
+            <button id="manage-schedules-btn" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#manage-schedule-modal">
+                <i class="bi bi-gear me-1"></i> Manage Schedules
+            </button>
+        </div>
+
+        <div class="col-md-2 text-md-end">
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-plus-circle me-1"></i> New
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="/app/exam/new-exam">New Exam</a></li>
+                    <li><a class="dropdown-item" href="/app/exam-schedule/new-exam-schedule">New Schedule</a></li>
+                </ul>
             </div>
         </div>
     </div>
@@ -58,9 +66,7 @@
         <div class="col-md-4 mb-4 exam-card-wrapper" 
              data-exam-name="{{ exam.name }}" 
              data-exam-title="{{ exam.title }}" 
-             data-exam-published="{{ exam.published }}"
-             data-toggle="modal" 
-             data-target="#schedules-modal">
+             data-exam-published="{{ exam.published }}">
             <div class="card exam-card h-100 clickable">
                 <div class="card-body">
                     <h5 class="card-title">{{ exam.title }}</h5>
@@ -99,29 +105,210 @@
     </div>
 </div>
 
+<!-- Manage Schedule Modal -->
+<div class="modal fade" id="manage-schedule-modal" tabindex="-1" role="dialog" aria-labelledby="manage-schedule-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manage-schedule-modal-label">Manage Upcoming Schedules</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="schedule-selector" class="form-label">Select Schedule</label>
+                    <select id="schedule-selector" class="form-control">
+                        <option value="">-- Select a Schedule --</option>
+                        <!-- Schedules will be loaded here -->
+                    </select>
+                </div>
+                
+                <div id="schedule-management-content" style="display: none;">
+                    <ul class="nav nav-tabs" id="manage-schedule-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="assign-users-tab" data-bs-toggle="tab" data-bs-target="#assign-users-content" type="button" role="tab">
+                                Assign Users
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="evaluators-tab" data-bs-toggle="tab" data-bs-target="#evaluators-content" type="button" role="tab">
+                                Evaluators
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="assigned-users-tab" data-bs-toggle="tab" data-bs-target="#assigned-users-content" type="button" role="tab">
+                                Current Users
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="batch-assign-tab" data-bs-toggle="tab" data-bs-target="#batch-assign-content" type="button" role="tab">
+                                Batch Assign
+                            </button>
+                        </li>
+                    </ul>
+                <div class="tab-content mt-3" id="schedule-management-tabs">
+                    <div class="tab-pane fade show active" id="assign-users-content" role="tabpanel">
+                        <div class="mb-3">
+                            <label for="user-search" class="form-label">Search Users</label>
+                            <input type="text" class="form-control" id="user-search" placeholder="Search by name or email">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="select-all-users"></th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-list">
+                                    <!-- Users will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button class="btn btn-primary" id="assign-selected-users">
+                                <i class="bi bi-person-plus me-1"></i> Assign Selected
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="evaluators-content" role="tabpanel">
+                        <div class="mb-3">
+                            <label for="evaluator-search" class="form-label">Search Evaluators</label>
+                            <input type="text" class="form-control" id="evaluator-search" placeholder="Search by name or email">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="select-all-evaluators"></th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="evaluators-list">
+                                    <!-- Evaluators will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button class="btn btn-primary" id="assign-selected-evaluators">
+                                <i class="bi bi-person-check me-1"></i> Assign Evaluators
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Assigned Users Tab -->
+                    <div class="tab-pane fade" id="assigned-users-content" role="tabpanel">
+                        <div class="mb-3">
+                            <h5>Currently Assigned Users</h5>
+                            <p class="text-muted">Users currently registered for this exam schedule.</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assigned-users-list">
+                                    <tr id="loading-assigned-users">
+                                        <td colspan="4" class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="sr-only">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <!-- Assigned users will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Batch Assign Tab -->
+                    <div class="tab-pane fade" id="batch-assign-content" role="tabpanel">
+                        <div class="mb-3">
+                            <h5>Batch Assign Users</h5>
+                            <p class="text-muted">Assign multiple users at once by selecting a batch.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="batch-selector" class="form-label">Select Batch</label>
+                            <select id="batch-selector" class="form-control">
+                                <option value="">-- Select a Batch --</option>
+                                <!-- Batches will be loaded here -->
+                            </select>
+                        </div>
+                        
+                        <div id="batch-users-container" style="display: none;">
+                            <div class="mb-3">
+                                <h6>Users in Selected Batch</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th><input type="checkbox" id="select-all-batch-users"></th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="batch-users-list">
+                                            <!-- Batch users will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button class="btn btn-primary" id="assign-selected-batch-users">
+                                        <i class="bi bi-person-plus me-1"></i> Assign Selected Users from Batch
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Schedules Modal -->
 <div class="modal fade" id="schedules-modal" tabindex="-1" role="dialog" aria-labelledby="schedules-modal-label" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="schedules-modal-label">Schedules</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <ul class="nav nav-tabs" id="modal-tabs" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="schedules-tab" data-toggle="tab" href="#schedules-content" role="tab">Schedules</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="schedules-tab" data-bs-toggle="tab" data-bs-target="#schedules-content" type="button" role="tab">
+                    Schedules
+                </button>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" id="new-schedule-tab" data-toggle="tab" href="#new-schedule-content" role="tab">New Schedule</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="new-schedule-tab" data-bs-toggle="tab" data-bs-target="#new-schedule-content" type="button" role="tab">
+                    New Schedule
+                </button>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" id="settings-tab" data-toggle="tab" href="#settings-content" role="tab">Exam Settings</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings-content" type="button" role="tab">
+                    Exam Settings
+                </button>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" id="questions-tab" data-toggle="tab" href="#questions-content" role="tab">Questions</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions-content" type="button" role="tab">
+                    Questions
+                </button>
             </li>
         </ul>
         <div class="tab-content mt-3">
@@ -202,7 +389,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -227,8 +414,28 @@
 
 <script>
 frappe.ready(function() {
-    // Global variable to store the current exam name
+    // Global variables to store the current exam and schedule
     var currentExamName = '';
+    var currentScheduleName = '';
+    
+    // Initialize modals using Bootstrap 5
+    var manageScheduleModal, schedulesModal;
+    
+    function initModals() {
+        var manageScheduleEl = document.getElementById('manage-schedule-modal');
+        var schedulesEl = document.getElementById('schedules-modal');
+        
+        if (manageScheduleEl) {
+            manageScheduleModal = new bootstrap.Modal(manageScheduleEl);
+        }
+        
+        if (schedulesEl) {
+            schedulesModal = new bootstrap.Modal(schedulesEl);
+        }
+    }
+    
+    // Initialize modals on page load
+    initModals();
     
     function applyFilters() {
         var searchTerm = $("#item-search").val().toLowerCase();
@@ -262,10 +469,35 @@ frappe.ready(function() {
         $("#item-count").text(`Showing: ${visibleExams} exams`);
     }
 
-    $('#schedules-modal').on('show.bs.modal', function (event) {
-        var card = $(event.relatedTarget);
-        var examName = card.data('exam-name');
-        var examTitle = card.data('exam-title');
+    // Add click handler for exam cards
+    $(document).on('click', '.exam-card-wrapper', function() {
+        var $card = $(this);
+        var examName = $card.data('exam-name');
+        var examTitle = $card.data('exam-title');
+        
+        // Set current exam name
+        currentExamName = examName;
+        
+        // Show the modal
+        if (schedulesModal) {
+            schedulesModal.show();
+            
+            // Setup modal content
+            var modal = $('#schedules-modal');
+            modal.find('.modal-title').text('Manage: ' + examTitle);
+            
+            // Setup New Schedule Tab
+            $('#new-schedule-exam-name').val(examName);
+            
+            // Fetch schedules
+            fetchAndPopulateSchedules(examName, modal);
+        } else {
+            console.error("Schedules Modal not initialized");
+        }
+    });
+    
+    // Function to set up the schedules modal
+    function setupSchedulesModal(examName, examTitle) {
         
         // Store the exam name in the global variable for use across tabs
         currentExamName = examName;
@@ -300,7 +532,7 @@ frappe.ready(function() {
         if ($('#questions-tab').hasClass('active')) {
             fetchQuestionCategories(examName);
         }
-    });
+    }
 
     function fetchAndPopulateSchedules(examName, modal) {
         var $schedulesList = modal.find('#schedules-list');
@@ -374,8 +606,8 @@ frappe.ready(function() {
         });
     });
 
-    // Add a tab event handler for the questions tab
-    $('a[data-toggle="tab"][href="#questions-content"]').on('shown.bs.tab', function (e) {
+    // Add a tab event handler for the questions tab using Bootstrap 5 syntax
+    $(document).on('shown.bs.tab', '#questions-tab', function (e) {
         // Use the global currentExamName variable instead of getting it from the hidden input
         if (currentExamName) {
             fetchQuestionCategories(currentExamName);
@@ -576,6 +808,363 @@ frappe.ready(function() {
         }
     }
 
+    // Add click handler for the manage schedules button
+    $('#manage-schedules-btn').on('click', function() {
+        if (manageScheduleModal) {
+            manageScheduleModal.show();
+        } else {
+            console.error("Manage Schedule Modal not initialized");
+        }
+    });
+    
+    // Handle the manage schedule modal opening
+    $('#manage-schedule-modal').on('show.bs.modal', function(event) {
+        // Clear the schedule selector and hide the content
+        $('#schedule-selector').html('<option value="">-- Select a Schedule --</option>');
+        $('#schedule-management-content').hide();
+        
+        // Load all available schedules from all exams
+        loadAllSchedules();
+    });
+    
+    // Function to load all schedules for the dropdown
+    function loadAllSchedules() {
+        $('#schedule-selector').prop('disabled', true);
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.get_all_schedules',
+            callback: function(r) {
+                $('#schedule-selector').prop('disabled', false);
+                
+                if (r.message && r.message.schedules) {
+                    var schedules = r.message.schedules;
+                    
+                    if (schedules.length > 0) {
+                        schedules.forEach(function(schedule) {
+                            var formattedDate = schedule.start_date_time ? 
+                                frappe.datetime.str_to_user(schedule.start_date_time) : 
+                                'No date';
+                                
+                            $('#schedule-selector').append(`
+                                <option value="${schedule.name}" data-exam="${schedule.exam}">
+                                    ${schedule.name} - ${schedule.exam_title} (${formattedDate})
+                                </option>
+                            `);
+                        });
+                    } else {
+                        $('#schedule-selector').append('<option value="" disabled>No schedules available</option>');
+                    }
+                } else {
+                    $('#schedule-selector').append('<option value="" disabled>Error loading schedules</option>');
+                }
+            },
+            error: function() {
+                $('#schedule-selector').prop('disabled', false);
+                $('#schedule-selector').append('<option value="" disabled>Error loading schedules</option>');
+            }
+        });
+    }
+    
+    // Handle schedule selection
+    $('#schedule-selector').on('change', function() {
+        var selectedSchedule = $(this).val();
+        
+        if (selectedSchedule) {
+            $('#schedule-management-content').show();
+            loadScheduleData(selectedSchedule);
+        } else {
+            $('#schedule-management-content').hide();
+        }
+    });
+    
+    // Function to load schedule data
+    function loadScheduleData(scheduleName) {
+        // Load assigned users when tab is shown
+        loadAssignedUsers(scheduleName);
+        
+        // Load available batches
+        loadAvailableBatches();
+        
+        // Set the current schedule for other functions
+        currentScheduleName = scheduleName;
+    }
+    
+    // Function to load assigned users for a schedule
+    function loadAssignedUsers(scheduleName) {
+        var $assignedUsersList = $('#assigned-users-list');
+        $('#loading-assigned-users').show();
+        $assignedUsersList.find('tr:not(#loading-assigned-users)').remove();
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.get_assigned_users',
+            args: { schedule: scheduleName },
+            callback: function(r) {
+                $('#loading-assigned-users').hide();
+                
+                if (r.message && r.message.users) {
+                    var users = r.message.users;
+                    
+                    if (users.length > 0) {
+                        users.forEach(function(user) {
+                            var statusBadgeClass = '';
+                            switch(user.status) {
+                                case 'Not Started': statusBadgeClass = 'bg-secondary'; break;
+                                case 'In Progress': statusBadgeClass = 'bg-warning'; break;
+                                case 'Completed': statusBadgeClass = 'bg-success'; break;
+                                case 'Evaluated': statusBadgeClass = 'bg-info'; break;
+                                default: statusBadgeClass = 'bg-secondary';
+                            }
+                            
+                            $assignedUsersList.append(`
+                                <tr data-user="${user.user}">
+                                    <td>${user.user_name || user.user}</td>
+                                    <td>${user.email || 'N/A'}</td>
+                                    <td><span class="badge ${statusBadgeClass}">${user.status}</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger remove-user" data-user="${user.user}">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        $assignedUsersList.append(`
+                            <tr>
+                                <td colspan="4" class="text-center">No users assigned to this schedule.</td>
+                            </tr>
+                        `);
+                    }
+                } else {
+                    $assignedUsersList.append(`
+                        <tr>
+                            <td colspan="4" class="text-center text-danger">
+                                Error loading assigned users. ${r.message && r.message.error ? r.message.error : ''}
+                            </td>
+                        </tr>
+                    `);
+                }
+            },
+            error: function() {
+                $('#loading-assigned-users').hide();
+                $assignedUsersList.append(`
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">Network or server error loading assigned users.</td>
+                    </tr>
+                `);
+            }
+        });
+    }
+    
+    // Function to load available batches
+    function loadAvailableBatches() {
+        var $batchSelector = $('#batch-selector');
+        $batchSelector.html('<option value="">-- Select a Batch --</option>');
+        $batchSelector.prop('disabled', true);
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.get_available_batches',
+            callback: function(r) {
+                $batchSelector.prop('disabled', false);
+                
+                if (r.message && r.message.batches) {
+                    var batches = r.message.batches;
+                    
+                    if (batches.length > 0) {
+                        batches.forEach(function(batch) {
+                            $batchSelector.append(`
+                                <option value="${batch.name}">${batch.name} (${batch.user_count} users)</option>
+                            `);
+                        });
+                    } else {
+                        $batchSelector.append('<option value="" disabled>No batches available</option>');
+                    }
+                } else {
+                    $batchSelector.append('<option value="" disabled>Error loading batches</option>');
+                }
+            },
+            error: function() {
+                $batchSelector.prop('disabled', false);
+                $batchSelector.append('<option value="" disabled>Error loading batches</option>');
+            }
+        });
+    }
+    
+    // Handle batch selection
+    $('#batch-selector').on('change', function() {
+        var selectedBatch = $(this).val();
+        
+        if (selectedBatch) {
+            loadBatchUsers(selectedBatch);
+            $('#batch-users-container').show();
+        } else {
+            $('#batch-users-container').hide();
+        }
+    });
+    
+    // Function to load users from a batch
+    function loadBatchUsers(batchName) {
+        var $batchUsersList = $('#batch-users-list');
+        $batchUsersList.html(`
+            <tr>
+                <td colspan="4" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </td>
+            </tr>
+        `);
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.get_batch_users',
+            args: { batch: batchName, schedule: currentScheduleName },
+            callback: function(r) {
+                $batchUsersList.empty();
+                
+                if (r.message && r.message.users) {
+                    var users = r.message.users;
+                    
+                    if (users.length > 0) {
+                        users.forEach(function(user) {
+                            var disabledAttr = user.already_assigned ? 'disabled' : '';
+                            var statusText = user.already_assigned ? 'Already Assigned' : 'Not Assigned';
+                            var statusClass = user.already_assigned ? 'text-success' : 'text-muted';
+                            
+                            $batchUsersList.append(`
+                                <tr data-user="${user.user}">
+                                    <td>
+                                        <input type="checkbox" class="batch-user-checkbox" 
+                                            value="${user.user}" ${disabledAttr}>
+                                    </td>
+                                    <td>${user.user_name || user.user}</td>
+                                    <td>${user.email || 'N/A'}</td>
+                                    <td class="${statusClass}">${statusText}</td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        $batchUsersList.append(`
+                            <tr>
+                                <td colspan="4" class="text-center">No users in this batch.</td>
+                            </tr>
+                        `);
+                    }
+                } else {
+                    $batchUsersList.append(`
+                        <tr>
+                            <td colspan="4" class="text-center text-danger">
+                                Error loading batch users. ${r.message && r.message.error ? r.message.error : ''}
+                            </td>
+                        </tr>
+                    `);
+                }
+            },
+            error: function() {
+                $batchUsersList.empty();
+                $batchUsersList.append(`
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">Network or server error loading batch users.</td>
+                    </tr>
+                `);
+            }
+        });
+    }
+    
+    // Handle select all batch users checkbox
+    $('#select-all-batch-users').on('change', function() {
+        var isChecked = $(this).prop('checked');
+        $('.batch-user-checkbox:not(:disabled)').prop('checked', isChecked);
+    });
+    
+    // Handle batch user assign button
+    $('#assign-selected-batch-users').on('click', function() {
+        var selectedUsers = [];
+        $('.batch-user-checkbox:checked').each(function() {
+            selectedUsers.push($(this).val());
+        });
+        
+        if (selectedUsers.length === 0) {
+            frappe.show_alert({ message: 'Please select users to assign', indicator: 'red' }, 3);
+            return;
+        }
+        
+        // Save button state
+        var $btn = $(this);
+        var originalText = $btn.html();
+        $btn.html('<i class="bi bi-hourglass-split me-1"></i> Assigning...').prop('disabled', true);
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.assign_users_to_schedule',
+            args: {
+                schedule: currentScheduleName,
+                users: selectedUsers
+            },
+            callback: function(r) {
+                $btn.html(originalText).prop('disabled', false);
+                
+                if (r.message && r.message.success) {
+                    frappe.show_alert({ message: `Successfully assigned ${r.message.assigned_count} users to the schedule`, indicator: 'green' }, 3);
+                    
+                    // Refresh the batch users list
+                    var currentBatch = $('#batch-selector').val();
+                    if (currentBatch) {
+                        loadBatchUsers(currentBatch);
+                    }
+                    
+                    // Refresh the assigned users list
+                    loadAssignedUsers(currentScheduleName);
+                } else {
+                    frappe.show_alert({ message: r.message && r.message.error ? r.message.error : 'Error assigning users', indicator: 'red' }, 5);
+                }
+            },
+            error: function() {
+                $btn.html(originalText).prop('disabled', false);
+                frappe.show_alert({ message: 'Network or server error while assigning users', indicator: 'red' }, 5);
+            }
+        });
+    });
+    
+    // Handle user removal
+    $(document).on('click', '.remove-user', function() {
+        var user = $(this).data('user');
+        var $btn = $(this);
+        
+        frappe.confirm(`Are you sure you want to remove ${user} from this schedule?`, function() {
+            $btn.html('<i class="bi bi-hourglass-split"></i>').prop('disabled', true);
+            
+            frappe.call({
+                method: 'exampro.www.manage.exams.remove_user_from_schedule',
+                args: {
+                    schedule: currentScheduleName,
+                    user: user
+                },
+                callback: function(r) {
+                    if (r.message && r.message.success) {
+                        frappe.show_alert({ message: 'User removed from schedule', indicator: 'green' }, 3);
+                        loadAssignedUsers(currentScheduleName);
+                    } else {
+                        $btn.html('<i class="bi bi-trash"></i> Remove').prop('disabled', false);
+                        frappe.show_alert({ message: r.message && r.message.error ? r.message.error : 'Error removing user', indicator: 'red' }, 5);
+                    }
+                },
+                error: function() {
+                    $btn.html('<i class="bi bi-trash"></i> Remove').prop('disabled', false);
+                    frappe.show_alert({ message: 'Network or server error while removing user', indicator: 'red' }, 5);
+                }
+            });
+        });
+    });
+    
+    // Handle tab changes in schedule management
+    $('#manage-schedule-tabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var target = $(e.target).attr('data-bs-target');
+        
+        if (target === '#assigned-users-content' && currentScheduleName) {
+            loadAssignedUsers(currentScheduleName);
+        }
+    });
+    
+    // Modal event handlers
     $('#schedules-modal').on('hidden.bs.modal', function () {
         var modal = $(this);
         modal.find('#schedules-list').html('');
@@ -587,10 +1176,23 @@ frappe.ready(function() {
         $('#total-questions-selected').text('0');
         $('#total-marks-calculated').text('0');
         // Reset tabs to default
-        $('#modal-tabs a:first').tab('show');
+        var firstTab = document.querySelector('#modal-tabs button:first-child');
+        if (firstTab) {
+            var tab = new bootstrap.Tab(firstTab);
+            tab.show();
+        }
         // Unbind tab show events to prevent multiple triggers
-        $('a[data-toggle="tab"][href="#schedules-content"]').off('shown.bs.tab');
-        $('a[data-toggle="tab"][href="#questions-content"]').off('shown.bs.tab');
+        $('#schedules-tab, #questions-tab').off('shown.bs.tab');
+    });
+    
+    // Handle manage schedule modal reset
+    $('#manage-schedule-modal').on('hidden.bs.modal', function() {
+        $('#schedule-selector').html('<option value="">-- Select a Schedule --</option>');
+        $('#schedule-management-content').hide();
+        $('#batch-users-container').hide();
+        $('#batch-selector').val('');
+        $('#assigned-users-list tr:not(#loading-assigned-users)').remove();
+        currentScheduleName = '';
     });
 
     $("#item-search, #status-filter").on("keyup change", function() {
@@ -637,6 +1239,55 @@ frappe.ready(function() {
     });
 
     applyFilters();
+    
+    // Initialize Bootstrap modals when DOM is loaded
+    $(document).ready(function() {
+        try {
+            // Initialize Bootstrap modals properly
+            var manageScheduleModal = new bootstrap.Modal(document.getElementById('manage-schedule-modal'));
+            var schedulesModal = new bootstrap.Modal(document.getElementById('schedules-modal'));
+            
+            // Add click handler for manage schedules button if data attributes aren't working
+            var manageButton = document.querySelector('.btn[data-bs-target="#manage-schedule-modal"]');
+            if (manageButton) {
+                manageButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    manageScheduleModal.show();
+                });
+            }
+        } catch (err) {
+            console.error("Error initializing Bootstrap modals:", err);
+        }
+    });
+    
+    // Fix for exam cards if data attributes aren't working (moved inside the main script)
+    document.querySelectorAll('.exam-card-wrapper').forEach(function(card) {
+        card.addEventListener('click', function(e) {
+            e.preventDefault();
+            var examName = this.getAttribute('data-exam-name');
+            var examTitle = this.getAttribute('data-exam-title');
+            
+            // Set global variable
+            window.currentExamName = examName;
+            
+            // Update modal content
+            document.querySelector('#schedules-modal .modal-title').textContent = 'Manage: ' + examTitle;
+            document.getElementById('new-schedule-exam-name').value = examName;
+            
+            try {
+                // Show modal with Bootstrap 5 API
+                var schedulesModal = new bootstrap.Modal(document.getElementById('schedules-modal'));
+                schedulesModal.show();
+            } catch (err) {
+                // Fallback to jQuery modal
+                console.error("Error showing modal with Bootstrap API, trying jQuery fallback:", err);
+                $('#schedules-modal').modal('show');
+            }
+            
+            // Load initial data
+            fetchAndPopulateSchedules(examName, $('#schedules-modal'));
+        });
+    });
 });
 </script>
 {% endblock %}
