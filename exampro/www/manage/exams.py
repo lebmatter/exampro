@@ -138,6 +138,37 @@ def delete_schedule(schedule):
         frappe.log_error(frappe.get_traceback(), f"Error deleting schedule {schedule}")
         return {"success": False, "error": str(e)}
 
+@frappe.whitelist()
+def get_schedules_for_exam(exam):
+    """
+    Get all schedules for a given exam with registered user count.
+    
+    Args:
+        exam (str): Name of the exam to get schedules for.
+    """
+    if not frappe.has_permission("Exam Schedule", "read"):
+        frappe.throw(_("Not permitted to read Exam Schedules"), frappe.PermissionError)
+
+    schedules = frappe.get_all(
+        "Exam Schedule",
+        filters={"exam": exam},
+        fields=["name", "start_date_time"]
+    )
+
+    for sched in schedules:
+        schedule_doc = frappe.get_doc("Exam Schedule", sched.name)
+        sched["status"] = schedule_doc.get_status()
+        
+        # Get user count from exam submissions for this schedule
+        submission_count = frappe.db.count(
+            "Exam Submission", 
+            filters={"exam_schedule": sched.name}
+        )
+        
+        sched["registered_users"] = submission_count
+
+    return schedules
+
 def get_exams_with_schedules():
     """Get all exams with their associated schedules"""
     
