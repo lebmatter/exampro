@@ -7,7 +7,6 @@
 {% block head_include %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <link rel="stylesheet" href="/assets/exampro/css/manage.css">
-<link rel="stylesheet" href="/assets/exampro/css/exam-builder.css">
 {% endblock %}
 
 {% block page_content %}
@@ -111,8 +110,96 @@
         </button>
       </div>
       <div class="modal-body">
-        <div id="exam-actions" class="mb-3"></div>
-        <div id="schedules-list"></div>
+        <ul class="nav nav-tabs" id="modal-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="schedules-tab" data-toggle="tab" href="#schedules-content" role="tab">Schedules</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="new-schedule-tab" data-toggle="tab" href="#new-schedule-content" role="tab">New Schedule</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="settings-tab" data-toggle="tab" href="#settings-content" role="tab">Exam Settings</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="questions-tab" data-toggle="tab" href="#questions-content" role="tab">Questions</a>
+            </li>
+        </ul>
+        <div class="tab-content mt-3">
+            <div class="tab-pane fade show active" id="schedules-content" role="tabpanel">
+                <div id="schedules-list"></div>
+            </div>
+            <div class="tab-pane fade" id="new-schedule-content" role="tabpanel">
+                <form id="new-schedule-form">
+                    <input type="hidden" id="new-schedule-exam-name">
+                    <div class="form-group">
+                        <label for="new-schedule-name">Schedule Name</label>
+                        <input type="text" id="new-schedule-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-schedule-start-datetime">Start Date & Time</label>
+                        <input type="datetime-local" id="new-schedule-start-datetime" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-schedule-type">Schedule Type</label>
+                        <select id="new-schedule-type" class="form-control">
+                            <option value="Fixed">Fixed</option>
+                            <option value="Flexible">Flexible</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="expire-days-container" style="display: none;">
+                        <label for="new-schedule-expire-days">Schedule Expire in Days</label>
+                        <input type="number" id="new-schedule-expire-days" class="form-control" min="1">
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Save Schedule</button>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="settings-content" role="tabpanel">
+                <div id="exam-actions"></div>
+            </div>
+            <div class="tab-pane fade" id="questions-content" role="tabpanel">
+                <div class="mb-3">
+                    <h5>Questions by Category</h5>
+                    <p class="text-muted">Select how many questions to include from each category. Categories may appear multiple times if they have questions with different mark values.</p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="questions-category-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Available Questions</th>
+                                <th>Marks per Question</th>
+                                <th>Select # of Questions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="questions-categories-body">
+                            <!-- Categories will be populated here -->
+                            <tr id="loading-categories">
+                                <td colspan="4" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between mt-3">
+                    <div>
+                        <div class="mb-2">
+                            <span class="text-muted">Total Questions Selected: <span id="total-questions-selected">0</span></span>
+                        </div>
+                        <div>
+                            <span class="text-muted">Total Marks: <span id="total-marks-calculated">0</span></span>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary" id="save-questions-config">
+                            <i class="bi bi-save me-1"></i> Save Questions Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -140,6 +227,9 @@
 
 <script>
 frappe.ready(function() {
+    // Global variable to store the current exam name
+    var currentExamName = '';
+    
     function applyFilters() {
         var searchTerm = $("#item-search").val().toLowerCase();
         var statusFilter = $("#status-filter").val();
@@ -176,24 +266,46 @@ frappe.ready(function() {
         var card = $(event.relatedTarget);
         var examName = card.data('exam-name');
         var examTitle = card.data('exam-title');
+        
+        // Store the exam name in the global variable for use across tabs
+        currentExamName = examName;
 
         var modal = $(this);
         modal.find('.modal-title').text('Manage: ' + examTitle);
 
-        // Populate exam actions
-        modal.find('#exam-actions').html(`
-            <div class="btn-group">
-                <a href="/app/exam/${examName}" class="btn btn-sm btn-outline-primary">Edit Exam</a>
-                <button type="button" class="btn btn-sm btn-outline-secondary duplicate-exam" data-exam="${examName}">Duplicate Exam</button>
-                <button type="button" class="btn btn-sm btn-outline-danger delete-exam" data-exam="${examName}" data-title="${examTitle}">Delete Exam</button>
-            </div>
-        `);
+        // Setup Settings Tab
+        // modal.find('#exam-actions').html(`
+        //     <h5>Exam Actions</h5>
+        //     <div class="btn-group">
+        //         <a href="/app/exam/${examName}" class="btn btn-sm btn-outline-primary">Edit Exam</a>
+        //         <button type="button" class="btn btn-sm btn-outline-secondary duplicate-exam" data-exam="${examName}">Duplicate Exam</button>
+        //         <button type="button" class="btn btn-sm btn-outline-danger delete-exam" data-exam="${examName}" data-title="${examTitle}">Delete Exam</button>
+        //     </div>
+        // `);
 
-        // Show loading spinner
+        // Setup New Schedule Tab
+        $('#new-schedule-exam-name').val(examName);
+
+        // Fetch and populate schedules when the tab is shown
+        $('a[data-toggle="tab"][href="#schedules-content"]').on('shown.bs.tab', function (e) {
+            fetchAndPopulateSchedules(examName, modal);
+        });
+
+        // Trigger initial fetch if the tab is already active
+        if ($('#schedules-tab').hasClass('active')) {
+            fetchAndPopulateSchedules(examName, modal);
+        }
+        
+        // Pre-fetch exam details for questions tab
+        if ($('#questions-tab').hasClass('active')) {
+            fetchQuestionCategories(examName);
+        }
+    });
+
+    function fetchAndPopulateSchedules(examName, modal) {
         var $schedulesList = modal.find('#schedules-list');
         $schedulesList.html(`<div class="loading-spinner"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></div>`);
 
-        // Fetch and populate schedules
         frappe.call({
             method: 'exampro.www.manage.exams.get_schedules_for_exam',
             args: { exam: examName },
@@ -223,6 +335,236 @@ frappe.ready(function() {
                 console.error(r);
             }
         });
+    }
+
+    $('#new-schedule-type').on('change', function() {
+        if ($(this).val() === 'Flexible') {
+            $('#expire-days-container').show();
+        } else {
+            $('#expire-days-container').hide();
+        }
+    });
+
+    $('#new-schedule-form').on('submit', function(e) {
+        e.preventDefault();
+        var examName = $('#new-schedule-exam-name').val();
+        var scheduleName = $('#new-schedule-name').val();
+        var startDateTime = $('#new-schedule-start-datetime').val();
+        var scheduleType = $('#new-schedule-type').val();
+        var expireDays = $('#new-schedule-expire-days').val();
+
+        frappe.call({
+            method: 'exampro.www.manage.exams.create_schedule',
+            args: {
+                exam: examName,
+                name: scheduleName,
+                start_date_time: startDateTime,
+                schedule_type: scheduleType,
+                schedule_expire_in_days: expireDays
+            },
+            callback: function(r) {
+                if (r.message && r.message.success) {
+                    frappe.show_alert({ message: 'Schedule created successfully', indicator: 'green' }, 5);
+                    $('#schedules-modal').modal('hide');
+                    location.reload();
+                } else {
+                    frappe.show_alert({ message: r.message.error || 'Error creating schedule', indicator: 'red' }, 5);
+                }
+            }
+        });
+    });
+
+    // Add a tab event handler for the questions tab
+    $('a[data-toggle="tab"][href="#questions-content"]').on('shown.bs.tab', function (e) {
+        // Use the global currentExamName variable instead of getting it from the hidden input
+        if (currentExamName) {
+            fetchQuestionCategories(currentExamName);
+        } else {
+            console.error("No exam selected");
+            $('#questions-categories-body').find('tr:not(#loading-categories)').remove();
+            $('#loading-categories').hide();
+            $('#questions-categories-body').append(`
+                <tr>
+                    <td colspan="4" class="text-center text-danger">Error: No exam selected</td>
+                </tr>
+            `);
+        }
+    });
+    
+    // Function to fetch question categories for the selected exam
+    function fetchQuestionCategories(examName) {
+        var $categoriesBody = $('#questions-categories-body');
+        
+        // Clear previous content except the loading row
+        $categoriesBody.find('tr:not(#loading-categories)').remove();
+        $('#loading-categories').show();
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.get_question_categories',
+            args: { exam: examName },
+            callback: function(r) {
+                $('#loading-categories').hide();
+                
+                if (r.message && r.message.categories) {
+                    // Check if the API call was successful
+                    if (r.message.success === false) {
+                        var errorMessage = r.message.error || 'Error loading question categories';
+                        $categoriesBody.append(`
+                            <tr>
+                                <td colspan="4" class="text-center text-danger">${errorMessage}</td>
+                            </tr>
+                        `);
+                        console.error("API Error:", r.message.error);
+                        return;
+                    }
+                    
+                    var categories = r.message.categories;
+                    var examConfig = r.message.exam_config || {};
+                    
+                    if (categories && categories.length > 0) {
+                        categories.forEach(function(category) {
+                            // Validate that the category has a proper ID
+                            if (!category.id) {
+                                return; // Skip this category
+                            }
+                            
+                            // Use the composite key to look up the current count
+                            var currentCount = examConfig[category.id] || 0;
+                            var questionCount = parseInt(category.question_count) || 0;
+                            var rowClass = questionCount === 0 ? 'table-warning' : '';
+                            
+                            var row = $(`
+                                <tr data-category-id="${category.id}" class="${rowClass}">
+                                    <td>${category.category_name}</td>
+                                    <td>
+                                        ${questionCount > 0 ? questionCount : 
+                                        '<span class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i> No questions</span>'}
+                                    </td>
+                                    <td>${category.marks_per_question || 1}</td>
+                                    <td>
+                                        <input type="number" class="form-control category-question-count" 
+                                            min="0" max="${questionCount}" value="${currentCount}" 
+                                            data-category="${category.id}" data-max="${questionCount}"
+                                            ${questionCount === 0 ? 'disabled' : ''}>
+                                        ${questionCount === 0 ? 
+                                        '<small class="text-muted">Add questions to this category first</small>' : ''}
+                                    </td>
+                                </tr>
+                            `);
+                            $categoriesBody.append(row);
+                        });
+                        
+                        updateTotalQuestions();
+                        
+                        // Add event listeners to update total when input changes
+                        $('.category-question-count').on('input', function() {
+                            var max = parseInt($(this).data('max'));
+                            var val = parseInt($(this).val()) || 0;
+                            
+                            // Enforce min/max constraints
+                            if (val < 0) $(this).val(0);
+                            if (val > max) $(this).val(max);
+                            
+                            updateTotalQuestions();
+                        });
+                    } else {
+                        $categoriesBody.append(`
+                            <tr>
+                                <td colspan="4" class="text-center">No question categories found.</td>
+                            </tr>
+                        `);
+                    }
+                } else {
+                    // Handle case where categories doesn't exist in the response
+                    var errorMessage = (r.message && r.message.error) ? r.message.error : 'Error loading question categories.';
+                    $categoriesBody.append(`
+                        <tr>
+                            <td colspan="4" class="text-center text-danger">${errorMessage}</td>
+                        </tr>
+                    `);
+                    console.error("API Response missing categories:", r.message);
+                }
+            },
+            error: function(r) {
+                $('#loading-categories').hide();
+                var errorMessage = 'Network or server error loading question categories.';
+                if (r && r.responseJSON && r.responseJSON.exception) {
+                    errorMessage = r.responseJSON.exception;
+                }
+                
+                $categoriesBody.append(`
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">${errorMessage}</td>
+                    </tr>
+                `);
+                console.error("AJAX Error:", r);
+            }
+        });
+    }
+    
+    // Function to update the total questions count and marks
+    function updateTotalQuestions() {
+        var totalQuestions = 0;
+        var totalMarks = 0;
+        
+        $('.category-question-count').each(function() {
+            var count = parseInt($(this).val()) || 0;
+            var marksPerQuestion = parseInt($(this).closest('tr').find('td:eq(2)').text()) || 1;
+            
+            totalQuestions += count;
+            totalMarks += (count * marksPerQuestion);
+        });
+        
+        $('#total-questions-selected').text(totalQuestions);
+        $('#total-marks-calculated').text(totalMarks);
+    }
+    
+    // Handle saving the questions configuration
+    $('#save-questions-config').on('click', function() {
+        // Use the global variable for consistency
+        var examName = currentExamName;
+        if (!examName) {
+            frappe.show_alert({ message: 'Error: No exam selected', indicator: 'red' }, 5);
+            return;
+        }
+        var categoryConfig = {};
+        
+        $('.category-question-count').each(function() {
+            var category = $(this).data('category');
+            var count = parseInt($(this).val()) || 0;
+            categoryConfig[category] = count;
+        });
+        
+        // Save button state
+        var $btn = $(this);
+        var originalText = $btn.html();
+        $btn.html('<i class="bi bi-hourglass-split me-1"></i> Saving...').prop('disabled', true);
+        
+        frappe.call({
+            method: 'exampro.www.manage.exams.update_exam_questions',
+            args: {
+                exam: examName,
+                category_config: categoryConfig
+            },
+            callback: function(r) {
+                $btn.html(originalText).prop('disabled', false);
+                
+                if (r.message && r.message.success) {
+                    frappe.show_alert({ message: 'Question configuration saved successfully', indicator: 'green' }, 3);
+                    
+                    // Update question count and marks in the card
+                    var totalQuestions = r.message.total_questions || $('#total-questions-selected').text();
+                    $(`.exam-card-wrapper[data-exam-name="${examName}"] small:contains("questions")`).html(`<i class="bi bi-card-list"></i> ${totalQuestions} questions`);
+                } else {
+                    frappe.show_alert({ message: r.message.error || 'Error saving question configuration', indicator: 'red' }, 5);
+                }
+            },
+            error: function(r) {
+                $btn.html(originalText).prop('disabled', false);
+                frappe.show_alert({ message: 'Error saving question configuration', indicator: 'red' }, 5);
+                console.error(r);
+            }
+        });
     });
 
     function get_status_badge(status) {
@@ -238,6 +580,17 @@ frappe.ready(function() {
         var modal = $(this);
         modal.find('#schedules-list').html('');
         modal.find('#exam-actions').html('');
+        $('#new-schedule-form')[0].reset();
+        $('#expire-days-container').hide();
+        // Clear questions category table
+        $('#questions-categories-body tr:not(#loading-categories)').remove();
+        $('#total-questions-selected').text('0');
+        $('#total-marks-calculated').text('0');
+        // Reset tabs to default
+        $('#modal-tabs a:first').tab('show');
+        // Unbind tab show events to prevent multiple triggers
+        $('a[data-toggle="tab"][href="#schedules-content"]').off('shown.bs.tab');
+        $('a[data-toggle="tab"][href="#questions-content"]').off('shown.bs.tab');
     });
 
     $("#item-search, #status-filter").on("keyup change", function() {

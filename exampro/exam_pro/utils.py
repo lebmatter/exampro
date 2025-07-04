@@ -32,8 +32,7 @@ def get_website_context(context):
             "child_items": [  # Use child_items instead of dropdown_items
                 {"label": "Users", "url": "/manage/users"},
                 {"label": "Exams", "url": "/manage/exams"},
-                {"label": "Questions", "url": "/manage/questions"},
-                {"label": "🛠️ Exam Builder", "url": "/manage/exam-builder"}
+                {"label": "Questions", "url": "/manage/questions"}
             ]
         })
     
