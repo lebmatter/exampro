@@ -177,3 +177,111 @@ def get_random_questions(category, mark_per_qs, no_of_qs, question_type):
 				mark_per_qs, question_type, category, len(cat_qs)
 			))
 
+@frappe.whitelist()
+def get_question_categories(exam):
+    """
+    Get all question categories with their counts and marks, along with the exam's current configuration.
+    
+    Args:
+        exam (str): Name of the exam to get categories for
+    """
+    if not frappe.has_permission("Exam", "read"):
+        return {"success": False, "error": _("Not permitted to view exam"), "categories": []}
+    
+    try:
+        # Get the exam
+        exam_doc = frappe.get_doc("Exam", exam)
+        
+        # Get categories with associated questions and marks
+        # Group questions by category AND mark to show different rows for different mark values
+        category_marks_questions = frappe.db.sql("""
+            SELECT 
+                eqc.name as category_id,
+                eqc.title as category_name,
+                IFNULL(eq.mark, 1) as marks_per_question,
+                COUNT(eq.name) as question_count
+            FROM 
+                `tabExam Question Category` eqc
+            LEFT JOIN 
+                `tabExam Question` eq ON eq.category = eqc.name
+            WHERE
+                eq.name IS NOT NULL
+            GROUP BY 
+                eqc.name, eq.mark
+            ORDER BY 
+                eqc.title, eq.mark
+        """, as_dict=True)
+        
+        # Also get categories that don't have questions yet
+        empty_categories = frappe.db.sql("""
+            SELECT 
+                eqc.name as category_id,
+                eqc.title as category_name,
+                1 as marks_per_question,
+                0 as question_count
+            FROM 
+                `tabExam Question Category` eqc
+            LEFT JOIN 
+                `tabExam Question` eq ON eq.category = eqc.name
+            WHERE
+                eq.name IS NULL
+            GROUP BY 
+                eqc.name
+            ORDER BY 
+                eqc.title
+        """, as_dict=True)
+        
+        # Combine both sets of categories
+        categories = category_marks_questions + empty_categories
+        
+        # Create a dictionary of the exam's current configuration
+        # We need to track both category and marks per question
+        exam_config = {}
+        if exam_doc.added_questions:
+            for question in exam_doc.added_questions:
+                try:
+                    # Get both category and mark for each question
+                    question_data = frappe.db.get_value(
+                        "Exam Question", 
+                        question.exam_question, 
+                        ["category", "mark"], 
+                        as_dict=True
+                    )
+                    
+                    if not question_data or not question_data.category:
+                        continue
+                        
+                    marks = question_data.mark or 1  # Default to 1 if mark is None
+                    
+                    # Create a composite key: category_id:marks_per_question
+                    composite_key = f"{question_data.category}:{marks}"
+                    exam_config[composite_key] = exam_config.get(composite_key, 0) + 1
+                        
+                except Exception as e:
+                    frappe.log_error(f"Error processing question {question.exam_question}: {str(e)}")
+                    continue
+        
+        # Format the categories for the frontend with composite keys
+        formatted_categories = []
+        for cat in categories:
+            # Create a unique identifier for this category+marks combination
+            composite_key = f"{cat.category_id}:{cat.marks_per_question}"
+            formatted_cat = {
+                "id": composite_key,  # Unique ID for this category+marks combination
+                "category_id": cat.category_id,
+                "category_name": cat.category_name,
+                "marks_per_question": cat.marks_per_question,
+                "question_count": cat.question_count
+            }
+            formatted_categories.append(formatted_cat)
+            
+        return {
+            "success": True, 
+            "categories": formatted_categories,
+            "exam_config": exam_config
+        }
+    
+    except Exception as e:
+        error_msg = f"Error getting question categories for exam {exam}: {str(e)}"
+        frappe.log_error(frappe.get_traceback(), error_msg)
+        return {"success": False, "error": str(e), "categories": []}
