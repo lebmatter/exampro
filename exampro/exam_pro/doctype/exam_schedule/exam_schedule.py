@@ -7,7 +7,6 @@ import frappe
 
 from frappe.utils import now
 from frappe.model.document import Document
-from datetime import datetime
 
 
 class ExamSchedule(Document):
@@ -68,6 +67,69 @@ class ExamSchedule(Document):
 					title="Sending modification emails...",
 					wide=True
 				)
+	
+		# If batch_assignments are present and auto_assign_batch_users is checked, add Exam Submissions for all users in the batches
+		if self.batch_assignments and self.auto_assign_batch_users:
+			self.create_exam_submissions_for_batch_users()
+
+	def create_exam_submissions_for_batch_users(self):
+		"""
+		Fetch all users from the selected batches and create Exam Submission entries for each user
+		while avoiding duplicates
+		"""
+		# Check for existing submissions to avoid duplicates
+		existing_submissions = frappe.get_all("Exam Submission", 
+			filters={"exam_schedule": self.name},
+			fields=["candidate"]
+		)
+		
+		existing_candidates = set([s.candidate for s in existing_submissions])
+		
+		submissions_created = 0
+		batch_counts = {}
+		
+		# Process each batch in the batch_assignments table
+		for batch_assignment in self.batch_assignments:
+			batch_id = batch_assignment.batch_name
+			
+			# Get all users from the current batch
+			batch_users = frappe.get_all("Exam Batch User", 
+				filters={"exam_batch": batch_id},
+				fields=["candidate"]
+			)
+			
+			if not batch_users:
+				frappe.msgprint(f"No users found in batch {batch_id}. No submissions created for this batch.")
+				continue
+			
+			batch_counts[batch_id] = 0
+			
+			for user in batch_users:
+				candidate = user.candidate
+				
+				# Skip if submission already exists for this candidate
+				if candidate in existing_candidates:
+					continue
+					
+				# Create new submission
+				submission = frappe.new_doc("Exam Submission")
+				submission.exam_schedule = self.name
+				submission.exam = self.exam
+				submission.candidate = candidate
+				submission.exam_batch = batch_id
+				submission.status = "Registered"
+				submission.insert(ignore_permissions=True)
+				submissions_created += 1
+				batch_counts[batch_id] += 1
+				
+				# Add to existing candidates to avoid duplicates if the same candidate is in multiple batches
+				existing_candidates.add(candidate)
+		
+		# Construct message about created submissions
+		if submissions_created > 0:
+			batch_messages = [f"{count} for batch {batch_id}" for batch_id, count in batch_counts.items() if count > 0]
+			message = f"Created {submissions_created} new exam submissions ({', '.join(batch_messages)})"
+			frappe.msgprint(message)
 
 	def after_save(self):
 		self.send_proctor_emails()

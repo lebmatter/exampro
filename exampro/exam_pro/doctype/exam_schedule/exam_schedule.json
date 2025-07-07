@@ -16,7 +16,10 @@
   "certificate_template",
   "exam_settings_section",
   "column_break_5bke",
-  "examiners"
+  "examiners",
+  "assign_by_batch_section",
+  "batch_assignments",
+  "auto_assign_batch_users"
  ],
  "fields": [
   {
@@ -94,6 +97,23 @@
    "fieldtype": "Int",
    "label": "Schedule Expire in Days",
    "non_negative": 1
+  },
+  {
+   "fieldname": "assign_by_batch_section",
+   "fieldtype": "Section Break",
+   "label": "Assign by Batch"
+  },
+  {
+   "fieldname": "batch_assignments",
+   "fieldtype": "Table",
+   "label": "Batch Assignments",
+   "options": "Schedule Batch Assignment"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_assign_batch_users",
+   "fieldtype": "Check",
+   "label": "Auto assign all batch users"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -104,7 +124,7 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-07-02 11:19:09.435676",
+ "modified": "2025-07-07 14:18:57.907422",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",
