@@ -41,6 +41,7 @@
   "evaluation_required",
   "evaluation_ends_in_days",
   "section_break_tpbr",
+  "view_questions",
   "select_questions",
   "added_questions"
  ],
@@ -142,12 +143,14 @@
   {
    "fieldname": "question_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Question Type",
    "options": "Choices\nUser Input\nMixed"
   },
   {
    "fieldname": "total_questions",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Total no. of question",
    "non_negative": 1,
    "read_only": 1
@@ -170,6 +173,7 @@
    "default": "50.00",
    "fieldname": "pass_percentage",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Pass Percentage",
    "non_negative": 1,
    "reqd": 1
@@ -215,6 +219,7 @@
    "description": "Duration in minutes",
    "fieldname": "duration",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Duration",
    "non_negative": 1,
    "reqd": 1
@@ -281,6 +286,11 @@
   {
    "fieldname": "column_break_vleg",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "view_questions",
+   "fieldtype": "Button",
+   "label": "View Questions"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -291,7 +301,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-02 11:18:58.649656",
+ "modified": "2025-07-07 12:43:46.148848",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",
