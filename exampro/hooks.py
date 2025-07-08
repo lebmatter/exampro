@@ -72,7 +72,7 @@ website_user_home_page = "/my-exams"
 # ------------
 
 # before_install = "exampro.install.before_install"
-# after_install = "exampro.install.after_install"
+after_install = "exampro.exam_pro.utils.create_sample_exams"
 
 
 # Uninstallation

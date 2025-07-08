@@ -273,7 +273,7 @@
    "options": "Exam Certificate Template"
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "enable_chat",
    "fieldtype": "Check",
    "label": "Enable Chat"
@@ -301,8 +301,8 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-07 12:43:46.148848",
- "modified_by": "labeeb@zerodha.com",
+ "modified": "2025-07-08 15:21:11.699360",
+ "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",
  "owner": "Administrator",
