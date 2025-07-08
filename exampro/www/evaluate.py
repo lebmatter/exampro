@@ -83,10 +83,11 @@ def get_submission_details(exam_id, submission_id):
 		order_by="seq_no"
 	)
 	
-	# Get max marks for each question
+	# Get max marks and question type for each question
 	for answer in answers:
-		max_marks = frappe.db.get_value("Exam Question", answer.exam_question, "mark")
-		answer.max_marks = max_marks
+		question_data = frappe.db.get_value("Exam Question", answer.exam_question, ["mark", "type"], as_dict=True)
+		answer.max_marks = question_data.mark
+		answer.question_type = question_data.type
 	
 	return {
 		"success": True,

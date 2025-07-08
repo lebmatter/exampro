@@ -85,12 +85,20 @@ frappe.ready(function() {
             
             this.answers.forEach((answer, index) => {
             const status = answer.evaluation_status;
-            const btnClass = status === 'Auto' ? 'light' : 
+            let btnClass = status === 'Auto' ? 'light' : 
                        status === 'Done' ? 'success' :
                        status === 'Pending' ? 'warning' : '';
                
+            // If question type is "Choices", mark it as disabled and use a different style
+            const isChoicesType = answer.question_type === 'Choices';
+            if (isChoicesType) {
+                btnClass = 'secondary';
+            }
+            
+            const disabledAttr = isChoicesType ? 'disabled' : '';
+            
             navGrid.append(`
-                <button class="question-nav-btn btn-sm btn-${btnClass}" data-index="${answer.seq_no}">
+                <button class="question-nav-btn btn-sm btn-${btnClass}" data-index="${answer.seq_no}" ${disabledAttr}>
                 ${answer.seq_no}
                 </button>
             `);
@@ -127,25 +135,39 @@ frappe.ready(function() {
             $('.question-nav-btn').removeClass('active');
             $(`.question-nav-btn[data-index="${questionSeqNo}"]`).addClass('active');
 
-            // Check if evaluation is allowed (status is Pending)
+            // Check if question is of type Choices (read-only) or if evaluation is not allowed (status is not Pending)
+            const isChoicesType = answer.question_type === 'Choices';
             const isPending = answer.evaluation_status === 'Pending';
             
-            // Update question display
-            if (!isPending) {
+            // Display read-only view for Choices type or auto-evaluated questions
+            if (isChoicesType || !isPending) {
                 // Show simplified view for auto-evaluated questions
                 $('#evaluation-area').html(`
                     <div class="card">
                         <div class="card-body">
                             <h5>Question ${questionSeqNo}</h5>
-                            <div class="alert alert-info mt-3">
+                            <div class="question-text mb-4">${answer.question}</div>
+                            
+                            <div class="answer-section mb-4">
+                                <h6>Candidate's Answer:</h6>
+                                <div class="p-3 bg-light rounded">${answer.answer || 'No answer provided'}</div>
+                            </div>
+                            
+                            <div class="alert ${isChoicesType ? 'alert-secondary' : 'alert-info'} mt-3">
                                 <i class="bi bi-info-circle me-2"></i>
-                                This answer has been automatically evaluated.
+                                ${isChoicesType ? 
+                                  'This is a Choices type question that has been automatically evaluated.' : 
+                                  'This answer has been automatically evaluated.'}
+                            </div>
+                            
+                            <div class="evaluation-result mt-3">
+                                <strong>Score:</strong> ${answer.mark || 0} / ${answer.max_marks}
                             </div>
                         </div>
                     </div>
                 `);
             } else {
-                // Show full evaluation interface for pending questions
+                // Show full evaluation interface for User Input pending questions
                 const readOnlyAttr = '';
                 const buttonDisabledClass = '';
                 const buttonDisabledAttr = '';
