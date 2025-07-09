@@ -57,14 +57,14 @@
                                 <th>{{ _("Duration") }}</th>
                                 <th>{{ _("Schedule Status") }}</th>
                                 <th>{{ _("Exam Status") }}</th>
-                                <th>{{ _("Score") }}</th>
+                                <th>{{ _("Result") }}</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% if not exams %}
                             <tr>
-                                <td colspan="5" class="text-center py-4">
+                                <td colspan="7" class="text-center py-4">
                                     {{ _("No exams found") }}
                                 </td>
                             </tr>
@@ -100,8 +100,16 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if exam.score is not none %}
-                                        {{ exam.score }}
+                                    {% if exam.result_status %}
+                                        {% if exam.result_status == "Passed" %}
+                                            <span class="badge bg-success text-white">{{ exam.result_status }}</span>
+                                        {% elif exam.result_status == "Failed" %}
+                                            <span class="badge bg-danger text-white">{{ exam.result_status }}</span>
+                                        {% elif exam.result_status == "Pending" %}
+                                            <span class="badge bg-warning text-dark">{{ exam.result_status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary text-white">{{ exam.result_status }}</span>
+                                        {% endif %}
                                     {% else %}
                                         -
                                     {% endif %}

@@ -38,7 +38,8 @@ def get_user_exams(member=None, page=1, page_size=10):
 			"status",
 			"exam_started_time",
 			"exam_submitted_time",
-			"additional_time_given"
+			"additional_time_given",
+			"result_status"
 	])
 	for submission in submissions:
 		schedule = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
@@ -69,8 +70,8 @@ def get_user_exams(member=None, page=1, page_size=10):
 			"enable_video_proctoring": exam.enable_video_proctoring,
 			"enable_chat": exam.enable_chat,
 			"submission": submission["name"],  # Added for view result link
-			"score": frappe.db.get_value("Exam Submission", submission["name"], "total_marks") if submission["status"] == "Submitted" else None
-		}
+			"result_status": submission["result_status"]
+			}
 
 		# make datetime in isoformat
 		for key,val in exam_details.items():
