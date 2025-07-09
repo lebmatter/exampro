@@ -101,6 +101,7 @@
    "description": "No. of questions pending to be evaluated",
    "fieldname": "evaluation_pending",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Evaluation pending",
    "read_only": 1
   },
@@ -207,7 +208,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-07-02 11:09:41.144298",
+ "modified": "2025-07-09 12:11:58.090917",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Submission",

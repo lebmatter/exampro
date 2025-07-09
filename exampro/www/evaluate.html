@@ -71,9 +71,9 @@ Exam Evaluation
 		<div class="col-md-4">
 			<!-- Main content -->
 			<div class="row" id="evaluation-area">
-					<!-- <div class="col-12 text-center mt-5">
+					<div class="col-12 text-center mt-5">
 						<h4 class="text-muted">Select an exam from the sidebar to start evaluation</h4>
-					</div> -->
+					</div>
 			</div>
 		</div>
 	</div>
@@ -85,6 +85,28 @@ Exam Evaluation
 	grid-template-columns: repeat(5, 1fr);
 	gap: 5px;
 	padding: 10px;
+}
+
+/* Added styles for question buttons */
+.question-nav-btn.btn-success {
+	border-color: #28a745;
+}
+
+.question-nav-btn.active {
+	position: relative;
+	z-index: 1;
+	box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+/* Alert styles for unsaved changes */
+.unsaved-alert {
+	background-color: #fff3cd;
+	color: #856404;
+	border-color: #ffeeba;
+	padding: 0.75rem 1.25rem;
+	margin-bottom: 1rem;
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
 }
 </style>
 {% endblock %}

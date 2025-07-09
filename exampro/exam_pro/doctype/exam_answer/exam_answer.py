@@ -16,7 +16,7 @@ class ExamAnswer(Document):
 		"""
 		# evaluate
 		question_type = frappe.get_cached_value(
-			"Exam Question", self.exam_question, "question_type"
+			"Exam Question", self.exam_question, "type"
 		)
 		mark = frappe.get_cached_value(
 			"Exam Question", self.exam_question, "mark"
@@ -24,7 +24,7 @@ class ExamAnswer(Document):
 
 		if question_type == "Choices" and self.answer:
 			answered_options = [ans for ans in self.answer.split(",")]
-			correct_options = frappe.db.get_value(
+			correct_options = frappe.get_cached_value(
 				"Exam Question", self.exam_question,
 				[
 					"is_correct_1",

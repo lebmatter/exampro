@@ -124,11 +124,6 @@ class ExamSubmission(Document):
 		# ):
 		# 	frappe.throw("Duplicate submission exists for {} - {}".format(self.candidate, self.exam_schedule))
 
-		if self.exam_started_time:
-			self.total_marks, self.evaluation_pending, self.result_status = evaluation_values(
-				self.exam, self.submitted_answers
-			)
-
 		if "System Manager" in frappe.get_roles():
 			self.assign_proctor_evaluator()
 
@@ -168,7 +163,6 @@ class ExamSubmission(Document):
 		if not last_login:
 			self.new_user = 1
 			self.reset_password_key = frappe.db.get_value("User", self.candidate, "reset_password_key")
-
 
 def can_process_question(doc, member=None):
 	"""
@@ -559,11 +553,12 @@ def submit_exam(exam_submission=None):
 	if doc.status == "Submitted":
 		frappe.throw("Exam submitted!")
 	elif doc.status == "Started":
-		# check if the exam is ended, if so, submit the exam
-		exam_ended, end_time = doc.exam_ended()
-		if exam_ended:
-			doc.status = "Submitted"
-			doc.save(ignore_permissions=True)
+		doc.status = "Submitted"
+		doc.total_marks, doc.evaluation_pending, doc.result_status = evaluation_values(
+			doc.exam, doc.submitted_answers
+		)
+		doc.save(ignore_permissions=True)
+		frappe.db.commit()
 
 	return {"status": "Submitted"}
 

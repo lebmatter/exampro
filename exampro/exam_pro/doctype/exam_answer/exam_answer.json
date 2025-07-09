@@ -85,6 +85,7 @@
    "default": "0",
    "fieldname": "mark",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Mark",
    "non_negative": 1
   },
@@ -98,8 +99,8 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-19 16:46:09.617801",
- "modified_by": "Administrator",
+ "modified": "2025-07-09 12:11:15.371631",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Answer",
  "owner": "Administrator",
