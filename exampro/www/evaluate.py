@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from exampro.exam_pro.doctype.exam_submission.exam_submission import evaluation_values
 
 def get_evaluator_live_exams(evaluator=None):
 	"""
@@ -130,11 +131,17 @@ def save_marks(question_id, marks, submission_id, feedback=None):
 	result_doc.evaluator = frappe.session.user
 	result_doc.evaluation_status = "Done"
 	result_doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	submission.reload()
 
-
-	# Update evaluation_pending count 
-	pending_count = frappe.db.get_value("Exam Submission", submission_id, "evaluation_pending")
-	frappe.db.set_value("Exam Submission", submission_id, "evaluation_pending", pending_count -1)
+	total_marks, evaluation_pending, result_status = evaluation_values(
+		submission.exam, submission.submitted_answers
+	)
+	submission.total_marks = total_marks
+	submission.evaluation_pending = evaluation_pending
+	submission.result_status = result_status
+	submission.save(ignore_permissions=True)
+	frappe.db.commit()
 
 	return {
 		"success": True,
