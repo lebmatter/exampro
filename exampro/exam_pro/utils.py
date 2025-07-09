@@ -155,3 +155,4 @@ def create_sample_exams():
         }).insert()
 
     frappe.db.commit()
+    frappe.msgprint("Sample exams and questions created successfully.")
