@@ -110,11 +110,16 @@ def get_next_exam(exams):
 	
 	# Group exams by status
 	started_exams = [exam for exam in exams if exam["submission_status"] == "Started"]
+	ongoing_exams = [exam for exam in exams if  "Ongoing." in exam["schedule_status"]]
 	upcoming_exams = [exam for exam in exams if exam["schedule_status"] == "Upcoming"]
 	
 	# Return started exam first if available
 	if started_exams:
 		return started_exams[0]
+	
+	if ongoing_exams:
+		# Sort ongoing exams by start time and return the first one
+		return sorted(ongoing_exams, key=lambda x: x["start_time"])[0]
 	
 	# Otherwise return the next upcoming exam (closest to current time)
 	if upcoming_exams:

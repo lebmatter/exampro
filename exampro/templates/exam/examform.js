@@ -131,12 +131,21 @@ function startRecording() {
 function stopRecording() {
     // Stop recording and clear the recording interval
     clearInterval(recordingInterval);
-    recorder.stopRecording(function () {
-        // Release the stream
+    if (recorder) {
+        recorder.stopRecording(function () {
+            // Release the stream
+            if (stream) {
+                stream.getTracks().forEach(function (track) {
+                    track.stop();
+                });
+            }
+        });
+    } else if (stream) {
+        // If recorder is not defined but stream exists, stop the tracks
         stream.getTracks().forEach(function (track) {
             track.stop();
         });
-    });
+    }
 }
 
 function activateDetector(){

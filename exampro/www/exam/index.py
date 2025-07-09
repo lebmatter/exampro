@@ -55,17 +55,24 @@ def get_live_exam(member=None):
 			"enable_video_proctoring": exam.enable_video_proctoring,
 			"enable_chat": exam.enable_chat,
 			"schedule_status": schedule.get_status(),
+			"schedule_type": schedule.schedule_type,
 		}
 
 		# make datetime in isoformat
 		for key,val in exam_details.items():
 			if type(val) == datetime:
 				exam_details[key] = val.isoformat()
+		
+		if schedule.schedule_type == "Flexible":
+			end_time += timedelta(days=schedule.schedule_expire_in_days)
 
 		# checks if current time is between schedule start and end time
 		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-		if schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"]:
+		if schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and schedule.schedule_type == "Fixed":
+			exam_details["is_live"] = True
+			return exam_details
+		elif schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and schedule.schedule_type == "Flexible":
 			exam_details["is_live"] = True
 			return exam_details
 		if schedule.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":

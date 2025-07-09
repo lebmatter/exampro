@@ -216,14 +216,9 @@ def get_current_qs(exam_submission):
 
 def evaluation_values(exam, submitted_answers):
 	# add marks and evalualtion pending count if applicable
-	total_marks = 0
-	eval_pending = 0
+	total_marks = sum([s.mark for s in submitted_answers if s.is_correct])
+	eval_pending = len([s for s in submitted_answers if s.evaluation_status == "Pending"])
 	result_status = "NA"
-	for ans in submitted_answers:
-		if ans.is_correct:
-			total_marks += ans.mark
-		if ans.evaluation_status == "Pending":
-			eval_pending += 1
 	# check result status
 	exam_total_mark, pass_perc = frappe.get_cached_value(
 		"Exam", exam, ["total_marks", "pass_percentage"]
@@ -231,7 +226,7 @@ def evaluation_values(exam, submitted_answers):
 	pass_mark = (exam_total_mark * pass_perc)/100
 	if total_marks >= pass_mark:
 		result_status = "Passed"
-	elif eval_pending == 0:
+	elif eval_pending == 0 and total_marks < pass_mark:
 		result_status = "Failed"
 	else:
 		result_status = "NA"
@@ -420,14 +415,21 @@ def end_exam(exam_submission=None):
 	"""
 	assert exam_submission
 	doc = frappe.get_doc("Exam Submission", exam_submission)
-	if doc.status == "Submitted":
-		frappe.throw("Exam is sbumitted already.")
-	if doc.status != "Started":
-		frappe.throw("Exam is not in started state.")
 
-	doc.status = "Submitted"
-	doc.exam_submitted_time = datetime.now()
-	doc.save(ignore_permissions=True)
+	# check of the logged in user is same as exam submission candidate
+	if frappe.session.user != doc.candidate:
+		raise PermissionError("You don't have access to this exam.")
+	
+	if doc.status == "Started":
+		doc.status = "Submitted"
+		total_marks, evaluation_pending, result_status = evaluation_values(
+			doc.exam, doc.submitted_answers
+		)
+		doc.total_marks = total_marks
+		doc.evaluation_pending = evaluation_pending
+		doc.result_status = result_status
+		doc.save(ignore_permissions=True)
+		frappe.db.commit()
 
 	# return result details
 	exam = frappe.get_cached_value(
@@ -537,30 +539,6 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 		
 	return {"qs_name": qs_name, "qs_no": result_doc.seq_no}
 
-
-@frappe.whitelist()
-def submit_exam(exam_submission=None):
-	"""
-	Submit response and add marks if applicable
-	"""
-	assert exam_submission
-
-	doc = frappe.get_doc("Exam Submission", exam_submission, ignore_permissions=True)
-	# check of the logged in user is same as exam submission candidate
-	if frappe.session.user != doc.candidate:
-		raise PermissionError("You don't have access to this exam.")
-
-	if doc.status == "Submitted":
-		frappe.throw("Exam submitted!")
-	elif doc.status == "Started":
-		doc.status = "Submitted"
-		doc.total_marks, doc.evaluation_pending, doc.result_status = evaluation_values(
-			doc.exam, doc.submitted_answers
-		)
-		doc.save(ignore_permissions=True)
-		frappe.db.commit()
-
-	return {"status": "Submitted"}
 
 @frappe.whitelist()
 def post_exam_message(exam_submission=None, message=None, type_of_message="General", warning_type="other"):
