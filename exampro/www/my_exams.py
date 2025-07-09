@@ -23,9 +23,10 @@ def submit_pending_exams(member=None):
 			doc.save(ignore_permissions=True)
 			frappe.db.commit()
 
-def get_user_exams(member=None):
+def get_user_exams(member=None, page=1, page_size=10):
 	"""
 	Get upcoming/ongoing exam of a candidate.
+	Supports pagination with page and page_size parameters.
 	"""
 	res = []
 
@@ -100,18 +101,43 @@ def get_user_exams(member=None):
 	# Sort exams by schedule time
 	res.sort(key=lambda x: x["start_time"], reverse=True)
 
-	return res
-
+	# Calculate pagination
+	total_exams = len(res)
+	total_pages = (total_exams + page_size - 1) // page_size  # Ceiling division
+	start_idx = (page - 1) * page_size
+	end_idx = min(start_idx + page_size, total_exams)
+	
+	# Return paginated results and pagination metadata
+	return {
+		"exams": res[start_idx:end_idx],
+		"pagination": {
+			"total": total_exams,
+			"page": page,
+			"page_size": page_size,
+			"total_pages": total_pages,
+			"has_prev": page > 1,
+			"has_next": page < total_pages
+		}
+	}
 
 def get_next_exam(exams):
-	"""Get the next upcoming or current exam for the user."""
+	"""
+	Get the next upcoming or current exam for the user.
+	This now gets all exams (not just the paginated ones) to ensure we always show the correct next exam.
+	"""
+	# For the next exam banner, we need to consider ALL exams, not just the paginated ones
 	if not exams:
+		all_exams = get_user_exams(page=1, page_size=1000)["exams"]  # Get all exams
+	else:
+		all_exams = exams
+		
+	if not all_exams:
 		return None
 	
 	# Group exams by status
-	started_exams = [exam for exam in exams if exam["submission_status"] == "Started"]
-	ongoing_exams = [exam for exam in exams if  "Ongoing." in exam["schedule_status"]]
-	upcoming_exams = [exam for exam in exams if exam["schedule_status"] == "Upcoming"]
+	started_exams = [exam for exam in all_exams if exam["submission_status"] == "Started"]
+	ongoing_exams = [exam for exam in all_exams if "Ongoing." in exam["schedule_status"]]
+	upcoming_exams = [exam for exam in all_exams if exam["schedule_status"] == "Upcoming"]
 	
 	# Return started exam first if available
 	if started_exams:
@@ -156,7 +182,15 @@ def get_context(context):
 
 	submit_pending_exams()
 	context.no_cache = 1
-	context.exams = exams = get_user_exams()
+	
+	# Get page number from query parameters, default to 1
+	page = int(frappe.form_dict.get('page', 1))
+	page_size = 10
+	
+	# Get paginated exams
+	exams_data = get_user_exams(page=page, page_size=page_size)
+	context.exams = exams = exams_data["exams"]
+	context.pagination = exams_data["pagination"]
 	
 	# Get next exam information for banner
 	context.next_exam = next_exam = get_next_exam(exams)
