@@ -78,7 +78,20 @@ def set_exam_context(context, exmsubmn):
 				context.message = "The score will not be displayed for this exam."
 			elif exam_data["show_result"] == "After Exam Submission":
 				context.result_type = "scorecard"
-	
+			elif exam_data["show_result"] == "After Schedule Completion":
+				ended, end_time = exam_submission.exam_ended()
+				if ended:
+					context.result_type = "scorecard"
+				else:
+					context.result_type = "pending"
+					context.message = "Result will be published after {}.".format(
+						end_time.strftime("%d %b %Y, %H:%M:%S")
+					)
+		
+		if context.result_type == "scorecard" and exam_submission.result_status == "NA":
+			context.result_type = "pending"
+			context.message = "Your exam submission is incomplete or not evaluated yet. Please check back later."
+
 	else:
 		context.result_type = "pending"
 		context.message = "This exam submission is currently in progress or incomplete."

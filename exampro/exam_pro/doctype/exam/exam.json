@@ -179,10 +179,11 @@
    "reqd": 1
   },
   {
+   "default": "After Schedule Completion",
    "fieldname": "show_result",
    "fieldtype": "Select",
    "label": "Show Result",
-   "options": "After Exam Submission\nAfter Specific Date\nDo Not Show Score"
+   "options": "After Schedule Completion\nAfter Exam Submission\nAfter Specific Date\nDo Not Show Score"
   },
   {
    "depends_on": "eval: doc.show_result == 'After Specific Date'",
@@ -301,8 +302,8 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-08 15:21:11.699360",
- "modified_by": "Administrator",
+ "modified": "2025-07-09 13:23:32.218542",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",
  "owner": "Administrator",
