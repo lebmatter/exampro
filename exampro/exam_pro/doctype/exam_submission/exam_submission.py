@@ -549,9 +549,6 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 	assert message
 
 	doc = frappe.get_doc("Exam Submission", exam_submission)
-	enable_chat = frappe.get_cached_value("Exam", doc.exam, "enable_chat")
-	if not enable_chat:
-		raise PermissionError("Chat is disabled for this exam.")
 
 	# check of the logged in user is same as exam submission candidate
 	if frappe.session.user not in [doc.candidate, doc.assigned_proctor]:
