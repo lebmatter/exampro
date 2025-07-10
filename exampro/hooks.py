@@ -243,6 +243,9 @@ fixtures = [
         "filters": [
             ["name", "in", ["Exam Candidate", "Exam Proctor", "Exam Evaluator", "Exam Manager"]]
         ]
+    },
+    {
+        "dt": "Email Template"
     }
 ]
 
