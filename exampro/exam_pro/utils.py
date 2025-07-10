@@ -24,27 +24,6 @@ def get_website_context(context):
     if "Exam Evaluator" in user_roles:
         top_bar_items.append({"label": "Evaluate Exam", "url": "/evaluate"})
     
-    if "Exam Manager" in user_roles:
-        top_bar_items.append({
-            "label": "Manage",
-            "url": "#",  # Add a URL or use "#" for dropdown parent
-            "right": True,
-            "child_items": [  # Use child_items instead of dropdown_items
-                {"label": "Users", "url": "/manage/users"},
-                {"label": "Questions", "url": "/manage/questions"}
-            ]
-        })
-    
-    if "System Manager" in user_roles:
-        top_bar_items.append({
-            "label": "Admin",
-            "url": "#",  # Add a URL or use "#" for dropdown parent
-            "right": True,
-            "child_items": [  # Use child_items instead of dropdown_items
-                {"label": "Desk", "url": "/app"},
-                {"label": "Exam Dashboard", "url": "/app/exam-dashboard"},
-            ]
-        })
     context.top_bar_items = top_bar_items
     return context
 
