@@ -4,6 +4,7 @@
 from datetime import timedelta, datetime, date
 from dateutil.parser import parse
 import frappe
+import base64
 
 from frappe.utils import now
 from frappe.model.document import Document
@@ -281,6 +282,26 @@ class ExamSchedule(Document):
 		d['status'] = status
 		d['_server_status'] = status  # Special field for JavaScript to use
 		return d
+	
+	@frappe.whitelist()
+	def generate_invite_link(self):
+		"""Generate an invite link for this exam schedule"""
+		# Get the current domain from site configuration
+		domain = frappe.local.conf.get("host_name") or frappe.local.site
+		if not domain.startswith(('http://', 'https://')):
+			domain = "http://" + domain
+			
+		# Encode the schedule name in base64
+		encoded_name = base64.b64encode(self.name.encode('utf-8')).decode('utf-8')
+		
+		# Create the invite link
+		invite_link = f"{domain}/exam/invite/{encoded_name}"
+		
+		# Update the document
+		self.schedule_invite_link = invite_link
+		self.save(ignore_permissions=True)
+		
+		return invite_link
 	
 def check_overlap(start_time1, end_time1, start_time2, end_time2):
 	assert isinstance(start_time1, datetime), "start_time1 must be a datetime object"

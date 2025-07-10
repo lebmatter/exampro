@@ -6,6 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "schedule_settings_section",
   "exam",
   "start_date_time",
   "schedule_type",
@@ -14,6 +15,7 @@
   "question_type",
   "duration",
   "certificate_template",
+  "schedule_invite_link",
   "exam_settings_section",
   "column_break_5bke",
   "examiners",
@@ -114,6 +116,17 @@
    "fieldname": "auto_assign_batch_users",
    "fieldtype": "Check",
    "label": "Auto assign all batch users"
+  },
+  {
+   "fieldname": "schedule_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Schedule Settings"
+  },
+  {
+   "fieldname": "schedule_invite_link",
+   "fieldtype": "Data",
+   "label": "Schedule Invitation Link",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -124,7 +137,7 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-07-10 11:16:37.447460",
+ "modified": "2025-07-10 11:55:53.139194",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",
