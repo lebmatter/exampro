@@ -10,7 +10,9 @@
   "aws_account_id",
   "aws_key",
   "aws_secret",
-  "s3_bucket"
+  "s3_bucket",
+  "user_settings_section",
+  "restrict_user_account_domains"
  ],
  "fields": [
   {
@@ -43,13 +45,24 @@
    "fieldtype": "Select",
    "label": "Storage Provider",
    "options": "AWS S3\nCloudflare R2"
+  },
+  {
+   "fieldname": "user_settings_section",
+   "fieldtype": "Section Break",
+   "label": "User Settings"
+  },
+  {
+   "description": "Optional comma separated list of email domains to restrict user signup. Eg., 'company.com, gmail.com'",
+   "fieldname": "restrict_user_account_domains",
+   "fieldtype": "Small Text",
+   "label": "Restrict User Account Domains"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-23 19:38:35.216226",
- "modified_by": "Administrator",
+ "modified": "2025-07-10 12:39:01.618103",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Settings",
  "owner": "Administrator",
@@ -68,10 +81,8 @@
    "create": 1,
    "delete": 1,
    "email": 1,
-   "export": 1,
    "print": 1,
    "read": 1,
-   "report": 1,
    "role": "Exam Manager",
    "select": 1,
    "share": 1,

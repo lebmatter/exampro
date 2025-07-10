@@ -135,3 +135,19 @@ def create_sample_exams():
 
     frappe.db.commit()
     frappe.msgprint("Sample exams and questions created successfully.")
+
+def validate_user_email(doc, method=None):
+    """
+    Validate the email with optional list in Exam Settings
+    """
+    if not doc.email:
+        return
+
+    # Get the list of allowed emails from Exam Settings
+    allowed_emails = frappe.get_single("Exam Settings").restrict_user_account_domains or ""
+    allowed_emails = [email.strip() for email in allowed_emails.split(",") if email.strip()]
+    if allowed_emails:
+        # Check if the user's email domain is in the allowed list
+        user_email_domain = doc.email.split('@')[-1]
+        if user_email_domain not in allowed_emails:
+            frappe.throw(f"Email domain '{user_email_domain}' is not allowed.")

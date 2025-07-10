@@ -135,6 +135,12 @@ after_install = "exampro.exam_pro.utils.create_sample_exams"
 #	}
 # }
 
+doc_events = {
+    "User": {
+        "before_insert": "exampro.exam_pro.utils.validate_user_email"
+    }
+}
+
 # Scheduled Tasks
 # ---------------
 
