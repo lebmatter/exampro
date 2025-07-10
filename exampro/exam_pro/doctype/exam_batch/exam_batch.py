@@ -38,32 +38,13 @@ def bulk_add_users(batch_name, emails):
 			skipped_count += 1
 			continue
 		
-		# Check if user exists
-		user_exists = frappe.db.exists("User", email)
-		
-		# If user doesn't exist, create a new user
-		if not user_exists:
-			try:
-				user = frappe.get_doc({
-					"doctype": "User",
-					"email": email,
-					"first_name": email.split('@')[0],
-					"send_welcome_email": 0
-				})
-				user.append("roles", {
-					"role": "Exam Candidate"
-				})
-				user.insert(ignore_permissions=True)
-				user_exists = email
-			except Exception as e:
-				frappe.log_error(f"Failed to create user {email}: {str(e)}", "Bulk Add Users")
-				skipped_count += 1
-				continue
+		if frappe.db.exists("User", email):
+			continue
 		
 		# Check if user is already added to this batch
 		existing = frappe.db.exists("Exam Batch User", {
 			"exam_batch": batch_name,
-			"candidate": user_exists
+			"candidate": email
 		})
 		
 		if existing:
@@ -74,7 +55,7 @@ def bulk_add_users(batch_name, emails):
 		try:
 			batch_user = frappe.new_doc("Exam Batch User")
 			batch_user.exam_batch = batch_name
-			batch_user.candidate = user_exists
+			batch_user.candidate = email
 			batch_user.insert(ignore_permissions=True)
 			added_count += 1
 		except Exception as e:
