@@ -49,6 +49,14 @@ frappe.ready(function() {
                 const feedback = $(`.feedback-input[data-question-id="${questionId}"]`).val();
                 this.saveMark(questionId, mark, feedback);
             });
+            
+            // Handle Finish Evaluation button
+            $(document).on('click', '#finish-evaluation-btn', (e) => {
+                e.preventDefault();
+                if (confirm('Are you sure you want to finish evaluation? This will mark the evaluation as complete.')) {
+                    this.finishEvaluation();
+                }
+            });
         }
 
         loadExamSubmission(examId, submissionId) {
@@ -87,6 +95,9 @@ frappe.ready(function() {
                         
                         // Show question navigation panel
                         $('#question-nav-panel').show();
+                        
+                        // Check if all questions are evaluated to show/hide finish button
+                        this.checkAllEvaluated();
                     }
                 }
             });
@@ -160,7 +171,7 @@ frappe.ready(function() {
 
             // Check if question is of type Choices (read-only) or if evaluation is not allowed (status is not Pending)
             const isChoicesType = answer.question_type === 'Choices';
-            const isDone = answer.evaluation_status === 'Done';
+            const isDone = answer.evaluation_status === 'Done' || answer.evaluation_status === 'Auto';
             const isPending = answer.evaluation_status === 'Pending';
             
             // Display read-only view for Choices type or auto-evaluated questions
@@ -306,7 +317,68 @@ frappe.ready(function() {
                             message: 'Mark saved successfully',
                             indicator: 'green'
                         });
+                        
+                        // Check if all questions are now evaluated
+                        this.checkAllEvaluated();
                     }
+                }
+            });
+        }
+        
+        // Check if all questions have been evaluated and show/hide Finish Evaluation button
+        checkAllEvaluated() {
+            if (!this.answers || this.answers.length === 0) {
+                $('#finish-evaluation-btn').hide();
+                return;
+            }
+            
+            // Check if any question is still pending evaluation
+            const pendingEvaluation = this.answers.some(answer => answer.evaluation_status === 'Pending');
+            
+            if (!pendingEvaluation) {
+                // All questions evaluated, show the Finish Evaluation button
+                $('#finish-evaluation-btn').show();
+            } else {
+                // Some questions still need evaluation, hide the button
+                $('#finish-evaluation-btn').hide();
+            }
+        }
+        
+        // Finish the evaluation process
+        finishEvaluation() {
+            if (!this.currentSubmissionId) {
+                frappe.show_alert({
+                    message: 'No active submission to finish evaluation',
+                    indicator: 'red'
+                });
+                return;
+            }
+            
+            frappe.call({
+                method: 'exampro.www.evaluate.finish_evaluation',
+                args: {
+                    submission_id: this.currentSubmissionId
+                },
+                callback: (r) => {
+                    if (r.message && r.message.success) {
+                        frappe.show_alert({
+                            message: 'Evaluation marked as finished successfully',
+                            indicator: 'green'
+                        });
+                        // Update the UI to reflect the finished state
+                        $('#finish-evaluation-btn').hide().addClass('disabled');
+                        
+                        // Update exam item in sidebar
+                        $(`.exam-item[data-submission-id="${this.currentSubmissionId}"]`)
+                            .find('.exam-status')
+                            .text('Finished');
+                    }
+                },
+                error: (err) => {
+                    frappe.show_alert({
+                        message: err.message || 'Error finishing evaluation',
+                        indicator: 'red'
+                    });
                 }
             });
         }

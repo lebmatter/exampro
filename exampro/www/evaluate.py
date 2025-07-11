@@ -186,3 +186,29 @@ def get_submission_answers(submission_id):
 		order_by="seq_no"
 	)
 
+@frappe.whitelist()
+def finish_evaluation(submission_id):
+	"""Update evaluation status to Finished for a submission"""
+	if not submission_id:
+		frappe.throw(_("Invalid exam!"))
+
+	submission = frappe.get_doc("Exam Submission", submission_id)
+	
+	# Verify if the user is assigned as evaluator
+	if submission.assigned_evaluator != frappe.session.user:
+		frappe.throw(_("You are not assigned to evaluate this submission"))
+	
+	# Check if all questions have been evaluated
+	eval_pending = len([s for s in submission.submitted_answers if s.evaluation_status == "Pending"])
+	if eval_pending > 0:
+		frappe.throw(_("All questions must be evaluated before finishing the evaluation"))
+	
+	submission.evaluation_status = "Finished"
+	submission.save(ignore_permissions=True)
+	frappe.db.commit()
+	
+	return {
+		"success": True,
+		"message": "Evaluation marked as finished successfully"
+	}
+
