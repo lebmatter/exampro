@@ -59,40 +59,32 @@ def get_proctor_live_exams(proctor=None):
 def get_latest_messages(proctor=None):
 	"""Get latest messages from all candidates being proctored by the current proctor"""
 	result = []
-	submissions = frappe.get_all(
-		"Exam Submission",
-		{"assigned_proctor": proctor or frappe.session.user},
-		["name", "candidate_name", "status", "exam_schedule"]
-	)
-
-	for submission in submissions:
+	sub = get_proctor_live_exams(proctor)["live_submissions"]
+	if not sub:
+		return result
+	
+	for submission in sub:
 		latest_msg = frappe.get_all(
 			"Exam Messages",
-			filters={"exam_submission": submission.name},
+			filters={"exam_submission": submission["name"]},
 			fields=["message", "creation", "from"],
 			order_by="creation desc",
 			limit=1
 		)
 
-		sched_status = frappe.db.get_value(
-			"Exam Schedule", submission.exam_schedule, "status"
-		)
-		if sched_status == "Completed":
-			continue
-
 		msg_text = "Exam not started"
-		if submission.status == "Started":
+		if submission["status"] == "Started":
 			msg_text = "Exam started"
-		elif submission.status == "Terminated":
+		elif submission["status"] == "Terminated":
 			msg_text = "Exam terminated"
 		if latest_msg:
 			msg_text = latest_msg[0].message
 
 		result.append({
-			"exam_submission": submission.name,
-			"candidate_name": submission.candidate_name,
+			"exam_submission": submission["name"],
+			"candidate_name": submission["candidate_name"],
 			"message": msg_text,
-			"status": submission.status
+			"status": submission["status"]
 		})
 
 	return result
