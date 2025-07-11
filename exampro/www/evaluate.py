@@ -137,6 +137,9 @@ def save_marks(question_id, marks, submission_id, feedback=None):
 	total_marks, evaluation_status, result_status = evaluation_values(
 		submission.exam, submission.submitted_answers
 	)
+	# if new eval status is NA, it means manual evaluation is finished
+	if evaluation_status == "NA":
+		evaluation_status = "Finished"
 	submission.total_marks = total_marks
 	submission.evaluation_status = evaluation_status
 	submission.result_status = result_status

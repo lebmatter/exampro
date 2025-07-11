@@ -372,6 +372,7 @@ frappe.ready(function() {
                         $(`.exam-item[data-submission-id="${this.currentSubmissionId}"]`)
                             .find('.exam-status')
                             .text('Finished');
+                        window.location.reload(); // Reload to refresh the exam list
                     }
                 },
                 error: (err) => {
