@@ -26,9 +26,9 @@
   "result_status",
   "issued_certificate",
   "column_break_whlx",
-  "evaluation_pending",
   "assigned_evaluator",
   "assigned_proctor",
+  "evaluation_status",
   "section_break_rxvo",
   "submitted_answers"
  ],
@@ -95,14 +95,6 @@
    "fieldname": "total_marks",
    "fieldtype": "Float",
    "label": "Total marks",
-   "read_only": 1
-  },
-  {
-   "description": "No. of questions pending to be evaluated",
-   "fieldname": "evaluation_pending",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Evaluation pending",
    "read_only": 1
   },
   {
@@ -195,6 +187,13 @@
    "fieldtype": "Link",
    "label": "Exam Batch",
    "options": "Exam Batch"
+  },
+  {
+   "default": "NA",
+   "fieldname": "evaluation_status",
+   "fieldtype": "Data",
+   "label": "Evaluation Status",
+   "options": "NA\nPending\nFinished"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -208,7 +207,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-07-09 12:11:58.090917",
+ "modified": "2025-07-11 14:47:25.850458",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Submission",

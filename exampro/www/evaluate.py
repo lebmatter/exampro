@@ -12,7 +12,7 @@ def get_evaluator_live_exams(evaluator=None):
 		"Exam Submission",
 		filters={
 			"assigned_evaluator": evaluator,
-			"evaluation_pending": [">", 0],
+			"evaluation_status": "Pending",
 			"status": "Submitted"
 		},
 		fields=[
@@ -20,7 +20,7 @@ def get_evaluator_live_exams(evaluator=None):
 			"exam", 
 			"candidate_name",
 			"status",
-			"evaluation_pending",
+			"evaluation_status",
 			"exam_schedule",
 			"exam_submitted_time",
 		]
@@ -134,11 +134,11 @@ def save_marks(question_id, marks, submission_id, feedback=None):
 	frappe.db.commit()
 	submission.reload()
 
-	total_marks, evaluation_pending, result_status = evaluation_values(
+	total_marks, evaluation_status, result_status = evaluation_values(
 		submission.exam, submission.submitted_answers
 	)
 	submission.total_marks = total_marks
-	submission.evaluation_pending = evaluation_pending
+	submission.evaluation_status = evaluation_status
 	submission.result_status = result_status
 	submission.save(ignore_permissions=True)
 	frappe.db.commit()

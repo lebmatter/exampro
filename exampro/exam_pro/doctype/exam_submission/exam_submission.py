@@ -231,7 +231,11 @@ def evaluation_values(exam, submitted_answers):
 	else:
 		result_status = "NA"
 	
-	return total_marks, eval_pending, result_status
+	evaluation_status = "NA"
+	if eval_pending > 0:
+		evaluation_status = "Pending"
+	
+	return total_marks, evaluation_status, result_status
 	
 
 @frappe.whitelist()
@@ -422,11 +426,11 @@ def end_exam(exam_submission=None):
 	
 	if doc.status == "Started":
 		doc.status = "Submitted"
-		total_marks, evaluation_pending, result_status = evaluation_values(
+		total_marks, evaluation_status, result_status = evaluation_values(
 			doc.exam, doc.submitted_answers
 		)
 		doc.total_marks = total_marks
-		doc.evaluation_pending = evaluation_pending
+		doc.evaluation_status = evaluation_status
 		doc.result_status = result_status
 		doc.save(ignore_permissions=True)
 		frappe.db.commit()

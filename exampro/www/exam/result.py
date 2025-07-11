@@ -61,7 +61,7 @@ def set_exam_context(context, exmsubmn):
 			context.message = "The exam was terminated due to a violation of exam rules."
 	
 	elif exam_submission.status == "Submitted":
-		if exam_submission.evaluation_pending > 0:
+		if exam_submission.evaluation_status == "Pending":
 			context.result_type = "pending"
 			context.message = "Evaluation pending in your exam. Please check back later for your score!"
 		else:
