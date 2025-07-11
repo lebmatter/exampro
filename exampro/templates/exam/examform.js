@@ -609,6 +609,9 @@ function getQuestion(qsno) {
 };
 
 function showSubmitConfirmPage() {
+        // Submit the current answer before showing the summary
+        submitAnswer(false);
+        
         // user wants to end the exam
         updateOverviewMap();
         $("#start-banner").removeClass("hide");
