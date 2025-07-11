@@ -30,24 +30,18 @@ def get_proctor_live_exams(proctor=None):
 		if submission["status"] in ["Registration Cancelled", "Aborted"]:
 			continue
 
-		sched_status = frappe.db.get_value(
-			"Exam Schedule", submission.exam_schedule, "status"
-		)
-		if sched_status == "Completed":
+		sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
+		if sched.get_status(additional_time=submission["additional_time_given"]) == "Completed":
 			continue
 
-		schedule_start_dt, sched_duration = frappe.db.get_value(
-			"Exam Schedule", submission["exam_schedule"], ["start_date_time", "duration"]
-		)
-
 		# end time is schedule start time + duration + additional time given
-		end_time = schedule_start_dt + timedelta(minutes=sched_duration) + \
+		end_time = sched.start_date_time + timedelta(minutes=sched.duration) + \
 			timedelta(minutes=submission["additional_time_given"])
 
 		# checks if current time is between schedule start and end time
 		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-		if schedule_start_dt <= tnow <= end_time:
+		if sched.start_date_time <= tnow <= end_time:
 			userdata = {
 				"name": submission["name"],
 				"candidate_name": submission["candidate_name"],
