@@ -270,6 +270,13 @@ function openChatModal(event) {
     const videoContainer = document.querySelector(`.video-container[data-videoid="${videoId}"]`);
     const video = videoContainer.querySelector("video");
     videoSrc = video.src;
+    // Check if the exam has been submitted
+    if (videoContainer.getAttribute("data-submission-status") === "Submitted") {
+      // Don't open modal if submission status is "Submitted"
+      console.log("Chat disabled: Exam already submitted");
+      return;
+    }
+    
   } else {
     // Called from video controls
     const videoContainer = this.closest(".video-container");
@@ -277,13 +284,14 @@ function openChatModal(event) {
     videoSrc = video.src;
     videoId = videoContainer.getAttribute("data-videoid");
     candName = videoContainer.getAttribute("data-candidatename");
-  }
 
-  // Check if the exam has been submitted
-  if (videoContainer.getAttribute("data-submission-status") === "Submitted") {
-    // Don't open modal if submission status is "Submitted"
-    console.log("Chat disabled: Exam already submitted");
-    return;
+    // Check if the exam has been submitted
+    if (videoContainer.getAttribute("data-submission-status") === "Submitted") {
+      // Don't open modal if submission status is "Submitted"
+      console.log("Chat disabled: Exam already submitted");
+      return;
+    }
+
   }
 
   const modalVideo = document.getElementById("modalVideoElement");
