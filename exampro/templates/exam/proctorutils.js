@@ -589,3 +589,144 @@ frappe.ready(() => {
   }
 
 });
+
+
+// Message Card Hover - Video Card Highlight Effect
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Get all message cards
+    const messageCards = document.querySelectorAll('.message-card');
+    
+    // Function to add highlight effect to video card
+    function highlightVideoCard(submissionId) {
+        const videoContainer = document.querySelector(`[data-videoid="${submissionId}"]`);
+        if (videoContainer) {
+            const videoCard = videoContainer.closest('.card');
+            if (videoCard) {
+                videoCard.classList.add('video-card-highlighted');
+                
+                // Add a subtle animation
+                videoCard.style.transform = 'scale(1.02)';
+                videoCard.style.transition = 'all 0.3s ease';
+                videoCard.style.boxShadow = '0 4px 20px rgba(0, 123, 255, 0.3)';
+                videoCard.style.borderColor = '#007bff';
+            }
+        }
+    }
+    
+    // Function to remove highlight effect from video card
+    function removeHighlightVideoCard(submissionId) {
+        const videoContainer = document.querySelector(`[data-videoid="${submissionId}"]`);
+        if (videoContainer) {
+            const videoCard = videoContainer.closest('.card');
+            if (videoCard) {
+                videoCard.classList.remove('video-card-highlighted');
+                
+                // Remove the animation
+                videoCard.style.transform = 'scale(1)';
+                videoCard.style.boxShadow = '';
+                videoCard.style.borderColor = '';
+            }
+        }
+    }
+    
+    // Add event listeners to message cards
+    messageCards.forEach(messageCard => {
+        const submissionId = messageCard.getAttribute('data-submission');
+        
+        if (submissionId) {
+            // Mouse enter event
+            messageCard.addEventListener('mouseenter', function() {
+                highlightVideoCard(submissionId);
+            });
+            
+            // Mouse leave event
+            messageCard.addEventListener('mouseleave', function() {
+                removeHighlightVideoCard(submissionId);
+            });
+        }
+    });
+    
+    // Optional: Add reverse effect - highlight message card when hovering over video card
+    const videoCards = document.querySelectorAll('.video-card');
+    
+    videoCards.forEach(videoCard => {
+        const videoContainer = videoCard.querySelector('[data-videoid]');
+        if (videoContainer) {
+            const videoId = videoContainer.getAttribute('data-videoid');
+            
+            // Mouse enter event on video card
+            videoCard.addEventListener('mouseenter', function() {
+                const messageCard = document.querySelector(`[data-submission="${videoId}"]`);
+                if (messageCard) {
+                    messageCard.classList.add('message-card-highlighted');
+                    messageCard.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+                    messageCard.style.borderLeftColor = '#007bff';
+                    messageCard.style.borderLeftWidth = '4px';
+                    messageCard.style.transition = 'all 0.3s ease';
+                }
+            });
+            
+            // Mouse leave event on video card
+            videoCard.addEventListener('mouseleave', function() {
+                const messageCard = document.querySelector(`[data-submission="${videoId}"]`);
+                if (messageCard) {
+                    messageCard.classList.remove('message-card-highlighted');
+                    messageCard.style.backgroundColor = '';
+                    messageCard.style.borderLeftColor = '#e0e0e0';
+                    messageCard.style.borderLeftWidth = '4px';
+                }
+            });
+        }
+    });
+});
+
+// CSS styles to be added to the existing stylesheet
+const additionalStyles = `
+    /* Video card highlight effect */
+    .video-card-highlighted {
+        border: 2px solid #007bff !important;
+        box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3) !important;
+        transform: scale(1.02) !important;
+        transition: all 0.3s ease !important;
+        z-index: 10 !important;
+        position: relative !important;
+    }
+    
+    /* Message card highlight effect */
+    .message-card-highlighted {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+        border-left-color: #007bff !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    /* Smooth transitions for all cards */
+    .message-card, .video-card {
+        transition: all 0.3s ease;
+    }
+    
+    /* Optional: Add a glow effect */
+    .video-card-highlighted::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        border-radius: 8px;
+        z-index: -1;
+        opacity: 0.3;
+        filter: blur(6px);
+    }
+`;
+
+// Function to inject additional CSS styles
+function injectStyles() {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = additionalStyles;
+    document.head.appendChild(styleSheet);
+}
+
+// Inject styles when DOM is loaded
+document.addEventListener('DOMContentLoaded', injectStyles);
