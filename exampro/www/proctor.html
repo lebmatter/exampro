@@ -326,7 +326,7 @@ Proctor
                         <div class="card-body p-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="card-subtitle text-muted mb-0">{{ msg.candidate_name }}</h6>
-                                <span class="badge status-badge status-{{ msg.status.lower() }}">{{ msg.status }}</span>
+                                <span class="badge status-badge status-{{ msg.status.lower() }}" data-submission-status="{{ msg.status }}">{{ msg.status }}</span>
                             </div>
                             <p class="card-text message-text mb-0">{{ msg.message }}</p>
                         </div>
@@ -343,7 +343,7 @@ Proctor
                 <div class="col-md-6">
                     <div class="d-flex justify-content-start">
                         <button type="button" class="btn btn-primary mr-2">
-                            Live exams <span class="badge badge-light">{{ submissions|length }}</span>
+                            Live candidates <span class="badge badge-light">{{ submissions|length }}</span>
                         </button>
                         <button type="button" class="btn btn-secondary">
                             Pending candidates <span class="badge badge-light">{{ pending_candidates|length }}</span>

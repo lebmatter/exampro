@@ -279,6 +279,13 @@ function openChatModal(event) {
     candName = videoContainer.getAttribute("data-candidatename");
   }
 
+  // Check if the exam has been submitted
+  if (videoContainer.getAttribute("data-submission-status") === "Submitted") {
+    // Don't open modal if submission status is "Submitted"
+    console.log("Chat disabled: Exam already submitted");
+    return;
+  }
+
   const modalVideo = document.getElementById("modalVideoElement");
   modalVideo.src = videoSrc;
   $("#chatModal").modal("show");

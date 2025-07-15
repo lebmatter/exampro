@@ -31,7 +31,6 @@ def validate_video_settings():
 		frappe.msgprint("Video storage error: All AWS/Cloudflare credentials and bucket name are required")
 		return False
 
-	import pdb; pdb.set_trace()  # Debugging line to inspect the state before validation
 	try:
 		# Create S3 client with the appropriate endpoint based on provider
 		client_kwargs = {

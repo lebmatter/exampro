@@ -4,7 +4,7 @@ from frappe.utils import now
 import frappe
 from frappe import _
 
-def get_proctor_live_exams(proctor=None):
+def get_proctor_live_exams(proctor=None, skip_submitted=False):
 	"""
 	Get upcoming/ongoing exam of a proctor.
 
@@ -28,6 +28,8 @@ def get_proctor_live_exams(proctor=None):
 	])
 	for submission in submissions:
 		if submission["status"] in ["Registration Cancelled", "Aborted"]:
+			continue
+		if skip_submitted and submission["status"] == "Submitted":
 			continue
 
 		sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
@@ -78,7 +80,7 @@ def get_latest_messages(proctor=None):
 		elif submission["status"] == "Terminated":
 			msg_text = "Exam terminated"
 		elif submission["status"] == "Submitted":
-			msg_text = "Exam submitted"
+			msg_text = "Exam submitted. Schedule ongoing."
 		if latest_msg:
 			msg_text = latest_msg[0].message
 
@@ -108,7 +110,7 @@ def get_context(context):
 		raise frappe.Redirect
 
 	context.page_context = {}
-	proctor_list = get_proctor_live_exams()
+	proctor_list = get_proctor_live_exams(skip_submitted=True)
 
 	context.submissions = proctor_list["live_submissions"]
 	context.pending_candidates = proctor_list["pending_candidates"]
