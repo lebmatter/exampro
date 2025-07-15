@@ -566,10 +566,10 @@ frappe.ready(() => {
 
   if ($examStatus.text() === 'Started') {
       $examStatus.removeClass();
-      $examStatus.addClass('btn btn-sm btn-success');
+      $examStatus.addClass('badge status-badge status-started');
   } else if ($examStatus.text() === 'Terminated') {
       $examStatus.removeClass();
-      $examStatus.addClass('btn btn-sm btn-danger');
+      $examStatus.addClass('badge status-badge status-terminated');
   }
 
 });
