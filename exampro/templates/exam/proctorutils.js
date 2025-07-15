@@ -332,13 +332,34 @@ function onLoanMetaData() {
       // check if the last video is 30 sec old
       if (!video.paused) {
         if (!disconnected) {
-          liveBtn.innerHTML =
+            liveBtn.innerHTML =
             '<i class="bi bi-circle-fill text-success me-1"></i> Live';
-          videoContainer.setAttribute("data-islive", "1");
-        } else {
-          liveBtn.innerHTML =
+            videoContainer.setAttribute("data-islive", "1");
+            // Find the card that contains this video container
+            const card = videoContainer.closest('.card');
+            // Look for status badge in the card header
+            if (card) {
+            const statusBadge = card.querySelector('.card-header .status-badge');
+            if (statusBadge) {
+              statusBadge.textContent = 'Started';
+              statusBadge.className = 'badge status-badge status-started';
+            }
+            }
+          } else {
+            liveBtn.innerHTML =
             '<i class="bi bi-circle-fill text-danger me-1"></i> Offline';
-          videoContainer.setAttribute("data-islive", "0");
+            videoContainer.setAttribute("data-islive", "0");
+            // Find the card that contains this video container
+            const card = videoContainer.closest('.card');
+            // Look for status badge in the card header
+            if (card) {
+            const statusBadge = card.querySelector('.card-header .status-badge');
+            if (statusBadge) {
+                statusBadge.textContent = 'Offline';
+                statusBadge.innerHTML = '<i class="bi bi-wifi-off me-1"></i>Offline';
+              statusBadge.className = 'badge status-badge status-offline';
+            }
+            }
         }
       }
     } else {
@@ -354,6 +375,7 @@ function onLoanMetaData() {
     }
   }
 }
+
 
 addEventListenerToClass("toggleButton", "click", togglePlay);
 addEventListenerToClass("video", "click", togglePlay);

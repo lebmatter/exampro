@@ -60,8 +60,14 @@ Proctor
     .status-started { background-color: #28a745; color: white; }
     .status-registered { background-color: #6c757d; color: white; }
     .status-terminated { background-color: #dc3545; color: white; }
+    .status-offline { background-color: #ffcccb; color: black; }
 
-    /* Video Grid */
+    /* Video Grid - Updated for 4 cards per row */
+    .video-card {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
     .video-container {
         position: relative;
         padding-bottom: 56.25%;
@@ -221,7 +227,7 @@ Proctor
 
 {% block page_content %}
 
-<div class="container">
+<div class="container-fluid">
 	<div class="row mb-5">
 		<div class="col">
             <h4>👀 Proctor Dashboard</h4>
@@ -229,7 +235,7 @@ Proctor
     </div>
     <div class="row">
         <!-- Message Sidebar -->
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Latest Messages</h5>
@@ -251,7 +257,7 @@ Proctor
         </div>
 
         <!-- Main Video Grid -->
-        <div class="col-md-9">
+        <div class="col-md-10">
             <!-- Main content -->
             <div class="row">
                 <div class="col-md-6">
@@ -266,52 +272,52 @@ Proctor
                 </div>
                 <div class="col-md-6">
                 </div>
-                <div class="col-md-12 mt-5">
-                    {% for index, submission in enumerate(submissions) %}
-                    <div class="col-md-4">
-                        <div class="card mb-3">
-                            <div class="card-header d-flex justify-content-between align-items-center mb-3">
-                                <span>{{ submission.candidate_name }}</span>
-                                <span class="badge status-badge status-{{ submission.status.lower() }}">{{ submission.status }}</span>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="video-container" data-videoid="{{ submission.name }}"
-                                    data-candidatename="{{ submission.candidate_name }}" data-islive="0">
-                                    <video class="video" id="{{ submission.name }}" data-videoid="{{ submission.name }}" preload="metadata">
-                                        <p>Your browser doesn't support HTML5 video.</p>
-                                    </video>
-                                    <div class="controls">
-                                        <small class="fileTimeStamp"></small>
-                                        <button class="controls__button toggleButton" title="Toggle Play">
-                                            <i class="bi bi-play-fill"></i>
-                                        </button>
-                                        <button class="controls__button skipBack" title="Skip back">
-                                            <i class="bi bi-rewind-fill"></i>
-                                        </button>
-                                        <button class="controls__button skipFwd" title="Skip forward">
-                                            <i class="bi bi-fast-forward-fill"></i>
-                                        </button>
-                                        <small><button class="controls__button goLive" title="Go Live">
-                                                Go Live
-                                            </button></small>
-                                        <button type="button" class="controls__button menu" title="Chat"
-                                            data-videoid="{{ submission.name }}">
-                                            <i class="bi bi-chat-square-text-fill"></i>
-                                        </button>
-                                    </div>
+            </div>
+            
+            <!-- Video Cards Grid - 4 per row -->
+            <div class="row mt-4">
+                {% for submission in submissions %}
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card video-card">
+                        <div class="card-header p-2 d-flex justify-content-between align-items-center">
+                            <small class="text-truncate me-2">{{ submission.candidate_name }}</small>
+                            <span class="badge status-badge status-{{ submission.status.lower() }}">{{ submission.status }}</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="video-container" data-videoid="{{ submission.name }}"
+                                data-candidatename="{{ submission.candidate_name }}" data-islive="0">
+                                <video class="video" id="{{ submission.name }}" data-videoid="{{ submission.name }}" preload="metadata">
+                                    <p>Your browser doesn't support HTML5 video.</p>
+                                </video>
+                                <div class="controls">
+                                    <small class="fileTimeStamp"></small>
+                                    <button class="controls__button toggleButton" title="Toggle Play">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
+                                    <button class="controls__button skipBack" title="Skip back">
+                                        <i class="bi bi-rewind-fill"></i>
+                                    </button>
+                                    <button class="controls__button skipFwd" title="Skip forward">
+                                        <i class="bi bi-fast-forward-fill"></i>
+                                    </button>
+                                    <small><button class="controls__button goLive" title="Go Live">
+                                            Go Live
+                                        </button></small>
+                                    <button type="button" class="controls__button menu" title="Chat"
+                                        data-videoid="{{ submission.name }}">
+                                        <i class="bi bi-chat-square-text-fill"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {% if loop.index % 3 == 0 %}
                 </div>
-                <div class="row mt-5">
-                    {% endif %}
-                    {% endfor %}
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
+</div>
+
 <div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatVideoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -362,16 +368,16 @@ Proctor
         </div>
     </div>
 </div>
-    {% endblock %}
+{% endblock %}
 
-    <!-- Scripts -->
-    {%- block script %}
-    {{ super() }}
-    <script type="text/javascript">
-        {% include "exampro/templates/exam/examutils.js" %}
-    </script>
-    <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
-    <script type="text/javascript">
-        {% include "exampro/templates/exam/proctorutils.js" %}
-    </script>
-    {% endblock %}
+<!-- Scripts -->
+{%- block script %}
+{{ super() }}
+<script type="text/javascript">
+    {% include "exampro/templates/exam/examutils.js" %}
+</script>
+<script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+<script type="text/javascript">
+    {% include "exampro/templates/exam/proctorutils.js" %}
+</script>
+{% endblock %}
