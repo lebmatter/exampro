@@ -5,6 +5,7 @@ import re
 import random
 import frappe
 from frappe.model.document import Document
+from exampro.exam_pro.doctype.exam_settings.exam_settings import validate_video_settings
 
 RE_SLUG_NOTALLOWED = re.compile("[^a-z0-9]+")
 
@@ -69,9 +70,8 @@ class Exam(Document):
 		if self.show_result == "After Specific Date":
 			if not self.show_result_after_date:
 				frappe.throw("Specify date for showing result.")
-		
-		settings = frappe.get_single("Exam Settings")
-		if self.enable_video_proctoring and not settings.validate_video_settings():
+
+		if self.enable_video_proctoring and not validate_video_settings():
 			frappe.throw("Video storage is not configured for proctoring.")
 
 
