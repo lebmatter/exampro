@@ -137,7 +137,7 @@ def get_next_exam(exams):
 	
 	# Group exams by status
 	started_exams = [exam for exam in all_exams if exam["submission_status"] == "Started"]
-	ongoing_exams = [exam for exam in all_exams if "Ongoing." in exam["schedule_status"]]
+	ongoing_exams = [exam for exam in all_exams if "Ongoing" in exam["schedule_status"] and exam["submission_status"] == "Registered"]
 	upcoming_exams = [exam for exam in all_exams if exam["schedule_status"] == "Upcoming"]
 	
 	# Return started exam first if available
