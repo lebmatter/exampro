@@ -64,7 +64,9 @@ function updateToggleButton() {
 
   // Within that container, find the toggleButton
   const toggleButton = videoContainer.querySelector(".toggleButton");
-  toggleButton.innerHTML = this.paused ? "►" : "❚ ❚";
+  toggleButton.innerHTML = this.paused ? 
+    '<i class="bi bi-play-fill"></i>' : 
+    '<i class="bi bi-pause-fill"></i>';
 }
 
 function parseUnitTime(videoURL, addSeconds) {
@@ -331,15 +333,11 @@ function onLoanMetaData() {
       if (!video.paused) {
         if (!disconnected) {
           liveBtn.innerHTML =
-            '<svg width="10" height="10" xmlns="http://www.w3.org/2000/svg">' +
-            '<circle cx="5" cy="5" r="5" fill="green" />' +
-            "</svg> Live";
+            '<i class="bi bi-circle-fill text-success me-1"></i> Live';
           videoContainer.setAttribute("data-islive", "1");
         } else {
           liveBtn.innerHTML =
-            '<svg width="10" height="10" xmlns="http://www.w3.org/2000/svg">' +
-            '<circle cx="5" cy="5" r="5" fill="red" />' +
-            "</svg> Offline";
+            '<i class="bi bi-circle-fill text-danger me-1"></i> Offline';
           videoContainer.setAttribute("data-islive", "0");
         }
       }
@@ -350,9 +348,7 @@ function onLoanMetaData() {
         videoContainer.setAttribute("data-islive", "0");
       } else {
         liveBtn.innerHTML =
-          '<svg width="10" height="10" xmlns="http://www.w3.org/2000/svg">' +
-          '<circle cx="5" cy="5" r="5" fill="red" />' +
-          "</svg> Disconnected";
+          '<i class="bi bi-circle-fill text-danger me-1"></i> Disconnected';
         videoContainer.setAttribute("data-islive", "0");
       }
     }
