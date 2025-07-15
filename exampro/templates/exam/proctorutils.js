@@ -212,21 +212,21 @@ function playPreviousVideo() {
 }
 
 function appendMessage(convertedTime, text, sender) {
-  console.log("APPEND", convertedTime, text, sender);
-  const chatMessages = document.getElementById('chatMessages');
+  const chatMessages = document.getElementById('chat-messages');
 
   const messageElement = document.createElement('div');
-  messageElement.className = `message ${sender === 'Candidate' ? 'bot-message' : 'user-message'}`;
+  messageElement.className = `d-flex flex-column mb-2`;
+
+  const timestampElement = document.createElement('div');
+  timestampElement.className = `${sender === 'Candidate' ? 'chat-timestamp' : 'chat-timestamp-right'}`;
+  timestampElement.textContent = convertedTime;
+
   const contentElement = document.createElement('div');
-  contentElement.className = 'message-content';
+  contentElement.className = `chat-bubble ${sender === 'Candidate' ? 'chat-left' : 'chat-right'}`;
   contentElement.textContent = text;
   
-  const timestampElement = document.createElement('div');
-  timestampElement.className = 'timestamp';
-  timestampElement.textContent = convertedTime;
-  
-  messageElement.appendChild(contentElement);
   messageElement.appendChild(timestampElement);
+  messageElement.appendChild(contentElement);
   
   chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -301,7 +301,7 @@ function openChatModal(event) {
   $("#chatModal").modal("show");
   $("#candidateName").text(candName);
   activeChat = videoId;
-  $("#chatMessages").empty();
+  $("#chat-messages").empty();
   existingMessages[videoId] = [];
 
   setInterval(function () {
@@ -492,20 +492,18 @@ frappe.ready(() => {
 
   // chatModal controls
   // Handle send button click event
-  $("#send-button").click(function () {
-    var message = $("#messageInput").val();
-    var nowtime = new Date().toLocaleTimeString();
-    appendMessage(nowtime, message, 'Proctor');
+  $("#send-message").click(function () {
+    var message = $("#chat-input").val();
     sendProcMessage(message);
-    $("#messageInput").val("");
+    $("#chat-input").val("");
   });
 
   // Handle enter key press event
-  $("#messageInput").keypress(function (e) {
+  $("#chat-input").keypress(function (e) {
     if (e.which == 13) {
-      var message = $("#messageInput").val();
+      var message = $("#chat-input").val();
       sendProcMessage(message);
-      $("#messageInput").val("");
+      $("#chat-input").val("");
     }
   });
 

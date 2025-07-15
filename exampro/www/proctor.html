@@ -100,65 +100,106 @@ Proctor
     
     .svg-white { fill: white; }
 
-    /* Modal Chat Styling */
-    .chat-wrapper {
-        display: flex;
-        flex-direction: column;
-        height: 500px; /* Adjust as needed */
-    }
-
-    .chat-messages {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 15px;
+    /* Zerodha-style chat container with updated styling */
+    #messages {
+        max-height: 200px;
+        border-radius: 5px;
         background-color: #f9f9f9;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        margin-bottom: 10px;
-        display: flex;
-        flex-direction: column;
+        padding: 8px;
+        font-size: 13px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    .message {
-        max-width: 80%;
-        margin-bottom: 15px;
-        padding: 8px 12px;
-        border-radius: 15px;
-        position: relative;
+    /* Chat bubble styling */
+    .chat-bubble {
+        padding: 6px 10px;
+        margin-bottom: 6px;
+        border-radius: 4px;
+        max-width: 85%;
         word-wrap: break-word;
     }
 
-    .message-content {
-        margin-bottom: 5px;
-    }
-
-    .timestamp {
-        font-size: 0.75em;
-        color: #777;
-        position: absolute;
-        bottom: -18px;
-    }
-
-    .user-message {
-        align-self: flex-end;
-        background-color: #007bff;
-        color: white;
-        min-width: 120px;
-    }
-
-
-    .user-message .timestamp {
-        right: 10px;
-    }
-
-    .bot-message {
+    .chat-left {
+        background-color: #e6f3ff;
         align-self: flex-start;
-        background-color: #f1f0f0;
-        color: #333;
     }
 
-    .bot-message .timestamp {
-        left: 10px;
+    .chat-right {
+        background-color: #f0f0f0;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    .chat-timestamp-right {
+        font-size: 10px;
+        color: #6c757d;
+        margin-bottom: 1px;
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    /* Timestamp styling */
+    .chat-timestamp {
+        font-size: 10px;
+        color: #6c757d;
+        margin-bottom: 1px;
+    }
+
+    /* Chat container styles */
+    .chat-container {
+        height: 250px;
+        overflow-y: auto;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    /* Chat input container styles */
+    .chat-input-container {
+        position: sticky;
+        bottom: 0;
+        background-color: #f9f9f9;
+        padding-top: 6px;
+    }
+
+    /* Input box styling */
+    #chat-input {
+        border: 1px solid #dee2e6;
+        border-radius: 4px 0 0 4px;
+        padding: 6px;
+        font-size: 13px;
+        height: 32px;
+    }
+
+    /* Send button styling */
+    #send-message {
+        background-color: #0d6efd;
+        color: white;
+        border: none;
+        border-radius: 0 4px 4px 0;
+        padding: 6px 10px;
+        font-size: 13px;
+        height: 32px;
+        line-height: 20px;
+        transition: all 0.2s ease;
+    }
+
+    /* Adjust input group */
+    .input-group {
+        display: flex;
+    }
+
+    .input-group .form-control {
+        flex: 1;
+    }
+
+    .input-group-append {
+        display: flex;
+    }
+
+    #send-message:hover {
+        background-color: #0b5ed7;
     }
 
     .modal-video-container {
@@ -282,13 +323,25 @@ Proctor
                 <div class="row">
                     <!-- Chat Column -->
                     <div class="col-md-6">
-                        <div class="chat-wrapper">
-                            <div class="chat-messages" id="chatMessages">
-                                <!-- Messages will be dynamically inserted here -->
+                        <div id="messages" class="tab-pane fade show active">
+                            <div class="chat-container">
+                                <div id="chat-messages" class="d-flex flex-column mb-3"></div>
                             </div>
-                            <div class="input-group">
-                                <input type="text" id="messageInput" class="form-control" placeholder="Type your message...">
-                                <button class="btn btn-primary" id="send-button" type="button">Send</button>
+                            <div class="chat-input-container">
+                                <div class="input-group">
+                                    <input type="text" id="chat-input" class="form-control" placeholder="Type your message...">
+                                    <div class="input-group-append">
+                                        <button class="btn" type="button" id="send-message">
+                                            <span class="d-flex align-items-center">
+                                                Send
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                                    class="bi bi-send ms-2" viewBox="0 0 16 16">
+                                                    <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
+                                                </svg>
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
