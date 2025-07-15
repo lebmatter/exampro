@@ -77,6 +77,8 @@ def get_latest_messages(proctor=None):
 			msg_text = "Exam started"
 		elif submission["status"] == "Terminated":
 			msg_text = "Exam terminated"
+		elif submission["status"] == "Submitted":
+			msg_text = "Exam submitted"
 		if latest_msg:
 			msg_text = latest_msg[0].message
 

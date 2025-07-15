@@ -27,7 +27,7 @@ def get_evaluator_live_exams(evaluator=None):
 	)
 	res = []
 
-	for submission in submissions:
+	for idx, submission in enumerate(submissions):
 		exam = frappe.get_doc("Exam", submission.exam)
 		# default 3 days for evaluation
 		evaluation_ends_days = frappe.db.get_value("Exam", exam.name,  "evaluation_ends_in_days") or 3
@@ -38,6 +38,7 @@ def get_evaluator_live_exams(evaluator=None):
 
 		submission.title = exam.title
 		submission.name = exam.name  # This is needed for the data-exam-id in template
+		submission.candidate_name = "Candiate {}".format(idx + 1)
 		res.append(submission)
 
 	return res
