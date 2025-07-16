@@ -588,6 +588,7 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 
 		# If warning count exceeds max_warning_count, terminate the exam
 		if warning_count >= max_warning_count:
+			doc.reload()
 			doc.status = "Terminated"
 			doc.save(ignore_permissions=True)
 			frappe.db.commit()
@@ -607,6 +608,7 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 	
 	# Terminate exam immediately if warning_type is nowebcam
 	elif warning_type == "nowebcam":
+		doc.reload()
 		doc.status = "Terminated"
 		doc.save(ignore_permissions=True)
 		frappe.db.commit()
