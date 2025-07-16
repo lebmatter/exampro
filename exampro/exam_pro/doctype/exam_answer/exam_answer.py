@@ -7,9 +7,6 @@ from frappe.model.document import Document
 
 class ExamAnswer(Document):
 
-	def autoname(self):
-		self.name = "{}-{}".format(self.parent, self.seq_no)
-
 	def before_save(self):
 		"""
 		Validate if appilicable before save

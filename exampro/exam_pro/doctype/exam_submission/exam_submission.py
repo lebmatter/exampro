@@ -327,19 +327,19 @@ def get_question(exam_submission=None, qsno=1):
 	if get_schedule_status(exam_schedule) != "Ongoing":
 		frappe.throw("Exam is not ongoing or has ended.")
 	
-	if has_submission_ended(exam_submission):
+	if frappe.db.get_value("Exam Submission", exam_submission, "status") != "Started":
+		frappe.throw("Exam is not started yet.")
+	exam_ended, _ = has_submission_ended(exam_submission)
+	if exam_ended:
 		frappe.throw("Exam has ended.")
 
 	total_qs = frappe.get_cached_value(
-		"Exam", exam_submission, "total_questions"
+		"Exam", exam, "total_questions"
 	)
 	if qs_no < 1 or qs_no > total_qs:
 		frappe.throw("Invalid question number requested: {}".format(qs_no))
 
-	answer_doc = frappe.get_value(
-		"Exam Answer", "{}-{}".format(exam_submission, qs_no),
-		["marked_for_later", "answer", "seq_no", "exam_question"], as_dict=True
-	)
+	answer_doc = frappe.db.get_value("Exam Answer", {"parent": exam_submission, "seq_no": qs_no}, "*")
 	if not answer_doc:
 		frappe.throw("Invalid question requested.")
 
@@ -384,16 +384,16 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 		raise PermissionError("You don't have access to submit and answer.")
 
 	can_process_question(submission)
-	if not frappe.db.exists("Exam Answer", "{}-{}".format(exam_submission, qs_name)):
-		frappe.throw("Invalid question.")
 
-	result_doc = frappe.get_doc("Exam Answer", "{}-{}".format(exam_submission, qs_name), ignore_permissions=True)
+	answer_docname = frappe.db.get_value("Exam Answer", {"parent": exam_submission, "exam_question": qs_name}, "name")
+	if not answer_docname:
+		frappe.throw("Invalid question requested.")
 
+	result_doc = frappe.get_doc("Exam Answer", answer_docname)
 	result_doc.answer = answer
 	result_doc.marked_for_later = markdflater
 	result_doc.evaluation_status = "Pending"
 	result_doc.save(ignore_permissions=True)
-
 		
 	return {"qs_name": qs_name, "qs_no": result_doc.seq_no}
 
