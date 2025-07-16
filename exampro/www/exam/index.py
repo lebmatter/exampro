@@ -110,7 +110,7 @@ def get_context(context):
 			"text": "You do not have any live or upcoming exams."
 		}
 	elif exam_details["submission_status"] in ["Submitted", "Terminated"]:
-		frappe.local.flags.redirect_location = "/my-exams"
+		frappe.local.flags.redirect_location = "/exam/{}".format(exam_details["exam_submission"])
 		raise frappe.Redirect
 
 	elif exam_details["schedule_status"] == "Upcoming":
