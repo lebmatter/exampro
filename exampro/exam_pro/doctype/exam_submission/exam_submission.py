@@ -124,8 +124,10 @@ class ExamSubmission(Document):
 		# ):
 		# 	frappe.throw("Duplicate submission exists for {} - {}".format(self.candidate, self.exam_schedule))
 
-		if "System Manager" in frappe.get_roles():
-			self.assign_proctor_evaluator()
+		sched = frappe.get_doc("Exam Schedule", self.exam_schedule)
+		if sched.examiners:
+			if not self.assigned_proctor or not self.assigned_evaluator:
+				self.assign_proctor_evaluator()
 
 	def assign_proctor_evaluator(self):
 		"""
