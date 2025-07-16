@@ -2,6 +2,8 @@ import frappe
 import base64
 from frappe import _
 
+from exampro.www.my_exams import submit_pending_exams
+
 def get_context(context):
     """
     Handle exam invite context
@@ -9,6 +11,8 @@ def get_context(context):
     # Check if invite code is provided
     invite_code = frappe.form_dict.get("invite_code")
     context.invite_valid = False
+
+    submit_pending_exams()
     
     if not invite_code:
         context.message = _("Invalid invitation link. No invitation code provided.")
