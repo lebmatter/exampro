@@ -101,23 +101,6 @@ class ExamSubmission(Document):
 		frappe.db.delete("Exam Messages", {"exam_submission": self.name})
 		frappe.db.delete("Exam Certificate", {"exam_submission": self.name})
 
-	def exam_ended(self):
-		"""
-		End time is schedule start time + duration + additional time given
-		returns True, end_time if exam has ended
-		"""
-		scheduled_start, duration = frappe.get_cached_value(
-		"Exam Schedule", self.exam_schedule, ["start_date_time", "duration"]
-		)
-		end_time = scheduled_start + timedelta(minutes=duration) + \
-			timedelta(minutes=self.additional_time_given)
-		
-		current_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-
-		if current_time >= end_time:
-			return True, end_time
-		
-		return False, end_time
 	
 	def before_save(self):
 		# if frappe.db.exists(
@@ -176,6 +159,24 @@ class ExamSubmission(Document):
 			self.new_user = 1
 			self.reset_password_key = frappe.db.get_value("User", self.candidate, "reset_password_key")
 
+		# get questions
+		questions = frappe.get_all(
+			"Exam Added Question", filters={"parent": self.exam}, fields=["exam_question"]
+		)
+		random_questions = frappe.get_cached_value("Exam", self.exam, "randomize_questions")
+		if random_questions:
+			random.shuffle(questions)
+
+		self.submitted_answers = []
+		for idx, qs in enumerate(questions):
+			seq_no = idx + 1
+			qs_ = {
+					"seq_no": seq_no,
+					"exam_question": qs["exam_question"],
+					"evaluation_status": "Not Attempted"
+			}
+			self.append('submitted_answers', qs_)
+
 def can_process_question(doc, member=None):
 	"""
 	validatior function to run before getting or updating a question
@@ -184,7 +185,7 @@ def can_process_question(doc, member=None):
 		frappe.throw("Exam submitted!")
 	elif doc.status == "Started":
 		# check if the exam is ended, if so, submit the exam
-		exam_ended, end_time = doc.exam_ended()
+		exam_ended, end_time = has_submission_ended(doc.name)
 		if exam_ended:
 			doc.status = "Submitted"
 			doc.save(ignore_permissions=True)
@@ -270,150 +271,12 @@ def start_exam(exam_submission=None):
 
 	start_time = doc.can_start_exam()
 	doc.exam_started_time = start_time
-	# get questions
-	questions = frappe.get_all(
-		"Exam Added Question", filters={"parent": doc.exam}, fields=["exam_question"]
-	)
-	random_questions = frappe.get_cached_value("Exam", doc.exam, "randomize_questions")
-	if random_questions:
-		random.shuffle(questions)
-
-	doc.submitted_answers = []
-	qs_data = {}
-	for idx, qs in enumerate(questions):
-		seq_no = idx + 1
-		qs_ = {
-				"seq_no": seq_no,
-				"exam_question": qs["exam_question"],
-				"evaluation_status": "Not Attempted"
-		}
-		doc.append('submitted_answers', qs_)
-		qs_data["qs:{}".format(seq_no)] = "{}:{}".format(qs["exam_question"], "Not Attempted")
-	
 
 	doc.status = "Started"
 	doc.save(ignore_permissions=True)
-
-	# cache submission details
-	start_date_time, duration = frappe.get_cached_value(
-		"Exam Schedule", doc.exam_schedule, ["start_date_time", "duration"]
-	)
-	# end time is schedule start time + duration + additional time given
-	end_time = start_date_time + timedelta(minutes=duration) + \
-			timedelta(minutes=doc.additional_time_given)
-	data = {
-		"candidate": doc.candidate,
-		"exam_schedule": doc.exam_schedule,
-		"exam": doc.exam,
-		"total_questions": str(frappe.get_cached_value(
-			"Exam", doc.exam, "total_questions"
-		)),
-		"status": doc.status,
-		"exam_started_time": start_time.isoformat(),
-		"exam_end_time": end_time.isoformat(),
-		"additional_time_given": str(doc.additional_time_given),
-		"assigned_evaluator": doc.assigned_evaluator or "",
-		"assigned_proctor": doc.assigned_proctor or "",
-		"warning_count": 0,
-	}
-	for k, v in qs_data.items():
-		data[k] = v
-	for k,v in data.items():
-		frappe.cache().hset(exam_submission, k, v)
+	frappe.db.commit()
 
 	return True
-
-
-def rebuild_exam_trackers():
-    """
-    Rebuild tracker keys and exam data for ongoing exams in case of app restart.
-    This preserves the cache entries that track ongoing exam sessions.
-    Called from on_app_init hook.
-    """
-    # Clear any existing S3 client
-    if hasattr(frappe.local, "s3_client"):
-        delattr(frappe.local, "s3_client")
-    
-    # Get all ongoing exams (status = "Started")
-    ongoing_exams = frappe.get_all(
-        "Exam Submission", 
-        filters={"status": "Started"}, 
-        fields=["name", "exam", "exam_schedule", "exam_started_time", "additional_time_given", 
-                "candidate", "assigned_evaluator", "assigned_proctor"]
-    )
-    
-    rebuilt_count = 0
-    for exam in ongoing_exams:        
-        try:
-            # Get required values to calculate expiration time
-            start_date_time, duration = frappe.get_cached_value(
-                "Exam Schedule", exam.exam_schedule, ["start_date_time", "duration"]
-            )
-            
-            # Calculate end time (same logic as in start_exam)
-            end_time = start_date_time + timedelta(minutes=duration) + \
-                    timedelta(minutes=exam.additional_time_given)
-            
-            # Calculate remaining time
-            current_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-            remaining_seconds = max(0, int((end_time - current_time).total_seconds()))
-            
-            # Only rebuild if exam is still in progress (has remaining time)
-            if remaining_seconds > 0:
-
-                # Rebuild all exam cache data
-                exam_doc = frappe.get_doc("Exam Submission", exam.name)
-                
-                # Cache submission details (similar to start_exam function)
-                data = {
-                    "candidate": exam.candidate,
-                    "exam_schedule": exam.exam_schedule,
-                    "exam": exam.exam,
-                    "total_questions": str(frappe.get_cached_value(
-                        "Exam", exam.exam, "total_questions"
-                    )),
-                    "status": "Started",
-                    "exam_started_time": exam.exam_started_time.isoformat(),
-                    "exam_end_time": end_time.isoformat(),
-                    "additional_time_given": str(exam.additional_time_given),
-                    "assigned_evaluator": exam.assigned_evaluator or "",
-                    "assigned_proctor": exam.assigned_proctor or "",
-                    "warning_count": 0,
-                }
-                
-                # Get question data
-                submitted_answers = frappe.get_all(
-                    "Exam Answer", 
-                    filters={"parent": exam.name},
-                    fields=["seq_no", "exam_question", "evaluation_status"]
-                )
-                
-                # Cache question data
-                for ans in submitted_answers:
-                    data[f"qs:{ans.seq_no}"] = f"{ans.exam_question}:{ans.evaluation_status}"
-                
-                # Set all cache entries
-                for k, v in data.items():
-                    frappe.cache().hset(exam.name, k, v)
-                
-                rebuilt_count += 1
-                
-                # Log for monitoring purposes
-                frappe.logger().info(f"Rebuilt cache for exam submission: {exam.name} with {remaining_seconds} seconds remaining")
-            else:
-                # If the exam has expired, mark it as submitted
-                exam_doc = frappe.get_doc("Exam Submission", exam.name)
-                if exam_doc.status == "Started":
-                    exam_doc.status = "Submitted"
-                    exam_doc.exam_submitted_time = datetime.now()
-                    exam_doc.save(ignore_permissions=True)
-                    frappe.logger().info(f"Marked expired exam as submitted: {exam.name}")
-                
-        except Exception as error:
-            frappe.logger().error(f"Failed to rebuild cache for exam {exam.name}: {str(error)}")
-    
-    frappe.logger().info(f"Rebuilt cache for {rebuilt_count} ongoing exams")
-    return rebuilt_count
 
 
 @frappe.whitelist()
@@ -459,39 +322,31 @@ def get_question(exam_submission=None, qsno=1):
 	"""
 	assert exam_submission
 	qs_no = int(qsno)
-	exam = frappe.cache().hget(exam_submission, "exam")
-	if not exam:
-		frappe.throw("Invalid exam or exam is expired.")
-	
-	exam_schedule = frappe.get_cached_value("Exam Submission", exam_submission, "exam_schedule")
+
+	exam_schedule, exam = frappe.get_cached_value("Exam Submission", exam_submission, ["exam_schedule", "exam"])
 	if get_schedule_status(exam_schedule) != "Ongoing":
 		frappe.throw("Exam is not ongoing or has ended.")
-
-	# check if the requested question is valid
-	if qs_no > int(frappe.cache().hget(exam_submission, "total_questions")):
-		frappe.throw("Invalid question no. {} requested.".format(qs_no))
-	# check if the previous question is answered. else throw err
-	# if qs_no > 1:
-	# 	prev = frappe.cache().hget(exam_submission, "qs:{}".format(qs_no-1))
-	# 	if prev.split(":")[-1] == "Not Attempted":
-	# 		frappe.throw("Previous question not attempted.")
-
-	# get the qs with seq no
-	qs_ = frappe.cache().hget(exam_submission, "qs:{}".format(qs_no))
-	if not qs_:
-		frappe.throw("Invalid question no. {} requested.".format(qs_no))
-	qs_name = qs_.split(":")[0]
 	
-	try:
-		question_doc = frappe.get_cached_doc("Exam Question", qs_name)
-	except frappe.DoesNotExistError:
-		frappe.throw("Invalid question requested.")
+	if has_submission_ended(exam_submission):
+		frappe.throw("Exam has ended.")
 
+	total_qs = frappe.get_cached_value(
+		"Exam", exam_submission, "total_questions"
+	)
+	if qs_no < 1 or qs_no > total_qs:
+		frappe.throw("Invalid question number requested: {}".format(qs_no))
 
 	answer_doc = frappe.get_value(
-		"Exam Answer", "{}-{}".format(exam_submission, qs_name),
-		["marked_for_later", "answer", "seq_no"], as_dict=True
+		"Exam Answer", "{}-{}".format(exam_submission, qs_no),
+		["marked_for_later", "answer", "seq_no", "exam_question"], as_dict=True
 	)
+	if not answer_doc:
+		frappe.throw("Invalid question requested.")
+
+	try:
+		question_doc = frappe.get_cached_doc("Exam Question", answer_doc["exam_question"])
+	except frappe.DoesNotExistError:
+		frappe.throw("Invalid question requested.")
 
 	res = {
 		"question": question_doc.question,
@@ -533,11 +388,6 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 		frappe.throw("Invalid question.")
 
 	result_doc = frappe.get_doc("Exam Answer", "{}-{}".format(exam_submission, qs_name), ignore_permissions=True)
-	frappe.cache().hset(
-		exam_submission,
-		"qs:{}".format(result_doc.seq_no),
-		"{}:{}".format(qs_name, "Pending"
-	))
 
 	result_doc.answer = answer
 	result_doc.marked_for_later = markdflater
@@ -784,9 +634,12 @@ def proctor_video_list(exam_submission=None):
 	if frappe.session.user == "Guest":
 		raise frappe.PermissionError(_("Please login to access this page."))
 
+	assigned_proctor = frappe.get_cached_value(
+		"Exam Submission", exam_submission, "assigned_proctor"
+	)
 	# make sure that logged in user is valid proctor
-	if frappe.session.user != frappe.cache().hget(exam_submission, "assigned_proctor"):
-		raise frappe.PermissionError(_("No proctor access to the exam."))
+	if frappe.session.user != assigned_proctor:
+		raise frappe.PermissionError(_("No permission to access this exam."))
 
 	exam = frappe.get_cached_value(
 		"Exam Submission", exam_submission, "exam"
@@ -852,15 +705,15 @@ def upload_video(exam_submission=None):
 		frappe.cache().setex(object_name, ttl, presigned_url)
 
 		# trigger webocket msg to proctor
-		frappe.publish_realtime(
-			event='newproctorvideo',
-			message={
-				"exam_submission": exam_submission,
-				"ts": filename[:-5],
-				"url": presigned_url
-			},
-			user=frappe.cache().hget(exam_submission, "assigned_proctor")
-		)
+		# frappe.publish_realtime(
+		# 	event='newproctorvideo',
+		# 	message={
+		# 		"exam_submission": exam_submission,
+		# 		"ts": filename[:-5],
+		# 		"url": presigned_url
+		# 	},
+		# 	user=frappe.cache().hget(exam_submission, "assigned_proctor")
+		# )
 		return {"status": True}
 
 def val_secs(securities):
@@ -926,3 +779,21 @@ def register_candidate(schedule='', user_email='', user_name=''):
 		frappe.db.commit()
 
 
+def has_submission_ended(exam_submission):
+	"""
+	End time is schedule start time + duration + additional time given
+	returns True, end_time if exam has ended
+	"""
+	schedule, additional_time_given = frappe.get_cached_value("Exam Submission", exam_submission, ["exam_schedule", "additional_time_given"])
+	scheduled_start, duration = frappe.get_cached_value(
+	"Exam Schedule", schedule, ["start_date_time", "duration"]
+	)
+	end_time = scheduled_start + timedelta(minutes=duration) + \
+		timedelta(minutes=additional_time_given)
+	
+	current_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
+
+	if current_time >= end_time:
+		return True, end_time
+	
+	return False, end_time

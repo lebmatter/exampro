@@ -7,7 +7,7 @@ app_license = "mit"
 # required_apps = []
 
 # App startup hooks
-on_app_init = ["exampro.exam_pro.doctype.exam_submission.exam_submission.rebuild_exam_trackers"]
+# on_app_init = ["exampro.exam_pro.doctype.exam_submission.exam_submission.rebuild_exam_trackers"]
 
 # Includes in <head>
 # ------------------

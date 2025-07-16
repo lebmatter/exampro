@@ -4,6 +4,7 @@ import frappe
 from frappe import _
 
 from exampro.exam_pro.utils import (redirect_to_exams_list)
+from exampro.exam_pro.doctype.exam_submission.exam_submission import has_submission_ended
 
 
 def get_context(context):
@@ -79,7 +80,7 @@ def set_exam_context(context, exmsubmn):
 			elif exam_data["show_result"] == "After Exam Submission":
 				context.result_type = "scorecard"
 			elif exam_data["show_result"] == "After Schedule Completion":
-				ended, end_time = exam_submission.exam_ended()
+				ended, end_time = has_submission_ended(exam_submission.name)
 				if ended:
 					context.result_type = "scorecard"
 				else:
