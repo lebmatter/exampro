@@ -126,6 +126,14 @@ class ExamSubmission(Document):
 		# ):
 		# 	frappe.throw("Duplicate submission exists for {} - {}".format(self.candidate, self.exam_schedule))
 
+		# If this is a new submission, make sure the candidate has the Exam Candidate role
+		if self.candidate:
+			user = frappe.get_doc("User", self.candidate)
+			roles = [ro.role for ro in user.roles]
+			if "Exam Candidate" not in roles:
+				user.add_roles("Exam Candidate")
+				user.save(ignore_permissions=True)
+
 		sched = frappe.get_doc("Exam Schedule", self.exam_schedule)
 		if sched.examiners:
 			if not self.assigned_proctor or not self.assigned_evaluator:
