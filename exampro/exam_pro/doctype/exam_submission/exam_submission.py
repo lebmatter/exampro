@@ -12,6 +12,8 @@ from frappe.utils.file_manager import get_uploaded_content
 from frappe.utils import now
 from werkzeug.utils import secure_filename
 
+from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_status
+
 import boto3
 from botocore.client import Config
 
@@ -310,8 +312,6 @@ def start_exam(exam_submission=None):
 		data[k] = v
 	for k,v in data.items():
 		frappe.cache().hset(exam_submission, k, v)
-	expiration = (end_time - start_date_time).seconds
-	frappe.cache().setex("{}:tracker".format(doc.name), expiration, 1)
 
 	return True
 
@@ -335,11 +335,7 @@ def rebuild_exam_trackers():
     )
     
     rebuilt_count = 0
-    for exam in ongoing_exams:
-        # Check if the tracker key exists
-        if frappe.cache().get("{}:tracker".format(exam.name)):
-            continue
-        
+    for exam in ongoing_exams:        
         try:
             # Get required values to calculate expiration time
             start_date_time, duration = frappe.get_cached_value(
@@ -356,9 +352,7 @@ def rebuild_exam_trackers():
             
             # Only rebuild if exam is still in progress (has remaining time)
             if remaining_seconds > 0:
-                # Rebuild the tracker key with remaining time
-                frappe.cache().setex("{}:tracker".format(exam.name), remaining_seconds, 1)
-                
+
                 # Rebuild all exam cache data
                 exam_doc = frappe.get_doc("Exam Submission", exam.name)
                 
@@ -459,11 +453,11 @@ def get_question(exam_submission=None, qsno=1):
 	qs_no = int(qsno)
 	exam = frappe.cache().hget(exam_submission, "exam")
 	if not exam:
-		frappe.throw("Invalid exam.")
-
-	if not frappe.cache().get("{}:tracker".format(exam_submission)):
-		doc = frappe.get_doc("Exam Submission", exam_submission)
-		can_process_question(doc)
+		frappe.throw("Invalid exam or exam is expired.")
+	
+	exam_schedule = frappe.get_cached_value("Exam Submission", exam_submission, "exam_schedule")
+	if get_schedule_status(exam_schedule) != "Ongoing":
+		frappe.throw("Exam is not ongoing or has ended.")
 
 	# check if the requested question is valid
 	if qs_no > int(frappe.cache().hget(exam_submission, "total_questions")):
@@ -786,7 +780,10 @@ def proctor_video_list(exam_submission=None):
 	if frappe.session.user != frappe.cache().hget(exam_submission, "assigned_proctor"):
 		raise frappe.PermissionError(_("No proctor access to the exam."))
 
-	ttl = frappe.cache().ttl("{}:tracker".format(exam_submission))
+	exam = frappe.get_cached_value(
+		"Exam Submission", exam_submission, "exam"
+	)
+	ttl = frappe.get_cached_value("Exam", exam, "duration") * 60 + 900  # ttl is exam duration + 15 min buffer
 	res = get_videos(exam_submission, ttl)
 
 	return res
@@ -801,7 +798,7 @@ def upload_video(exam_submission=None):
 	if frappe.session.user == "Guest":
 		raise frappe.PermissionError(_("Please login to access this page."))
 
-	if not frappe.cache().get("{}:tracker".format(exam_submission)):
+	if frappe.db.get_value("Exam Submission", exam_submission, "status") != "Started":
 		raise frappe.PermissionError(_("Exam is invalid/ended."))
 	# check if the exam is of logged in user
 	if frappe.session.user != \
@@ -824,7 +821,11 @@ def upload_video(exam_submission=None):
 	# Specify your S3 bucket and folder
 	bucket_name = settings.s3_bucket
 	object_name = "{}/{}".format(exam_submission, filename)
-	ttl = frappe.cache().ttl("{}:tracker".format(exam_submission))
+	exam = frappe.get_cached_value(
+		"Exam Submission", exam_submission, "exam"
+	)
+	duration = frappe.get_cached_value("Exam", exam, "duration")
+	ttl = duration * 60 + 900  # ttl is exam duration + 15 min buffer
 
 	try:
 		# Stream the file directly to S3

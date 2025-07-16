@@ -12,7 +12,6 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 	Function returns only one live/upcoming exam details
 	even if multiple entries are there.
 	"""
-	tracker = "{}:tracker"
 	res = {"live_submissions":[], "pending_candidates": []}
 
 	submissions = frappe.get_all(
@@ -49,7 +48,7 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 				"candidate_name": submission["candidate_name"],
 				"status": submission["status"]
 			}
-			if frappe.cache().get(tracker.format(submission["name"])):
+			if submission["status"] == "Started":
 				# if tracker exists, candidate started the exam
 				res["live_submissions"].append(userdata)
 			else:

@@ -395,3 +395,41 @@ def get_server_status(schedule_name):
 	except Exception as e:
 		frappe.logger().error(f"Error in get_server_status for {schedule_name}: {str(e)}")
 		return "Error"
+
+def get_schedule_status(exam_schedule, additional_time=0):
+	"""
+	Calculate and return the status of the exam schedule.
+	:param additional_time: Optional minutes to adjust the end time for status calculation.
+	Returns the status of the exam schedule based on the current time and start date time.
+	- "Upcoming" if the current time is before the start date time.
+	- "Ongoing" if the current time is between the start date time and end date time.
+	- "Completed" if the current time is after the end date time.
+	"""
+	start_date_time, schedule_type, duration, schedule_expire_in_days = frappe.get_value(
+		"Exam Schedule", exam_schedule, 
+		["start_date_time", "schedule_type", "duration", "schedule_expire_in_days"]
+	)
+	current_time = datetime.now()
+	
+	# Calculate end time based on schedule type
+	if schedule_type == "Fixed":
+		end_time = start_date_time + timedelta(minutes=duration or 0)
+	else:
+		# For flexible schedules, we consider the end time as start time + duration + days
+		days = schedule_expire_in_days or 0
+		end_time = start_date_time + timedelta(minutes=duration or 0, days=days)
+	
+	# If additional_time is provided, adjust the end time
+	if additional_time:
+		end_time += timedelta(minutes=additional_time)
+	
+	# Determine status
+	status = None
+	if current_time < start_date_time:
+		status = "Upcoming"
+	elif start_date_time <= current_time <= end_time:
+		status = "Ongoing"
+	else:
+		status = "Completed"
+		
+	return status
