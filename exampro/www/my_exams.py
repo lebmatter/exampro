@@ -13,12 +13,13 @@ def submit_pending_exams(member=None):
 			"candidate": member or frappe.session.user,
 			"status": ["in", ["Registered", "Started"]]
 		}, 
-		["name", "exam_schedule", "status", "additional_time_given"]
+		["name", "exam_schedule", "status", "additional_time_given"],
+		ignore_permissions=True
 	)
 	for submission in submissions:
-		sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
-		if sched.get_status() == "Completed":
-			doc = frappe.get_doc("Exam Submission", submission["name"], additional_time=submission["additional_time_given"])
+		sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"], ignore_permissions=True)
+		if sched.get_status(additional_time=submission["additional_time_given"]) == "Completed":
+			doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
 			doc.status = "Submitted"
 			doc.save(ignore_permissions=True)
 			frappe.db.commit()
@@ -39,11 +40,10 @@ def get_user_exams(member=None, page=1, page_size=10):
 			"exam_started_time",
 			"exam_submitted_time",
 			"additional_time_given",
-			"result_status"
-	])
+			"result_status"], ignore_permissions=True)
 	for submission in submissions:
-		schedule = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
-		exam = frappe.get_doc("Exam", schedule.exam)
+		schedule = frappe.get_doc("Exam Schedule", submission["exam_schedule"], ignore_permissions=True)
+		exam = frappe.get_doc("Exam", schedule.exam, ignore_permissions=True)
 
 		# end time is schedule start time + duration + additional time given
 		end_time = schedule.start_date_time + timedelta(minutes=schedule.duration) + \
@@ -87,7 +87,7 @@ def get_user_exams(member=None, page=1, page_size=10):
 			exam_details["schedule_status"] = "Ongoing. Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
 		# if time is over, submit if applicable
 		if submission["status"] != "Submitted" and exam_details["schedule_status"] == "Completed":
-			doc = frappe.get_doc("Exam Submission", submission["name"])
+			doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
 			doc.status = "Submitted"
 			doc.save(ignore_permissions=True)
 				
