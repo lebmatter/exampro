@@ -10,7 +10,11 @@ def get_context(context):
     """
     # Check if invite code is provided
     invite_code = frappe.form_dict.get("invite_code")
-    context.invite_valid = False
+    if not invite_code:
+        context.invite_valid = False
+        context.message = _("Invalid invitation link. No invitation code provided.")
+        return context
+
     if frappe.session.user == "Guest":
         return {"success": False, "message": _("Please login to accept the invitation.")}
 
@@ -27,10 +31,6 @@ def get_context(context):
             frappe.db.commit()    
 
     submit_pending_exams()
-    
-    if not invite_code:
-        context.message = _("Invalid invitation link. No invitation code provided.")
-        return context
     
     try:
         # Decode the base64 invite code
