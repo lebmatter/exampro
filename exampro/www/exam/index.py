@@ -130,7 +130,10 @@ def get_context(context):
 		for key, value in exam_details.items():
 			exam[key] = value
 
-		exam["instructions"] = markdown(exam["instructions"])
+		instructions = markdown(exam["instructions"])
+		if instructions.strip() == "<p></p>" or instructions.strip() == "":
+			instructions = ""
+		exam["instructions"] = instructions if instructions else ""
 		exam["current_qs"] = 1
 		# return the last question requested in this exam, if applicable
 		if exam["submission_status"] == "Started":
