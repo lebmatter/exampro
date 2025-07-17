@@ -216,7 +216,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-07-16 17:19:28.519934",
+ "modified": "2025-07-17 12:52:16.919306",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Submission",
@@ -244,6 +244,18 @@
    "read": 1,
    "report": 1,
    "role": "Exam Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Exam Candidate",
    "select": 1,
    "share": 1,
    "write": 1
