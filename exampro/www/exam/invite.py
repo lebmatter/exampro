@@ -11,6 +11,20 @@ def get_context(context):
     # Check if invite code is provided
     invite_code = frappe.form_dict.get("invite_code")
     context.invite_valid = False
+    if frappe.session.user == "Guest":
+        return {"success": False, "message": _("Please login to accept the invitation.")}
+
+    # Check if submission already exists for this user and schedule
+    if frappe.session.user != "Administrator":
+        # Check if user has Exam Candidate role, add if not present
+        user_roles = frappe.get_roles(frappe.session.user)
+        if "Exam Candidate" not in user_roles:
+            user = frappe.get_doc("User", frappe.session.user)
+            user.append("roles", {
+                "role": "Exam Candidate"
+            })
+            user.save(ignore_permissions=True)
+            frappe.db.commit()    
 
     submit_pending_exams()
     
@@ -51,24 +65,12 @@ def get_context(context):
         # Check if user is logged in
         context.is_logged_in = frappe.session.user != "Guest"
         
-        # Check if submission already exists for this user and schedule
-        if context.is_logged_in and frappe.session.user != "Administrator":
-            # Check if user has Exam Candidate role, add if not present
-            user_roles = frappe.get_roles(frappe.session.user)
-            if "Exam Candidate" not in user_roles:
-                user = frappe.get_doc("User", frappe.session.user)
-                user.append("roles", {
-                    "role": "Exam Candidate"
-                })
-                user.save(ignore_permissions=True)
-                frappe.db.commit()
-
-            existing_submission = frappe.db.exists("Exam Submission", {
-                "exam_schedule": schedule_name,
-                "candidate": frappe.session.user
-            })
-            context.has_submission = bool(existing_submission)
-            context.submission_id = existing_submission if existing_submission else None
+        existing_submission = frappe.db.exists("Exam Submission", {
+            "exam_schedule": schedule_name,
+            "candidate": frappe.session.user
+        })
+        context.has_submission = bool(existing_submission)
+        context.submission_id = existing_submission if existing_submission else None
         else:
             context.has_submission = False
             context.submission_id = None
