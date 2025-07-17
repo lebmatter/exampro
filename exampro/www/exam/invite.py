@@ -49,7 +49,9 @@ def get_context(context):
         if schedule.get_status() == "Completed":
             context.message = _("This exam schedule has already been completed.")
             return context
-        
+        else:
+            context.has_submission = False
+            context.submission_id = None
         
         # Get the exam data
         exam = frappe.get_doc("Exam", schedule.exam)
@@ -71,9 +73,6 @@ def get_context(context):
         })
         context.has_submission = bool(existing_submission)
         context.submission_id = existing_submission if existing_submission else None
-        else:
-            context.has_submission = False
-            context.submission_id = None
             
     except Exception as e:
         frappe.log_error(f"Error processing exam invite: {str(e)}")
