@@ -429,12 +429,27 @@ Proctor
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="chatVideoModalLabel">Chat with: <span id="candidateName"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <!-- Chat Column -->
-                    <div class="col-md-6">
+                    <!-- Video Column (Left) -->
+                    <div class="col-md-5">
+                        <div class="modal-video-container">
+                            <video id="modalVideoElement" controls>
+                                <source src="" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <div class="mt-3 text-center">
+                                <button type="button" class="btn btn-danger" id="terminateExam">Terminate Exam</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Column (Right) -->
+                    <div class="col-md-7">
                         <div id="messages" class="tab-pane fade show active">
                             <div class="chat-container">
                                 <div id="chat-messages" class="d-flex flex-column mb-3"></div>
@@ -446,26 +461,11 @@ Proctor
                                         <button class="btn" type="button" id="proc-send-message">
                                             <span class="d-flex align-items-center">
                                                 Send
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-                                                    class="bi bi-send ms-2" viewBox="0 0 16 16">
-                                                    <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/>
-                                                </svg>
+                                                <i class="bi bi-send ms-2"></i>
                                             </span>
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Video Column -->
-                    <div class="col-md-6">
-                        <div class="modal-video-container">
-                            <video id="modalVideoElement" controls>
-                                <source src="" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                            <div class="mt-3 text-center">
-                                <button type="button" class="btn btn-danger" id="terminateExam">Terminate Exam</button>
                             </div>
                         </div>
                     </div>
