@@ -83,28 +83,74 @@ Proctor
         height: 100%;
     }
 
-    .controls {
-        position: absolute;
-        bottom: 5px;
-        width: 100%;
+    /* Updated controls - now positioned below video */
+    .video-controls {
         display: flex;
-        flex-wrap: wrap;
-        background: rgba(0, 0, 0, 0.4);
-        color: white;
-        text-align: center;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
     }
 
     .controls__button {
-        background: none;
-        border: 0;
-        line-height: 1;
-        color: white;
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        color: #495057;
         text-align: center;
         outline: 0;
-        padding: 5px;
+        padding: 4px 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+    }
+
+    .controls__button:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    .controls__button.go-live-btn {
+        background-color: #dc3545;
+        color: white;
+        border-color: #dc3545;
+        font-size: 10px;
+        padding: 4px 8px;
+        min-width: auto;
+    }
+
+    .controls__button.go-live-btn:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+
+    .controls__button.chat-btn {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .controls__button.chat-btn:hover {
+        background-color: #0056b3;
+        border-color: #004085;
     }
     
     .svg-white { fill: white; }
+
+    /* Timestamp display */
+    .file-timestamp {
+        font-size: 10px;
+        color: #6c757d;
+        margin-right: 8px;
+        align-self: center;
+    }
 
     /* Zerodha-style chat container with updated styling */
     #messages {
@@ -289,25 +335,26 @@ Proctor
                                 <video class="video" id="{{ submission.name }}" data-videoid="{{ submission.name }}" preload="metadata">
                                     <p>Your browser doesn't support HTML5 video.</p>
                                 </video>
-                                <div class="controls">
-                                    <small class="fileTimeStamp"></small>
-                                    <button class="controls__button toggleButton" title="Toggle Play">
-                                        <i class="bi bi-play-fill"></i>
-                                    </button>
-                                    <button class="controls__button skipBack" title="Skip back">
-                                        <i class="bi bi-rewind-fill"></i>
-                                    </button>
-                                    <button class="controls__button skipFwd" title="Skip forward">
-                                        <i class="bi bi-fast-forward-fill"></i>
-                                    </button>
-                                    <small><button class="controls__button goLive" title="Go Live">
-                                            Go Live
-                                        </button></small>
-                                    <button type="button" class="controls__button menu" title="Chat"
-                                        data-videoid="{{ submission.name }}">
-                                        <i class="bi bi-chat-square-text-fill"></i>
-                                    </button>
-                                </div>
+                            </div>
+                            <!-- Controls moved below video as centered button group -->
+                            <div class="video-controls">
+                                <small class="file-timestamp fileTimeStamp"></small>
+                                <button class="controls__button toggleButton" title="Toggle Play">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                                <button class="controls__button skipBack" title="Skip back">
+                                    <i class="bi bi-rewind-fill"></i>
+                                </button>
+                                <button class="controls__button skipFwd" title="Skip forward">
+                                    <i class="bi bi-fast-forward-fill"></i>
+                                </button>
+                                <button class="controls__button go-live-btn goLive" title="Go Live">
+                                    Go Live
+                                </button>
+                                <button type="button" class="controls__button chat-btn menu" title="Chat"
+                                    data-videoid="{{ submission.name }}">
+                                    <i class="bi bi-chat-square-text-fill"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
