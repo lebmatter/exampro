@@ -593,6 +593,7 @@ function startExam() {
 };
 
 function getQuestion(qsno) {
+    submitAnswer(false);
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_question",
         type: "POST",
