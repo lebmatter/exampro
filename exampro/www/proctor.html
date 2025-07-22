@@ -268,6 +268,58 @@ Proctor
         margin-bottom: 20px;
         border-radius: 5px;
     }
+
+    /* Offline Overlay Styles */
+    .offline-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .offline-overlay.show {
+        display: flex;
+    }
+
+    .offline-button {
+        background-color: rgba(220, 53, 69, 0.9);
+        color: white;
+        border: 2px solid #dc3545;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .offline-button:hover {
+        background-color: rgba(220, 53, 69, 1);
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .offline-button i {
+        font-size: 16px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
 </style>
 {% endblock %}
 
@@ -327,7 +379,6 @@ Proctor
                     <div class="card video-card">
                         <div class="card-header p-2 d-flex justify-content-between align-items-center">
                             <small class="text-truncate me-2">{{ submission.candidate_name }}</small>
-                            <span class="badge status-badge status-{{ submission.status.lower() }}">{{ submission.status }}</span>
                         </div>
                         <div class="card-body p-0">
                             <div class="video-container" data-videoid="{{ submission.name }}"
@@ -335,6 +386,13 @@ Proctor
                                 <video class="video" id="{{ submission.name }}" data-videoid="{{ submission.name }}" preload="metadata">
                                     <p>Your browser doesn't support HTML5 video.</p>
                                 </video>
+                            </div>
+                            <!-- Offline Overlay -->
+                            <div class="offline-overlay" id="offline-overlay-{{ submission.name }}">
+                                <div class="offline-button" onclick="toggleOfflineStatus('{{ submission.name }}')">
+                                    <i class="bi bi-wifi-off"></i>
+                                    <span>Offline</span>
+                                </div>
                             </div>
                             <!-- Controls moved below video as centered button group -->
                             <div class="video-controls">
@@ -347,9 +405,6 @@ Proctor
                                 </button>
                                 <button class="controls__button skipFwd" title="Skip forward">
                                     <i class="bi bi-fast-forward-fill"></i>
-                                </button>
-                                <button class="controls__button go-live-btn goLive" title="Go Live">
-                                    Go Live
                                 </button>
                                 <button type="button" class="controls__button chat-btn menu" title="Chat"
                                     data-videoid="{{ submission.name }}">

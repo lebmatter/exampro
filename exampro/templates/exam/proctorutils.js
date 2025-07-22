@@ -312,7 +312,6 @@ function openChatModal(event) {
 function onLoanMetaData() {
   const videoContainer = this.closest(".video-container");
   const video = videoContainer.querySelector("video");
-  let liveBtn = videoContainer.querySelector(".goLive");
   let skipfwd = videoContainer.querySelector(".skipFwd");
   let exam_submission = videoContainer.getAttribute("data-videoid");
 
@@ -332,44 +331,16 @@ function onLoanMetaData() {
       // check if the last video is 30 sec old
       if (!video.paused) {
         if (!disconnected) {
-            liveBtn.innerHTML =
-            '<i class="bi bi-circle-fill text-success me-1"></i> Live';
             videoContainer.setAttribute("data-islive", "1");
-            // Find the card that contains this video container
-            const card = videoContainer.closest('.card');
-            // Look for status badge in the card header
-            if (card) {
-            const statusBadge = card.querySelector('.card-header .status-badge');
-            if (statusBadge) {
-              statusBadge.textContent = 'Started';
-              statusBadge.className = 'badge status-badge status-started';
-            }
-            }
           } else {
-            liveBtn.innerHTML =
-            '<i class="bi bi-circle-fill text-danger me-1"></i> Offline';
             videoContainer.setAttribute("data-islive", "0");
-            // Find the card that contains this video container
-            const card = videoContainer.closest('.card');
-            // Look for status badge in the card header
-            if (card) {
-            const statusBadge = card.querySelector('.card-header .status-badge');
-            if (statusBadge) {
-                statusBadge.textContent = 'Offline';
-                statusBadge.innerHTML = '<i class="bi bi-wifi-off me-1"></i>Offline';
-              statusBadge.className = 'badge status-badge status-offline';
-            }
-            }
         }
       }
     } else {
       skipfwd.disabled = false;
       if (!disconnected) {
-        liveBtn.innerText = "Go Live";
         videoContainer.setAttribute("data-islive", "0");
       } else {
-        liveBtn.innerHTML =
-          '<i class="bi bi-circle-fill text-danger me-1"></i> Disconnected';
         videoContainer.setAttribute("data-islive", "0");
       }
     }
