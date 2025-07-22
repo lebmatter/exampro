@@ -53,10 +53,9 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>{{ _("Exam Name") }}</th>
-                                <th>{{ _("Schedule Time") }}</th>
+                                <th>{{ _("Time") }}</th>
                                 <th>{{ _("Duration") }}</th>
-                                <th>{{ _("Schedule Status") }}</th>
-                                <th>{{ _("Exam Status") }}</th>
+                                <th>{{ _("Status") }}</th>
                                 <th>{{ _("Result") }}</th>
                                 <th></th>
                             </tr>
@@ -72,20 +71,20 @@
 
                             {% for exam in exams %}
                             <tr>
-                                <td>{{ exam.exam_name }}</td>
-                                <td>{{ exam.schedule_time }}</td>
-                                <td>{{ exam.duration }}</td>
                                 <td>
-                                    {% if exam.schedule_status == "Upcoming" %}
-                                        <span class="badge bg-primary-light text-primary">{{ exam.schedule_status }}</span>
-                                    {% elif exam.schedule_status == "Ongoing" %}
-                                        <span class="badge bg-warning-light text-warning">{{ exam.schedule_status }}</span>
-                                    {% elif exam.schedule_status == "Completed" %}
-                                        <span class="badge bg-success-light text-success">{{ exam.schedule_status }}</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary-light text-secondary">{{ exam.schedule_status }}</span>
+                                    {{ exam.exam_name }}
+                                    {% if exam.schedule_type == "Flexible" %}
+                                        <span class="badge badge-pill badge-info ms-2">Flexible</span>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    {% if exam.schedule_type == "Flexible" %}
+                                        {{ exam.flexible_schedule_status }}
+                                    {% else %}
+                                        {{ exam.schedule_time }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ exam.duration }}</td>
                                 <td>
                                     {% if exam.status == "Upcoming" %}
                                         <span class="badge bg-info text-white">{{ exam.status }}</span>

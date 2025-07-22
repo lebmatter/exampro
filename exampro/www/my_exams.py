@@ -84,7 +84,7 @@ def get_user_exams(member=None, page=1, page_size=10):
 			frappe.local.flags.redirect_location = "/exam"
 			raise frappe.Redirect
 		if exam_details["schedule_status"] == "Ongoing" and schedule.schedule_type == "Flexible":
-			exam_details["schedule_status"] = "Ongoing. Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
+			exam_details["flexible_schedule_status"] = "Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
 		# if time is over, submit if applicable
 		if submission["status"] != "Submitted" and exam_details["schedule_status"] == "Completed":
 			doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
