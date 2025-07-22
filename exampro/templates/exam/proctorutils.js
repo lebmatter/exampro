@@ -4,7 +4,7 @@ var videoBlobStore = {};
 const MAX_BLOB_CACHE_SIZE = 4;
 var activeChat = "";
 const videos = document.getElementsByClassName("video");
-const toggleButton = document.getElementsByClassName("toggleButton");
+const togglePlayBtn = document.getElementsByClassName("togglePlayBtn");
 
 // Cache for storing the last known message for each candidate
 var lastKnownMessages = {};
@@ -58,13 +58,14 @@ function togglePlay() {
   }
 }
 
-function updateToggleButton() {
+function updatetogglePlayBtn() {
   // Find the closest '.video-container' ancestor from the video
   const videoContainer = this.closest(".video-container");
+  console.log("Updating toggle play button for video container:", videoContainer);
 
-  // Within that container, find the toggleButton
-  const toggleButton = videoContainer.querySelector(".toggleButton");
-  toggleButton.innerHTML = this.paused ? 
+  // Within that container, find the togglePlayBtn
+  const togglePlayBtn = videoContainer.querySelector(".togglePlayBtn");
+  togglePlayBtn.innerHTML = this.paused ? 
     '<i class="bi bi-play-fill"></i>' : 
     '<i class="bi bi-pause-fill"></i>';
 }
@@ -365,10 +366,10 @@ function onLoanMetaData() {
 }
 
 
-addEventListenerToClass("toggleButton", "click", togglePlay);
+addEventListenerToClass("togglePlayBtn", "click", togglePlay);
 addEventListenerToClass("video", "click", togglePlay);
-addEventListenerToClass("video", "play", updateToggleButton);
-addEventListenerToClass("video", "pause", updateToggleButton);
+addEventListenerToClass("video", "play", updatetogglePlayBtn);
+addEventListenerToClass("video", "pause", updatetogglePlayBtn);
 addEventListenerToClass("video", "timeupdate", handleProgress);
 // addEventListenerToClass("video", "ended", playNextVideo);
 addEventListenerToClass("goLive", "click", playLastVideo);
