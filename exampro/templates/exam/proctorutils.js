@@ -46,11 +46,26 @@ function addEventListenerToClass(className, eventType, handlerFunction) {
   }
 }
 function togglePlay() {
-  // Find the closest '.video-container' ancestor
-  const videoContainer = this.closest(".video-container");
-
-  // Within that container, find the video element
-  const video = videoContainer.querySelector("video");
+  let videoId;
+  
+  // Check if this is a button or the video itself
+  if (this.classList.contains('togglePlayBtn')) {
+    // If it's the button, get ID from its ID attribute
+    videoId = this.id.replace('togglePlayBtn-', '');
+  } else if (this.classList.contains('video')) {
+    // If it's the video, get ID directly
+    videoId = this.getAttribute('data-videoid');
+  } else {
+    // Exit if we can't determine videoId
+    return;
+  }
+  
+  // Find the video element by ID
+  const video = document.getElementById(videoId);
+  
+  // Exit if no video found
+  if (!video) return;
+  
   if (video.paused || video.ended) {
     video.play();
   } else {
@@ -59,15 +74,18 @@ function togglePlay() {
 }
 
 function updatetogglePlayBtn() {
-  // Find the closest '.video-container' ancestor from the video
-  const videoContainer = this.closest(".video-container");
-  console.log("Updating toggle play button for video container:", videoContainer);
-
-  // Within that container, find the togglePlayBtn
-  const togglePlayBtn = videoContainer.querySelector(".togglePlayBtn");
-  togglePlayBtn.innerHTML = this.paused ? 
-    '<i class="bi bi-play-fill"></i>' : 
-    '<i class="bi bi-pause-fill"></i>';
+  // Get video ID from the video element's data attribute
+  const videoId = this.getAttribute("data-videoid");
+  
+  // Use ID-specific selector to find the play button
+  const togglePlayBtn = document.getElementById(`togglePlayBtn-${videoId}`);
+  
+  // Update the button based on video state
+  if (togglePlayBtn) {
+    togglePlayBtn.innerHTML = this.paused ? 
+      '<i class="bi bi-play-fill"></i>' : 
+      '<i class="bi bi-pause-fill"></i>';
+  }
 }
 
 function parseUnitTime(videoURL, addSeconds) {
@@ -86,16 +104,56 @@ function parseUnitTime(videoURL, addSeconds) {
   return hours + ":" + minutes + ":" + seconds;
 }
 
+/**
+ * Check if a video has been disconnected based on its timestamp
+ * @param {string} videoURL - The URL of the video to check
+ * @returns {boolean} - True if the video is considered disconnected
+ */
+function videoDisconnected(videoURL) {
+  if (!videoURL) return true;
+  
+  try {
+    const url = new URL(videoURL);
+    const filenameWithExtension = url.pathname.split("/").pop();
+    const filename = filenameWithExtension.split(".")[0];
+    
+    // Get timestamp from filename (assumed to be a unix timestamp)
+    const videoTimestamp = parseInt(filename, 10) * 1000;
+    const currentTime = new Date().getTime();
+    
+    // If the video is more than 30 seconds old, consider it disconnected
+    return (currentTime - videoTimestamp) > 30000; // 30 seconds in milliseconds
+  } catch (error) {
+    console.error("Error checking video connection status:", error);
+    return true; // Assume disconnected on error
+  }
+}
+
 function handleProgress() {
-  const videoContainer = this.closest(".video-container");
-  let fTS = videoContainer.querySelector(".fileTimeStamp");
-  let exam_submission = videoContainer.getAttribute("data-videoid");
+  // Get video ID from the video element
+  const exam_submission = this.getAttribute("data-videoid");
+  if (!exam_submission) return;
+  
+  // Find the timestamp element using ID-specific selector
+  let fTS = document.getElementById(`fileTimeStamp-${exam_submission}`);
+  
+  // Find the video container using ID-specific selector
+  const videoContainer = document.querySelector(`.video-container[data-videoid="${exam_submission}"]`);
+  if (!videoContainer) return;
+  
   let islive = videoContainer.getAttribute("data-islive");
 
-  // Within that container, find the video element
-  const video = videoContainer.querySelector("video");
-  // show timestamp only if current video is not live
-  if (islive === "0") {
+  // Exit early if required elements are not found
+  if (!fTS || !videoStore[exam_submission]) return;
+  
+  // Reference to the video element (this)
+  const video = this;
+  
+  // Show timestamp only if current video is not live
+  if (islive === "0" && 
+      currentVideoIndex[exam_submission] !== undefined && 
+      videoStore[exam_submission] && 
+      videoStore[exam_submission][currentVideoIndex[exam_submission]]) {
     fTS.innerText = parseUnitTime(
       videoStore[exam_submission][currentVideoIndex[exam_submission]],
       video.currentTime,
@@ -185,30 +243,65 @@ function playVideoAtIndexOld(exam_submission, index) {
 }
 
 function handleSliderUpdate() {
-  // Find the closest '.video-container' ancestor
-  const videoContainer = this.closest(".video-container");
-  let exam_submission = videoContainer.getAttribute("data-videoid");
+  // Get the exam submission ID from the element's ID
+  const exam_submission = this.getAttribute("data-videoid");
+  if (!exam_submission) return;
+  
   playVideoAtIndex(exam_submission, this.value);
 }
 
 function playNextVideo() {
-  const videoContainer = this.closest(".video-container");
-  let exam_submission = videoContainer.getAttribute("data-videoid");
+  // Get the exam submission ID from the element's ID
+  const exam_submission = this.getAttribute("data-videoid");
+  if (!exam_submission) {
+    const buttonId = this.id;
+    if (buttonId && buttonId.startsWith('skipFwd-')) {
+      const videoId = buttonId.replace('skipFwd-', '');
+      playVideoAtIndex(videoId, currentVideoIndex[videoId] + 1);
+    }
+    return;
+  }
+  
   playVideoAtIndex(exam_submission, currentVideoIndex[exam_submission] + 1);
 }
 
 function playLastVideo() {
-  const videoContainer = this.closest(".video-container");
-  let exam_submission = videoContainer.getAttribute("data-videoid");
-  let fTS = videoContainer.querySelector(".fileTimeStamp");
-  fTS.innerText = "";
-
+  // Get the exam submission ID from the element's ID
+  const exam_submission = this.getAttribute("data-videoid");
+  if (!exam_submission) {
+    const buttonId = this.id;
+    if (buttonId && buttonId.startsWith('goLive-')) {
+      const videoId = buttonId.replace('goLive-', '');
+      if (!videoStore[videoId] || !videoStore[videoId].length) return;
+      
+      // Clear the timestamp
+      const fTS = document.getElementById(`fileTimeStamp-${videoId}`);
+      if (fTS) fTS.innerText = "";
+      
+      playVideoAtIndex(videoId, videoStore[videoId].length - 1);
+    }
+    return;
+  }
+  
+  // Clear the timestamp using ID-specific selector
+  const fTS = document.getElementById(`fileTimeStamp-${exam_submission}`);
+  if (fTS) fTS.innerText = "";
+  
   playVideoAtIndex(exam_submission, videoStore[exam_submission].length - 1);
 }
 
 function playPreviousVideo() {
-  const videoContainer = this.closest(".video-container");
-  let exam_submission = videoContainer.getAttribute("data-videoid");
+  // Get the exam submission ID from the element's ID
+  const exam_submission = this.getAttribute("data-videoid");
+  if (!exam_submission) {
+    const buttonId = this.id;
+    if (buttonId && buttonId.startsWith('skipBack-')) {
+      const videoId = buttonId.replace('skipBack-', '');
+      playVideoAtIndex(videoId, currentVideoIndex[videoId] - 1);
+    }
+    return;
+  }
+  
   playVideoAtIndex(exam_submission, currentVideoIndex[exam_submission] - 1);
 }
 
@@ -271,8 +364,19 @@ function openChatModal(event) {
     videoId = this.getAttribute("data-submission");
     candName = this.querySelector(".card-subtitle").textContent;
     const videoContainer = document.querySelector(`.video-container[data-videoid="${videoId}"]`);
+    if (!videoContainer) {
+      console.error(`Video container not found for submission: ${videoId}`);
+      return;
+    }
+    
     const video = videoContainer.querySelector("video");
+    if (!video) {
+      console.error(`Video element not found for submission: ${videoId}`);
+      return;
+    }
+    
     videoSrc = video.src;
+    
     // Check if the exam has been submitted
     if (videoContainer.getAttribute("data-submission-status") === "Submitted") {
       // Don't open modal if submission status is "Submitted"
@@ -281,29 +385,65 @@ function openChatModal(event) {
     }
     
   } else {
-    // Called from video controls
-    const videoContainer = this.closest(".video-container");
-    const video = videoContainer.querySelector("video");
+    // Called from video controls button with ID-specific selector
+    videoId = this.getAttribute("data-videoid");
+    if (!videoId) {
+      console.error("No data-videoid attribute found on button");
+      return;
+    }
+    
+    // Find the video container using the videoId
+    const videoContainer = document.querySelector(`.video-container[data-videoid="${videoId}"]`);
+    if (!videoContainer) {
+      console.error(`Video container not found for submission: ${videoId}`);
+      return;
+    }
+    
+    // Get the video element
+    const video = document.getElementById(videoId);
+    if (!video) {
+      console.error(`Video element not found with ID: ${videoId}`);
+      return;
+    }
+    
     videoSrc = video.src;
-    videoId = videoContainer.getAttribute("data-videoid");
     candName = videoContainer.getAttribute("data-candidatename");
-
+    
     // Check if the exam has been submitted
     if (videoContainer.getAttribute("data-submission-status") === "Submitted") {
       // Don't open modal if submission status is "Submitted"
       console.log("Chat disabled: Exam already submitted");
       return;
     }
-
   }
 
   const modalVideo = document.getElementById("modalVideoElement");
   modalVideo.src = videoSrc;
-  $("#chatModal").modal("show");
+  
+  // Get the modal element
+  const chatModal = document.getElementById("chatModal");
+  
+  // Show the modal using Bootstrap 5 syntax (if available)
+  if (bootstrap && bootstrap.Modal) {
+    const modalInstance = new bootstrap.Modal(chatModal);
+    modalInstance.show();
+  } else {
+    // Fallback to jQuery method for older Bootstrap versions
+    try {
+      $("#chatModal").modal("show");
+    } catch (error) {
+      console.error("Error showing modal:", error);
+      alert("Could not open chat. Please refresh the page and try again.");
+      return;
+    }
+  }
+  
   $("#candidateName").text(candName);
   activeChat = videoId;
   $("#chat-messages").empty();
   existingMessages[videoId] = [];
+  
+  console.log(`Chat modal opened for: ${candName} (${videoId})`);
 
   setInterval(function () {
     updateProcMessages(videoId);
@@ -311,16 +451,26 @@ function openChatModal(event) {
 }
 
 function onLoanMetaData() {
-  const videoContainer = this.closest(".video-container");
-  const video = videoContainer.querySelector("video");
-  let skipfwd = videoContainer.querySelector(".skipFwd");
-  let exam_submission = videoContainer.getAttribute("data-videoid");
+  // Get video ID directly from the video element
+  const exam_submission = this.getAttribute("data-videoid");
+  if (!exam_submission) return;
+  
+  const video = this; // The video element is 'this'
+  const videoContainer = document.querySelector(`.video-container[data-videoid="${exam_submission}"]`);
+  if (!videoContainer) return;
+  
+  // Use ID-specific selector for skip forward button
+  let skipfwd = document.getElementById(`skipFwd-${exam_submission}`);
   const offlineOverlay = document.getElementById(`offline-overlay-${exam_submission}`);
 
   if (video.src === "") {
     videoContainer.classList.add("border", "border-primary");
   } else {
     videoContainer.classList.remove("border", "border-primary");
+    
+    // Check if we have video data for this submission
+    if (!videoStore[exam_submission] || !videoStore[exam_submission].length) return;
+    
     // if currentidx is length-1, then we are playing last video
     let disconnected = videoDisconnected(
       videoStore[exam_submission][videoStore[exam_submission].length - 1],
@@ -345,7 +495,7 @@ function onLoanMetaData() {
       currentVideoIndex[exam_submission] ==
       videoStore[exam_submission].length - 1
     ) {
-      skipfwd.disabled = true;
+      if (skipfwd) skipfwd.disabled = true;
       // check if the last video is 30 sec old
       if (!video.paused) {
         if (!disconnected) {
@@ -355,7 +505,7 @@ function onLoanMetaData() {
         }
       }
     } else {
-      skipfwd.disabled = false;
+      if (skipfwd) skipfwd.disabled = false;
       if (!disconnected) {
         videoContainer.setAttribute("data-islive", "0");
       } else {
@@ -366,17 +516,55 @@ function onLoanMetaData() {
 }
 
 
-addEventListenerToClass("togglePlayBtn", "click", togglePlay);
-addEventListenerToClass("video", "click", togglePlay);
-addEventListenerToClass("video", "play", updatetogglePlayBtn);
-addEventListenerToClass("video", "pause", updatetogglePlayBtn);
-addEventListenerToClass("video", "timeupdate", handleProgress);
-// addEventListenerToClass("video", "ended", playNextVideo);
-addEventListenerToClass("goLive", "click", playLastVideo);
-addEventListenerToClass("skipBack", "click", playPreviousVideo);
-addEventListenerToClass("skipFwd", "click", playNextVideo);
-addEventListenerToClass("menu", "click", openChatModal);
-addEventListenerToClass("video", "loadedmetadata", onLoanMetaData);
+// Initialize event listeners
+function setupVideoEventListeners() {
+  // Process all videos
+  Array.from(document.getElementsByClassName("video")).forEach(video => {
+    const exam_submission = video.getAttribute("data-videoid");
+    if (!exam_submission) return;
+    
+    // Add event listeners to video elements
+    video.addEventListener("click", togglePlay);
+    video.addEventListener("play", updatetogglePlayBtn);
+    video.addEventListener("pause", updatetogglePlayBtn);
+    video.addEventListener("timeupdate", handleProgress);
+    video.addEventListener("loadedmetadata", onLoanMetaData);
+    
+    // Add event listeners to control elements using ID-specific selectors
+    const togglePlayBtn = document.getElementById(`togglePlayBtn-${exam_submission}`);
+    if (togglePlayBtn) togglePlayBtn.addEventListener("click", togglePlay);
+    
+    const goLiveBtn = document.getElementById(`goLive-${exam_submission}`);
+    if (goLiveBtn) goLiveBtn.addEventListener("click", playLastVideo);
+    
+    const skipBackBtn = document.getElementById(`skipBack-${exam_submission}`);
+    if (skipBackBtn) skipBackBtn.addEventListener("click", playPreviousVideo);
+    
+    const skipFwdBtn = document.getElementById(`skipFwd-${exam_submission}`);
+    if (skipFwdBtn) skipFwdBtn.addEventListener("click", playNextVideo);
+    
+    const chatBtn = document.getElementById(`chat-btn-${exam_submission}`);
+    if (chatBtn) {
+      // Remove any existing event listeners first to prevent duplicates
+      chatBtn.removeEventListener("click", openChatModal);
+      chatBtn.addEventListener("click", openChatModal);
+      console.log(`Added click listener to chat button for ${exam_submission}`);
+    }
+  });
+  
+  // Set up event listeners for message cards in the sidebar
+  document.querySelectorAll('.message-card').forEach(card => {
+    card.removeEventListener('click', openChatModal);
+    card.addEventListener('click', openChatModal);
+    card.style.cursor = 'pointer';
+  });
+}
+
+// Call setup function initially
+setupVideoEventListeners();
+
+// Remove the class-based approach to avoid double event binding
+// addEventListenerToClass("menu", "click", openChatModal);
 
 function updateVideoList() {
   for (var i = 0; i < videos.length; i++) {
@@ -393,7 +581,16 @@ function updateVideoList() {
       },
       success: (data) => {
         var vid = document.getElementById(exam_submission);
-        let container = vid.closest(".video-container");
+        if (!vid) return;
+        
+        // Set data-videoid attribute on video if not already set
+        if (!vid.getAttribute('data-videoid')) {
+          vid.setAttribute('data-videoid', exam_submission);
+        }
+        
+        let container = document.querySelector(`.video-container[data-videoid="${exam_submission}"]`);
+        if (!container) return;
+        
         container.classList.remove("hidden");
         // convert api response to an array of objects
         let videoList = Object.entries(data.message.videos).map(
@@ -422,6 +619,9 @@ function updateVideoList() {
             updateMessageCardStatus(exam_submission, "started");
           }
         }
+        
+        // Make sure control elements have ID-specific IDs
+        updateControlElementIds();
         
         playVideoAtIndex(
           exam_submission,
@@ -491,21 +691,19 @@ function updateSidebarMessages() {
 }
 
 frappe.ready(() => {
-  // Add click handlers for sidebar message cards
-  document.querySelectorAll('.message-card').forEach(card => {
-    card.addEventListener('click', openChatModal);
-    card.style.cursor = 'pointer';
-  });
+  // Initialize the page
+  updateControlElementIds(); // Set up ID-specific elements
+  setupVideoEventListeners(); // Set up event listeners
 
+  // Set up interval for updates
   setInterval(function () {
     updateVideoList();
     updateSidebarMessages();
-    // Re-attach click handlers to any new cards
-    document.querySelectorAll('.message-card').forEach(card => {
-      card.removeEventListener('click', openChatModal);
-      card.addEventListener('click', openChatModal);
-      card.style.cursor = 'pointer';
-    });
+    // Re-setup event listeners to ensure everything works after updates
+    setupVideoEventListeners();
+    
+    // Log active event listeners to help with debugging
+    console.log("Event listeners refreshed");
   }, 5000); // 5 seconds
   
   // frappe.realtime.on('newproctorvideo', (data) => {
@@ -759,8 +957,58 @@ function injectStyles() {
     document.head.appendChild(styleSheet);
 }
 
-// Inject styles when DOM is loaded
-document.addEventListener('DOMContentLoaded', injectStyles);
+// Function to convert control elements to use ID-specific selectors
+function updateControlElementIds() {
+    // Find all video containers
+    const videoContainers = document.querySelectorAll('.video-container');
+    
+    videoContainers.forEach(container => {
+        const exam_submission = container.getAttribute('data-videoid');
+        if (!exam_submission) return;
+        
+        // Find video element within this container and ensure it has data-videoid attribute
+        const video = container.querySelector('video');
+        if (video && !video.getAttribute('data-videoid')) {
+            video.setAttribute('data-videoid', exam_submission);
+        }
+        
+        // Check if control elements already have proper IDs
+        // If IDs are already set correctly in HTML, this will be skipped
+        const elements = {
+            togglePlayBtn: container.querySelector('.togglePlayBtn'),
+            skipBack: container.querySelector('.skipBack'),
+            skipFwd: container.querySelector('.skipFwd'),
+            goLive: container.querySelector('.goLive'),
+            fileTimeStamp: container.querySelector('.fileTimeStamp'),
+            chatBtn: container.querySelector('.chat-btn')
+        };
+        
+        // Set ID attributes and data-videoid for each element if needed
+        Object.entries(elements).forEach(([key, element]) => {
+            if (element) {
+                // Set ID if not already set correctly
+                const expectedId = `${key === 'chatBtn' ? 'chat-btn' : key}-${exam_submission}`;
+                if (element.id !== expectedId) {
+                    element.id = expectedId;
+                }
+                
+                // Add data-videoid attribute to all control elements if not present
+                if (!element.getAttribute('data-videoid')) {
+                    element.setAttribute('data-videoid', exam_submission);
+                }
+            }
+        });
+    });
+    
+    // After updating IDs, set up the event listeners
+    setupVideoEventListeners();
+}
+
+// Run both initialization functions when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    injectStyles();
+    updateControlElementIds();
+});
 
 /**
  * Updates the status badge in the message sidebar for a specific exam submission
