@@ -276,7 +276,13 @@ def start_exam(exam_submission=None):
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()
 
-	return True
+	schedule = frappe.get_doc("Exam Schedule", doc.exam_schedule)
+
+	# end time is schedule start time + duration + additional time given
+	end_time = schedule.start_date_time + timedelta(minutes=schedule.duration) + \
+		timedelta(minutes=doc.additional_time_given)
+
+	return {"end_time": end_time}
 
 
 @frappe.whitelist()

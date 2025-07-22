@@ -47,7 +47,7 @@ def get_live_exam(member=None):
 			"exam": schedule.exam,
 			"exam_schedule": submission["exam_schedule"],
 			"start_time": schedule.start_date_time,
-			"end_time": end_time,
+			"end_time": "",
 			"additional_time_given": submission["additional_time_given"],
 			"submission_status": submission["status"],
 			"duration": schedule.duration,
@@ -58,14 +58,18 @@ def get_live_exam(member=None):
 			"schedule_status": schedule.get_status(),
 			"schedule_type": schedule.schedule_type,
 		}
+		if submission["status"] == "Started" and schedule.schedule_type == "Fixed":
+			exam_details["end_time"] = end_time
+		elif submission["status"] == "Started" and schedule.schedule_type == "Flexible":
+			# for flexible exams, exam started time + duration + additional time given
+			exam_details["end_time"] = submission["exam_started_time"] + \
+				timedelta(minutes=schedule.duration) + \
+				timedelta(minutes=submission["additional_time_given"])
 
 		# make datetime in isoformat
 		for key,val in exam_details.items():
 			if type(val) == datetime:
 				exam_details[key] = val.isoformat()
-		
-		if schedule.schedule_type == "Flexible":
-			end_time += timedelta(days=schedule.schedule_expire_in_days)
 
 		# checks if current time is between schedule start and end time
 		# ongoing exams can be in Not staryed, started or submitted states

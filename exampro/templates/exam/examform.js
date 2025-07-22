@@ -583,6 +583,11 @@ function startExam() {
             "exam_submission": exam["exam_submission"],
         },
         callback: (data) => {
+            // Update the exam end_time with the value returned from the server
+            if (data.message && data.message.end_time) {
+                exam.end_time = data.message.end_time;
+            }
+            
             $("#start-banner").addClass("hide");
             $("#quiz-form").removeClass("hide");
             // getQuestion(1);
