@@ -593,7 +593,10 @@ function startExam() {
 };
 
 function getQuestion(qsno) {
-    submitAnswer(false);
+    // Only submit the current answer if we're on a question after the first one
+    if (currentQuestion && currentQuestion.no > 1) {
+        submitAnswer(false);
+    }
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_question",
         type: "POST",

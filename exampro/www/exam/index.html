@@ -407,13 +407,6 @@ Alert!
                 </div>
                 <div class="col-md-6">
                     <div class="d-flex justify-content-end" id="timerdiv">
-                        <!-- Right-aligned element -->
-                        <button class="btn btn-info btn-sm" id="showTimer" style="display: none;">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-clock me-2"></i>
-                                Show timer
-                            </span>
-                        </button>
                         <a class="btn btn-link">
                             <span class="d-flex align-items-center">
                                 <i class="bi bi-eye-off me-2" id="toggleTimer"></i>
@@ -514,13 +507,6 @@ Alert!
                 // Replace the content of the timerdiv with the button
                 $('#toggleTimer').hide();
                 $('.timer').hide();
-                $("#showTimer").show();
-            });
-            $('#showTimer').click(function () {
-                // Replace the content of the timerdiv with the button
-                $('#toggleTimer').show();
-                $('.timer').show();
-                $("#showTimer").hide();
             });
 
             // Chat functionality
