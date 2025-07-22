@@ -23,7 +23,10 @@ def get_live_exam(member=None):
 
 	submissions = frappe.get_all(
 		"Exam Submission",
-		{"candidate": member or frappe.session.user},[
+		{
+			"candidate": member or frappe.session.user,
+			"status": ["in", ["Registered", "Started"]]
+		},[
 			"name",
 			"exam_schedule",
 			"status",
@@ -32,9 +35,6 @@ def get_live_exam(member=None):
 			"additional_time_given"
 	])
 	for submission in submissions:
-		if submission["status"] in ["Registration Cancelled", "Aborted"]:
-			continue
-
 		schedule = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
 		exam = frappe.get_doc("Exam", schedule.exam)
 

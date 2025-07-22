@@ -362,7 +362,7 @@ function openChatModal(event) {
   if (this.classList.contains('message-card')) {
     // Called from sidebar card click
     videoId = this.getAttribute("data-submission");
-    candName = this.querySelector(".card-subtitle").textContent;
+    candName = this.querySelector(".card-body .card-subtitle").textContent;
     const videoContainer = document.querySelector(`.video-container[data-videoid="${videoId}"]`);
     if (!videoContainer) {
       console.error(`Video container not found for submission: ${videoId}`);
@@ -638,10 +638,28 @@ function updateSidebarMessages() {
     callback: (data) => {
       if (!data.message) return;
       
+      // Create a set of existing submissions for checking new entries
+      const existingSubmissions = new Set(Object.keys(videoStore));
+      const newSubmissions = [];
+      const missingMessageCards = [];
+      
       data.message.forEach(msg => {
+        // Check if this is a new submission that doesn't have a video tile yet
+        if (!existingSubmissions.has(msg.exam_submission)) {
+          newSubmissions.push(msg);
+          return;
+        }
+        
+        // Check if message card exists for this submission
         const card = document.querySelector(`.message-card[data-submission="${msg.exam_submission}"]`);
-        if (!card) return;
+        
+        // If the submission has a video tile but no message card, create one
+        if (!card) {
+          missingMessageCards.push(msg);
+          return;
+        }
 
+        // Process existing message cards
         const messageText = card.querySelector('.message-text');
         const statusBadge = card.querySelector('.status-badge');
         
@@ -686,24 +704,49 @@ function updateSidebarMessages() {
           };
         }
       });
+      
+      // Process submissions that have video tiles but no message cards
+      if (missingMessageCards.length > 0) {
+        console.log(`Found ${missingMessageCards.length} submissions missing message cards:`, missingMessageCards);
+        addMissingMessageCards(missingMessageCards);
+      }
+      
+      // Process new submissions that need video tiles
+      if (newSubmissions.length > 0) {
+        console.log(`Found ${newSubmissions.length} new submissions to add:`, newSubmissions);
+        addNewVideoTiles(newSubmissions);
+      }
     }
   });
 }
 
 frappe.ready(() => {
-  // Initialize the page
+  console.log("Initializing ExamPro Proctor Dashboard");
+  
+  // Set the timestamp for when we started
+  window.dashboardStartTime = new Date();
+  
+  // Initialize the page components
   updateControlElementIds(); // Set up ID-specific elements
   setupVideoEventListeners(); // Set up event listeners
 
-  // Set up interval for updates
+  // First run of updates
+  updateVideoList();
+  updateSidebarMessages();
+  
+  // Set up interval for regular updates
   setInterval(function () {
+    // Update existing videos
     updateVideoList();
+    
+    // Check for new submissions and update sidebar
     updateSidebarMessages();
-    // Re-setup event listeners to ensure everything works after updates
+    
+    // Ensure all event listeners are properly set up
     setupVideoEventListeners();
     
-    // Log active event listeners to help with debugging
-    console.log("Event listeners refreshed");
+    // Setup dynamic observer for new content
+    setupDynamicObservers();
   }, 5000); // 5 seconds
   
   // frappe.realtime.on('newproctorvideo', (data) => {
@@ -886,6 +929,218 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+/**
+ * Adds new video tiles and message cards for newly added submissions
+ * @param {Array} newSubmissions - Array of new submission objects
+ */
+function addNewVideoTiles(newSubmissions) {
+  if (!newSubmissions || !newSubmissions.length) return;
+
+  // Get the video grid container
+  const videoGrid = document.querySelector('.row.mt-4');
+  if (!videoGrid) {
+    console.error("Could not find video grid container");
+    return;
+  }
+  
+  // Get the messages sidebar container
+  const messagesSidebar = document.querySelector('.messages-sidebar');
+  if (!messagesSidebar) {
+    console.error("Could not find messages sidebar container");
+    // Continue anyway as we can still add video tiles
+  }
+
+  // Create and add new video tiles for each submission
+  newSubmissions.forEach(submission => {
+    const exam_submission = submission.exam_submission;
+    const candidate_name = submission.candidate_name || "Unknown Candidate";
+    const message = submission.message || "Exam started";
+    const status = submission.status || "registered";
+    
+    // Check if a video tile already exists for this submission
+    const existingTile = document.querySelector(`[data-videoid="${exam_submission}"]`);
+    if (existingTile) {
+      console.log(`Video tile already exists for ${candidate_name} (${exam_submission}), skipping duplicate creation`);
+      return; // Skip to next submission
+    }
+
+    // Create column container for video tile
+    const colDiv = document.createElement('div');
+    colDiv.className = 'col-md-3 col-sm-6 mb-3';
+
+    // Create video card HTML
+    colDiv.innerHTML = `
+      <div class="card video-card">
+        <div class="card-header p-2 d-flex justify-content-between align-items-center">
+          <small class="text-truncate me-2">${candidate_name}</small>
+        </div>
+        <div class="card-body p-0">
+          <div class="video-container" data-videoid="${exam_submission}"
+              data-candidatename="${candidate_name}" data-islive="0">
+            <video class="video" id="${exam_submission}" data-videoid="${exam_submission}" preload="metadata">
+              <p>Your browser doesn't support HTML5 video.</p>
+            </video>
+          </div>
+          <!-- Offline Overlay -->
+          <div class="offline-overlay" id="offline-overlay-${exam_submission}">
+            <div class="offline-button" onclick="toggleOfflineStatus('${exam_submission}')">
+              <i class="bi bi-wifi-off"></i>
+              <span>Offline</span>
+            </div>
+          </div>
+          <!-- Controls moved below video as centered button group -->
+          <div class="video-controls">
+            <small class="file-timestamp fileTimeStamp" id="fileTimeStamp-${exam_submission}"></small>
+            <button class="controls__button togglePlayBtn" id="togglePlayBtn-${exam_submission}" title="Toggle Play" data-videoid="${exam_submission}">
+              <i class="bi bi-play-fill"></i>
+            </button>
+            <button class="controls__button skipBack" id="skipBack-${exam_submission}" title="Skip back" data-videoid="${exam_submission}">
+              <i class="bi bi-rewind-fill"></i>
+            </button>
+            <button class="controls__button skipFwd" id="skipFwd-${exam_submission}" title="Skip forward" data-videoid="${exam_submission}">
+              <i class="bi bi-fast-forward-fill"></i>
+            </button>
+            <button type="button" class="controls__button chat-btn menu" id="chat-btn-${exam_submission}" title="Chat" data-videoid="${exam_submission}">
+              <i class="bi bi-chat-square-text-fill"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add the new column to the grid
+    videoGrid.appendChild(colDiv);
+    
+    // Add a message card to the sidebar if the sidebar exists
+    if (messagesSidebar) {
+      // Check if a message card for this submission already exists
+      const existingCard = document.querySelector(`.message-card[data-submission="${exam_submission}"]`);
+      
+      if (!existingCard) {
+        // Prepare submission data for the message card
+        const submissionData = {
+          name: exam_submission,
+          candidate_name: candidate_name
+        };
+        
+        // Create a new message card using our utility function
+        const messageCard = addNewSidebarMessageCard(submissionData);
+        
+        // Update the status badge if needed
+        if (status) {
+          const statusBadge = messageCard.querySelector('.status-badge');
+          if (statusBadge) {
+            statusBadge.className = `status-badge status-${status.toLowerCase()}`;
+            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+          }
+        }
+        
+        // Update the message text if needed
+        if (message) {
+          const messageElement = messageCard.querySelector('.card-text.message-text');
+          if (messageElement) {
+            messageElement.textContent = message;
+          }
+        }
+        
+        console.log(`Added new message card for ${candidate_name} (${exam_submission})`);
+        
+        // Update the last known message for this submission
+        lastKnownMessages[exam_submission] = {
+          message: message,
+          status: status,
+          timestamp: new Date()
+        };
+        
+        // Add animation to highlight the new message card
+        messageCard.classList.add('has-new-message');
+        
+        // Remove animation class after animation completes
+        setTimeout(() => {
+          messageCard.classList.remove('has-new-message');
+        }, 2000);
+      }
+    }
+    
+    console.log(`Added new video tile for ${candidate_name} (${exam_submission})`);
+    
+    // Initialize the video controls and fetch videos for this submission
+    updateControlElementIds();
+    
+    // Update the video counter
+    const liveCountBadge = document.querySelector('.btn-primary .badge');
+    if (liveCountBadge) {
+      const currentCount = parseInt(liveCountBadge.textContent) || 0;
+      liveCountBadge.textContent = currentCount + 1;
+    }
+    
+    // Fetch videos for this new submission
+    fetchVideosForSubmission(exam_submission);
+  });
+}
+
+/**
+ * Fetch videos for a specific exam submission
+ */
+function fetchVideosForSubmission(exam_submission) {
+  frappe.call({
+    method: "exampro.exam_pro.doctype.exam_submission.exam_submission.proctor_video_list",
+    args: {
+      exam_submission: exam_submission,
+    },
+    callback: (data) => {
+      if (!data.message || !data.message.videos) {
+        console.error(`No videos found for submission: ${exam_submission}`);
+        return;
+      }
+      
+      var vid = document.getElementById(exam_submission);
+      if (!vid) return;
+      
+      let container = document.querySelector(`.video-container[data-videoid="${exam_submission}"]`);
+      if (!container) return;
+      
+      container.classList.remove("hidden");
+      
+      // Convert API response to an array of objects
+      let videoList = Object.entries(data.message.videos).map(
+        ([unixtimestamp, videourl]) => {
+          return { unixtimestamp: parseInt(unixtimestamp, 10), videourl };
+        },
+      );
+      
+      // Sort them
+      videoList.sort((a, b) => a.unixtimestamp - b.unixtimestamp);
+
+      videoStore[exam_submission] = videoList.map((video) => video.videourl);
+      
+      // Check connection status
+      if (videoStore[exam_submission].length > 0) {
+        const lastVideoUrl = videoStore[exam_submission][videoStore[exam_submission].length - 1];
+        const disconnected = videoDisconnected(lastVideoUrl);
+        const offlineOverlay = document.getElementById(`offline-overlay-${exam_submission}`);
+        
+        if (disconnected && offlineOverlay) {
+          offlineOverlay.classList.add("show");
+          updateMessageCardStatus(exam_submission, "offline");
+        } else if (offlineOverlay) {
+          offlineOverlay.classList.remove("show");
+          updateMessageCardStatus(exam_submission, "started");
+        }
+      }
+      
+      // Play the latest video
+      if (videoStore[exam_submission] && videoStore[exam_submission].length > 0) {
+        playVideoAtIndex(
+          exam_submission,
+          videoStore[exam_submission].length - 1,
+        );
+        console.log(`Started playing video for ${exam_submission}`);
+      }
+    },
+  });
+}
+
 // Function to toggle offline status when button is clicked
 function toggleOfflineStatus(exam_submission) {
     const offlineOverlay = document.getElementById(`offline-overlay-${exam_submission}`);
@@ -1004,10 +1259,65 @@ function updateControlElementIds() {
     setupVideoEventListeners();
 }
 
+// Function to set up dynamic observers for new content
+function setupDynamicObservers() {
+    // Set up mutation observer to watch for new video cards being added
+    if (!window.videoGridObserver) {
+        const videoGrid = document.querySelector('.row.mt-4');
+        if (videoGrid) {
+            window.videoGridObserver = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                        // New nodes added to the video grid
+                        console.log("New video cards detected, updating controls and listeners");
+                        updateControlElementIds();
+                        setupVideoEventListeners();
+                    }
+                }
+            });
+            
+            // Start observing the video grid for added/removed nodes
+            window.videoGridObserver.observe(videoGrid, {
+                childList: true,
+                subtree: false
+            });
+        }
+    }
+    
+    // Set up mutation observer for message sidebar
+    if (!window.sidebarObserver) {
+        const messagesSidebar = document.querySelector('.messages-sidebar');
+        if (messagesSidebar) {
+            window.sidebarObserver = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                        // New messages added to the sidebar
+                        console.log("New message cards detected, updating event listeners");
+                        document.querySelectorAll('.message-card').forEach(card => {
+                            if (!card.hasEventListener) {
+                                card.addEventListener('click', openChatModal);
+                                card.style.cursor = 'pointer';
+                                card.hasEventListener = true;
+                            }
+                        });
+                    }
+                }
+            });
+            
+            // Start observing the messages sidebar for added/removed nodes
+            window.sidebarObserver.observe(messagesSidebar, {
+                childList: true,
+                subtree: true
+            });
+        }
+    }
+}
+
 // Run both initialization functions when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     injectStyles();
     updateControlElementIds();
+    setupDynamicObservers();
 });
 
 /**
@@ -1045,4 +1355,133 @@ function updateMessageCardStatus(exam_submission, status) {
             }, 2000);
         }
     }
+}
+
+/**
+ * Adds a new message card to the sidebar for a new submission
+ * @param {Object} submission - The submission object with candidate info
+ */
+function addNewSidebarMessageCard(submission) {
+  console.log("Adding new sidebar message card for:", submission.name);
+  
+  // Find the message sidebar (try different possible selectors)
+  let messageSidebar = document.querySelector(".message-sidebar .messages-container");
+  if (!messageSidebar) {
+    messageSidebar = document.querySelector(".messages-sidebar");
+  }
+  if (!messageSidebar) {
+    console.error("Message sidebar not found with any selector, cannot add message card");
+    return;
+  }
+  
+  // Create a new message card using the exact same structure as in proctor.html
+  const messageCard = document.createElement("div");
+  messageCard.className = "card mb-2 message-card";
+  messageCard.setAttribute("data-submission", submission.name);
+  
+  // Add inner HTML structure that matches proctor.html exactly
+  messageCard.innerHTML = `
+    <div class="card-body p-2">
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h6 class="card-subtitle text-muted mb-0">${submission.candidate_name}</h6>
+        <span class="badge status-badge status-registered" data-submission-status="Registered">Registered</span>
+      </div>
+      <p class="card-text message-text mb-0">No messages yet</p>
+    </div>
+  `;
+  
+  // Add click event listener
+  messageCard.addEventListener('click', openChatModal);
+  messageCard.style.cursor = 'pointer';
+  
+  // Add hover effects
+  messageCard.addEventListener('mouseenter', function() {
+    // Try multiple selectors to find the video element
+    let videoCard = document.querySelector(`.card-body [data-videoid="${submission.name}"]`);
+    if (!videoCard) {
+      videoCard = document.querySelector(`[data-videoid="${submission.name}"]`);
+    }
+    
+    if (videoCard && videoCard.closest('.card')) {
+      const parentCard = videoCard.closest('.card');
+      parentCard.classList.add('video-card-highlighted');
+      parentCard.style.transform = 'scale(1.02)';
+      parentCard.style.transition = 'all 0.3s ease';
+      parentCard.style.boxShadow = '0 4px 20px rgba(0, 123, 255, 0.3)';
+      parentCard.style.borderColor = '#007bff';
+    }
+  });
+  
+  messageCard.addEventListener('mouseleave', function() {
+    // Try multiple selectors to find the video element
+    let videoCard = document.querySelector(`.card-body [data-videoid="${submission.name}"]`);
+    if (!videoCard) {
+      videoCard = document.querySelector(`[data-videoid="${submission.name}"]`);
+    }
+    
+    if (videoCard && videoCard.closest('.card')) {
+      const parentCard = videoCard.closest('.card');
+      parentCard.classList.remove('video-card-highlighted');
+      parentCard.style.transform = 'scale(1)';
+      parentCard.style.boxShadow = '';
+      parentCard.style.borderColor = '';
+    }
+  });
+  
+  // Add the card to the sidebar
+  messageSidebar.appendChild(messageCard);
+  
+  // Update the message counter
+  const messageCounter = document.querySelector(".message-counter");
+  if (messageCounter) {
+    const currentCount = parseInt(messageCounter.textContent) || 0;
+    messageCounter.textContent = currentCount + 1;
+  }
+  
+  return messageCard;
+}
+
+/**
+ * Adds message cards for submissions that have video tiles but no message cards
+ * @param {Array} submissions - Array of submission objects
+ */
+function addMissingMessageCards(submissions) {
+  if (!submissions || !submissions.length) return;
+  
+  submissions.forEach(submission => {
+    console.log(`Adding missing message card for ${submission.exam_submission}`);
+    
+    // Prepare submission data in the format expected by addNewSidebarMessageCard
+    const submissionData = {
+      name: submission.exam_submission,
+      candidate_name: submission.candidate_name || "Unknown Candidate"
+    };
+    
+    // Create a new message card for this submission
+    const messageCard = addNewSidebarMessageCard(submissionData);
+    
+    // If the submission has a status, update the card's status badge
+    if (submission.status) {
+      const statusBadge = messageCard.querySelector('.status-badge');
+      if (statusBadge) {
+        statusBadge.className = `status-badge status-${submission.status.toLowerCase()}`;
+        statusBadge.textContent = submission.status;
+      }
+    }
+    
+    // If the submission has a message, update the card's message text
+    if (submission.message) {
+      const messageElement = messageCard.querySelector('.card-text.message-text');
+      if (messageElement) {
+        messageElement.textContent = submission.message;
+      }
+    }
+    
+    // Update cache
+    lastKnownMessages[submission.exam_submission] = {
+      message: submission.message || "",
+      status: submission.status || "Registered",
+      timestamp: new Date()
+    };
+  });
 }
