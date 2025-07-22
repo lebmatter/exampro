@@ -4,6 +4,7 @@ from frappe.utils import now
 
 from frappe import _
 from frappe.utils.data import markdown
+from exampro.www.my_exams import submit_pending_exams
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs
@@ -69,7 +70,10 @@ def get_live_exam(member=None):
 		# checks if current time is between schedule start and end time
 		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-		if schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and schedule.schedule_type == "Fixed":
+		if submission["status"] == "Started":
+			exam_details["is_live"] = True
+			return exam_details
+		elif schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and schedule.schedule_type == "Fixed":
 			exam_details["is_live"] = True
 			return exam_details
 		elif schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and schedule.schedule_type == "Flexible":
@@ -100,6 +104,7 @@ def get_context(context):
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
 
+	submit_pending_exams()
 	exam_details = get_live_exam(frappe.session.user)
 	context.page_context = {}
 
@@ -109,9 +114,6 @@ def get_context(context):
 			"title": "No exams scheduled.",
 			"text": "You do not have any live or upcoming exams."
 		}
-	elif exam_details["submission_status"] in ["Submitted", "Terminated"]:
-		frappe.local.flags.redirect_location = "/exam/{}".format(exam_details["exam_submission"])
-		raise frappe.Redirect
 
 	elif exam_details["schedule_status"] == "Upcoming":
 		context.exam = {}
