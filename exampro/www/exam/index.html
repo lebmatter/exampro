@@ -10,6 +10,7 @@ Alert!
 
 
 {% block head_include %}
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 {% for ext in page_extensions %}
 {{ ext.render_header() }}
@@ -361,23 +362,21 @@ Alert!
                     {% endif %}
                 </div>
             </div>
-            <div class="common-card-style mt-4">
-                <div class="collapse show" id="videoCollapse" data-parent=".common-card-style">
-                    <div class="card-body">
-                        {% if exam.enable_video_proctoring %}
-                        <video id="webcam-stream" autoplay style="max-width: 100%; border-radius: 4px;"></video>
-                        {% else %}
-                        <p class="card-text">Video proctoring disabled.</p>
-                        {% endif %}
-                    </div>
+            <!-- Updated Video Section with Alpine.js -->
+            <div class="common-card-style mt-4" x-data="{ videoVisible: true }">
+                <div x-show="videoVisible" class="card-body">
+                    {% if exam.enable_video_proctoring %}
+                    <video id="webcam-stream" autoplay style="max-width: 100%; border-radius: 4px;"></video>
+                    {% else %}
+                    <p class="card-text">Video proctoring disabled.</p>
+                    {% endif %}
                 </div>
                 {% if exam.enable_video_proctoring %}
                 <div class="card-footer d-flex justify-content-end">
-                    <button class="btn btn-sm btn-outline-info" type="button" 
-                        id="toggleButton">
+                    <button @click="videoVisible = !videoVisible" class="btn btn-sm btn-outline-info" type="button">
                         <span class="d-flex align-items-center">
                             <i class="bi bi-camera-video me-2"></i>
-                            Hide Video
+                            <span x-text="videoVisible ? 'Hide Video' : 'Show Video'"></span>
                         </span>
                     </button>
                 </div>
@@ -386,7 +385,7 @@ Alert!
         </div>
         <div class="col-md-9">
             <!-- Main content -->
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <div class="d-flex justify-content-start">
                         {% if exam.instructions != "" %}
@@ -406,17 +405,20 @@ Alert!
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="d-flex justify-content-end" id="timerdiv">
-                        <a class="btn btn-link">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-eye-off me-2" id="toggleTimer"></i>
-                                <span class="badge badge-pill bg-warning timer">--:--</span>
-                            </span>
-                        </a>
+                    <!-- Updated Timer Section with Alpine.js -->
+                    <div class="d-flex justify-content-end" id="timerdiv" x-data="{ timerVisible: true }">
+                        <button type="button" @click="timerVisible = !timerVisible" class="btn btn-warning btn-sm" 
+                                data-bs-toggle="tooltip" :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
+                                style="cursor: pointer;">
+                            <span x-show="timerVisible" class="timer">--:--</span>
+                            <span x-show="!timerVisible">Show Timer</span>
+                        </button>
                     </div>
                 </div>
+                </div>
 
-                <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-12">
                     {% if exam.instructions %}
                     <div id="instruction" class="mt-3">
                         <div class="alert alert-info pl-9">
@@ -425,7 +427,10 @@ Alert!
                     </div>
                     {% endif %}
                 </div>
+                </div>
+                <div class="row">
                 {{ frappe.render_template('templates/exam/examform.html', {"exam": exam}) }}
+                </div>
             </div>
         </div>
     </div>
@@ -474,97 +479,51 @@ Alert!
     justify-content: flex-start !important;
 }
 </style>
-    {% endblock %}
+{% endblock %}
 
-    <!-- Scripts -->
-    {%- block script %}
-    {{ super() }}
-    {% if exam %}
-    <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
-    <script type="text/javascript">
-        var exam = {{ exam | tojson }};
-        {% include "exampro/templates/exam/examutils.js" %}
-        {% include "exampro/templates/exam/inactivityDetector.js" %}
-        {% include "exampro/templates/exam/examform.js" %}
-        {% include "exampro/templates/exam/calculator.js" %}
-    </script>
-    <script>
-        $(document).ready(function () {
-            // Only add toggle functionality if instructions exist
-            if (exam.instructions) {
-                $('#toggleInstruction').click(function () {
-                    $('#instruction').toggle();
-                    $(this).html(function (i, html) {
-                        if (html.includes("Hide instructions")) {
-                            return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Show instructions</span>';
-                        } else {
-                            return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Hide instructions</span>';
-                        }
-                    });
+<!-- Scripts -->
+{%- block script %}
+{{ super() }}
+{% if exam %}
+<script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+<script type="text/javascript">
+    var exam = {{ exam | tojson }};
+    {% include "exampro/templates/exam/examutils.js" %}
+    {% include "exampro/templates/exam/inactivityDetector.js" %}
+    {% include "exampro/templates/exam/examform.js" %}
+    {% include "exampro/templates/exam/calculator.js" %}
+</script>
+<script>
+    $(document).ready(function () {
+        // Only add toggle functionality if instructions exist
+        if (exam.instructions) {
+            $('#toggleInstruction').click(function () {
+                $('#instruction').toggle();
+                $(this).html(function (i, html) {
+                    if (html.includes("Hide instructions")) {
+                        return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Show instructions</span>';
+                    } else {
+                        return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Hide instructions</span>';
+                    }
                 });
-            }
-            $('#toggleTimer').click(function () {
-                // Replace the content of the timerdiv with the button
-                $('#toggleTimer').hide();
-                $('.timer').hide();
             });
+        }
 
-            // Chat functionality
-            $('#send-message').click(function() {
-                sendChatMessage();
-            });
+        // Timer toggle is now handled by Alpine.js - no jQuery code needed
+        // Video toggle is now handled by Alpine.js - no jQuery code needed
 
-            $('#chat-input').keypress(function(e) {
-                if(e.which == 13) {
-                    sendChatMessage();
-                    return false;
-                }
-            });
-            
-            // Toggle button for video
-            $('#toggleButton').click(function(e) {
-                e.preventDefault(); // Prevent default button action
-                
-                // Check if the video section is currently visible
-                const isVisible = $('#videoCollapse').hasClass('show');
-                
-                if (isVisible) {
-                    // Currently visible, so hide it
-                    $('#videoCollapse').collapse('hide');
-                    $(this).html('<i class="bi bi-camera-video me-2"></i>Show Video</span>');
-                    
-                    // If we have a webcam, disable tracks to save resources
-                    var video = document.getElementById('webcam-stream');
-                    if (video && video.srcObject) {
-                        video.srcObject.getTracks().forEach(track => track.enabled = false);
-                    }
-                } else {
-                    // Currently hidden, so show it
-                    $('#videoCollapse').collapse('show');
-                    $(this).html('<i class="bi bi-camera-video me-2"></i>Hide Video</span>');
-                    
-                    // Re-enable the webcam tracks if available
-                    var video = document.getElementById('webcam-stream');
-                    if (video && video.srcObject) {
-                        video.srcObject.getTracks().forEach(track => track.enabled = true);
-                    }
-                }
-            });
-
-            // Initialize the video collapse functionality
-            $('#videoCollapse').collapse({
-                toggle: false
-            });
-            
-            // Handle collapse events to ensure button text stays in sync
-            $('#videoCollapse').on('hidden.bs.collapse', function () {
-                $('#toggleButton').html('<i class="bi bi-camera-video me-2"></i>Show Video</span>');
-            });
-            
-            $('#videoCollapse').on('shown.bs.collapse', function () {
-                $('#toggleButton').html('<i class="bi bi-camera-video me-2"></i>Hide Video</span>');
-            });
+        // Chat functionality
+        $('#send-message').click(function() {
+            sendChatMessage();
         });
-    </script>
-    {% endif %}
-    {% endblock %}
+
+        $('#chat-input').keypress(function(e) {
+            if(e.which == 13) {
+                sendChatMessage();
+                return false;
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}
