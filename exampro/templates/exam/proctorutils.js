@@ -314,6 +314,7 @@ function onLoanMetaData() {
   const video = videoContainer.querySelector("video");
   let skipfwd = videoContainer.querySelector(".skipFwd");
   let exam_submission = videoContainer.getAttribute("data-videoid");
+  const offlineOverlay = document.getElementById(`offline-overlay-${exam_submission}`);
 
   if (video.src === "") {
     videoContainer.classList.add("border", "border-primary");
@@ -323,6 +324,22 @@ function onLoanMetaData() {
     let disconnected = videoDisconnected(
       videoStore[exam_submission][videoStore[exam_submission].length - 1],
     );
+    
+    // Show/hide offline overlay based on connection status
+    if (disconnected) {
+      if (offlineOverlay) {
+        offlineOverlay.classList.add("show");
+      }
+      // Update the message sidebar status badge to "Offline"
+      updateMessageCardStatus(exam_submission, "offline");
+    } else {
+      if (offlineOverlay) {
+        offlineOverlay.classList.remove("show");
+      }
+      // Update the message sidebar status badge to "Started"
+      updateMessageCardStatus(exam_submission, "started");
+    }
+    
     if (
       currentVideoIndex[exam_submission] ==
       videoStore[exam_submission].length - 1
@@ -387,6 +404,24 @@ function updateVideoList() {
         videoList.sort((a, b) => a.unixtimestamp - b.unixtimestamp);
 
         videoStore[exam_submission] = videoList.map((video) => video.videourl);
+        
+        // Check connection status before playing video
+        if (videoStore[exam_submission].length > 0) {
+          const lastVideoUrl = videoStore[exam_submission][videoStore[exam_submission].length - 1];
+          const disconnected = videoDisconnected(lastVideoUrl);
+          const offlineOverlay = document.getElementById(`offline-overlay-${exam_submission}`);
+          
+          if (disconnected && offlineOverlay) {
+            offlineOverlay.classList.add("show");
+            // Update the message sidebar status badge to "Offline"
+            updateMessageCardStatus(exam_submission, "offline");
+          } else if (offlineOverlay) {
+            offlineOverlay.classList.remove("show");
+            // Update the message sidebar status badge to "Started"
+            updateMessageCardStatus(exam_submission, "started");
+          }
+        }
+        
         playVideoAtIndex(
           exam_submission,
           videoStore[exam_submission].length - 1,
@@ -652,6 +687,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Function to toggle offline status when button is clicked
+function toggleOfflineStatus(exam_submission) {
+    const offlineOverlay = document.getElementById(`offline-overlay-${exam_submission}`);
+    
+    if (offlineOverlay) {
+        // If already showing, then hide it (user manually reconnecting)
+        if (offlineOverlay.classList.contains('show')) {
+            offlineOverlay.classList.remove('show');
+            
+            // Mark container as live
+            const videoContainer = document.querySelector(`.video-container[data-videoid="${exam_submission}"]`);
+            if (videoContainer) {
+                videoContainer.setAttribute("data-islive", "1");
+                
+                // Update the message sidebar status badge to "Started"
+                updateMessageCardStatus(exam_submission, "started");
+                
+                // Refresh video (optional)
+                playLastVideo.call(videoContainer.querySelector('.goLive'));
+            }
+        }
+    }
+}
+
 // CSS styles to be added to the existing stylesheet
 const additionalStyles = `
     /* Video card highlight effect */
@@ -701,3 +760,40 @@ function injectStyles() {
 
 // Inject styles when DOM is loaded
 document.addEventListener('DOMContentLoaded', injectStyles);
+
+/**
+ * Updates the status badge in the message sidebar for a specific exam submission
+ * @param {string} exam_submission - The exam submission ID
+ * @param {string} status - The status to set: 'started', 'offline', 'terminated', etc.
+ */
+function updateMessageCardStatus(exam_submission, status) {
+    const messageCard = document.querySelector(`.message-card[data-submission="${exam_submission}"]`);
+    
+    if (messageCard) {
+        const statusBadge = messageCard.querySelector('.status-badge');
+        
+        if (statusBadge) {
+            // Remove all status classes
+            statusBadge.classList.remove('status-started', 'status-offline', 'status-terminated', 'status-registered');
+            
+            // Add appropriate status class
+            statusBadge.classList.add(`status-${status.toLowerCase()}`);
+            
+            // Update the text content (capitalize first letter for display)
+            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            // Store the status in the data attribute for future reference
+            statusBadge.setAttribute('data-submission-status', status.charAt(0).toUpperCase() + status.slice(1));
+            
+            // Add a subtle animation to highlight the change
+            messageCard.classList.remove('has-new-message');
+            void messageCard.offsetWidth; // Force reflow to restart animation
+            messageCard.classList.add('has-new-message');
+            
+            // Remove animation class after it completes
+            setTimeout(() => {
+                messageCard.classList.remove('has-new-message');
+            }, 2000);
+        }
+    }
+}
