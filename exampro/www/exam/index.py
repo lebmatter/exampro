@@ -41,6 +41,9 @@ def get_live_exam(member=None):
 		# end time is schedule start time + duration + additional time given
 		end_time = schedule.start_date_time + timedelta(minutes=schedule.duration) + \
 			timedelta(minutes=submission["additional_time_given"])
+		if schedule.schedule_type == "Flexible":
+			# For flexible schedules, we consider the end time as start time + duration + 5 min buffer
+			end_time += timedelta(days=schedule.schedule_expire_in_days)
 
 		exam_details = {
 			"exam_submission": submission["name"],

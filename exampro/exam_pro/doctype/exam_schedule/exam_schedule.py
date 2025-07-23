@@ -381,3 +381,27 @@ def get_schedule_status(exam_schedule, additional_time=0):
 		status = "Completed"
 		
 	return status
+
+def get_schedule_end_time(exam_schedule, additional_time=0):
+	"""
+	Get the end time of the exam schedule based on its type and additional time.
+	:param additional_time: Optional minutes to adjust the end time.
+	Returns the end time as a datetime object.
+	"""
+	start_date_time, schedule_type, duration, schedule_expire_in_days = frappe.get_value(
+		"Exam Schedule", exam_schedule, 
+		["start_date_time", "schedule_type", "duration", "schedule_expire_in_days"]
+	)
+	
+	if not isinstance(start_date_time, datetime):
+		start_date_time = parse(start_date_time) if start_date_time else datetime.now()
+	
+	if schedule_type == "Fixed":
+		end_time = start_date_time + timedelta(minutes=duration or 0)
+	else:
+		end_time = start_date_time + timedelta(minutes=duration or 0, days=schedule_expire_in_days or 0)
+	
+	if additional_time:
+		end_time += timedelta(minutes=additional_time)
+	
+	return end_time

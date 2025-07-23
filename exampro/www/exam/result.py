@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import frappe
 from frappe import _
 
 from exampro.exam_pro.utils import (redirect_to_exams_list)
-from exampro.exam_pro.doctype.exam_submission.exam_submission import has_submission_ended
+from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_end_time
 
 
 def get_context(context):
@@ -80,7 +80,9 @@ def set_exam_context(context, exmsubmn):
 			elif exam_data["show_result"] == "After Exam Submission":
 				context.result_type = "scorecard"
 			elif exam_data["show_result"] == "After Schedule Completion":
-				ended, end_time = has_submission_ended(exam_submission.name)
+				schedule_completion = get_schedule_end_time(exam_submission.exam_schedule, exam_submission.additional_time_given)
+				ended = datetime.now() > schedule_completion
+				end_time = schedule_completion + timedelta(minutes=5)  # Adding a buffer of 5 minutes
 				if ended:
 					context.result_type = "scorecard"
 				else:

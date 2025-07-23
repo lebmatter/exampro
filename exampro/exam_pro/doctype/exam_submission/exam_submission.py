@@ -2,13 +2,11 @@
 # For license information, please see license.txt
 
 import random
-import json
 from datetime import datetime, timedelta
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils.file_manager import get_uploaded_content
 from frappe.utils import now
 from werkzeug.utils import secure_filename
 
@@ -791,12 +789,20 @@ def has_submission_ended(exam_submission):
 	returns True, end_time if exam has ended
 	"""
 	schedule, additional_time_given = frappe.get_cached_value("Exam Submission", exam_submission, ["exam_schedule", "additional_time_given"])
-	scheduled_start, duration = frappe.get_cached_value(
-	"Exam Schedule", schedule, ["start_date_time", "duration"]
+	submission_status, sub_started_time = frappe.get_cached_value("Exam Submission", exam_submission, ["status", "exam_started_time"])
+	scheduled_start, duration, schedule_type = frappe.get_cached_value(
+	"Exam Schedule", schedule, ["start_date_time", "duration", "schedule_type"]
 	)
-	end_time = scheduled_start + timedelta(minutes=duration) + \
-		timedelta(minutes=additional_time_given)
-	
+	if submission_status != "Started":
+		frappe.throw(_("Exam is not started yet."))
+
+	if schedule_type == "Flexible":
+		end_time = sub_started_time + timedelta(minutes=duration) + \
+			timedelta(minutes=additional_time_given)
+	else:
+		end_time = scheduled_start + timedelta(minutes=duration) + \
+			timedelta(minutes=additional_time_given)
+
 	current_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
 
 	if current_time >= end_time:
