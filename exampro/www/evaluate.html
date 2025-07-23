@@ -13,13 +13,18 @@ Exam Evaluation
 
 {% block page_content %}
 
+{% if assigned_exams %}
+<div class="container-fluid" style="width: 80%;">
+{% else %}
 <div class="container">
+{% endif %}
 	<div class="row mb-5">
 		<div class="col">
 			<h4>📝 Evaluate Exams</h4>
 		</div>
 	</div>
 	<div class="row">
+		{% if assigned_exams %}
 		<div class="col-md-4">
 			<div class="card">
 				<div class="card-header">
@@ -27,7 +32,6 @@ Exam Evaluation
 				</div>
 				<div class="card-body p-0">
 					<div class="list-group list-group-flush" id="exam-list">
-						{% if assigned_exams %}
 							{% for submission in assigned_exams %}
 							<a href="#" class="list-group-item list-group-item-action exam-item" 
 							   data-exam-id="{{ submission.name }}"
@@ -43,11 +47,6 @@ Exam Evaluation
 								</div>
 							</a>
 							{% endfor %}
-						{% else %}
-							<div class="p-3 text-center text-muted">
-								No exams assigned for evaluation
-							</div>
-						{% endif %}
 					</div>
 				</div>
 			</div>
@@ -76,6 +75,21 @@ Exam Evaluation
 			<div class="row" id="evaluation-area">
 			</div>
 		</div>
+		{% else %}
+			<div class="col-12">
+				<div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+					<div class="text-center" style="max-width: 600px;">
+						<img src="/assets/exampro/img/nothing-to-eval.png" alt="Nothing to evaluate" 
+							 class="img-fluid mb-4" style="max-width: 600px; opacity: 0.8;">
+						<h4 class="text-muted mb-3">No Exams to Evaluate</h4>
+						<p class="text-muted mb-0" style="line-height: 1.6;">
+							There are currently no exam submissions assigned to you for evaluation. 
+							New submissions will appear here when they become available.
+						</p>
+					</div>
+				</div>
+			</div>
+		{% endif %}
 	</div>
 </div>
 
@@ -108,6 +122,8 @@ Exam Evaluation
 	border: 1px solid transparent;
 	border-radius: 0.25rem;
 }
+
+
 </style>
 {% endblock %}
 

@@ -325,14 +325,18 @@ Proctor
 {% endblock %}
 
 {% block page_content %}
-
-<div class="container-fluid">
+{% if submissions|length > 0 or pending_candidates|length > 0 %}
+<div class="container-fluid" style="width: 80%;">
+{% else %}
+<div class="container">
+{% endif %}
 	<div class="row mb-5">
 		<div class="col">
             <h4>👀 Proctor Dashboard</h4>
         </div>
     </div>
     <div class="row">
+        {% if submissions|length > 0 or pending_candidates|length > 0 %}
         <!-- Message Sidebar -->
         <div class="col-md-2">
             <div class="card">
@@ -421,6 +425,21 @@ Proctor
                 {% endfor %}
             </div>
         </div>
+        {% else %}
+			<div class="col-12">
+				<div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+					<div class="text-center" style="max-width: 600px;">
+						<img src="/assets/exampro/img/nothing-to-proc.png" alt="Nothing to proctor" 
+							 class="img-fluid mb-4" style="max-width: 600px; opacity: 0.8;">
+						<h4 class="text-muted mb-3">No Exams to Proctor</h4>
+						<p class="text-muted mb-0" style="line-height: 1.6;">
+							There are currently no exam submissions assigned to you for proctoring. 
+							New submissions will appear here when they become available.
+						</p>
+					</div>
+				</div>
+			</div>
+		{% endif %}
     </div>
 </div>
 
