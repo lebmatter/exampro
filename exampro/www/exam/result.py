@@ -49,7 +49,8 @@ def set_exam_context(context, exmsubmn):
 			"Exam Messages",
 			filters={
 				"exam_submission": exam_submission.name,
-				"type_of_message": "Critical"
+				"type_of_message": "Critical",
+				"from": "System"
 			},
 			fields=["message"],
 			order_by="creation desc",
