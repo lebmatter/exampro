@@ -151,7 +151,7 @@ class ExamSubmission(Document):
 		for ex_ in sched.examiners:
 			ex_.proctoring_count = pcount[ex_.examiner]
 			ex_.evaluation_count = ecount[ex_.examiner]
-		sched.save()
+		sched.save(ignore_permissions=True)
 	
 	def before_insert(self):
 		last_login = frappe.db.get_value("User", self.candidate, "last_login")
