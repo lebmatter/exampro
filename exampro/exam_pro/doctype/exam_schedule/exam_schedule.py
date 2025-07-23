@@ -271,7 +271,10 @@ def _submit_pending_exams(schedule_name):
 		if subm["status"] in ["Submitted", "Terminated", "Registered"]:
 			continue
 		doc = frappe.get_doc("Exam Submission", subm["name"])
-		doc.status = "Submitted"
+		if doc.status == "Started":
+			doc.status = "Submitted"
+		elif doc.status == "Registered":
+			doc.status = "Not Attempted"
 		doc.exam_submitted_time = datetime.now()
 		doc.save(ignore_permissions=True)
 

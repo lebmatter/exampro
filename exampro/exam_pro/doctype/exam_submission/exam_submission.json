@@ -66,7 +66,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Registered\nRegistration Cancelled\nStarted\nSubmitted\nTerminated",
+   "options": "Registered\nRegistration Cancelled\nStarted\nSubmitted\nTerminated\nNot Attempted",
    "search_index": 1
   },
   {
@@ -216,7 +216,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-07-17 12:52:16.919306",
+ "modified": "2025-07-23 13:09:06.335506",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Submission",

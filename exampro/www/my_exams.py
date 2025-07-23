@@ -20,7 +20,10 @@ def submit_pending_exams(member=None):
 		sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"], ignore_permissions=True)
 		if sched.get_status(additional_time=submission["additional_time_given"]) == "Completed":
 			doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
-			doc.status = "Submitted"
+			if doc.status == "Started":
+				doc.status = "Submitted"
+			elif doc.status == "Registered":
+				doc.status = "Not Attempted"
 			doc.save(ignore_permissions=True)
 			frappe.db.commit()
 
