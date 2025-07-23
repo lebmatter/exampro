@@ -20,7 +20,7 @@ frappe.ready(function() {
             });
 
             // Track changes in mark inputs and feedback to detect unsaved changes
-            $(document).on('input', '.mark-input, .feedback-input', (e) => {
+            $(document).on('change input', '.mark-select, .feedback-input', (e) => {
                 this.unsavedChanges = true;
             });
 
@@ -45,7 +45,7 @@ frappe.ready(function() {
             $(document).on('click', '.save-score-btn:not(.disabled)', (e) => {
                 e.preventDefault();
                 const questionId = $(e.target).data('question-id');
-                const mark = $(`.mark-input[data-question-id="${questionId}"]`).val();
+                const mark = $(`.mark-select[data-question-id="${questionId}"]`).val();
                 const feedback = $(`.feedback-input[data-question-id="${questionId}"]`).val();
                 this.saveMark(questionId, mark, feedback);
             });
@@ -57,6 +57,17 @@ frappe.ready(function() {
                     this.finishEvaluation();
                 }
             });
+        }
+
+        // Generate dropdown options for marks from 0 to max_marks with 0.5 increments
+        generateMarkOptions(maxMarks, selectedValue = 0) {
+            let options = '';
+            for (let i = 0; i <= maxMarks; i += 0.5) {
+                const value = i.toFixed(1);
+                const selected = parseFloat(selectedValue) === i ? 'selected' : '';
+                options += `<option value="${value}" ${selected}>${value}</option>`;
+            }
+            return options;
         }
 
         loadExamSubmission(examId, submissionId) {
@@ -201,6 +212,7 @@ frappe.ready(function() {
                 `);
             } else if (isDone) {
                 // Show evaluation interface for already evaluated questions with existing data
+                const markOptions = this.generateMarkOptions(answer.max_marks, answer.mark || 0);
                 $('#evaluation-area').html(`
                     <div class="card">
                         <div class="card-body">
@@ -220,15 +232,13 @@ frappe.ready(function() {
                                 </div>
                                 <div class="form-group mb-3">
                                     <label>Mark (max: ${answer.max_marks})</label>
-                                    <input type="number" 
-                                           class="form-control mark-input" 
-                                           data-question-id="${answer.exam_question}"
-                                           value="${answer.mark || 0}"
-                                           min="0" 
-                                           max="${answer.max_marks}">
+                                    <select class="form-control mark-select" 
+                                            data-question-id="${answer.exam_question}">
+                                        ${markOptions}
+                                    </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Feedback</label>
+                                    <label>Feedback (optional)</label>
                                     <textarea class="form-control feedback-input" 
                                               data-question-id="${answer.exam_question}"
                                               rows="3">${answer.evaluator_response || ''}</textarea>
@@ -245,6 +255,7 @@ frappe.ready(function() {
                 `);
             } else {
                 // Show full evaluation interface for User Input pending questions
+                const markOptions = this.generateMarkOptions(answer.max_marks, answer.mark || 0);
                 $('#evaluation-area').html(`
                     <div class="card">
                         <div class="card-body">
@@ -260,15 +271,13 @@ frappe.ready(function() {
                                 <h6>Evaluation</h6>
                                 <div class="form-group mb-3">
                                     <label>Mark (max: ${answer.max_marks})</label>
-                                    <input type="number" 
-                                           class="form-control mark-input" 
-                                           data-question-id="${answer.exam_question}"
-                                           value="${answer.mark || 0}"
-                                           min="0" 
-                                           max="${answer.max_marks}">
+                                    <select class="form-control mark-select" 
+                                            data-question-id="${answer.exam_question}">
+                                        ${markOptions}
+                                    </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Feedback</label>
+                                    <label>Feedback (Optional)</label>
                                     <textarea class="form-control feedback-input" 
                                               data-question-id="${answer.exam_question}"
                                               rows="3">${answer.evaluator_response || ''}</textarea>

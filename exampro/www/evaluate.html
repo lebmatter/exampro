@@ -13,11 +13,7 @@ Exam Evaluation
 
 {% block page_content %}
 
-{% if assigned_exams %}
-<div class="container-fluid" style="width: 80%;">
-{% else %}
 <div class="container">
-{% endif %}
 	<div class="row mb-5">
 		<div class="col">
 			<h4>📝 Evaluate Exams</h4>
@@ -52,7 +48,9 @@ Exam Evaluation
 			</div>
 			</div>
 
-		<div class="col-md-4">
+			<div class="col-md-8">
+			<div class="row mb-3">
+						<div class="col-md-12">
 			<!-- Question Navigation Panel -->
 			<div class="card" id="question-nav-panel" style="display: none;">
 				<div class="card-header">
@@ -69,12 +67,16 @@ Exam Evaluation
 			</div>
 
 		</div>
-		
-		<div class="col-md-4">
-			<!-- Main content -->
-			<div class="row" id="evaluation-area">
 			</div>
+		
+		<div class="row mb-5">
+				
+			<!-- Main content -->
+			<div class="col-md-12" id="evaluation-area">
+			</div>
+
 		</div>
+			</div>
 		{% else %}
 			<div class="col-12">
 				<div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
@@ -96,7 +98,7 @@ Exam Evaluation
 <style>
 .question-nav-grid {
 	display: grid;
-	grid-template-columns: repeat(5, 1fr);
+	grid-template-columns: repeat(20, 1fr);
 	gap: 5px;
 	padding: 10px;
 }

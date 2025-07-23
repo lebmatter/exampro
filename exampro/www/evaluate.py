@@ -124,7 +124,7 @@ def save_marks(question_id, marks, submission_id, feedback=None):
 	if marks > max_marks:
 		frappe.throw(_("Marks cannot be greater than the maximum marks for this question: {0}").format(max_marks))
 	
-	answer_docname = frappe.db.get_value("Exam Answer", {"parent": submission_id, "exam_question": qs_name}, "name")
+	answer_docname = frappe.db.get_value("Exam Answer", {"parent": submission_id, "exam_question": question_id}, "name")
 	if not answer_docname:
 		frappe.throw("Invalid question requested.")
 
