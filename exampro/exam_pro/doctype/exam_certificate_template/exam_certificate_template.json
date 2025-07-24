@@ -6,24 +6,39 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
-  "template_path"
+  "html_template",
+  "wkhtmltopdf_params"
  ],
  "fields": [
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "label": "Title"
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
   },
   {
-   "fieldname": "template_path",
-   "fieldtype": "Data",
-   "label": "Template path"
+   "fieldname": "html_template",
+   "fieldtype": "Long Text",
+   "label": "HTML Template",
+   "reqd": 1
+  },
+  {
+   "description": "Optional parameters for PDF generation in JSON format",
+   "fieldname": "wkhtmltopdf_params",
+   "fieldtype": "JSON",
+   "label": "wkhtmltopdf Parameters (JSON)"
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-01-20 13:06:25.624832",
- "modified_by": "Administrator",
+ "links": [
+  {
+   "link_doctype": "Exam Certificate",
+   "link_fieldname": "certificate_template"
+  }
+ ],
+ "modified": "2025-07-24 14:44:17.876071",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Certificate Template",
  "owner": "Administrator",
@@ -54,6 +69,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

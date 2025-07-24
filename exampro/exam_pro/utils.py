@@ -133,8 +133,144 @@ def create_sample_exams():
             ]
         }).insert()
 
+    # Create sample certificate template
+    if not frappe.db.exists("Exam Certificate Template", "Sample Certificate Template"):
+        sample_html_template = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body {
+                        font-family: 'Times New Roman', serif;
+                        margin: 0;
+                        padding: 50px;
+                        background-color: #f9f9f9;
+                    }
+                    .certificate {
+                        background: white;
+                        border: 10px solid #1e3a8a;
+                        border-radius: 20px;
+                        padding: 80px 60px;
+                        text-align: center;
+                        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                        max-width: 800px;
+                        margin: 0 auto;
+                    }
+                    .header {
+                        font-size: 48px;
+                        color: #1e3a8a;
+                        font-weight: bold;
+                        margin-bottom: 20px;
+                        text-transform: uppercase;
+                        letter-spacing: 3px;
+                    }
+                    .subtitle {
+                        font-size: 24px;
+                        color: #666;
+                        margin-bottom: 40px;
+                    }
+                    .recipient {
+                        font-size: 36px;
+                        color: #333;
+                        font-weight: bold;
+                        margin: 40px 0;
+                        text-decoration: underline;
+                    }
+                    .achievement {
+                        font-size: 20px;
+                        color: #333;
+                        margin: 30px 0;
+                        line-height: 1.6;
+                    }
+                    .exam-details {
+                        font-size: 18px;
+                        color: #555;
+                        margin: 20px 0;
+                    }
+                    .signature-section {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-top: 80px;
+                        font-size: 16px;
+                    }
+                    .signature {
+                        text-align: center;
+                        width: 200px;
+                    }
+                    .signature-line {
+                        border-top: 2px solid #333;
+                        margin: 10px 0 5px 0;
+                    }
+                    .date {
+                        text-align: right;
+                        margin-top: 40px;
+                        font-size: 14px;
+                        color: #666;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="certificate">
+                    <div class="header">Certificate of Achievement</div>
+                    <div class="subtitle">This is to certify that</div>
+                    
+                    <div class="recipient">{{ student_name or "Student Name" }}</div>
+                    
+                    <div class="achievement">
+                        has successfully completed the examination
+                    </div>
+                    
+                    <div class="exam-details">
+                        <strong>{{ exam_title or "Exam Title" }}</strong><br>
+                        Score: {{ score or "0" }}% ({{ marks_obtained or "0" }}/{{ total_marks or "0" }} marks)<br>
+                        {% if pass_percentage %}Passing Grade: {{ pass_percentage }}%{% endif %}
+                    </div>
+                    
+                    <div class="achievement">
+                        and has demonstrated proficiency in the subject matter
+                    </div>
+                    
+                    <div class="signature-section">
+                        <div class="signature">
+                            <div class="signature-line"></div>
+                            <div>Instructor</div>
+                        </div>
+                        <div class="signature">
+                            <div class="signature-line"></div>
+                            <div>Administrator</div>
+                        </div>
+                    </div>
+                    
+                    <div class="date">
+                        Date: {{ completion_date or frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy") }}
+                    </div>
+                </div>
+            </body>
+            </html>
+        """
+        
+        sample_wkhtmltopdf_params = """{
+            "page-size": "A4",
+            "orientation": "Landscape",
+            "margin-top": "0.5in",
+            "margin-right": "0.5in",
+            "margin-bottom": "0.5in",
+            "margin-left": "0.5in",
+            "encoding": "UTF-8",
+            "no-outline": null,
+            "enable-local-file-access": null
+        }"""
+        
+        frappe.get_doc({
+            "doctype": "Exam Certificate Template",
+            "title": "Sample Certificate Template",
+            "html_template": sample_html_template.strip(),
+            "wkhtmltopdf_params": sample_wkhtmltopdf_params
+        }).insert()
+
     frappe.db.commit()
-    frappe.msgprint("Sample exams and questions created successfully.")
+    frappe.msgprint("Sample exams, questions, and certificate template created successfully.")
 
 def validate_user_email(doc, method=None):
     """
