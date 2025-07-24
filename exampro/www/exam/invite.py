@@ -2,7 +2,7 @@ import frappe
 import base64
 from frappe import _
 
-from exampro.exam_pro.utils import submit_candidate_pending_exams
+from exampro.exam_pro.api.utils import submit_candidate_pending_exams
 
 def get_context(context):
     """

@@ -4,7 +4,7 @@ from frappe.utils import now
 
 from frappe import _
 from frappe.utils.data import markdown
-from exampro.exam_pro.utils import submit_candidate_pending_exams
+from exampro.exam_pro.api.utils import submit_candidate_pending_exams
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs

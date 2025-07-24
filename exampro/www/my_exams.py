@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import frappe
 from frappe.utils import now, format_datetime
-from exampro.exam_pro.utils import submit_candidate_pending_exams
+from exampro.exam_pro.api.utils import submit_candidate_pending_exams
 
 
 def get_user_exams(member=None, page=1, page_size=10):

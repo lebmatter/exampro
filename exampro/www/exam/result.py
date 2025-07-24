@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import frappe
 from frappe import _
 
-from exampro.exam_pro.utils import (redirect_to_exams_list)
+from exampro.exam_pro.api.utils import (redirect_to_exams_list)
 from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_end_time
 
 

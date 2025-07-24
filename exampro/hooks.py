@@ -72,7 +72,7 @@ website_user_home_page = "/my-exams"
 # ------------
 
 # before_install = "exampro.install.before_install"
-after_install = "exampro.exam_pro.utils.create_sample_exams"
+after_install = "exampro.exam_pro.api.utils.create_sample_exams"
 
 
 # Uninstallation
@@ -137,7 +137,7 @@ after_install = "exampro.exam_pro.utils.create_sample_exams"
 
 doc_events = {
     "User": {
-        "before_insert": "exampro.exam_pro.utils.validate_user_email"
+        "before_insert": "exampro.exam_pro.api.utils.validate_user_email"
     }
 }
 
@@ -193,7 +193,7 @@ doc_events = {
 # Request Events
 # ----------------
 # before_request = ["exampro.utils.before_request"]
-after_request = ["exampro.exam_pro.utils.cleanup_request"]
+after_request = ["exampro.exam_pro.api.utils.cleanup_request"]
 
 # Job Events
 # ----------
@@ -249,4 +249,4 @@ fixtures = [
     }
 ]
 
-update_website_context = ["exampro.exam_pro.utils.get_website_context"]
+update_website_context = ["exampro.exam_pro.api.utils.get_website_context"]

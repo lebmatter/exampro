@@ -3,12 +3,12 @@
 
 from datetime import timedelta, datetime, date
 from dateutil.parser import parse
-from exampro.exam_pro.utils import submit_pending_exams
 import frappe
 import base64
 
 from frappe.utils import now
 from frappe.model.document import Document
+from exampro.exam_pro.api.utils import submit_candidate_pending_exams
 
 
 class ExamSchedule(Document):
@@ -302,22 +302,93 @@ def send_certificates(docname):
 		frappe.throw("You do not have permission to send certificates.")
 
 	doc = frappe.get_doc("Exam Schedule", docname)
-	if not doc.can_end_schedule():
-		return
+	
+	# Check if schedule can be ended (is completed)
+	if get_schedule_status(docname) != "Completed":
+		frappe.throw("Cannot send certificates. The exam schedule is not yet completed.")
 
+	# Check if exam has certification enabled
+	has_certification = frappe.db.get_value("Exam", doc.exam, "enable_certification")
+	if not has_certification:
+		frappe.throw("Certification is not enabled for this exam.")
+
+	# Get all submitted submissions
 	submissions = frappe.get_all(
 		"Exam Submission", 
 		filters={"exam_schedule": docname, "status": "Submitted"},
 		fields=["name", "result_status", "exam", "candidate", "candidate_name"]
 	)
+	
+	if not submissions:
+		return "No submitted exam submissions found for this schedule."
+
+	# Submit any pending exams first
 	for subm in submissions:
-		submit_pending_exams(subm["candidate"])
+		try:
+			submit_candidate_pending_exams(subm["candidate"])
+		except:
+			pass  # Continue if this fails
 
-	has_certification = frappe.db.get_value("Exam", doc.exam, "enable_certification")
-	if has_certification:
-		_send_certificates(docname)
+	# Count passed submissions
+	passed_submissions = [s for s in submissions if s["result_status"] == "Passed"]
+	
+	if not passed_submissions:
+		return f"No passed submissions found. Total submissions: {len(submissions)}, None passed."
 
-	return "Success"
+	# Send certificates for passed submissions
+	certificates_sent = 0
+	certificates_already_exist = 0
+	errors = []
+
+	for subm in passed_submissions:
+		try:
+			# Check if certificate already exists
+			existing_cert = frappe.db.exists("Exam Certificate", {"exam_submission": subm["name"]})
+			if existing_cert:
+				certificates_already_exist += 1
+				continue
+
+			# Create new certificate
+			today = date.today()
+			cert_expiry = frappe.db.get_value("Exam", subm["exam"], "expiry")
+
+			new_cert = frappe.get_doc({
+				"doctype": "Exam Certificate",
+				"exam_submission": subm["name"],
+				"exam": subm["exam"],
+				"candidate": subm["candidate"],
+				"candidate_name": subm["candidate_name"],
+				"issue_date": today,
+				"certificate_template": frappe.db.get_value("Exam", subm["exam"], "certificate_template")
+			})
+			
+			if cert_expiry:
+				cert_expiry *= 365
+				new_cert.expiry_date = today + timedelta(days=cert_expiry)
+			
+			new_cert.insert()
+			certificates_sent += 1
+
+		except Exception as e:
+			errors.append(f"Error creating certificate for {subm['candidate_name']}: {str(e)}")
+
+	# Prepare result message
+	result_parts = []
+	result_parts.append(f"Certificates sent: {certificates_sent}")
+	
+	if certificates_already_exist:
+		result_parts.append(f"Certificates already existed: {certificates_already_exist}")
+	
+	if errors:
+		result_parts.append(f"Errors: {len(errors)}")
+		result_parts.extend(errors[:3])  # Show first 3 errors
+		if len(errors) > 3:
+			result_parts.append(f"... and {len(errors) - 3} more errors")
+
+	result_parts.append(f"Total passed submissions: {len(passed_submissions)}")
+	result_parts.append(f"Total submissions: {len(submissions)}")
+
+	return "\n".join(result_parts)
 
 @frappe.whitelist()
 def get_server_status(schedule_name):
