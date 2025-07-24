@@ -2,7 +2,7 @@ import frappe
 import base64
 from frappe import _
 
-from exampro.www.my_exams import submit_pending_exams
+from exampro.exam_pro.utils import submit_candidate_pending_exams
 
 def get_context(context):
     """
@@ -30,7 +30,7 @@ def get_context(context):
             user.save(ignore_permissions=True)
             frappe.db.commit()    
 
-    submit_pending_exams()
+    submit_candidate_pending_exams()
     
     try:
         # Decode the base64 invite code

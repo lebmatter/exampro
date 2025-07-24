@@ -3,6 +3,7 @@
 
 from datetime import timedelta, datetime, date
 from dateutil.parser import parse
+from exampro.exam_pro.utils import submit_pending_exams
 import frappe
 import base64
 
@@ -258,27 +259,6 @@ class ExamSchedule(Document):
 		return invite_link
 
 
-def _submit_pending_exams(schedule_name):
-	"""
-	submit exams if pendding
-	"""	
-	submissions = frappe.get_all(
-		"Exam Submission", 
-		filters={"exam_schedule": schedule_name},
-		fields=["name", "result_status", "status", "total_marks", "exam", "candidate", "candidate_name"]
-	)
-	for subm in submissions:
-		if subm["status"] in ["Submitted", "Terminated", "Registered"]:
-			continue
-		doc = frappe.get_doc("Exam Submission", subm["name"])
-		if doc.status == "Started":
-			doc.status = "Submitted"
-		elif doc.status == "Registered":
-			doc.status = "Not Attempted"
-		doc.exam_submitted_time = datetime.now()
-		doc.save(ignore_permissions=True)
-
-
 def _send_certificates(schedule_name):
 	"""
 	send certificates if applicable
@@ -325,7 +305,14 @@ def send_certificates(docname):
 	if not doc.can_end_schedule():
 		return
 
-	_submit_pending_exams(docname)
+	submissions = frappe.get_all(
+		"Exam Submission", 
+		filters={"exam_schedule": docname, "status": "Submitted"},
+		fields=["name", "result_status", "exam", "candidate", "candidate_name"]
+	)
+	for subm in submissions:
+		submit_pending_exams(subm["candidate"])
+
 	has_certification = frappe.db.get_value("Exam", doc.exam, "enable_certification")
 	if has_certification:
 		_send_certificates(docname)

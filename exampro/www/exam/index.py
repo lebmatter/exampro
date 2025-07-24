@@ -4,7 +4,7 @@ from frappe.utils import now
 
 from frappe import _
 from frappe.utils.data import markdown
-from exampro.www.my_exams import submit_pending_exams
+from exampro.exam_pro.utils import submit_candidate_pending_exams
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs
@@ -111,7 +111,7 @@ def get_context(context):
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
 
-	submit_pending_exams()
+	submit_candidate_pending_exams()
 	exam_details = get_live_exam(frappe.session.user)
 	context.page_context = {}
 

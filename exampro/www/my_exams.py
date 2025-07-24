@@ -1,31 +1,8 @@
 from datetime import datetime, timedelta
 import frappe
 from frappe.utils import now, format_datetime
+from exampro.exam_pro.utils import submit_candidate_pending_exams
 
-def submit_pending_exams(member=None):
-	"""
-	Submit any pending exams for the user.
-	This is useful for exams that are not submitted automatically.
-	"""
-	submissions = frappe.get_all(
-		"Exam Submission",
-		{
-			"candidate": member or frappe.session.user,
-			"status": ["in", ["Registered", "Started"]]
-		}, 
-		["name", "exam_schedule", "status", "additional_time_given"],
-		ignore_permissions=True
-	)
-	for submission in submissions:
-		sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"], ignore_permissions=True)
-		if sched.get_status(additional_time=submission["additional_time_given"]) == "Completed":
-			doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
-			if doc.status == "Started":
-				doc.status = "Submitted"
-			elif doc.status == "Registered":
-				doc.status = "Not Attempted"
-			doc.save(ignore_permissions=True)
-			frappe.db.commit()
 
 def get_user_exams(member=None, page=1, page_size=10):
 	"""
@@ -184,7 +161,7 @@ def get_context(context):
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
 
-	submit_pending_exams()
+	submit_candidate_pending_exams()
 	context.no_cache = 1
 	
 	# Get page number from query parameters, default to 1
