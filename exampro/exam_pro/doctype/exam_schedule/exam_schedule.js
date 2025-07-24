@@ -29,13 +29,17 @@ frappe.ui.form.on('Exam Schedule', {
                 frm.page.set_indicator("Unknown", "gray");
             });
             
-        // Add Actions dropdown with Generate Invite Link and Send Certificates
+        // Add Actions dropdown with Generate Invite Link, Send Certificates, and Recompute Results
         frm.add_custom_button(__('Generate Invite Link'), function() {
             generate_invite_link(frm);
         }, __('Actions'));
         
         frm.add_custom_button(__('Send Certificates'), function() {
             send_certificates(frm);
+        }, __('Actions'));
+        
+        frm.add_custom_button(__('Recompute Results'), function() {
+            recompute_results(frm);
         }, __('Actions'));
     }
 });
@@ -208,4 +212,112 @@ function send_certificates(frm) {
                 }
             );
         });
+}
+
+function recompute_results(frm) {
+    // Confirm before recomputing results
+    frappe.confirm(
+        __('Are you sure you want to recompute results for this exam schedule? This will recalculate marks and status for all submissions and may take some time.'),
+        function() {
+            // Show progress dialog
+            let progress_dialog = new frappe.ui.Dialog({
+                title: __('Recomputing Results'),
+                fields: [
+                    {
+                        fieldtype: 'HTML',
+                        fieldname: 'progress_area',
+                        options: `
+                            <div class="progress-container">
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         style="width: 0%;" id="recompute-progress-bar"></div>
+                                </div>
+                                <div class="progress-text text-muted mt-2" id="recompute-progress-text">
+                                    Initializing...
+                                </div>
+                                <div class="progress-details mt-3" id="recompute-progress-details">
+                                </div>
+                            </div>
+                        `
+                    }
+                ],
+                primary_action_label: __('Close'),
+                primary_action: function() {
+                    progress_dialog.hide();
+                }
+            });
+            
+            progress_dialog.show();
+            progress_dialog.$wrapper.find('.btn-primary').hide(); // Hide close button initially
+            
+            // Call the recompute results function
+            frappe.call({
+                method: 'exampro.exam_pro.doctype.exam_schedule.exam_schedule.recompute_results_for_schedule',
+                args: {
+                    schedule: frm.doc.name
+                },
+                callback: function(r) {
+                    // Update progress to 100%
+                    $('#recompute-progress-bar').css('width', '100%').removeClass('progress-bar-animated');
+                    $('#recompute-progress-text').text('Results recomputation completed successfully!');
+                    $('#recompute-progress-details').html(`
+                        <div class="alert alert-success">
+                            <strong>Results recomputed successfully!</strong><br>
+                            All exam submissions have been processed and their results updated.
+                        </div>
+                    `);
+                    
+                    // Show close button
+                    progress_dialog.$wrapper.find('.btn-primary').show();
+                    
+                    // Show success alert
+                    frappe.show_alert({
+                        message: __('Results recomputed successfully!'),
+                        indicator: 'green'
+                    });
+                    
+                    // Refresh the form to show updated data
+                    frm.refresh();
+                },
+                error: function(r) {
+                    $('#recompute-progress-bar').css('width', '100%').removeClass('progress-bar-animated').addClass('bg-danger');
+                    $('#recompute-progress-text').text('Error occurred while recomputing results');
+                    $('#recompute-progress-details').html(`
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong><br>
+                            ${r.message || 'An unknown error occurred while recomputing results'}
+                        </div>
+                    `);
+                    progress_dialog.$wrapper.find('.btn-primary').show();
+                },
+                freeze: false // Don't freeze the UI as we have our own progress dialog
+            });
+            
+            // Simulate progress updates (since we can't get real-time progress from server)
+            let progress = 0;
+            let progress_interval = setInterval(function() {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    if (progress > 90) progress = 90;
+                    
+                    $('#recompute-progress-bar').css('width', progress + '%');
+                    
+                    if (progress < 30) {
+                        $('#recompute-progress-text').text('Fetching submissions...');
+                    } else if (progress < 60) {
+                        $('#recompute-progress-text').text('Evaluating answers...');
+                    } else {
+                        $('#recompute-progress-text').text('Updating results...');
+                    }
+                } else {
+                    clearInterval(progress_interval);
+                }
+            }, 300);
+            
+            // Clear interval when dialog is hidden
+            progress_dialog.$wrapper.on('hidden.bs.modal', function() {
+                clearInterval(progress_interval);
+            });
+        }
+    );
 }

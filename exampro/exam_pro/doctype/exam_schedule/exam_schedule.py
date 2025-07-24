@@ -9,6 +9,7 @@ import base64
 from frappe.utils import now
 from frappe.model.document import Document
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams
+from exampro.exam_pro.api.examops import evaluation_values
 
 
 class ExamSchedule(Document):
@@ -463,3 +464,35 @@ def get_schedule_end_time(exam_schedule, additional_time=0):
 		end_time += timedelta(minutes=additional_time)
 	
 	return end_time
+
+@frappe.whitelist()
+def recompute_results_for_schedule(schedule):
+	"""
+	Recompute results for all submissions in the given exam schedule.
+	This will update the total marks, evaluation status, and result status for each submission.
+	"""
+	sched = frappe.get_doc("Exam Schedule", schedule, ignore_permissions=True)
+	# get max additional time given for submissions in this schedule
+	max_additional_time = frappe.db.get_value("Exam Submission", {"exam_schedule": schedule}, "max(additional_time_given)") or 0
+	if sched.get_status(additional_time=max_additional_time) != "Completed":
+		frappe.throw("Cannot recompute results since the exam schedule is not completed.")
+
+	submissions = frappe.get_all(
+		"Exam Submission", 
+		filters={"exam_schedule": schedule},
+		fields=["name", "exam", "additional_time_given"]
+	)
+	for submission in submissions:
+		doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
+		if doc.status == "Started":
+			doc.status = "Submitted"
+		elif doc.status == "Registered":
+			doc.status = "Not Attempted"
+		total_marks, evaluation_status, result_status = evaluation_values(
+			doc.exam, doc.submitted_answers
+		)
+		doc.total_marks = total_marks
+		doc.evaluation_status = evaluation_status
+		doc.result_status = result_status
+		doc.save()
+		frappe.db.commit()
