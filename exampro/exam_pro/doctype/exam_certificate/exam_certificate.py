@@ -92,5 +92,45 @@ class ExamCertificate(Document):
         
         # Save the document to persist saved_params
         self.save()
+    
+    def generate_pdf(self):
+        """Generate certificate PDF for download"""
+        cert_template = frappe.db.get_value("Exam", self.exam, "certificate_template")
+        if not cert_template:
+            frappe.throw("No certificate template configured for this exam")
+
+        # Get the certificate template document
+        template_doc = frappe.get_doc("Exam Certificate Template", cert_template)
+
+        # Use saved context if available, otherwise generate new context
+        if self.saved_params:
+            try:
+                context = frappe.parse_json(self.saved_params)
+            except:
+                context = self._generate_context()
+        else:
+            context = self._generate_context()
+        
+        # Generate and return PDF bytes
+        return template_doc.generate_pdf(context)
+    
+    def _generate_context(self):
+        """Generate context data for certificate template"""
+        # Prepare context data for the certificate
+        exam_submission = frappe.get_doc("Exam Submission", self.exam_submission)
+        exam_doc = frappe.get_doc("Exam", self.exam)
+        
+        return {
+            "student_name": self.candidate_name,
+            "exam_title": exam_doc.title,
+            "score": exam_submission.percentage or 0,
+            "marks_obtained": exam_submission.total_marks or 0,
+            "total_marks": exam_doc.total_marks or 0,
+            "pass_percentage": exam_doc.pass_percentage or 0,
+            "completion_date": frappe.utils.format_date(exam_submission.modified, "dd MMM yyyy"),
+            "exam_duration": f"{exam_doc.duration} minutes" if exam_doc.duration else "N/A",
+            "certificate_id": self.name,
+            "issue_date": frappe.utils.format_date(self.issue_date, "dd MMM yyyy") if self.issue_date else frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy")
+        }
 
 
