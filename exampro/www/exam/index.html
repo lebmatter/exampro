@@ -354,8 +354,7 @@ Alert!
                 <div id="calculator" class="tab-pane fade">
                     {% if exam.enable_calculator %}
                     <!-- Tab 2 Content Goes Here -->
-                    <div class="tab-pane fade show active">
-                        {{ frappe.render_template('templates/exam/calculator.html', {}) }}
+                    <div class="tab-pane fade show active" id="exam-calculator">
                     </div>
                     {% else %}
                     <p class="card-text">Calculator disabled.</p>
@@ -478,6 +477,51 @@ Alert!
 .justify-content-start {
     justify-content: flex-start !important;
 }
+
+/* Custom calculator styling - these override the default Bootstrap classes */
+.calculator-wrapper .calc-display {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    border: 2px solid #4a5568;
+    font-family: 'Courier New', monospace;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.calculator-wrapper .calc-btn {
+    height: 60px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 2px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.calculator-wrapper .calc-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.calculator-wrapper .calc-btn:active {
+    transform: translateY(0);
+}
+
+.calculator-wrapper .number-btn {
+    background-color: #f7fafc;
+    border-color: #e2e8f0;
+    color: #2d3748;
+}
+
+.calculator-wrapper .number-btn:hover {
+    background-color: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.calculator-wrapper .card {
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
 </style>
 {% endblock %}
 
@@ -491,10 +535,16 @@ Alert!
     {% include "exampro/templates/exam/examutils.js" %}
     {% include "exampro/templates/exam/inactivityDetector.js" %}
     {% include "exampro/templates/exam/examform.js" %}
-    {% include "exampro/templates/exam/calculator.js" %}
 </script>
+<script src="/assets/exampro/js/bootstrap-calculator.js"></script>
 <script>
     $(document).ready(function () {
+        // Create calculator instance
+        calculator = new BootstrapCalculator('#exam-calculator');
+
+        // Initialize the calculator
+        calculator.init();
+        
         // Only add toggle functionality if instructions exist
         if (exam.instructions) {
             $('#toggleInstruction').click(function () {
