@@ -12,7 +12,9 @@
   "column_break_3",
   "issue_date",
   "expiry_date",
-  "certificate_template"
+  "section_break_ygbp",
+  "certificate_template",
+  "saved_params"
  ],
  "fields": [
   {
@@ -68,11 +70,21 @@
    "label": "Certificate Template",
    "options": "Exam Certificate Template",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ygbp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "saved_params",
+   "fieldtype": "JSON",
+   "label": "Saved params",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-24 14:43:59.540896",
+ "modified": "2025-07-24 14:59:13.255126",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Certificate",

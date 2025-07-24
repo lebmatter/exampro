@@ -1,8 +1,5 @@
 # Copyright (c) 2024, Labeeb Mattra and contributors
 # For license information, please see license.txt
-import os
-import subprocess
-import tempfile
 
 import frappe
 from frappe.model.document import Document
@@ -31,75 +28,69 @@ class ExamCertificate(Document):
         self.can_send_certificate()
 
         cert_template = frappe.db.get_value("Exam", self.exam, "certificate_template")
-        cert_template_path = frappe.db.get_value("Exam Certificate Template", cert_template, "template_path")
-        assert cert_template_path
-        assert os.path.exists(cert_template_path)
+        if not cert_template:
+            frappe.throw("No certificate template configured for this exam")
 
-        # Render certificate content
+        # Get the certificate template document
+        template_doc = frappe.get_doc("Exam Certificate Template", cert_template)
+
+        # Prepare context data for the certificate
+        exam_submission = frappe.get_doc("Exam Submission", self.exam_submission)
+        exam_doc = frappe.get_doc("Exam", self.exam)
+        
         context = {
-            "name": self.member_name,
-            "score": frappe.db.get_value("Exam Submission", self.exam_submission, "total_marks"),
-            "total_marks": frappe.db.get_value("Exam", self.exam, "total_marks")
+            "student_name": self.candidate_name,
+            "exam_title": exam_doc.title,
+            "score": exam_submission.percentage or 0,
+            "marks_obtained": exam_submission.total_marks or 0,
+            "total_marks": exam_doc.total_marks or 0,
+            "pass_percentage": exam_doc.pass_percentage or 0,
+            "completion_date": frappe.utils.format_date(exam_submission.modified, "dd MMM yyyy"),
+            "exam_duration": f"{exam_doc.duration} minutes" if exam_doc.duration else "N/A",
+            "certificate_id": self.name,
+            "issue_date": frappe.utils.format_date(self.issue_date, "dd MMM yyyy") if self.issue_date else frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy")
         }
-        input_html = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.html')
-        cert_pdf = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.pdf')
 
-        # template temporary file
-        with open(cert_template_path, "r") as file:
-            html_content = file.read()
-            rendered_html = frappe.render_template(html_content, context)
-            # Save the rendered HTML to a new file
-            with open(input_html.name, "w") as file:
-                file.write(rendered_html)
-
-        # Generate PDF
-        command = [
-            "wkhtmltopdf",
-            "-L", "0mm",
-            "-R", "0mm",
-            "-T", "0mm",
-            "-B", "0mm",
-            "--no-outline",
-            "--no-pdf-compression",
-            "--page-width", "9.8in",
-            "--page-height", "13.5in",
-            "--disable-smart-shrinking",
-            input_html.name,
-            cert_pdf.name
-        ]
-        # Execute the command
+        # Save the template parameters used
+        self.saved_params = frappe.as_json(context)
+        
+        # Generate PDF using the template's generate_pdf method
         try:
-            subprocess.run(command, check=True)
-            print("PDF generated successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error generating PDF: {e}")
+            pdf_bytes = template_doc.generate_pdf(context)
+        except Exception as e:
+            frappe.throw(f"Error generating certificate PDF: {str(e)}")
 
         # Retrieve the email template document
-        email_template = frappe.get_doc("Email Template", "Exam Certificate Issue")
+        try:
+            email_template = frappe.get_doc("Email Template", "Exam Certificate Issue")
+            # Render the subject and message
+            subject = frappe.render_template(email_template.subject, context)
+            message = frappe.render_template(email_template.response, context)
+        except frappe.DoesNotExistError:
+            # Fallback email content if template doesn't exist
+            subject = f"Certificate for {exam_doc.title}"
+            message = f"Dear {self.candidate_name},<br><br>Congratulations! Please find your certificate attached.<br><br>Best regards"
 
-        # Render the subject and message
-        subject = frappe.render_template(email_template.subject, context)
-        message = frappe.render_template(email_template.response, context)
+        candidate_email = frappe.db.get_value("User", self.candidate, "email")
+        if not candidate_email:
+            frappe.throw(f"No email found for candidate {self.candidate}")
 
-        member_email = frappe.db.get_value("User", self.member, "email")
-
-        # Read the PDF content from the temporary file
-        with open(cert_pdf.name, 'rb') as pdf_file:
-            pdf_attachment = pdf_file.read()
-
+        # Send email with PDF attachment
         try:
             frappe.sendmail(
-                recipients=[member_email],
+                recipients=[candidate_email],
                 subject=subject,
                 message=message,
                 attachments=[{
-                    'fname': 'certificate.pdf',
-                    'fcontent': pdf_attachment
+                    'fname': f'certificate_{self.name}.pdf',
+                    'fcontent': pdf_bytes
                 }]
             )
-        finally:
-            # Delete the temporary file
-            cert_pdf.close()
-            input_html.close()
+            frappe.msgprint(f"Certificate sent successfully to {candidate_email}")
+        except Exception as e:
+            frappe.throw(f"Error sending certificate email: {str(e)}")
+        
+        # Save the document to persist saved_params
+        self.save()
 
 
