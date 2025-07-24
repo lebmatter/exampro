@@ -123,7 +123,8 @@ def get_leaderboard_data_internal(exam, leaderboard_type, limit=10, schedule=Non
             "candidate_name", 
             "total_marks",
             "result_status",
-            "modified as completion_time",
+            "exam_started_time",
+            "exam_submitted_time",
             "exam_schedule"
         ],
         order_by="total_marks desc, modified asc",
@@ -144,11 +145,17 @@ def get_leaderboard_data_internal(exam, leaderboard_type, limit=10, schedule=Non
         else:
             submission["percentage"] = 0.0
         
-        # Format completion time
-        if submission.get("completion_time"):
-            submission["completion_time"] = frappe.utils.format_datetime(
-                submission["completion_time"], "dd MMM yyyy, hh:mm a"
+        # Calculate completion time as exam_submitted_time - exam_started_time
+        if submission.get("exam_submitted_time") and submission.get("exam_started_time"):
+            time_diff = frappe.utils.time_diff_in_seconds(
+                submission["exam_submitted_time"],
+                submission["exam_started_time"]
             )
+            minutes = int(time_diff // 60)
+            seconds = int(time_diff % 60)
+            submission["completion_time"] = f"{minutes}m {seconds}s"
+        else:
+            submission["completion_time"] = "N/A"
 
     # Calculate statistics
     stats = calculate_stats(filters, exam_doc.pass_percentage or 50)

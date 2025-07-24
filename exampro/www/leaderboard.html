@@ -353,12 +353,12 @@
 
 {% block page_content %}
 <div class="container">
-    <div class="leaderboard-container common-card-style">
+    <div>
             {% if show_error %}
                 <!-- Error Section -->
                 <div class="row mb-5">
                     <div class="col">
-                        <h4 class="bold-heading"><i class="fas fa-exclamation-triangle text-danger me-2"></i> {{ title }}</h4>
+                        <h4 class="bold-heading"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> {{ title }}</h4>
                     </div>
                 </div>
                 
@@ -366,7 +366,7 @@
                     <div class="col">
                         <div class="card border-danger">
                             <div class="card-header bg-danger text-white">
-                                <i class="fas fa-lock me-2"></i> {{ _("Access Restricted") }}
+                                <i class="bi bi-lock-fill me-2"></i> {{ _("Access Restricted") }}
                             </div>
                             <div class="card-body text-center p-4">
                                 <p class="mb-0">{{ error_message }}</p>
@@ -378,17 +378,18 @@
                 <!-- Header Section -->
                 <div class="row mb-5">
                     <div class="col">
-                        <h4 class="bold-heading"><i class="fas fa-trophy text-warning"></i> {{ _("Exam Leaderboard") }}</h4>
+                        <h4 class="bold-heading"><i class="bi bi-trophy-fill text-warning me-2"></i> {{ _("Exam Leaderboard") }}</h4>
                     </div>
                 </div>
+
                 <div class="row mb-3">
                     <div class="col">
                         <h5 class="exam-title">{{ exam.title }}</h5>
                         <div class="exam-info">
                             {% if exam.description %}{{ exam.description }}<br>{% endif %}
-                            <span class="badge bg-info">{{ exam.leaderboard_type }}</span>
+                            <!-- <span class="badge bg-info">{{ exam.leaderboard_type }}</span>
                             <span class="badge bg-secondary">Total: {{ exam.total_marks }}</span>
-                            <span class="badge bg-success">Pass: {{ exam.pass_percentage }}%</span>
+                            <span class="badge bg-success">Pass: {{ exam.pass_percentage }}%</span> -->
                         </div>
                     </div>
                 </div>
@@ -399,7 +400,7 @@
                     <div class="col">
                         <div class="card border-light">
                             <div class="card-header bg-light">
-                                <i class="fas fa-user me-2"></i> {{ _("Your Performance") }}
+                                <i class="bi bi-person-fill me-2"></i> {{ _("Your Performance") }}
                             </div>
                             <div class="card-body">
                                 <div class="row text-center">
@@ -442,7 +443,7 @@
                     <div class="col-md-3 mb-3">
                         <div class="card border-light h-100">
                             <div class="card-body text-center">
-                                <i class="fas fa-users text-primary mb-2" style="font-size: 1.5rem;"></i>
+                                <i class="bi bi-people-fill text-primary mb-2" style="font-size: 1.5rem;"></i>
                                 <h5 class="card-title">{{ stats.total_participants }}</h5>
                                 <p class="card-text text-muted">{{ _("Total Participants") }}</p>
                             </div>
@@ -451,7 +452,7 @@
                     <div class="col-md-3 mb-3">
                         <div class="card border-light h-100">
                             <div class="card-body text-center">
-                                <i class="fas fa-chart-line text-success mb-2" style="font-size: 1.5rem;"></i>
+                                <i class="bi bi-graph-up text-success mb-2" style="font-size: 1.5rem;"></i>
                                 <h5 class="card-title">{{ "%.1f"|format(stats.average_score) }}%</h5>
                                 <p class="card-text text-muted">{{ _("Average Score") }}</p>
                             </div>
@@ -460,7 +461,7 @@
                     <div class="col-md-3 mb-3">
                         <div class="card border-light h-100">
                             <div class="card-body text-center">
-                                <i class="fas fa-medal text-warning mb-2" style="font-size: 1.5rem;"></i>
+                                <i class="bi bi-award-fill text-warning mb-2" style="font-size: 1.5rem;"></i>
                                 <h5 class="card-title">{{ "%.1f"|format(stats.highest_score) }}%</h5>
                                 <p class="card-text text-muted">{{ _("Highest Score") }}</p>
                             </div>
@@ -469,7 +470,7 @@
                     <div class="col-md-3 mb-3">
                         <div class="card border-light h-100">
                             <div class="card-body text-center">
-                                <i class="fas fa-check-circle text-info mb-2" style="font-size: 1.5rem;"></i>
+                                <i class="bi bi-check-circle-fill text-info mb-2" style="font-size: 1.5rem;"></i>
                                 <h5 class="card-title">{{ "%.1f"|format(stats.pass_rate) }}%</h5>
                                 <p class="card-text text-muted">{{ _("Pass Rate") }}</p>
                             </div>
@@ -481,7 +482,7 @@
                 <!-- Leaderboard Table -->
                 <div class="card border-light">
                     <div class="card-header bg-light">
-                        <i class="fas fa-trophy me-2"></i> {{ _("Leaderboard Rankings") }}
+                        <i class="bi bi-trophy-fill me-2"></i> {{ _("Leaderboard Rankings") }}
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -493,7 +494,7 @@
                                             <th>{{ _("Candidate") }}</th>
                                             <th width="120">{{ _("Score") }}</th>
                                             <th width="120">{{ _("Percentage") }}</th>
-                                            <th width="150">{{ _("Completion Time") }}</th>
+                                            <th width="150">{{ _("Time") }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -512,10 +513,10 @@
                                                 {% set initials = submission.candidate_name.split(' ')|map('first')|join('')|upper %}
                                                 {{ initials }}
                                             </div>
-                                            <span class="candidate-name">
+                                            <span class="candidate-name rank-{{ loop.index }}-name">
                                                 {{ submission.candidate_name }}
                                                 {% if submission.candidate == frappe.session.user %}
-                                                    <i class="fas fa-star text-warning ms-1" title="You"></i>
+                                                    <i class="bi bi-star-fill text-warning ms-1" title="You"></i>
                                                 {% endif %}
                                             </span>
                                         </div>
@@ -545,7 +546,7 @@
                                 </table>
                             {% else %}
                                 <div class="text-center p-5">
-                                    <i class="fas fa-chart-bar mb-3" style="font-size: 2.5rem; color: #dee2e6;"></i>
+                                    <i class="bi bi-bar-chart-fill mb-3" style="font-size: 2.5rem; color: #dee2e6;"></i>
                                     <h5>{{ _("No Leaderboard Data") }}</h5>
                                     <p class="text-muted">{{ _("No submissions found for this exam leaderboard") }}</p>
                                 </div>
@@ -556,4 +557,111 @@
             {% endif %}
         </div>
     </div>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script>
+// Simple JS Confetti implementation
+class JSConfetti {
+    constructor() {
+        this.canvas = document.createElement('canvas');
+        this.context = this.canvas.getContext('2d');
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.canvas.style.position = 'fixed';
+        this.canvas.style.top = '0';
+        this.canvas.style.left = '0';
+        this.canvas.style.zIndex = '1000';
+        this.canvas.style.pointerEvents = 'none';
+        document.body.appendChild(this.canvas);
+        
+        this.particles = [];
+        this.colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#7c3aed', '#f59e0b', '#10b981'];
+    }
+    
+    addParticle(x, y) {
+        this.particles.push({
+            x,
+            y,
+            color: this.colors[Math.floor(Math.random() * this.colors.length)],
+            size: Math.random() * 10 + 5,
+            speedX: Math.random() * 6 - 3,
+            speedY: Math.random() * -7 - 2,
+            gravity: 0.1,
+            rotation: Math.random() * 360,
+            rotationSpeed: Math.random() * 10 - 5
+        });
+    }
+    
+    update() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        for (let i = 0; i < this.particles.length; i++) {
+            const p = this.particles[i];
+            
+            // Update position
+            p.x += p.speedX;
+            p.y += p.speedY;
+            p.speedY += p.gravity;
+            p.rotation += p.rotationSpeed;
+            
+            // Draw particle
+            this.context.save();
+            this.context.translate(p.x, p.y);
+            this.context.rotate(p.rotation * Math.PI / 180);
+            this.context.fillStyle = p.color;
+            this.context.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            this.context.restore();
+            
+            // Remove particles that are out of the screen
+            if (p.y > this.canvas.height) {
+                this.particles.splice(i, 1);
+                i--;
+            }
+        }
+        
+        if (this.particles.length > 0) {
+            requestAnimationFrame(() => this.update());
+        } else {
+            // Remove canvas when all particles are gone
+            this.canvas.remove();
+        }
+    }
+    
+    addConfetti(x, y, amount = 100) {
+        for (let i = 0; i < amount; i++) {
+            this.addParticle(x, y);
+        }
+        this.update();
+    }
+}
+
+// Initialize Easter egg
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the first ranked participant (if exists)
+    const firstRankNameElement = document.querySelector('.rank-1-name');
+    
+    if (firstRankNameElement) {
+        // Add a click event listener to just the name element
+        firstRankNameElement.addEventListener('click', function(e) {
+            // Create confetti instance and trigger effect
+            const confetti = new JSConfetti();
+            const rect = firstRankNameElement.getBoundingClientRect();
+            confetti.addConfetti(e.clientX || rect.left + rect.width/2, e.clientY || rect.top, 150);
+            
+            // Add a little animation to the name element
+            firstRankNameElement.style.transition = 'transform 0.3s ease';
+            firstRankNameElement.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                firstRankNameElement.style.transform = '';
+            }, 300);
+        });
+        
+        // Add cursor pointer to indicate clickability
+        firstRankNameElement.style.cursor = 'pointer';
+        firstRankNameElement.setAttribute('title', 'Click for a surprise!');
+    }
+});
+</script>
 {% endblock %}
