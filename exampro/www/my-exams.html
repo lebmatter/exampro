@@ -56,7 +56,6 @@
                                 <th>{{ _("Schedule Time") }}</th>
                                 <th>{{ _("Duration") }}</th>
                                 <th>{{ _("Status") }}</th>
-                                <th>{{ _("Result") }}</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -72,9 +71,9 @@
                             {% for exam in exams %}
                             <tr>
                                 <td>
-                                    {{ exam.exam_name }}
+                                    <span class="font-weight-bold">{{ exam.exam_name }}</span>
                                     {% if exam.schedule_type == "Flexible" %}
-                                        <span class="badge badge-pill badge-info ms-2">Flexible</span>
+                                        <span class="badge badge-warning ms-2 tag">Flexible</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -91,15 +90,7 @@
                                     {% elif exam.status == "Started" %}
                                         <span class="badge bg-warning text-dark">{{ exam.status }}</span>
                                     {% elif exam.status == "Submitted" %}
-                                        <span class="badge bg-success text-white">{{ exam.status }}</span>
-                                    {% elif exam.status == "Terminated" %}
-                                        <span class="badge bg-danger text-white">{{ exam.status }}</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary text-white">{{ exam.status }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if exam.result_status %}
+                                        {% if exam.result_status %}
                                         {% if exam.result_status == "Passed" %}
                                             <span class="badge bg-success text-white">{{ exam.result_status }}</span>
                                         {% elif exam.result_status == "Failed" %}
@@ -107,10 +98,13 @@
                                         {% elif exam.result_status == "Pending" %}
                                             <span class="badge bg-warning text-dark">{{ exam.result_status }}</span>
                                         {% else %}
-                                            <span class="badge bg-secondary text-white">{{ exam.result_status }}</span>
+                                            <span class="badge bg-light">{{ exam.result_status }}</span>
                                         {% endif %}
+                                    {% endif %}
+                                    {% elif exam.status == "Terminated" %}
+                                        <span class="badge bg-danger text-white">{{ exam.status }}</span>
                                     {% else %}
-                                        -
+                                        <span class="badge bg-light">{{ exam.status }}</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-right">
@@ -208,6 +202,9 @@
         </div>
     </div>
 <style>
+.tag {
+    font-size: 1rem;
+}
 /* Common styling from examform.html */
 .bold-heading {
     font-weight: 600;
@@ -229,30 +226,7 @@
     flex-direction: column;
 }
 
-.badge {
-    font-weight: 500;
-    padding: 0.5em 0.7em;
-}
 
-.bg-info {
-    background-color: #17a2b8 !important;
-}
-
-.bg-warning {
-    background-color: #ffc107 !important;
-}
-
-.bg-success {
-    background-color: #28a745 !important;
-}
-
-.bg-danger {
-    background-color: #dc3545 !important;
-}
-
-.bg-secondary {
-    background-color: #6c757d !important;
-}
 
 /* Table styling */
 .table td, .table th {
