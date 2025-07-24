@@ -27,10 +27,6 @@
   "enable_certification",
   "expiry",
   "certificate_template",
-  "pricing_column",
-  "paid_certificate",
-  "currency",
-  "price_certificate",
   "questions_tab",
   "section_break_iifh",
   "question_type",
@@ -91,28 +87,6 @@
    "fieldname": "expiry",
    "fieldtype": "Int",
    "label": "Certification Expires After (Years)"
-  },
-  {
-   "default": "0",
-   "depends_on": "enable_certification",
-   "fieldname": "paid_certificate",
-   "fieldtype": "Check",
-   "label": "Paid Certificate"
-  },
-  {
-   "depends_on": "paid_certificate",
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "mandatory_depends_on": "paid_certificate",
-   "options": "Currency"
-  },
-  {
-   "depends_on": "paid_certificate",
-   "fieldname": "price_certificate",
-   "fieldtype": "Currency",
-   "label": "Certificate Price",
-   "mandatory_depends_on": "paid_certificate"
   },
   {
    "fieldname": "instructions",
@@ -262,11 +236,6 @@
    "non_negative": 1
   },
   {
-   "fieldname": "pricing_column",
-   "fieldtype": "Column Break",
-   "label": "Pricing"
-  },
-  {
    "depends_on": "enable_certification",
    "fieldname": "certificate_template",
    "fieldtype": "Link",
@@ -302,7 +271,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-17 11:11:25.747380",
+ "modified": "2025-07-24 15:06:38.094835",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",
