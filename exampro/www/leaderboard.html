@@ -1,0 +1,559 @@
+{% extends "exampro/templates/exam_base.html" %}
+
+{% block title %}
+{{ title or _("Exam Leaderboard") }}
+{% endblock %}
+
+{% block head_include %}
+{{ super() }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+        
+        .leaderboard-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin: 1rem auto;
+            width: 100%;
+        }
+        
+        .bold-heading {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        
+        .exam-title {
+            color: #7c3aed;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .exam-info {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+        
+        .badge {
+            margin-right: 5px;
+            padding: 6px 10px;
+        }
+        
+        .filter-section {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .filter-section h5 {
+            color: #374151;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .form-select, .btn {
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .form-select:focus, .btn:focus {
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            border: none;
+            font-weight: 600;
+            padding: 0.6rem 1.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
+        }
+        
+        .leaderboard-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+        }
+        
+        .table thead th {
+            background: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            border: none;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .table tbody tr:hover {
+            background: #f8fafc;
+            transform: scale(1.01);
+        }
+        
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: #f1f5f9;
+            font-size: 0.95rem;
+        }
+        
+        .rank-cell {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .rank-1 {
+            background: #ffd700;
+            color: #92400e;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rank-2 {
+            background: #c0c0c0;
+            color: #4b5563;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rank-3 {
+            background: #cd7f32;
+            color: white;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .candidate-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .candidate-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .candidate-name {
+            font-weight: 600;
+            color: #374151;
+            font-size: 1rem;
+        }
+        
+        .score-cell {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .score-excellent {
+            color: #10b981;
+        }
+        
+        .score-good {
+            color: #3b82f6;
+        }
+        
+        .score-average {
+            color: #f59e0b;
+        }
+        
+        .score-poor {
+            color: #ef4444;
+        }
+        
+        .percentage-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .percentage-excellent {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .percentage-good {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .percentage-average {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .percentage-poor {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .spinner-border {
+            color: #7c3aed;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        
+        .no-data i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #d1d5db;
+        }
+        
+        .error-container {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid #fecaca;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .error-container i {
+            font-size: 4rem;
+            color: #ef4444;
+            margin-bottom: 1rem;
+        }
+        
+        .error-container h3 {
+            color: #dc2626;
+            margin-bottom: 1rem;
+        }
+        
+        .error-container p {
+            color: #7f1d1d;
+            font-size: 1.1rem;
+        }
+        
+        .user-stats-card {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .user-stats-card h5 {
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .user-rank-highlight {
+            background-color: #fff8e6 !important;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #374151;
+        }
+        
+        .stat-card .stat-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .leaderboard-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            .header-section h1 {
+                font-size: 2rem;
+            }
+            
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .candidate-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
+<div class="container">
+    <div class="leaderboard-container common-card-style">
+            {% if show_error %}
+                <!-- Error Section -->
+                <div class="row mb-5">
+                    <div class="col">
+                        <h4 class="bold-heading"><i class="fas fa-exclamation-triangle text-danger me-2"></i> {{ title }}</h4>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col">
+                        <div class="card border-danger">
+                            <div class="card-header bg-danger text-white">
+                                <i class="fas fa-lock me-2"></i> {{ _("Access Restricted") }}
+                            </div>
+                            <div class="card-body text-center p-4">
+                                <p class="mb-0">{{ error_message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Header Section -->
+                <div class="row mb-5">
+                    <div class="col">
+                        <h4 class="bold-heading"><i class="fas fa-trophy text-warning"></i> {{ _("Exam Leaderboard") }}</h4>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <h5 class="exam-title">{{ exam.title }}</h5>
+                        <div class="exam-info">
+                            {% if exam.description %}{{ exam.description }}<br>{% endif %}
+                            <span class="badge bg-info">{{ exam.leaderboard_type }}</span>
+                            <span class="badge bg-secondary">Total: {{ exam.total_marks }}</span>
+                            <span class="badge bg-success">Pass: {{ exam.pass_percentage }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Stats Card -->
+                {% if user_submission %}
+                <div class="row mb-4">
+                    <div class="col">
+                        <div class="card border-light">
+                            <div class="card-header bg-light">
+                                <i class="fas fa-user me-2"></i> {{ _("Your Performance") }}
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="h4">{{ user_submission.total_marks }}/{{ exam.total_marks }}</div>
+                                        <small>{{ _("Your Score") }}</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="h4">{{ "%.1f"|format(user_submission.percentage) }}%</div>
+                                        <small>{{ _("Percentage") }}</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="h4">
+                                            <span class="badge {% if user_submission.result_status == 'Passed' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ user_submission.result_status }}
+                                            </span>
+                                        </div>
+                                        <small>{{ _("Result") }}</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="h4">
+                                            {% if user_rank %}
+                                                #{{ user_rank }}
+                                            {% else %}
+                                                {{ _("Not Ranked") }}
+                                            {% endif %}
+                                        </div>
+                                        <small>{{ _("Your Rank") }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Stats Cards -->
+                {% if stats %}
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-light h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-users text-primary mb-2" style="font-size: 1.5rem;"></i>
+                                <h5 class="card-title">{{ stats.total_participants }}</h5>
+                                <p class="card-text text-muted">{{ _("Total Participants") }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-light h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line text-success mb-2" style="font-size: 1.5rem;"></i>
+                                <h5 class="card-title">{{ "%.1f"|format(stats.average_score) }}%</h5>
+                                <p class="card-text text-muted">{{ _("Average Score") }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-light h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-medal text-warning mb-2" style="font-size: 1.5rem;"></i>
+                                <h5 class="card-title">{{ "%.1f"|format(stats.highest_score) }}%</h5>
+                                <p class="card-text text-muted">{{ _("Highest Score") }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-light h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-check-circle text-info mb-2" style="font-size: 1.5rem;"></i>
+                                <h5 class="card-title">{{ "%.1f"|format(stats.pass_rate) }}%</h5>
+                                <p class="card-text text-muted">{{ _("Pass Rate") }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Leaderboard Table -->
+                <div class="card border-light">
+                    <div class="card-header bg-light">
+                        <i class="fas fa-trophy me-2"></i> {{ _("Leaderboard Rankings") }}
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            {% if leaderboard_data and leaderboard_data|length > 0 %}
+                                <table class="table table-hover mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th width="80">{{ _("Rank") }}</th>
+                                            <th>{{ _("Candidate") }}</th>
+                                            <th width="120">{{ _("Score") }}</th>
+                                            <th width="120">{{ _("Percentage") }}</th>
+                                            <th width="150">{{ _("Completion Time") }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                {% for submission in leaderboard_data %}
+                                <tr {% if submission.candidate == frappe.session.user %}class="user-rank-highlight"{% endif %}>
+                                    <td class="rank-cell">
+                                        {% if loop.index <= 3 %}
+                                            <span class="rank-{{ loop.index }}">{{ loop.index }}</span>
+                                        {% else %}
+                                            <span style="font-weight: 600;">{{ loop.index }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="candidate-info">
+                                            <div class="candidate-avatar">
+                                                {% set initials = submission.candidate_name.split(' ')|map('first')|join('')|upper %}
+                                                {{ initials }}
+                                            </div>
+                                            <span class="candidate-name">
+                                                {{ submission.candidate_name }}
+                                                {% if submission.candidate == frappe.session.user %}
+                                                    <i class="fas fa-star text-warning ms-1" title="You"></i>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="score-cell 
+                                        {% if submission.percentage >= 90 %}score-excellent
+                                        {% elif submission.percentage >= 75 %}score-good
+                                        {% elif submission.percentage >= 60 %}score-average
+                                        {% else %}score-poor{% endif %}">
+                                        {{ submission.total_marks }}/{{ submission.max_marks }}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="percentage-badge 
+                                            {% if submission.percentage >= 90 %}percentage-excellent
+                                            {% elif submission.percentage >= 75 %}percentage-good
+                                            {% elif submission.percentage >= 60 %}percentage-average
+                                            {% else %}percentage-poor{% endif %}">
+                                            {{ "%.1f"|format(submission.percentage) }}%
+                                        </span>
+                                    </td>
+                                    <td class="text-center text-muted">
+                                        {{ submission.completion_time or "N/A" }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center p-5">
+                                    <i class="fas fa-chart-bar mb-3" style="font-size: 2.5rem; color: #dee2e6;"></i>
+                                    <h5>{{ _("No Leaderboard Data") }}</h5>
+                                    <p class="text-muted">{{ _("No submissions found for this exam leaderboard") }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

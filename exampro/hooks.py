@@ -234,7 +234,8 @@ after_request = ["exampro.exam_pro.api.utils.cleanup_request"]
 website_route_rules = [
     {"from_route": "/exam/<exam_submission>", "to_route": "exam/result"},
     {"from_route": "/manage", "to_route": "manage/users"},
-    {"from_route": "/exam/invite/<invite_code>", "to_route": "exam/invite"}
+    {"from_route": "/exam/invite/<invite_code>", "to_route": "exam/invite"},
+    {"from_route": "/leaderboard/<submission>", "to_route": "leaderboard"}
 ]
 
 fixtures = [

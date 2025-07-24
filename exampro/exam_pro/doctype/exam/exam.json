@@ -20,6 +20,10 @@
   "max_warning_count",
   "show_result",
   "show_result_after_date",
+  "section_break_qzxq",
+  "leaderboard",
+  "column_break_oukv",
+  "leaderboard_rows",
   "section_break_18",
   "description",
   "instructions",
@@ -261,6 +265,28 @@
    "fieldname": "view_questions",
    "fieldtype": "Button",
    "label": "View Questions"
+  },
+  {
+   "fieldname": "section_break_qzxq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "No Leaderboard",
+   "fieldname": "leaderboard",
+   "fieldtype": "Select",
+   "label": "Leaderboard",
+   "options": "No Leaderboard\nExam Level\nSchedule Level"
+  },
+  {
+   "fieldname": "column_break_oukv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "description": "No. of top scores to show",
+   "fieldname": "leaderboard_rows",
+   "fieldtype": "Int",
+   "label": "Leaderboard rows"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -271,7 +297,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-24 15:06:38.094835",
+ "modified": "2025-07-24 16:15:49.789232",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",

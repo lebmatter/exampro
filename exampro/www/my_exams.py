@@ -32,10 +32,14 @@ def get_user_exams(member=None, page=1, page_size=10):
 			# For flexible schedules, we consider the end time as start time + duration + 5 min buffer
 			end_time += timedelta(days=schedule.schedule_expire_in_days)
 
+		# Check if certificate exists for this submission
+		certificate_exists = frappe.db.exists("Exam Certificate", {"exam_submission": submission["name"]})
+		
 		exam_details = {
 			"exam_submission": submission["name"],
 			"exam": schedule.exam,
 			"exam_name": exam.name,
+			"exam_title": exam.title,  # Add exam title for display
 			"exam_schedule": submission["exam_schedule"],
 			"start_time": schedule.start_date_time,
 			"schedule_time": format_datetime(schedule.start_date_time, "dd MMM YYYY, HH:mm"),  # Added for template
@@ -50,7 +54,14 @@ def get_user_exams(member=None, page=1, page_size=10):
 			"enable_video_proctoring": exam.enable_video_proctoring,
 			"enable_chat": exam.enable_chat,
 			"submission": submission["name"],  # Added for view result link
-			"result_status": submission["result_status"]
+			"result_status": submission["result_status"],
+			# Leaderboard information
+			"leaderboard_enabled": exam.leaderboard != "No Leaderboard",
+			"leaderboard_type": exam.leaderboard,
+			# Certificate information
+			"certification_enabled": exam.enable_certification,
+			"certificate_exists": certificate_exists,
+			"certificate_name": certificate_exists if certificate_exists else None
 			}
 
 		# make datetime in isoformat
@@ -197,3 +208,24 @@ def get_context(context):
 		"title": "My Exams",
 		"description": "View your upcoming and past exams"
 	}
+
+@frappe.whitelist()
+def download_certificate(certificate_name):
+	"""Download certificate PDF"""
+	# Check if user has access to this certificate
+	cert_doc = frappe.get_doc("Exam Certificate", certificate_name)
+	
+	if cert_doc.candidate != frappe.session.user:
+		frappe.throw("You don't have permission to download this certificate")
+	
+	# Generate PDF using the certificate's generate_pdf method
+	try:
+		pdf_bytes = cert_doc.generate_pdf()
+		
+		# Return base64 encoded PDF for JavaScript download
+		import base64
+		pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+		return pdf_base64
+		
+	except Exception as e:
+		frappe.throw(f"Error generating certificate PDF: {str(e)}")

@@ -108,31 +108,57 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-right">
-                                    {% if exam.status == "Upcoming" %}
-                                        <a href="/exam" class="btn btn-sm btn-outline-primary">View</a>
-                                    {% elif exam.status == "Started" %}
-                                        <a href="/exam" class="btn btn-sm btn-primary">
-                                            <span class="d-flex align-items-center">
-                                                Continue Exam
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-                                                    class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
-                                                    <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
-                                                </svg>
-                                            </span>
-                                        </a>
-                                    {% elif exam.status == "Submitted" %}
-                                        <a href="/exam/{{ exam.submission }}" 
-                                           class="btn btn-sm btn-outline-secondary">
-                                           <span class="d-flex align-items-center">
-                                                View Result
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-                                                    class="bi bi-file-earmark-text ms-2" viewBox="0 0 16 16">
-                                                    <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
-                                                    <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
-                                                </svg>
-                                           </span>
-                                        </a>
-                                    {% endif %}
+                                    <div class="btn-group" role="group">
+                                        {% if exam.status == "Upcoming" %}
+                                            <a href="/exam" class="btn btn-sm btn-outline-primary">View</a>
+                                        {% elif exam.status == "Started" %}
+                                            <a href="/exam" class="btn btn-sm btn-primary">
+                                                <span class="d-flex align-items-center">
+                                                    Continue Exam
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                                        class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
+                                                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                                                    </svg>
+                                                </span>
+                                            </a>
+                                        {% elif exam.status == "Submitted" %}
+                                            {% if exam.certification_enabled and exam.certificate_exists %}
+                                                <!-- Download Certificate Button -->
+                                                <button onclick="downloadCertificate('{{ exam.certificate_name }}')" 
+                                                       class="btn btn-sm btn-success me-1">
+                                                    <span class="d-flex align-items-center">
+                                                        <i class="bi bi-download me-1"></i>
+                                                        Certificate
+                                                    </span>
+                                                </button>
+                                            {% else %}
+                                                <!-- View Result Button -->
+                                                <a href="/exam/{{ exam.submission }}" 
+                                                   class="btn btn-sm btn-outline-secondary me-1">
+                                                   <span class="d-flex align-items-center">
+                                                        View Result
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                                                            class="bi bi-file-earmark-text ms-2" viewBox="0 0 16 16">
+                                                            <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
+                                                            <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
+                                                        </svg>
+                                                   </span>
+                                                </a>
+                                            {% endif %}
+                                            
+                                            {% if exam.leaderboard_enabled %}
+                                                <!-- Leaderboard Button -->
+                                                <a href="/leaderboard/{{ exam.submission }}" 
+                                                   class="btn btn-sm btn-outline-warning"
+                                                   title="View Leaderboard">
+                                                    <span class="d-flex align-items-center">
+                                                        <i class="bi bi-trophy me-1"></i>
+                                                        Leaderboard
+                                                    </span>
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -381,5 +407,61 @@
     background-color: #fff;
     border-color: #dee2e6;
 }
+
+/* Button group styling */
+.btn-group .btn {
+    margin-right: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
 </style>
+
+<script>
+function downloadCertificate(certificateName) {
+    // Show loading state
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Downloading...';
+    button.disabled = true;
+    
+    // Create a form to submit the download request
+    frappe.call({
+        method: 'exampro.www.my_exams.download_certificate',
+        args: {
+            certificate_name: certificateName
+        },
+        callback: function(r) {
+            if (r.message) {
+                // Create a temporary link to download the file
+                const link = document.createElement('a');
+                link.href = 'data:application/pdf;base64,' + r.message;
+                link.download = `certificate_${certificateName}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Show success message
+                frappe.show_alert({
+                    message: 'Certificate downloaded successfully!',
+                    indicator: 'green'
+                });
+            }
+        },
+        error: function(r) {
+            frappe.show_alert({
+                message: r.message || 'Error downloading certificate',
+                indicator: 'red'
+            });
+        },
+        always: function() {
+            // Restore button state
+            button.innerHTML = originalContent;
+            button.disabled = false;
+        }
+    });
+}
+</script>
+
 {% endblock %}
