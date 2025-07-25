@@ -120,10 +120,15 @@ class ExamCertificate(Document):
         exam_submission = frappe.get_doc("Exam Submission", self.exam_submission)
         exam_doc = frappe.get_doc("Exam", self.exam)
         
+        # Calculate percentage if not available in submission
+        percentage = 0
+        if exam_doc.total_marks and exam_submission.total_marks:
+            percentage = round((exam_submission.total_marks / exam_doc.total_marks) * 100, 2)
+        
         return {
             "student_name": self.candidate_name,
             "exam_title": exam_doc.title,
-            "score": exam_submission.percentage or 0,
+            "score": percentage,
             "marks_obtained": exam_submission.total_marks or 0,
             "total_marks": exam_doc.total_marks or 0,
             "pass_percentage": exam_doc.pass_percentage or 0,
