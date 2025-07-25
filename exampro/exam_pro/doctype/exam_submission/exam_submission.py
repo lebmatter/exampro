@@ -11,6 +11,7 @@ from frappe.utils import now
 from werkzeug.utils import secure_filename
 
 from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_status
+from exampro.exam_pro.api.examops import evaluation_values
 
 import boto3
 from botocore.client import Config
