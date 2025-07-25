@@ -99,6 +99,25 @@ class ExamSubmission(Document):
 	def on_trash(self):
 		frappe.db.delete("Exam Messages", {"exam_submission": self.name})
 		frappe.db.delete("Exam Certificate", {"exam_submission": self.name})
+		
+		# Delete uploaded videos from S3
+		try:
+			settings = frappe.get_single("Exam Settings")
+			s3_client = get_s3_client()
+			
+			# List all objects with the exam submission prefix
+			paginator = s3_client.get_paginator('list_objects_v2')
+			for page in paginator.paginate(Bucket=settings.s3_bucket, Prefix=self.name):
+				if 'Contents' in page:
+					# Delete objects in batches
+					objects_to_delete = [{'Key': obj['Key']} for obj in page['Contents']]
+					if objects_to_delete:
+						s3_client.delete_objects(
+							Bucket=settings.s3_bucket,
+							Delete={'Objects': objects_to_delete}
+						)
+		except Exception as e:
+			frappe.log_error(f"Error deleting videos for exam submission {self.name}: {str(e)}", "exam_submission_video_cleanup")
 
 	
 	def before_save(self):
