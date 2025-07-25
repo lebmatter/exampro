@@ -34,7 +34,7 @@ def get_user_exams(member=None, page=1, page_size=10):
 
 		# Check if certificate exists for this submission
 		certificate_exists = frappe.db.exists("Exam Certificate", {"exam_submission": submission["name"]})
-		
+		exam.leaderboard = exam.leaderboard or "No Leaderboard"
 		exam_details = {
 			"exam_submission": submission["name"],
 			"exam": schedule.exam,
@@ -198,7 +198,7 @@ def get_context(context):
 			context.next_exam_link_text = "View Details"
 		elif next_exam["schedule_type"] == "Flexible":
 			context.next_exam_message = "Your flexible schedule exam '{}' is available. {}".format(
-				next_exam["exam_name"], 
+				next_exam["exam_title"], 
 				next_exam["schedule_status"]
 			)
 			context.next_exam_link = "/exam"

@@ -107,7 +107,7 @@ def get_leaderboard_data_internal(exam, leaderboard_type, limit=10, schedule=Non
     filters = {
         "exam": exam,
         "status": "Submitted",
-        "result_status": ["in", ["Passed", "Failed"]]  # Only include evaluated submissions
+        "result_status": "Passed"
     }
     
     if leaderboard_type == "Schedule Level" and schedule:

@@ -71,7 +71,7 @@
                             {% for exam in exams %}
                             <tr>
                                 <td>
-                                    <span class="font-weight-bold">{{ exam.exam_name }}</span>
+                                    <span class="font-weight-bold">{{ exam.exam_title }}</span>
                                     {% if exam.schedule_type == "Flexible" %}
                                         <span class="badge badge-warning ms-2 tag">Flexible</span>
                                     {% endif %}
