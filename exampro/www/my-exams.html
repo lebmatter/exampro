@@ -1,463 +1,462 @@
-{% extends "exampro/templates/exam_base.html" %}
-
-{% block title %}
-{{ _('My Exams') }}
-{% endblock %}
-
-{% block head_include %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-{% endblock %}
-
-{% block page_content %}
+{% extends "exampro/templates/exam_base.html" %} {% block title %} {{ _('My
+Exams') }} {% endblock %} {% block head_include %}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+/>
+{% endblock %} {% block page_content %}
 <div class="container">
-	<div class="row mb-5">
-		<div class="col">
-			<h4 class="bold-heading">📝 My Exams</h4>
-		</div>
-	</div>
-
-    {% if next_exam %}
-    <div class="row mb-4">
-        <div class="col">
-            <div class="alert alert-info next-exam-banner" role="alert">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <i class="bi bi-calendar-event me-2 pr-2"></i>
-                        <strong>{{ _("Next Exam: ") }}</strong>
-                        {{ next_exam_message }}
-                    </div>
-                    <a href="{{ next_exam_link }}" class="btn btn-info btn-sm ml-2">
-                        {{ next_exam_link_text }}
-                    </a>
-                </div>
-            </div>
-        </div>
+  <div class="row mb-5">
+    <div class="col">
+      <h4 class="bold-heading">📝 My Exams</h4>
     </div>
-    {% else %}
-    <div class="row mb-4">
-        <div class="col">
-            <div class="alert alert-secondary" role="alert">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-info-circle me-2 pr-2"></i>
-                    {{ _("You don't have any upcoming exams scheduled at this time.") }}
-                </div>
-            </div>
+  </div>
+
+  {% if next_exam %}
+  <div class="row mb-4">
+    <div class="col">
+      <div class="alert alert-info next-exam-banner" role="alert">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <i class="bi bi-calendar-event me-2 pr-2"></i>
+            <strong>{{ _("Next Exam: ") }}</strong>
+            {{ next_exam_message }}
+          </div>
+          <a href="{{ next_exam_link }}" class="btn btn-info btn-sm ml-2">
+            {{ next_exam_link_text }}
+          </a>
         </div>
+      </div>
     </div>
-    {% endif %}
+  </div>
+  {% else %}
+  <div class="row mb-4">
+    <div class="col">
+      <div class="alert alert-secondary" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-info-circle me-2 pr-2"></i>
+          {{ _("You don't have any upcoming exams scheduled at this time.") }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
-        <div class="common-card-style">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>{{ _("Exam Name") }}</th>
-                                <th>{{ _("Schedule Time") }}</th>
-                                <th>{{ _("Duration") }}</th>
-                                <th>{{ _("Status") }}</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if not exams %}
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    {{ _("No exams found") }}
-                                </td>
-                            </tr>
-                            {% endif %}
-
-                            {% for exam in exams %}
-                            <tr>
-                                <td>
-                                    <span class="font-weight-bold">{{ exam.exam_title }}</span>
-                                    {% if exam.schedule_type == "Flexible" %}
-                                        <span class="badge badge-warning ms-2 tag">Flexible</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if exam.schedule_type == "Flexible" %}
-                                        {{ exam.flexible_schedule_status }}
-                                    {% else %}
-                                        {{ exam.schedule_time }}
-                                    {% endif %}
-                                </td>
-                                <td>{{ exam.duration }}</td>
-                                <td>
-                                    {% if exam.status == "Upcoming" %}
-                                        <span class="badge bg-info text-white">{{ exam.status }}</span>
-                                    {% elif exam.status == "Started" %}
-                                        <span class="badge bg-warning text-dark">{{ exam.status }}</span>
-                                    {% elif exam.status == "Submitted" %}
-                                        {% if exam.result_status %}
-                                        {% if exam.result_status == "Passed" %}
-                                            <span class="badge bg-success text-white">{{ exam.result_status }}</span>
-                                        {% elif exam.result_status == "Failed" %}
-                                            <span class="badge bg-danger text-white">{{ exam.result_status }}</span>
-                                        {% elif exam.result_status == "Pending" %}
-                                            <span class="badge bg-warning text-dark">{{ exam.result_status }}</span>
-                                        {% else %}
-                                            <span class="badge bg-light">{{ exam.result_status }}</span>
-                                        {% endif %}
-                                    {% endif %}
-                                    {% elif exam.status == "Terminated" %}
-                                        <span class="badge bg-danger text-white">{{ exam.status }}</span>
-                                    {% else %}
-                                        <span class="badge bg-light">{{ exam.status }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-right">
-                                    <div class="btn-group" role="group">
-                                        {% if exam.status == "Upcoming" %}
-                                            <a href="/exam" class="btn btn-sm btn-outline-primary">View</a>
-                                        {% elif exam.status == "Started" %}
-                                            <a href="/exam" class="btn btn-sm btn-primary">
-                                                <span class="d-flex align-items-center">
-                                                    Continue Exam
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-                                                        class="bi bi-arrow-right ms-2" viewBox="0 0 16 16">
-                                                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
-                                                    </svg>
-                                                </span>
-                                            </a>
-                                        {% elif exam.status == "Submitted" %}
-                                            {% if exam.certification_enabled and exam.certificate_exists %}
-                                                <!-- Download Certificate Button -->
-                                                <button onclick="downloadCertificate('{{ exam.certificate_name }}')" 
-                                                       class="btn btn-sm btn-success me-1">
-                                                    <span class="d-flex align-items-center">
-                                                        <i class="bi bi-download me-1"></i>
-                                                        Certificate
-                                                    </span>
-                                                </button>
-                                            {% else %}
-                                                <!-- View Result Button -->
-                                                <a href="/exam/{{ exam.submission }}" 
-                                                   class="btn btn-sm btn-outline-secondary me-1">
-                                                   <span class="d-flex align-items-center">
-                                                        View Result
-                                                        <i class="bi bi-file-earmark-text ms-2"></i>
-                                                   </span>
-                                                </a>
-                                            {% endif %}
-                                            
-                                            {% if exam.leaderboard_enabled %}
-                                                <!-- Leaderboard Button -->
-                                                <a href="/leaderboard/{{ exam.submission }}" 
-                                                   class="btn btn-sm btn-outline-secondary"
-                                                   title="View Leaderboard">
-                                                    <span class="d-flex align-items-center">
-                                                        <i class="bi bi-trophy-fill me-2 text-warning"></i>
-                                                        Leaderboard
-                                                    </span>
-                                                </a>
-                                            {% endif %}
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                {% if pagination and pagination.total_pages > 1 %}
-                <div class="pagination-container p-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-6 text-md-start">
-                            <p class="text-muted mb-md-0">
-                                Showing {{ (pagination.page - 1) * pagination.page_size + 1 }} to 
-                                {{ min(pagination.page * pagination.page_size, pagination.total) }} 
-                                of {{ pagination.total }} entries
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination justify-content-md-end justify-content-center mb-0">
-                                    {% if pagination.has_prev %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ pagination.page - 1 }}" aria-label="Previous">
-                                            <span aria-hidden="true">&laquo;</span>
-                                        </a>
-                                    </li>
-                                    {% else %}
-                                    <li class="page-item disabled">
-                                        <a class="page-link" href="#" aria-label="Previous">
-                                            <span aria-hidden="true">&laquo;</span>
-                                        </a>
-                                    </li>
-                                    {% endif %}
-                                    
-                                    {% for i in range(1, pagination.total_pages + 1) %}
-                                        {% if i == pagination.page %}
-                                        <li class="page-item active">
-                                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                                        </li>
-                                        {% else %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                                        </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                    
-                                    {% if pagination.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ pagination.page + 1 }}" aria-label="Next">
-                                            <span aria-hidden="true">&raquo;</span>
-                                        </a>
-                                    </li>
-                                    {% else %}
-                                    <li class="page-item disabled">
-                                        <a class="page-link" href="#" aria-label="Next">
-                                            <span aria-hidden="true">&raquo;</span>
-                                        </a>
-                                    </li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+  <div class="common-card-style">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>{{ _("Exam Name") }}</th>
+              <th>{{ _("Schedule Time") }}</th>
+              <th>{{ _("Duration") }}</th>
+              <th>{{ _("Status") }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if not exams %}
+            <tr>
+              <td colspan="7" class="text-center py-4">
+                {{ _("No exams found") }}
+              </td>
+            </tr>
+            {% endif %} {% for exam in exams %}
+            <tr>
+              <td>
+                <span class="font-weight-bold">{{ exam.exam_title }}</span>
+                {% if exam.schedule_type == "Flexible" %}
+                <span class="badge badge-warning ms-2 tag">Flexible</span>
                 {% endif %}
-            </div>
+              </td>
+              <td>
+                {% if exam.schedule_type == "Flexible" %}
+                {{exam.flexible_schedule_status }} {% else %} {{
+                exam.schedule_time }} {% endif %}
+              </td>
+              <td>{{ exam.duration }}</td>
+              <td>
+                {% if exam.status == "Upcoming" %}
+                <span class="badge bg-info text-white">{{ exam.status }}</span>
+                {% elif exam.status == "Started" %}
+                <span class="badge bg-warning text-dark"
+                  >{{ exam.status }}</span
+                >
+                {% elif exam.status == "Submitted" %} {% if exam.result_status
+                %} {% if exam.result_status == "Passed" %}
+                <span class="badge bg-success text-white"
+                  >{{ exam.result_status }}</span
+                >
+                {% elif exam.result_status == "Failed" %}
+                <span class="badge bg-danger text-white"
+                  >{{ exam.result_status }}</span
+                >
+                {% elif exam.result_status == "Pending" %}
+                <span class="badge bg-warning text-dark"
+                  >{{ exam.result_status }}</span
+                >
+                {% else %}
+                <span class="badge bg-light">{{ exam.result_status }}</span>
+                {% endif %} {% endif %} {% elif exam.status == "Terminated" %}
+                <span class="badge bg-danger text-white"
+                  >{{ exam.status }}</span
+                >
+                {% else %}
+                <span class="badge bg-light">{{ exam.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="btn-group" role="group" aria-label="Exam Actions">
+                  {% if exam.status == "Upcoming" %}
+                  <button type="button" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-2"></i>View
+                  </button>
+                  {% elif exam.status == "Started" %}
+                  <button type="button" class="btn btn-sm btn-primary">
+                    <i class="bi bi-play-circle me-2"></i>Continue Exam
+                    <i class="bi bi-arrow-right ms-2"></i>
+                  </button>
+                  {% elif exam.status == "Submitted" %} {% if
+                  exam.certification_enabled and exam.certificate_exists %}
+                  <!-- Download Certificate Button -->
+                  <button
+                    type="button"
+                    onclick="downloadCertificate('{{ exam.certificate_name }}')"
+                    class="btn btn-sm btn-success"
+                  >
+                    <i class="bi bi-download me-2"></i>Certificate
+                  </button>
+                  {% else %}
+                  <!-- View Result Button -->
+                  <button
+                    type="button"
+                    onclick="window.location.href='/exam/{{ exam.submission }}'"
+                    class="btn btn-sm btn-outline-secondary"
+                  >
+                    <i class="bi bi-file-earmark-text me-2"></i>View Result
+                  </button>
+                  {% endif %} {% if exam.leaderboard_enabled %}
+                  <!-- Leaderboard Button -->
+                  <button
+                    type="button"
+                    onclick="window.location.href='/leaderboard/{{ exam.submission }}'"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="View Leaderboard"
+                  >
+                    <i class="bi bi-trophy-fill me-2 text-warning"></i
+                    >Leaderboard
+                  </button>
+                  {% endif %} {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if pagination and pagination.total_pages > 1 %}
+      <div class="pagination-container p-3">
+        <div class="row align-items-center">
+          <div class="col-md-6 text-md-start">
+            <p class="text-muted mb-md-0">
+              Showing {{ (pagination.page - 1) * pagination.page_size + 1 }} to
+              {{ min(pagination.page * pagination.page_size, pagination.total)
+              }} of {{ pagination.total }} entries
+            </p>
+          </div>
+          <div class="col-md-6">
+            <nav aria-label="Page navigation">
+              <ul
+                class="pagination justify-content-md-end justify-content-center mb-0"
+              >
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                  <a
+                    class="page-link"
+                    href="?page={{ pagination.page - 1 }}"
+                    aria-label="Previous"
+                  >
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+                {% endif %} {% for i in range(1, pagination.total_pages + 1) %}
+                {% if i == pagination.page %}
+                <li class="page-item active">
+                  <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                </li>
+                {% else %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                </li>
+                {% endif %} {% endfor %} {% if pagination.has_next %}
+                <li class="page-item">
+                  <a
+                    class="page-link"
+                    href="?page={{ pagination.page + 1 }}"
+                    aria-label="Next"
+                  >
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
         </div>
+      </div>
+      {% endif %}
     </div>
+  </div>
+</div>
 <style>
-.tag {
+  .tag {
     font-size: 1rem;
-}
-/* Common styling from examform.html */
-.bold-heading {
+  }
+  /* Common styling from examform.html */
+  .bold-heading {
     font-weight: 600;
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
     color: #212529;
-}
+  }
 
-.common-card-style {
+  .common-card-style {
     background-color: #fff;
     border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     border: none;
     margin-bottom: 2rem;
-}
+  }
 
-.column-card {
+  .column-card {
     display: flex;
     flex-direction: column;
-}
+  }
 
-
-
-/* Table styling */
-.table td, .table th {
+  /* Table styling */
+  .table td,
+  .table th {
     padding: 1rem;
     vertical-align: middle;
-}
+  }
 
-.thead-light th {
+  .thead-light th {
     background-color: #f8f9fa;
     color: #495057;
     border-color: #dee2e6;
-}
+  }
 
-.btn {
+  .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
-}
+  }
 
-.btn:hover {
+  .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
 
-.btn-sm {
+  .btn-sm {
     padding: 0.4rem 0.75rem;
     font-size: 0.875rem;
-}
+  }
 
-.ms-2 {
+  .ms-2 {
     margin-left: 0.5rem;
-}
+  }
 
-.alert-info {
+  .alert-info {
     border-left: 4px solid #17a2b8;
     background-color: rgba(23, 162, 184, 0.1);
     border: none;
     padding: 1rem;
-}
+  }
 
-.next-exam-banner {
+  .next-exam-banner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-}
+  }
 
-.next-exam-banner i {
+  .next-exam-banner i {
     font-size: 1.2rem;
     margin-right: 0.5rem;
-}
+  }
 
-.btn-info {
+  .btn-info {
     background-color: #17a2b8;
     border-color: #17a2b8;
     color: white;
-}
+  }
 
-.btn-info:hover {
+  .btn-info:hover {
     background-color: #138496;
     border-color: #117a8b;
     color: white;
-}
+  }
 
-.alert-secondary {
+  .alert-secondary {
     background-color: #f8f9fa;
     border: none;
     border-left: 4px solid #6c757d;
     padding: 1rem;
-}
+  }
 
-/* Badge styling */
-.badge {
+  /* Badge styling */
+  .badge {
     font-weight: 500;
     padding: 0.35em 0.65em;
     font-size: 0.75rem;
-}
+  }
 
-.bg-primary {
+  .bg-primary {
     background-color: #0d6efd !important;
-}
+  }
 
-.bg-warning {
+  .bg-warning {
     background-color: #ffc107 !important;
-}
+  }
 
-.bg-success {
+  .bg-success {
     background-color: #198754 !important;
-}
+  }
 
-.bg-info {
+  .bg-info {
     background-color: #0dcaf0 !important;
-}
+  }
 
-.bg-secondary {
+  .bg-secondary {
     background-color: #6c757d !important;
-}
+  }
 
-.bg-danger {
+  .bg-danger {
     background-color: #dc3545 !important;
-}
+  }
 
-.text-white {
+  .text-white {
     color: #fff !important;
-}
+  }
 
-.text-dark {
+  .text-dark {
     color: #212529 !important;
-}
+  }
 
-/* Pagination Styles */
-.pagination-container {
+  /* Pagination Styles */
+  .pagination-container {
     border-top: 1px solid #dee2e6;
     background-color: #f8f9fa;
-}
+  }
 
-.pagination {
+  .pagination {
     margin-bottom: 0;
-}
+  }
 
-/* Text alignment utilities for different screen sizes */
-.text-md-start {
+  /* Text alignment utilities for different screen sizes */
+  .text-md-start {
     text-align: center;
-}
+  }
 
-@media (min-width: 768px) {
+  @media (min-width: 768px) {
     .text-md-start {
-        text-align: left !important;
+      text-align: left !important;
     }
-    
-    .justify-content-md-end {
-        justify-content: flex-end !important;
-    }
-}
 
-.page-item.active .page-link {
+    .justify-content-md-end {
+      justify-content: flex-end !important;
+    }
+  }
+
+  .page-item.active .page-link {
     background-color: #17a2b8;
     border-color: #17a2b8;
-}
+  }
 
-.page-link {
+  .page-link {
     color: #17a2b8;
-}
+  }
 
-.page-link:hover {
+  .page-link:hover {
     color: #138496;
-}
+  }
 
-.page-item.disabled .page-link {
+  .page-item.disabled .page-link {
     color: #6c757d;
     pointer-events: none;
     background-color: #fff;
     border-color: #dee2e6;
-}
+  }
 
-/* Button group styling */
-.btn-group .btn {
+  /* Button group styling */
+  .btn-group .btn {
     margin-right: 0.25rem;
-}
+  }
 
-.btn-group .btn:last-child {
+  .btn-group .btn:last-child {
     margin-right: 0;
-}
+  }
 </style>
 
 <script>
-function downloadCertificate(certificateName) {
+  function downloadCertificate(certificateName) {
     // Show loading state
-    const button = event.target.closest('button');
+    const button = event.target.closest("button");
     const originalContent = button.innerHTML;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Downloading...';
+    button.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Downloading...';
     button.disabled = true;
-    
+
     // Create a form to submit the download request
     frappe.call({
-        method: 'exampro.www.my_exams.download_certificate',
-        args: {
-            certificate_name: certificateName
-        },
-        callback: function(r) {
-            if (r.message) {
-                // Create a temporary link to download the file
-                const link = document.createElement('a');
-                link.href = 'data:application/pdf;base64,' + r.message;
-                link.download = `certificate_${certificateName}.pdf`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Show success message
-                frappe.show_alert({
-                    message: 'Certificate downloaded successfully!',
-                    indicator: 'green'
-                });
-            }
-        },
-        error: function(r) {
-            frappe.show_alert({
-                message: r.message || 'Error downloading certificate',
-                indicator: 'red'
-            });
-        },
-        always: function() {
-            // Restore button state
-            button.innerHTML = originalContent;
-            button.disabled = false;
+      method: "exampro.www.my_exams.download_certificate",
+      args: {
+        certificate_name: certificateName,
+      },
+      callback: function (r) {
+        if (r.message) {
+          // Create a temporary link to download the file
+          const link = document.createElement("a");
+          link.href = "data:application/pdf;base64," + r.message;
+          link.download = `certificate_${certificateName}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Show success message
+          frappe.show_alert({
+            message: "Certificate downloaded successfully!",
+            indicator: "green",
+          });
         }
+      },
+      error: function (r) {
+        frappe.show_alert({
+          message: r.message || "Error downloading certificate",
+          indicator: "red",
+        });
+      },
+      always: function () {
+        // Restore button state
+        button.innerHTML = originalContent;
+        button.disabled = false;
+      },
     });
-}
+  }
 </script>
 
 {% endblock %}

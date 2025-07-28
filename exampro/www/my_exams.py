@@ -61,7 +61,8 @@ def get_user_exams(member=None, page=1, page_size=10):
 			# Certificate information
 			"certification_enabled": exam.enable_certification,
 			"certificate_exists": certificate_exists,
-			"certificate_name": certificate_exists if certificate_exists else None
+			"certificate_name": certificate_exists if certificate_exists else None,
+			"flexible_schedule_status": "",
 			}
 
 		# make datetime in isoformat
@@ -76,6 +77,8 @@ def get_user_exams(member=None, page=1, page_size=10):
 			raise frappe.Redirect
 		if exam_details["schedule_status"] == "Ongoing" and schedule.schedule_type == "Flexible":
 			exam_details["flexible_schedule_status"] = "Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
+		if exam_details["schedule_status"] == "Completed" and schedule.schedule_type == "Flexible":
+			exam_details["flexible_schedule_status"] = "Finished on " + format_datetime(end_time, "dd MMM, HH:mm")
 		# if time is over, submit if applicable
 		if submission["status"] != "Submitted" and exam_details["schedule_status"] == "Completed":
 			doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
