@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ExamPro - Proctored Exams for Frappe Framework</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/gh/meenaviyal/placeholderjs@main/placeholder.js"></script>
+    <style>
+      :root {
+        --primary-color: #0e87ff;
+        --secondary-color: #ffbf10;
+        --black: #222222;
+        --text-grey: #888888;
+        --bg-grey: #f8f8f8;
+        --light-grey: #f7f7f7;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background-color: white;
+        color: var(--black);
+        line-height: 1.6;
+      }
+
+      /* Navigation - Notion Style */
+      .navbar {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        padding: 1rem 0;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+
+      .navbar-brand {
+        font-weight: 600;
+        font-size: 1.5rem;
+        color: var(--black);
+        text-decoration: none;
+      }
+
+      .navbar-brand:hover {
+        color: var(--black);
+      }
+
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-color);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-right: 0.5rem;
+      }
+
+      .nav-link {
+        color: var(--text-grey);
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+      }
+
+      .nav-link:hover {
+        color: var(--black);
+        background: var(--light-grey);
+      }
+
+      .btn-nav {
+        background: var(--black);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+
+      .btn-nav:hover {
+        background: var(--text-grey);
+        color: white;
+      }
+
+      /* Hero Section - Notion Style */
+      .hero {
+        padding: 5rem 0 8rem 0;
+        background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+        text-align: center;
+      }
+
+      .hero h1 {
+        font-size: 4rem;
+        font-weight: 700;
+        line-height: 1.1;
+        color: var(--black);
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+      }
+
+      .hero-subtitle {
+        font-size: 1.5rem;
+        color: var(--text-grey);
+        margin-bottom: 3rem;
+        font-weight: 400;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 4rem;
+      }
+
+      .btn-primary-hero {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(14, 135, 255, 0.2);
+      }
+
+      .btn-primary-hero:hover {
+        background: #0c6dd4;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(14, 135, 255, 0.3);
+      }
+
+      .btn-secondary-hero {
+        background: transparent;
+        color: var(--black);
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        padding: 0.875rem 2rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+
+      .btn-secondary-hero:hover {
+        background: var(--light-grey);
+        color: var(--black);
+        border-color: rgba(0, 0, 0, 0.2);
+      }
+
+      /* Hero Visual */
+      .hero-visual {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+      }
+
+      .hero-visual img {
+        width: 100%;
+        border-radius: 8px;
+      }
+
+      /* Features Section - Notion Style */
+      .features {
+        padding: 6rem 0;
+        background: white;
+      }
+
+      .features h2 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--black);
+        text-align: center;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+      }
+
+      .features-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-grey);
+        text-align: center;
+        margin-bottom: 4rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+      }
+
+      .feature-item {
+        padding: 2rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        transition: all 0.2s ease;
+      }
+
+      .feature-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        border-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .feature-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--primary-color);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .feature-item h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--black);
+        margin-bottom: 0.75rem;
+      }
+
+      .feature-item p {
+        color: var(--text-grey);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+      }
+
+      .feature-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .feature-list li {
+        color: var(--text-grey);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        padding-left: 1.25rem;
+        position: relative;
+      }
+
+      .feature-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: var(--primary-color);
+        font-weight: 600;
+      }
+
+      /* Showcase Section - Notion Style */
+      .showcase {
+        padding: 6rem 0;
+        background: var(--light-grey);
+      }
+
+      .showcase h2 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--black);
+        text-align: center;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+      }
+
+      .showcase-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-grey);
+        text-align: center;
+        margin-bottom: 4rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .showcase-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+      }
+
+      .showcase-content {
+        padding: 3rem;
+      }
+
+      .showcase-item {
+        display: none;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .showcase-item.active {
+        display: block;
+        opacity: 1;
+      }
+
+      .showcase-item img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+
+      .showcase-item h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--black);
+        margin-bottom: 1rem;
+      }
+
+      .showcase-item p {
+        color: var(--text-grey);
+        font-size: 1rem;
+        line-height: 1.6;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .showcase-nav {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-top: 2.5rem;
+        padding-bottom: 1rem;
+      }
+
+      .showcase-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .showcase-dot.active {
+        background: var(--primary-color);
+        transform: scale(1.2);
+      }
+
+      /* Installation Section - Notion Style */
+      .installation {
+        padding: 6rem 0;
+        background: white;
+      }
+
+      .installation h2 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--black);
+        text-align: center;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+      }
+
+      .installation-subtitle {
+        font-size: 1.25rem;
+        color: var(--text-grey);
+        text-align: center;
+        margin-bottom: 3rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .code-container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: var(--black);
+        border-radius: 8px;
+        padding: 2rem;
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 0.95rem;
+        color: #e2e8f0;
+        margin-bottom: 2rem;
+      }
+
+      .code-line {
+        margin-bottom: 0.5rem;
+      }
+
+      .command {
+        color: var(--secondary-color);
+        font-weight: 600;
+      }
+
+      .install-note {
+        text-align: center;
+        color: var(--text-grey);
+        font-size: 0.95rem;
+      }
+
+      .install-note a {
+        color: var(--primary-color);
+        text-decoration: none;
+      }
+
+      .install-note a:hover {
+        text-decoration: underline;
+      }
+
+      /* Footer - Notion Style */
+      footer {
+        background: var(--light-grey);
+        padding: 4rem 0 2rem 0;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+      }
+
+      .footer-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .footer-section h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--black);
+        margin-bottom: 1rem;
+      }
+
+      .footer-section ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .footer-section li {
+        margin-bottom: 0.5rem;
+      }
+
+      .footer-link {
+        color: var(--text-grey);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.2s ease;
+      }
+
+      .footer-link:hover {
+        color: var(--primary-color);
+      }
+
+      .footer-bottom {
+        text-align: center;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        color: var(--text-grey);
+        font-size: 0.9rem;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+
+        .hero-subtitle {
+          font-size: 1.25rem;
+        }
+
+        .features h2,
+        .showcase h2,
+        .installation h2 {
+          font-size: 2rem;
+        }
+
+        .hero-buttons {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .btn-primary-hero,
+        .btn-secondary-hero {
+          width: 100%;
+          max-width: 300px;
+        }
+
+        .showcase-item img {
+          height: 250px;
+        }
+
+        .navbar-nav {
+          display: none;
+        }
+      }
+
+      /* Smooth animations */
+      * {
+        transition: all 0.2s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-center w-100">
+          <a href="#" class="navbar-brand d-flex align-items-center">
+            <img
+              src="exampro-logo.png"
+              alt="ExamPro Logo"
+              class="me-2"
+              style="width: 140px; height: 32px"
+            />
+          </a>
+
+          <div class="navbar-nav d-none d-md-flex flex-row gap-2">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#installation" class="nav-link">Installation</a>
+            <a href="#docs" class="nav-link">Docs</a>
+            <a href="#support" class="nav-link">Support</a>
+            <a href="#" class="btn-nav">Get Started</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-10">
+            <h1>Proctored exams,<br />perfected for Frappe</h1>
+            <p class="hero-subtitle">
+              Conduct secure, video-monitored examinations with seamless
+              integration into your Frappe environment
+            </p>
+
+            <div class="hero-buttons">
+              <a href="#installation" class="btn-primary-hero">Get Started</a>
+              <a href="#features" class="btn-secondary-hero">View Features</a>
+            </div>
+
+            <div class="hero-visual">
+              <img class="placeholder-800-500" alt="ExamPro Dashboard" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+      <div class="container">
+        <h2>Built for education & training</h2>
+        <p class="features-subtitle">
+          Everything you need to conduct secure, professional exams for schools,
+          universities, and workplace training.
+        </p>
+
+        <div class="feature-grid">
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="bi bi-camera-video"></i>
+            </div>
+            <h3>Live Proctoring</h3>
+            <p>
+              Monitor candidates in real-time with advanced video surveillance
+              and automatic recording capabilities.
+            </p>
+            <ul class="feature-list">
+              <li>Real-time video monitoring</li>
+              <li>Automatic session recording</li>
+              <li>Live chat support</li>
+              <li>Smart alerts and notifications</li>
+            </ul>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="bi bi-question-circle"></i>
+            </div>
+            <h3>Flexible Questions</h3>
+            <p>
+              Create diverse question types to suit any examination format with
+              our intuitive question builder.
+            </p>
+            <ul class="feature-list">
+              <li>Multiple choice questions</li>
+              <li>True/false responses</li>
+              <li>Subjective questions</li>
+              <li>Image-based questions</li>
+            </ul>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="bi bi-graph-up"></i>
+            </div>
+            <h3>Smart Analytics</h3>
+            <p>
+              Get detailed insights into exam performance with automatic grading
+              and comprehensive reporting.
+            </p>
+            <ul class="feature-list">
+              <li>Instant objective grading</li>
+              <li>Performance analytics</li>
+              <li>Detailed progress reports</li>
+              <li>Export capabilities</li>
+            </ul>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i class="bi bi-award"></i>
+            </div>
+            <h3>Digital Certificates</h3>
+            <p>
+              Issue professional certificates automatically upon successful
+              completion of examinations.
+            </p>
+            <ul class="feature-list">
+              <li>Custom certificate templates</li>
+              <li>Automated distribution</li>
+              <li>Digital verification</li>
+              <li>Bulk generation</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Showcase Section -->
+    <section class="showcase">
+      <div class="container">
+        <h2>See it in action</h2>
+        <p class="showcase-subtitle">
+          Explore the features that make ExamPro powerful yet simple to use
+        </p>
+
+        <div class="showcase-container">
+          <div class="showcase-content">
+            <div class="showcase-item active">
+              <img class="placeholder-700-400" alt="Dashboard Overview" />
+              <h3>Intuitive Dashboard</h3>
+              <p>
+                Monitor all your exams, candidates, and proctoring sessions from
+                a single, clean interface designed for efficiency.
+              </p>
+            </div>
+
+            <div class="showcase-item">
+              <img class="placeholder-700-400" alt="Live Monitoring" />
+              <h3>Real-time Monitoring</h3>
+              <p>
+                Watch candidates live with advanced video controls and instant
+                communication tools for seamless proctoring.
+              </p>
+            </div>
+
+            <div class="showcase-item">
+              <img class="placeholder-700-400" alt="Question Builder" />
+              <h3>Question Builder</h3>
+              <p>
+                Create and manage different question types with our intuitive
+                drag-and-drop interface.
+              </p>
+            </div>
+
+            <div class="showcase-item">
+              <img class="placeholder-700-400" alt="Analytics Dashboard" />
+              <h3>Performance Analytics</h3>
+              <p>
+                Get comprehensive insights with detailed reports, automated
+                grading, and exportable data.
+              </p>
+            </div>
+          </div>
+
+          <div class="showcase-nav">
+            <div class="showcase-dot active" data-slide="0"></div>
+            <div class="showcase-dot" data-slide="1"></div>
+            <div class="showcase-dot" data-slide="2"></div>
+            <div class="showcase-dot" data-slide="3"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="installation">
+      <div class="container">
+        <h2>Get started in minutes</h2>
+        <p class="installation-subtitle">
+          Install ExamPro in your Frappe environment with just two commands
+        </p>
+
+        <div class="code-container">
+          <div class="code-line">
+            <span class="command">bench get-app</span>
+            https://github.com/lebmatter/exampro.git
+          </div>
+          <div class="code-line">
+            <span class="command">bench install-app</span> exampro
+          </div>
+        </div>
+
+        <p class="install-note">
+          Need help? Check out our <a href="#">installation guide</a> or
+          <a href="#">contact support</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>ExamPro</h4>
+            <p
+              style="
+                color: var(--text-grey);
+                font-size: 0.9rem;
+                margin-bottom: 0;
+              "
+            >
+              Secure, reliable proctored examinations built for the Frappe
+              ecosystem.
+            </p>
+          </div>
+          <div class="footer-section">
+            <h4>Product</h4>
+            <ul>
+              <li><a href="#" class="footer-link">Features</a></li>
+              <li><a href="#" class="footer-link">Pricing</a></li>
+              <li><a href="#" class="footer-link">Security</a></li>
+              <li><a href="#" class="footer-link">Updates</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Resources</h4>
+            <ul>
+              <li><a href="#" class="footer-link">Documentation</a></li>
+              <li><a href="#" class="footer-link">API Reference</a></li>
+              <li><a href="#" class="footer-link">Examples</a></li>
+              <li><a href="#" class="footer-link">Community</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Support</h4>
+            <ul>
+              <li><a href="#" class="footer-link">Help Center</a></li>
+              <li><a href="#" class="footer-link">Contact Us</a></li>
+              <li><a href="#" class="footer-link">Status</a></li>
+              <li><a href="#" class="footer-link">Changelog</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 ExamPro. Built with ❤️ for the Frappe community.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Showcase slideshow functionality
+      let currentSlide = 0;
+      const slides = document.querySelectorAll(".showcase-item");
+      const dots = document.querySelectorAll(".showcase-dot");
+
+      function showSlide(n) {
+        slides.forEach((slide) => slide.classList.remove("active"));
+        dots.forEach((dot) => dot.classList.remove("active"));
+
+        slides[n].classList.add("active");
+        dots[n].classList.add("active");
+      }
+
+      function nextSlide() {
+        currentSlide = (currentSlide + 1) % slides.length;
+        showSlide(currentSlide);
+      }
+
+      // Auto-advance slides
+      setInterval(nextSlide, 5000);
+
+      // Dot navigation
+      dots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+          currentSlide = index;
+          showSlide(currentSlide);
+        });
+      });
+
+      // Smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
