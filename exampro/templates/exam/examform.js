@@ -367,6 +367,31 @@ function updateOverviewMap() {
     });
 };
 
+// Helper function to format image source (handles both URL and base64)
+function getImageSrc(imageData) {
+    if (!imageData) return null;
+    
+    try {
+        // Check if it's already a data URL (base64)
+        if (imageData.startsWith('data:')) {
+            return imageData;
+        }
+        
+        // Check if it's base64 without data URL prefix
+        if (imageData.match(/^[A-Za-z0-9+/=]+$/)) {
+            // Validate base64 by attempting to decode it
+            atob(imageData);
+            return `data:image/jpeg;base64,${imageData}`;
+        }
+        
+        // Assume it's a regular URL
+        return imageData;
+    } catch (error) {
+        console.warn('Invalid image data:', error);
+        return null;
+    }
+}
+
 function displayQuestion(current_qs) {
     // $("#quiz-form").fadeOut(300);
     currentQuestion = {
@@ -402,13 +427,6 @@ function displayQuestion(current_qs) {
         'data-multi': currentQuestion["multiple"]
     });
 
-    if (currentQuestion["description_image"]) {
-        $("#question-image").show();
-        $("#question-image").attr("src", currentQuestion["description_image"]);
-    } else {
-        $("#question-image").hide();
-    }
-
     // Set question number and instruction
     let instruction;
     if (currentQuestion["type"] == "Choices" && currentQuestion["multiple"]) {
@@ -420,10 +438,27 @@ function displayQuestion(current_qs) {
     }
     $('#question-number').html(`<span class="question-number-text">Question ${currentQuestion["no"]}</span> <span class="question-instruction">${instruction}</span>`);
 
-    // Set question text
+    // Set question text with description image
     $('#question-text').html('');
-    // Wrap the question content in a div for better styling
-    $('#question-text').append(`<div class="question-content">${currentQuestion["question"]}</div>`);
+    
+    // Create question content with optional description image
+    let questionContentHtml = `<div class="question-content">
+        <div class="question-text-content">${currentQuestion["question"]}</div>`;
+    
+    if (currentQuestion["description_image"]) {
+        const imageSrc = getImageSrc(currentQuestion["description_image"]);
+        if (imageSrc) {
+            questionContentHtml += `
+            <div class="question-description-image mt-3">
+                <img src="${imageSrc}" class="img-fluid" alt="Question description image" 
+                     style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                     onerror="this.style.display='none'; console.warn('Failed to load question description image');">
+            </div>`;
+        }
+    }
+    
+    questionContentHtml += `</div>`;
+    $('#question-text').append(questionContentHtml);
 
     // Populate choices or show input based on question type
     if (currentQuestion["type"] === "Choices") {
@@ -452,17 +487,28 @@ function displayQuestion(current_qs) {
 
                 let optImgHtml = '';
                 if (optImg) {
-                    optImgHtml = `<div class="option-image"><img src="${optImg}" class="img-fluid" alt="" ></div>`
+                    const imageSrc = getImageSrc(optImg);
+                    if (imageSrc) {
+                        optImgHtml = `
+                        <div class="option-image mt-2">
+                            <img src="${imageSrc}" class="img-fluid" alt="Option image" 
+                                 style="max-width: 200px; height: auto; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);"
+                                 onerror="this.style.display='none'; console.warn('Failed to load option image');">
+                        </div>`;
+                    }
                 }
+                
                 choicesHtml += `
                     <label for="option_${currentQuestion["key"]}_${key}" class="w-100 mb-0" style="cursor: pointer;">
-                        <div class="option-item ${checked ? 'selected' : ''}">
-                            <div class="d-flex align-items-center">
-                                <input class="option" value="${key}" type="${inputType}" name="qs_${currentQuestion["key"]}" ${checked} id="option_${currentQuestion["key"]}_${key}">
-                                <span class="option-text mb-0">${value}</span>
+                        <div class="option-item ${checked ? 'selected' : ''}" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; margin-bottom: 8px; transition: all 0.2s ease;">
+                            <div class="d-flex align-items-start">
+                                <input class="option me-2 mt-1" value="${key}" type="${inputType}" name="qs_${currentQuestion["key"]}" ${checked} id="option_${currentQuestion["key"]}_${key}" style="margin-top: 2px;">
+                                <div class="option-content flex-grow-1">
+                                    <div class="option-text mb-0">${value}</div>
+                                    ${optImgHtml}
+                                    ${explanationHtml}
+                                </div>
                             </div>
-                            ${optImgHtml}
-                            ${explanationHtml}
                         </div>
                     </label>`;
             }
@@ -478,13 +524,63 @@ function displayQuestion(current_qs) {
         $('.option').on('change', function() {
             if (currentQuestion["multiple"]) {
                 // For checkboxes (multiple choice)
-                $(this).closest('.option-item').toggleClass('selected', $(this).is(':checked'));
+                const optionItem = $(this).closest('.option-item');
+                if ($(this).is(':checked')) {
+                    optionItem.addClass('selected').css({
+                        'background-color': '#e3f2fd',
+                        'border-color': '#2196f3',
+                        'box-shadow': '0 2px 8px rgba(33, 150, 243, 0.2)'
+                    });
+                } else {
+                    optionItem.removeClass('selected').css({
+                        'background-color': '',
+                        'border-color': '#dee2e6',
+                        'box-shadow': '0 1px 4px rgba(0,0,0,0.1)'
+                    });
+                }
             } else {
                 // For radio buttons (single choice)
-                $('.option-item').removeClass('selected');
-                $(this).closest('.option-item').addClass('selected');
+                $('.option-item').removeClass('selected').css({
+                    'background-color': '',
+                    'border-color': '#dee2e6',
+                    'box-shadow': '0 1px 4px rgba(0,0,0,0.1)'
+                });
+                $(this).closest('.option-item').addClass('selected').css({
+                    'background-color': '#e3f2fd',
+                    'border-color': '#2196f3',
+                    'box-shadow': '0 2px 8px rgba(33, 150, 243, 0.2)'
+                });
             }
         });
+        
+        // Apply initial styling for pre-selected options
+        $('.option:checked').each(function() {
+            $(this).closest('.option-item').addClass('selected').css({
+                'background-color': '#e3f2fd',
+                'border-color': '#2196f3',
+                'box-shadow': '0 2px 8px rgba(33, 150, 243, 0.2)'
+            });
+        });
+        
+        // Add hover effects for better UX
+        $('.option-item').hover(
+            function() {
+                if (!$(this).hasClass('selected')) {
+                    $(this).css({
+                        'background-color': '#f8f9fa',
+                        'border-color': '#adb5bd'
+                    });
+                }
+            },
+            function() {
+                if (!$(this).hasClass('selected')) {
+                    $(this).css({
+                        'background-color': '',
+                        'border-color': '#dee2e6'
+                    });
+                }
+            }
+        );
 
     } else {
         $('#choices').hide();

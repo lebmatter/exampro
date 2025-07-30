@@ -2,6 +2,9 @@
 # For license information, please see license.txt
 
 import random
+import base64
+import os
+import requests
 from datetime import datetime, timedelta
 
 import frappe
@@ -53,6 +56,81 @@ def get_s3_client():
     frappe.local.s3_client = s3_client
     
     return s3_client
+
+def convert_image_to_base64(image_path):
+    """
+    Convert image file to base64 string.
+    Handles both local file paths, URLs, and Frappe file paths.
+    
+    Args:
+        image_path (str): Path to image file, URL, or Frappe file path
+        
+    Returns:
+        str: Base64 encoded image string or None if conversion fails
+    """
+    if not image_path:
+        return None
+        
+    try:
+        # Check if it's already base64
+        if image_path.startswith('data:'):
+            return image_path
+            
+        # Handle Frappe file paths (/files/ and /private/files/)
+        if image_path.startswith('/files/') or image_path.startswith('/private/files/'):
+            # Remove leading slash and convert to site-relative path
+            if image_path.startswith('/files/'):
+                # Public files are in public/files/
+                local_path = frappe.get_site_path('public', image_path[1:])  # Remove leading slash
+            elif image_path.startswith('/private/files/'):
+                # Private files are in private/files/
+                local_path = frappe.get_site_path('private', image_path[9:])  # Remove '/private/' prefix
+            
+            # Check if file exists
+            if os.path.exists(local_path):
+                with open(local_path, 'rb') as image_file:
+                    image_data = image_file.read()
+                    base64_string = base64.b64encode(image_data).decode('utf-8')
+                    return base64_string
+            else:
+                frappe.log_error(f"Frappe file not found: {local_path} (original path: {image_path})", "convert_image_to_base64")
+                return None
+        
+        # Handle file:// URLs or local paths
+        elif image_path.startswith('file://') or not image_path.startswith('http'):
+            # Remove file:// prefix if present
+            local_path = image_path.replace('file://', '')
+            
+            # If it's a relative path, make it absolute relative to frappe site public/files
+            if not os.path.isabs(local_path):
+                local_path = frappe.get_site_path('public', 'files', local_path)
+            
+            # Check if file exists
+            if os.path.exists(local_path):
+                with open(local_path, 'rb') as image_file:
+                    image_data = image_file.read()
+                    base64_string = base64.b64encode(image_data).decode('utf-8')
+                    return base64_string
+            else:
+                frappe.log_error(f"Image file not found: {local_path}", "convert_image_to_base64")
+                return None
+                
+        # Handle HTTP/HTTPS URLs
+        elif image_path.startswith('http'):
+            response = requests.get(image_path, timeout=10)
+            if response.status_code == 200:
+                image_data = response.content
+                base64_string = base64.b64encode(image_data).decode('utf-8')
+                return base64_string
+            else:
+                frappe.log_error(f"Failed to fetch image from URL: {image_path}, Status: {response.status_code}", "convert_image_to_base64")
+                return None
+                
+    except Exception as e:
+        frappe.log_error(f"Error converting image to base64: {image_path}, Error: {str(e)}", "convert_image_to_base64")
+        return None
+        
+    return None
 
 def create_website_user(full_name, email):
     # Check if the user already exists
@@ -353,15 +431,15 @@ def get_question(exam_submission=None, qsno=1):
 		"qs_no": answer_doc["seq_no"],
 		"name": question_doc.name,
 		"type": question_doc.type,
-		"description_image": question_doc.description_image,
+		"description_image": convert_image_to_base64(question_doc.description_image),
 		"option_1": question_doc.option_1,
 		"option_2": question_doc.option_2,
 		"option_3": question_doc.option_3,
 		"option_4": question_doc.option_4,
-		"option_1_image": question_doc.option_1_image,
-		"option_2_image": question_doc.option_2_image,
-		"option_3_image": question_doc.option_3_image,
-		"option_4_image": question_doc.option_4_image,
+		"option_1_image": convert_image_to_base64(question_doc.option_1_image),
+		"option_2_image": convert_image_to_base64(question_doc.option_2_image),
+		"option_3_image": convert_image_to_base64(question_doc.option_3_image),
+		"option_4_image": convert_image_to_base64(question_doc.option_4_image),
 		"multiple": question_doc.multiple,
 		# submitted answer
 		"marked_for_later": answer_doc["marked_for_later"],
