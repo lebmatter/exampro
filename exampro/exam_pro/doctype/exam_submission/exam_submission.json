@@ -74,12 +74,14 @@
   {
    "fieldname": "exam_started_time",
    "fieldtype": "Datetime",
-   "label": "Exam started at"
+   "label": "Exam started at",
+   "read_only": 1
   },
   {
    "fieldname": "exam_submitted_time",
    "fieldtype": "Datetime",
-   "label": "Exam submitted at"
+   "label": "Exam submitted at",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -218,7 +220,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-07-24 15:19:35.504087",
+ "modified": "2025-07-30 21:29:13.084262",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Submission",

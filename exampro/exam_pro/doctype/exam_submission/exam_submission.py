@@ -374,6 +374,7 @@ def end_exam(exam_submission=None):
 		total_marks, evaluation_status, result_status = evaluation_values(
 			doc.exam, doc.submitted_answers
 		)
+		doc.exam_submitted_time = frappe.utils.now()
 		doc.total_marks = total_marks
 		doc.evaluation_status = evaluation_status
 		doc.result_status = result_status
