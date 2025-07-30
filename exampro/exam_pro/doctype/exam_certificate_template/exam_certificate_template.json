@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:title",
  "creation": "2024-12-04 13:21:47.596961",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -15,7 +16,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Title",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "html_template",
@@ -37,10 +39,11 @@
    "link_fieldname": "certificate_template"
   }
  ],
- "modified": "2025-07-24 14:44:17.876071",
+ "modified": "2025-07-30 11:28:56.444656",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Certificate Template",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

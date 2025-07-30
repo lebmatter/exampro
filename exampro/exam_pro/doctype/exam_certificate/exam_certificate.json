@@ -7,9 +7,10 @@
  "field_order": [
   "exam_submission",
   "exam",
+  "exam_schedule",
+  "column_break_3",
   "candidate",
   "candidate_name",
-  "column_break_3",
   "issue_date",
   "expiry_date",
   "section_break_ygbp",
@@ -24,7 +25,8 @@
    "in_standard_filter": 1,
    "label": "Exam",
    "options": "Exam",
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "column_break_3",
@@ -33,8 +35,10 @@
   {
    "fieldname": "issue_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Issue Date",
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "expiry_date",
@@ -46,6 +50,7 @@
    "fieldtype": "Link",
    "label": "Exam Submission",
    "options": "Exam Submission",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -55,7 +60,9 @@
    "in_standard_filter": 1,
    "label": "Candidate",
    "options": "User",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
    "fetch_from": "member.full_name",
@@ -80,11 +87,22 @@
    "fieldtype": "JSON",
    "label": "Saved params",
    "read_only": 1
+  },
+  {
+   "fetch_from": "exam_submission.exam_schedule",
+   "fieldname": "exam_schedule",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Exam Schedule",
+   "options": "Exam Schedule",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-24 14:59:13.255126",
+ "modified": "2025-07-30 12:43:41.525216",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Certificate",

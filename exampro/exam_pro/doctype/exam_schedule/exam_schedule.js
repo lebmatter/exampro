@@ -111,36 +111,11 @@ function send_certificates(frm) {
             frappe.confirm(
                 __('Are you sure you want to send certificates for this exam schedule? This will process all passed submissions and send certificate emails.'),
                 function() {
-                    // Show progress dialog
-                    let progress_dialog = new frappe.ui.Dialog({
-                        title: __('Sending Certificates'),
-                        fields: [
-                            {
-                                fieldtype: 'HTML',
-                                fieldname: 'progress_area',
-                                options: `
-                                    <div class="progress-container">
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                                 style="width: 0%;" id="cert-progress-bar"></div>
-                                        </div>
-                                        <div class="progress-text text-muted mt-2" id="cert-progress-text">
-                                            Initializing...
-                                        </div>
-                                        <div class="progress-details mt-3" id="cert-progress-details">
-                                        </div>
-                                    </div>
-                                `
-                            }
-                        ],
-                        primary_action_label: __('Close'),
-                        primary_action: function() {
-                            progress_dialog.hide();
-                        }
+                    // Show processing message
+                    frappe.show_alert({
+                        message: __('Processing certificates... This may take a while.'),
+                        indicator: 'blue'
                     });
-                    
-                    progress_dialog.show();
-                    progress_dialog.$wrapper.find('.btn-primary').hide(); // Hide close button initially
                     
                     // Call the send certificates function
                     frappe.call({
@@ -150,64 +125,28 @@ function send_certificates(frm) {
                         },
                         callback: function(r) {
                             if (r.message) {
-                                // Update progress to 100%
-                                $('#cert-progress-bar').css('width', '100%').removeClass('progress-bar-animated');
-                                $('#cert-progress-text').text('Certificate sending completed successfully!');
-                                $('#cert-progress-details').html(`
-                                    <div class="alert alert-success">
-                                        <strong>Results:</strong><br>
-                                        ${r.message.replace(/\n/g, '<br>')}
-                                    </div>
-                                `);
-                                
-                                // Show close button
-                                progress_dialog.$wrapper.find('.btn-primary').show();
-                                
-                                // Show success alert
-                                frappe.show_alert({
-                                    message: __('Certificates sent successfully!'),
+                                frappe.msgprint({
+                                    title: __('Certificates Sent Successfully'),
+                                    message: __('Certificate sending completed successfully!<br><br><strong>Results:</strong><br>{0}', [r.message.replace(/\n/g, '<br>')]),
+                                    indicator: 'green'
+                                });
+                            } else {
+                                frappe.msgprint({
+                                    title: __('Certificates Sent'),
+                                    message: __('Certificate sending process completed.'),
                                     indicator: 'green'
                                 });
                             }
                         },
                         error: function(r) {
-                            $('#cert-progress-bar').css('width', '100%').removeClass('progress-bar-animated').addClass('bg-danger');
-                            $('#cert-progress-text').text('Error occurred while sending certificates');
-                            $('#cert-progress-details').html(`
-                                <div class="alert alert-danger">
-                                    <strong>Error:</strong><br>
-                                    ${r.message || 'An unknown error occurred'}
-                                </div>
-                            `);
-                            progress_dialog.$wrapper.find('.btn-primary').show();
+                            frappe.msgprint({
+                                title: __('Error Sending Certificates'),
+                                message: __('An error occurred while sending certificates:<br><br>{0}', [r.message || 'Unknown error occurred']),
+                                indicator: 'red'
+                            });
                         },
-                        freeze: false // Don't freeze the UI as we have our own progress dialog
-                    });
-                    
-                    // Simulate progress updates (since we can't get real-time progress from server)
-                    let progress = 0;
-                    let progress_interval = setInterval(function() {
-                        if (progress < 90) {
-                            progress += Math.random() * 15;
-                            if (progress > 90) progress = 90;
-                            
-                            $('#cert-progress-bar').css('width', progress + '%');
-                            
-                            if (progress < 30) {
-                                $('#cert-progress-text').text('Checking submissions...');
-                            } else if (progress < 60) {
-                                $('#cert-progress-text').text('Processing certificates...');
-                            } else {
-                                $('#cert-progress-text').text('Sending emails...');
-                            }
-                        } else {
-                            clearInterval(progress_interval);
-                        }
-                    }, 500);
-                    
-                    // Clear interval when dialog is hidden
-                    progress_dialog.$wrapper.on('hidden.bs.modal', function() {
-                        clearInterval(progress_interval);
+                        freeze: true,
+                        freeze_message: __('Sending certificates...')
                     });
                 }
             );
@@ -219,36 +158,11 @@ function recompute_results(frm) {
     frappe.confirm(
         __('Are you sure you want to recompute results for this exam schedule? This will recalculate marks and status for all submissions and may take some time.'),
         function() {
-            // Show progress dialog
-            let progress_dialog = new frappe.ui.Dialog({
-                title: __('Recomputing Results'),
-                fields: [
-                    {
-                        fieldtype: 'HTML',
-                        fieldname: 'progress_area',
-                        options: `
-                            <div class="progress-container">
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                         style="width: 0%;" id="recompute-progress-bar"></div>
-                                </div>
-                                <div class="progress-text text-muted mt-2" id="recompute-progress-text">
-                                    Initializing...
-                                </div>
-                                <div class="progress-details mt-3" id="recompute-progress-details">
-                                </div>
-                            </div>
-                        `
-                    }
-                ],
-                primary_action_label: __('Close'),
-                primary_action: function() {
-                    progress_dialog.hide();
-                }
+            // Show processing message
+            frappe.show_alert({
+                message: __('Recomputing results... This may take a while.'),
+                indicator: 'blue'
             });
-            
-            progress_dialog.show();
-            progress_dialog.$wrapper.find('.btn-primary').hide(); // Hide close button initially
             
             // Call the recompute results function
             frappe.call({
@@ -257,22 +171,9 @@ function recompute_results(frm) {
                     schedule: frm.doc.name
                 },
                 callback: function(r) {
-                    // Update progress to 100%
-                    $('#recompute-progress-bar').css('width', '100%').removeClass('progress-bar-animated');
-                    $('#recompute-progress-text').text('Results recomputation completed successfully!');
-                    $('#recompute-progress-details').html(`
-                        <div class="alert alert-success">
-                            <strong>Results recomputed successfully!</strong><br>
-                            All exam submissions have been processed and their results updated.
-                        </div>
-                    `);
-                    
-                    // Show close button
-                    progress_dialog.$wrapper.find('.btn-primary').show();
-                    
-                    // Show success alert
-                    frappe.show_alert({
-                        message: __('Results recomputed successfully!'),
+                    frappe.msgprint({
+                        title: __('Results Recomputed Successfully'),
+                        message: __('All exam submissions have been processed and their results updated successfully.'),
                         indicator: 'green'
                     });
                     
@@ -280,43 +181,14 @@ function recompute_results(frm) {
                     frm.refresh();
                 },
                 error: function(r) {
-                    $('#recompute-progress-bar').css('width', '100%').removeClass('progress-bar-animated').addClass('bg-danger');
-                    $('#recompute-progress-text').text('Error occurred while recomputing results');
-                    $('#recompute-progress-details').html(`
-                        <div class="alert alert-danger">
-                            <strong>Error:</strong><br>
-                            ${r.message || 'An unknown error occurred while recomputing results'}
-                        </div>
-                    `);
-                    progress_dialog.$wrapper.find('.btn-primary').show();
+                    frappe.msgprint({
+                        title: __('Error Recomputing Results'),
+                        message: __('An error occurred while recomputing results:<br><br>{0}', [r.message || 'Unknown error occurred while recomputing results']),
+                        indicator: 'red'
+                    });
                 },
-                freeze: false // Don't freeze the UI as we have our own progress dialog
-            });
-            
-            // Simulate progress updates (since we can't get real-time progress from server)
-            let progress = 0;
-            let progress_interval = setInterval(function() {
-                if (progress < 90) {
-                    progress += Math.random() * 10;
-                    if (progress > 90) progress = 90;
-                    
-                    $('#recompute-progress-bar').css('width', progress + '%');
-                    
-                    if (progress < 30) {
-                        $('#recompute-progress-text').text('Fetching submissions...');
-                    } else if (progress < 60) {
-                        $('#recompute-progress-text').text('Evaluating answers...');
-                    } else {
-                        $('#recompute-progress-text').text('Updating results...');
-                    }
-                } else {
-                    clearInterval(progress_interval);
-                }
-            }, 300);
-            
-            // Clear interval when dialog is hidden
-            progress_dialog.$wrapper.on('hidden.bs.modal', function() {
-                clearInterval(progress_interval);
+                freeze: true,
+                freeze_message: __('Recomputing results...')
             });
         }
     );

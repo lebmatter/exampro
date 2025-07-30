@@ -295,9 +295,19 @@
    "group": "Schedule",
    "link_doctype": "Exam Schedule",
    "link_fieldname": "exam"
+  },
+  {
+   "group": "Candidates",
+   "link_doctype": "Exam Submission",
+   "link_fieldname": "exam"
+  },
+  {
+   "group": "Candidates",
+   "link_doctype": "Exam Certificate",
+   "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-24 16:15:49.789232",
+ "modified": "2025-07-30 12:30:36.242682",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",

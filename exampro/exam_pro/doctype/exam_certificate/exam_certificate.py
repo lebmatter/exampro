@@ -34,22 +34,7 @@ class ExamCertificate(Document):
         # Get the certificate template document
         template_doc = frappe.get_doc("Exam Certificate Template", cert_template)
 
-        # Prepare context data for the certificate
-        exam_submission = frappe.get_doc("Exam Submission", self.exam_submission)
-        exam_doc = frappe.get_doc("Exam", self.exam)
-        
-        context = {
-            "student_name": self.candidate_name,
-            "exam_title": exam_doc.title,
-            "score": exam_submission.percentage or 0,
-            "marks_obtained": exam_submission.total_marks or 0,
-            "total_marks": exam_doc.total_marks or 0,
-            "pass_percentage": exam_doc.pass_percentage or 0,
-            "completion_date": frappe.utils.format_date(exam_submission.modified, "dd MMM yyyy"),
-            "exam_duration": f"{exam_doc.duration} minutes" if exam_doc.duration else "N/A",
-            "certificate_id": self.name,
-            "issue_date": frappe.utils.format_date(self.issue_date, "dd MMM yyyy") if self.issue_date else frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy")
-        }
+        context = self.generate_context()
 
         # Save the template parameters used
         self.saved_params = frappe.as_json(context)
@@ -67,8 +52,9 @@ class ExamCertificate(Document):
             subject = frappe.render_template(email_template.subject, context)
             message = frappe.render_template(email_template.response, context)
         except frappe.DoesNotExistError:
+            exam_title = frappe.db.get_value("Exam", self.exam, "title")
             # Fallback email content if template doesn't exist
-            subject = f"Certificate for {exam_doc.title}"
+            subject = f"Certificate for {exam_title}"
             message = f"Dear {self.candidate_name},<br><br>Congratulations! Please find your certificate attached.<br><br>Best regards"
 
         candidate_email = frappe.db.get_value("User", self.candidate, "email")
@@ -107,14 +93,14 @@ class ExamCertificate(Document):
             try:
                 context = frappe.parse_json(self.saved_params)
             except:
-                context = self._generate_context()
+                context = self.generate_context()
         else:
-            context = self._generate_context()
+            context = self.generate_context()
         
         # Generate and return PDF bytes
         return template_doc.generate_pdf(context)
-    
-    def _generate_context(self):
+
+    def generate_context(self):
         """Generate context data for certificate template"""
         # Prepare context data for the certificate
         exam_submission = frappe.get_doc("Exam Submission", self.exam_submission)
@@ -138,4 +124,45 @@ class ExamCertificate(Document):
             "issue_date": frappe.utils.format_date(self.issue_date, "dd MMM yyyy") if self.issue_date else frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy")
         }
 
+
+@frappe.whitelist()
+def download_certificate_pdf(certificate_name):
+    """Download certificate PDF - wrapper method for doctype"""
+    # Check if user has access to this certificate
+    cert_doc = frappe.get_doc("Exam Certificate", certificate_name)
+    
+    # Allow access if user is the candidate or has appropriate permissions
+    if cert_doc.candidate != frappe.session.user and not frappe.has_permission("Exam Certificate", "read", cert_doc.name):
+        frappe.throw("You don't have permission to download this certificate")
+    
+    # Generate PDF using the certificate's generate_pdf method
+    try:
+        pdf_bytes = cert_doc.generate_pdf()
+        
+        # Return base64 encoded PDF for JavaScript download
+        import base64
+        pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+        return pdf_base64
+        
+    except Exception as e:
+        frappe.throw(f"Error generating certificate PDF: {str(e)}")
+
+
+@frappe.whitelist()
+def send_certificate_email(certificate_name):
+    """Send certificate email - wrapper method for doctype"""
+    # Check if user has permission to send email for this certificate
+    cert_doc = frappe.get_doc("Exam Certificate", certificate_name)
+    
+    # Allow access if user has write permission on the certificate
+    if not frappe.has_permission("Exam Certificate", "write", cert_doc.name):
+        frappe.throw("You don't have permission to send email for this certificate")
+    
+    # Send the certificate email
+    try:
+        cert_doc.send_email()
+        return {"success": True, "message": "Certificate email sent successfully"}
+        
+    except Exception as e:
+        frappe.throw(f"Error sending certificate email: {str(e)}")
 

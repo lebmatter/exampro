@@ -79,16 +79,19 @@
    "read_only": 1
   },
   {
-   "fetch_from": ".certificate_template",
+   "fetch_from": "exam.certificate_template",
    "fieldname": "certificate_template",
    "fieldtype": "Link",
    "label": "Certificate Template",
-   "options": "Exam Certificate Template"
+   "options": "Exam Certificate Template",
+   "read_only": 1
   },
   {
    "default": "Fixed",
    "fieldname": "schedule_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Schedule Type",
    "options": "Fixed\nFlexible"
   },
@@ -97,6 +100,7 @@
    "description": "No. of days till the exam is available in portal. ",
    "fieldname": "schedule_expire_in_days",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Schedule Expire in Days",
    "non_negative": 1
   },
@@ -135,9 +139,14 @@
    "group": "Candidates",
    "link_doctype": "Exam Submission",
    "link_fieldname": "exam_schedule"
+  },
+  {
+   "group": "Certificates",
+   "link_doctype": "Exam Certificate",
+   "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-07-16 17:08:05.273672",
+ "modified": "2025-07-30 13:05:17.153978",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",
