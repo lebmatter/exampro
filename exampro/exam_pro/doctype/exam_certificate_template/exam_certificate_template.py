@@ -10,6 +10,7 @@ import os
 
 
 class ExamCertificateTemplate(Document):
+			
 	def generate_pdf(self, context_data=None):
 		"""Generate PDF from HTML template using wkhtmltopdf"""
 		if not self.html_template:
@@ -23,19 +24,8 @@ class ExamCertificateTemplate(Document):
 			except json.JSONDecodeError:
 				frappe.throw("Invalid JSON in wkhtmltopdf parameters")
 		
-		# Default PDF options
-		default_options = {
-			'page-size': 'A4',
-			'margin-top': '0.75in',
-			'margin-right': '0.75in',
-			'margin-bottom': '0.75in',
-			'margin-left': '0.75in',
-			'encoding': "UTF-8",
-			'no-outline': None
-		}
-		
 		# Merge default options with custom ones
-		pdf_options = {**default_options, **pdf_options}
+		pdf_options = {**pdf_options}
 		
 		# Render HTML template with context
 		html_content = self.html_template

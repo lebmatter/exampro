@@ -21,7 +21,7 @@
   },
   {
    "fieldname": "html_template",
-   "fieldtype": "Long Text",
+   "fieldtype": "Code",
    "label": "HTML Template",
    "reqd": 1
   },
@@ -29,7 +29,7 @@
    "description": "Optional parameters for PDF generation in JSON format",
    "fieldname": "wkhtmltopdf_params",
    "fieldtype": "JSON",
-   "label": "wkhtmltopdf Parameters (JSON)"
+   "label": "PDFKit Parameters (JSON)"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -39,7 +39,7 @@
    "link_fieldname": "certificate_template"
   }
  ],
- "modified": "2025-07-30 11:28:56.444656",
+ "modified": "2025-07-30 16:59:14.182150",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Certificate Template",
