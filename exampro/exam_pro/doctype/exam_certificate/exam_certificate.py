@@ -109,7 +109,13 @@ class ExamCertificate(Document):
         # Calculate percentage if not available in submission
         percentage = 0
         if exam_doc.total_marks and exam_submission.total_marks:
-            percentage = round((exam_submission.total_marks / exam_doc.total_marks) * 100, 2)
+            percentage_val = (exam_submission.total_marks / exam_doc.total_marks) * 100
+            if percentage_val.is_integer():
+                percentage = str(int(percentage_val))
+            else:
+                percentage = f"{percentage_val:.2f}"
+        else:
+            percentage = "0"
         
         return {
             "student_name": self.candidate_name,
