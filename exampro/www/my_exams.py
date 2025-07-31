@@ -59,6 +59,7 @@ def get_user_exams(member=None, page=1, page_size=10):
 			"enable_chat": exam.enable_chat,
 			"submission": submission["name"],  # Added for view result link
 			"result_status": submission["result_status"],
+			"can_show_results": leaderboard_can_show,
 			# Leaderboard information
 			"leaderboard_enabled": exam.leaderboard != "No Leaderboard" and leaderboard_can_show,
 			"leaderboard_type": exam.leaderboard,

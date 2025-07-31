@@ -83,8 +83,11 @@ Exams') }} {% endblock %} {% block head_include %}
                 <span class="badge bg-warning text-dark"
                   >{{ exam.status }}</span
                 >
-                {% elif exam.status == "Submitted" %} {% if exam.result_status
-                %} {% if exam.result_status == "Passed" %}
+                {% elif exam.status == "Submitted" %} {% if not
+                exam.can_show_results %}
+                <span class="badge bg-light text-dark">Pending</span>
+                {% elif exam.result_status %} {% if exam.result_status ==
+                "Passed" %}
                 <span class="badge bg-success text-white"
                   >{{ exam.result_status }}</span
                 >
@@ -93,7 +96,7 @@ Exams') }} {% endblock %} {% block head_include %}
                   >{{ exam.result_status }}</span
                 >
                 {% elif exam.result_status == "Pending" %}
-                <span class="badge bg-warning text-dark"
+                <span class="badge bg-light text-dark"
                   >{{ exam.result_status }}</span
                 >
                 {% else %}
