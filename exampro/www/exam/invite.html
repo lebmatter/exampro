@@ -103,31 +103,24 @@
                 </div>
                 
                 <div class="text-center mt-4">
-                    {% if not is_logged_in %}
-                        <p class="login-message">Please log in to accept the invitation.</p>
-                        <a href="/login?redirect-to=/exam/invite/{{ invite_code }}" class="btn btn-primary back-button">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Login to Continue
-                        </a>
-                    {% else %}
-                        {% if has_submission %}
+                    {% if has_submission %}
                             <div class="message-box box-pending mb-4">
                                 <p>You have already accepted this invitation.</p>
                             </div>
                             <a href="/my-exams" class="btn btn-primary back-button">
                                 <i class="fas fa-list-alt mr-2"></i>Go to My Exams
                             </a>
-                        {% elif status == "Completed" %}
-                            <div class="message-box box-terminated mb-4">
-                                <p>This exam schedule has expired.</p>
-                            </div>
-                            <a href="/my-exams" class="btn btn-secondary back-button">
-                                <i class="fas fa-home mr-2"></i>Back to Home
-                            </a>
-                        {% else %}
-                            <button id="accept-invite" class="btn btn-success back-button">
-                                <i class="fas fa-check-circle mr-2"></i>Accept Invitation
-                            </button>
-                        {% endif %}
+                    {% elif status == "Completed" %}
+                        <div class="message-box box-terminated mb-4">
+                            <p>This exam schedule has expired.</p>
+                        </div>
+                        <a href="/my-exams" class="btn btn-secondary back-button">
+                            <i class="fas fa-home mr-2"></i>Back to Home
+                        </a>
+                    {% else %}
+                        <button id="accept-invite" class="btn btn-success back-button">
+                            <i class="fas fa-check-circle mr-2"></i>Accept Invitation
+                        </button>
                     {% endif %}
                 </div>
             {% else %}

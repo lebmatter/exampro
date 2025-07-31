@@ -15,7 +15,9 @@ def get_context(context):
         return context
 
     if frappe.session.user == "Guest":
-        return {"success": False, "message": _("Please login to accept the invitation.")}
+        # Use Frappe's native redirect to login with return URL
+        frappe.local.flags.redirect_location = f"/login?redirect-to={frappe.local.request.path}"
+        raise frappe.Redirect
 
     # Check if submission already exists for this user and schedule
     if frappe.session.user != "Administrator":
@@ -90,7 +92,7 @@ def accept_invitation(schedule_name):
     Create a new exam submission for the current user
     """
     if frappe.session.user == "Guest":
-        return {"success": False, "message": _("Please login to accept the invitation.")}
+        frappe.throw(_("Please login to accept the invitation."), frappe.AuthenticationError)
     
     try:
         # Check if a submission already exists
