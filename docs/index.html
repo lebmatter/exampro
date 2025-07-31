@@ -62,6 +62,23 @@
       .navbar-brand:hover {
         color: var(--black);
       }
+      .logo-img {
+        width: 140px;
+        height: 32px;
+        object-fit: contain;
+      }
+      @media (max-width: 768px) {
+        .logo-img {
+          width: 110px;
+          height: 28px;
+        }
+      }
+      @media (max-width: 480px) {
+        .logo-img {
+          width: 90px;
+          height: 24px;
+        }
+      }
 
       .logo-icon {
         width: 32px;
@@ -546,8 +563,7 @@
             <img
               src="exampro-logo.png"
               alt="ExamPro Logo"
-              class="me-2"
-              style="width: 140px; height: 32px"
+              class="me-2 logo-img"
             />
           </a>
 
@@ -572,7 +588,6 @@
         </div>
       </div>
     </nav>
-
     <!-- Hero Section -->
     <section class="hero">
       <div class="container">

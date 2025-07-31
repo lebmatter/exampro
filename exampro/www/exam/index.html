@@ -530,12 +530,9 @@ Alert!
 {{ super() }}
 {% if exam %}
 <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
-<script type="text/javascript">
-    var exam = {{ exam | tojson }};
-    {% include "exampro/templates/exam/examutils.js" %}
-    {% include "exampro/templates/exam/inactivityDetector.js" %}
-    {% include "exampro/templates/exam/examform.js" %}
-</script>
+<script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
+<script type="text/javascript" src="/assets/exampro/js/inactivityDetector.js"></script>
+<script type="text/javascript" src="/assets/exampro/js/examform.js"></script>
 <script src="/assets/exampro/js/bootstrap-calculator.js"></script>
 <script>
     $(document).ready(function () {

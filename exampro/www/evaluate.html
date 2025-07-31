@@ -1,139 +1,145 @@
-{% extends "exampro/templates/exam_base.html" %}
-
-{% block title %}
-Exam Evaluation
-{% endblock %}
-
-
-{% block head_include %}
-{% for ext in page_extensions %}
-{{ ext.render_header() }}
-{% endfor %}
-{% endblock %}
-
-{% block page_content %}
+{% extends "exampro/templates/exam_base.html" %} {% block title %} Exam
+Evaluation {% endblock %} {% block head_include %} {% for ext in page_extensions
+%} {{ ext.render_header() }} {% endfor %} {% endblock %} {% block page_content
+%}
 
 <div class="container">
-	<div class="row mb-5">
-		<div class="col">
-			<h4>📝 Evaluate Exams</h4>
-		</div>
-	</div>
-	<div class="row">
-		{% if assigned_exams %}
-		<div class="col-md-4">
-			<div class="card">
-				<div class="card-header">
-					<h5 class="mb-0">Assigned Exams</h5>
-				</div>
-				<div class="card-body p-0">
-					<div class="list-group list-group-flush" id="exam-list">
-							{% for submission in assigned_exams %}
-							<a href="#" class="list-group-item list-group-item-action exam-item" 
-							   data-exam-id="{{ submission.name }}"
-							   data-submission-id="{{ submission.submission_id }}">
-								<div class="d-flex justify-content-between align-items-center">
-									<div>
-										<h6 class="mb-1">{{ submission.title }}</h6>
-										<small class="text-muted">{{ submission.candidate_name }}</small>
-									</div>
-									<span class="badge {% if submission.status == 'Submitted' %}bg-warning{% else %}bg-success{% endif %}">
-										{{ submission.status }}
-									</span>
-								</div>
-							</a>
-							{% endfor %}
-					</div>
-				</div>
-			</div>
-			</div>
+  <div class="row mb-5">
+    <div class="col">
+      <h4>📝 Evaluate Exams</h4>
+    </div>
+  </div>
+  <div class="row">
+    {% if assigned_exams %}
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Assigned Exams</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush" id="exam-list">
+            {% for submission in assigned_exams %}
+            <a
+              href="#"
+              class="list-group-item list-group-item-action exam-item"
+              data-exam-id="{{ submission.name }}"
+              data-submission-id="{{ submission.submission_id }}"
+            >
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1">{{ submission.title }}</h6>
+                  <small class="text-muted"
+                    >{{ submission.candidate_name }}</small
+                  >
+                </div>
+                <span
+                  class="badge {% if submission.status == 'Submitted' %}bg-warning{% else %}bg-success{% endif %}"
+                >
+                  {{ submission.status }}
+                </span>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
 
-			<div class="col-md-8">
-			<div class="row mb-3">
-						<div class="col-md-12">
-			<!-- Question Navigation Panel -->
-			<div class="card" id="question-nav-panel" style="display: none;">
-				<div class="card-header">
-					<h5 class="mb-0">Questions</h5>
-				</div>
-				<div class="card-body">
-					<div class="question-nav-grid" id="question-nav-buttons">
-						<!-- Question buttons will be added here dynamically -->
-					</div>
-					<div class="d-flex justify-content-end mt-3" id="finish-eval-container">
-						<button id="finish-evaluation-btn" class="btn btn-primary" style="display: none;">Finish Evaluation</button>
-					</div>
-				</div>
-			</div>
+    <div class="col-md-8">
+      <div class="row mb-3">
+        <div class="col-md-12">
+          <!-- Question Navigation Panel -->
+          <div class="card" id="question-nav-panel" style="display: none">
+            <div class="card-header">
+              <h5 class="mb-0">Questions</h5>
+            </div>
+            <div class="card-body">
+              <div class="question-nav-grid" id="question-nav-buttons">
+                <!-- Question buttons will be added here dynamically -->
+              </div>
+              <div
+                class="d-flex justify-content-end mt-3"
+                id="finish-eval-container"
+              >
+                <button
+                  id="finish-evaluation-btn"
+                  class="btn btn-primary"
+                  style="display: none"
+                >
+                  Finish Evaluation
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-		</div>
-			</div>
-		
-		<div class="row mb-5">
-				
-			<!-- Main content -->
-			<div class="col-md-12" id="evaluation-area">
-			</div>
-
-		</div>
-			</div>
-		{% else %}
-			<div class="col-12">
-				<div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
-					<div class="text-center" style="max-width: 600px;">
-						<img src="/assets/exampro/img/nothing-to-eval.png" alt="Nothing to evaluate" 
-							 class="img-fluid mb-4" style="max-width: 600px; opacity: 0.8;">
-						<h4 class="text-muted mb-3">No Exams to Evaluate</h4>
-						<p class="text-muted mb-0" style="line-height: 1.6;">
-							There are currently no exam submissions assigned to you for evaluation. 
-							New submissions will appear here when they become available.
-						</p>
-					</div>
-				</div>
-			</div>
-		{% endif %}
-	</div>
+      <div class="row mb-5">
+        <!-- Main content -->
+        <div class="col-md-12" id="evaluation-area"></div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div
+        class="d-flex justify-content-center align-items-center"
+        style="min-height: 400px"
+      >
+        <div class="text-center" style="max-width: 600px">
+          <img
+            src="/assets/exampro/img/nothing-to-eval.png"
+            alt="Nothing to evaluate"
+            class="img-fluid mb-4"
+            style="max-width: 600px; opacity: 0.8"
+          />
+          <h4 class="text-muted mb-3">No Exams to Evaluate</h4>
+          <p class="text-muted mb-0" style="line-height: 1.6">
+            There are currently no exam submissions assigned to you for
+            evaluation. New submissions will appear here when they become
+            available.
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
 </div>
 
 <style>
-.question-nav-grid {
-	display: grid;
-	grid-template-columns: repeat(20, 1fr);
-	gap: 5px;
-	padding: 10px;
-}
+  .question-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    gap: 5px;
+    padding: 10px;
+  }
 
-/* Added styles for question buttons */
-.question-nav-btn.btn-success {
-	border-color: #28a745;
-}
+  /* Added styles for question buttons */
+  .question-nav-btn.btn-success {
+    border-color: #28a745;
+  }
 
-.question-nav-btn.active {
-	position: relative;
-	z-index: 1;
-	box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-}
+  .question-nav-btn.active {
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
 
-/* Alert styles for unsaved changes */
-.unsaved-alert {
-	background-color: #fff3cd;
-	color: #856404;
-	border-color: #ffeeba;
-	padding: 0.75rem 1.25rem;
-	margin-bottom: 1rem;
-	border: 1px solid transparent;
-	border-radius: 0.25rem;
-}
-
-
+  /* Alert styles for unsaved changes */
+  .unsaved-alert {
+    background-color: #fff3cd;
+    color: #856404;
+    border-color: #ffeeba;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+  }
 </style>
 {% endblock %}
 
-	<!-- Scripts -->
-	{%- block script %}
-	{{ super() }}
-	<script type="text/javascript">
-	{% include "exampro/templates/exam/examutils.js" %}
-	{% include "exampro/templates/exam/evaluate.js" %}
-	</script>
-	{% endblock %}
+<!-- Scripts -->
+{%- block script %} {{ super() }}
+<script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
+<script type="text/javascript" src="/assets/exampro/js/evaluate.js"></script>
+
+{% endblock %}
