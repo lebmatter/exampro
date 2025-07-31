@@ -529,6 +529,8 @@ Alert!
 {%- block script %}
 {{ super() }}
 {% if exam %}
+<script type="text/javascript"> var exam = {{ exam | tojson }};</script>
+
 <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/inactivityDetector.js"></script>
