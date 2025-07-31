@@ -646,16 +646,12 @@ function endExam() {
                 "exam_submission": exam["exam_submission"],
             },
             callback: (data) => {
-                if (data.message.show_result === 1) {
-                    window.location.href = "/exam/" + exam.exam_submission;
-                } else {
-                    window.location.reload();
-                }
                 examEnded = true;
                 stopRecording();
                 if (detector) {
                     detector.destroy();
                 }
+                window.location.href = "/exam/" + exam.exam_submission;
             }
         });
     }

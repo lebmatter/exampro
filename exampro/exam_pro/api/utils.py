@@ -321,3 +321,28 @@ def submit_candidate_pending_exams(member=None):
 			doc.result_status = result_status
 			doc.save(ignore_permissions=True)
 			frappe.db.commit()
+
+def can_show_exam_results_for_leaderboard(exam_doc, submission_doc):
+	"""Check if exam results can be shown for leaderboard based on show_result settings"""
+	
+	# If submission is not yet submitted or evaluated, don't show leaderboard
+	if submission_doc.status != "Submitted" or submission_doc.evaluation_status == "Pending":
+		return False
+	
+	# Check result display settings
+	show_result = exam_doc.show_result
+	
+	if show_result == "After Specific Date":
+		if datetime.now() < exam_doc.show_result_after_date:
+			return False
+		return True
+	elif show_result == "Do Not Show Score":
+		return False
+	elif show_result == "After Exam Submission":
+		return True
+	elif show_result == "After Schedule Completion":
+		schedule = frappe.get_doc("Exam Schedule", submission_doc.exam_schedule)
+		return schedule.get_status(additional_time=submission_doc.additional_time_given) == "Completed"
+
+	# Default: don't show if no valid setting found
+	return False

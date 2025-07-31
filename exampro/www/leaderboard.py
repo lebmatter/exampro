@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from exampro.exam_pro.api.utils import can_show_exam_results_for_leaderboard
 
 def get_context(context):
     """Context for the HTML page with submission-specific routing"""
@@ -43,6 +44,15 @@ def get_context(context):
         context.error_message = _("Leaderboard is not enabled for this exam.")
         context.show_error = True
         context.title = _("Leaderboard Disabled")
+        context.show_sidebar = False
+        return context
+    
+    # Check if results can be shown based on show_result settings
+    can_show_results = can_show_exam_results_for_leaderboard(exam_doc, user_submission_doc)
+    if not can_show_results:
+        context.error_message = _("Leaderboard is not available yet. Results will be published later.")
+        context.show_error = True
+        context.title = _("Leaderboard Not Available")
         context.show_sidebar = False
         return context
     

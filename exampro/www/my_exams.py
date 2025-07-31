@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import frappe
 from frappe.utils import now, format_datetime
-from exampro.exam_pro.api.utils import submit_candidate_pending_exams
+from exampro.exam_pro.api.utils import submit_candidate_pending_exams, can_show_exam_results_for_leaderboard
 
 
 def get_user_exams(member=None, page=1, page_size=10):
@@ -35,6 +35,10 @@ def get_user_exams(member=None, page=1, page_size=10):
 		# Check if certificate exists for this submission
 		certificate_exists = frappe.db.exists("Exam Certificate", {"exam_submission": submission["name"]})
 		exam.leaderboard = exam.leaderboard or "No Leaderboard"
+		
+		# Check if leaderboard can be shown based on show_result settings
+		submission_doc = frappe.get_doc("Exam Submission", submission["name"])
+		leaderboard_can_show = can_show_exam_results_for_leaderboard(exam, submission_doc)
 		exam_details = {
 			"exam_submission": submission["name"],
 			"exam": schedule.exam,
@@ -56,7 +60,7 @@ def get_user_exams(member=None, page=1, page_size=10):
 			"submission": submission["name"],  # Added for view result link
 			"result_status": submission["result_status"],
 			# Leaderboard information
-			"leaderboard_enabled": exam.leaderboard != "No Leaderboard",
+			"leaderboard_enabled": exam.leaderboard != "No Leaderboard" and leaderboard_can_show,
 			"leaderboard_type": exam.leaderboard,
 			# Certificate information
 			"certification_enabled": exam.enable_certification,
