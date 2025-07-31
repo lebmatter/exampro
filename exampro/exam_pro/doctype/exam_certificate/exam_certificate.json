@@ -15,7 +15,11 @@
   "expiry_date",
   "section_break_ygbp",
   "certificate_template",
-  "saved_params"
+  "saved_params",
+  "email_section",
+  "email_queue_name",
+  "column_break_email",
+  "email_sent_date"
  ],
  "fields": [
   {
@@ -98,6 +102,28 @@
    "options": "Exam Schedule",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "email_section",
+   "fieldtype": "Section Break",
+   "label": "Email Tracking"
+  },
+  {
+   "fieldname": "email_queue_name",
+   "fieldtype": "Link",
+   "label": "Email Queue Entry",
+   "options": "Email Queue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_email",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "email_sent_date",
+   "fieldtype": "Datetime",
+   "label": "Email Sent Date",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

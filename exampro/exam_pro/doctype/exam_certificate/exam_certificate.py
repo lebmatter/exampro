@@ -63,15 +63,24 @@ class ExamCertificate(Document):
 
         # Send email with PDF attachment
         try:
-            frappe.sendmail(
+            # Create Email Queue entry and capture its name
+            email_queue = frappe.sendmail(
                 recipients=[candidate_email],
                 subject=subject,
                 message=message,
                 attachments=[{
                     'fname': f'certificate_{self.name}.pdf',
                     'fcontent': pdf_bytes
-                }]
+                }],
+                delayed=False,  # Send immediately but still create queue entry
+                now=False  # This ensures queue entry is created
             )
+            
+            # Store the Email Queue reference if available
+            if email_queue:
+                self.email_queue_name = email_queue
+                self.email_sent_date = frappe.utils.now()
+            
             frappe.msgprint(f"Certificate sent successfully to {candidate_email}")
         except Exception as e:
             frappe.throw(f"Error sending certificate email: {str(e)}")
@@ -130,6 +139,25 @@ class ExamCertificate(Document):
             "issue_date": frappe.utils.format_date(self.issue_date, "dd MMM yyyy") if self.issue_date else frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy")
         }
 
+    def get_email_status(self):
+        """Get the status of the email from Email Queue"""
+        if not self.email_queue_name:
+            return {"status": "Not Sent", "message": "No email has been sent for this certificate"}
+        
+        try:
+            email_queue = frappe.get_doc("Email Queue", self.email_queue_name)
+            return {
+                "status": email_queue.status,
+                "sent_date": self.email_sent_date,
+                "recipient": email_queue.recipients,
+                "subject": email_queue.subject,
+                "error": email_queue.error if email_queue.status == "Error" else None
+            }
+        except frappe.DoesNotExistError:
+            return {"status": "Queue Entry Not Found", "message": "Email Queue entry has been deleted"}
+        except Exception as e:
+            return {"status": "Error", "message": f"Error fetching email status: {str(e)}"}
+
 
 @frappe.whitelist()
 def download_certificate_pdf(certificate_name):
@@ -155,6 +183,17 @@ def download_certificate_pdf(certificate_name):
 
 
 @frappe.whitelist()
+def get_email_status(certificate_name):
+    """Get email status for a certificate - wrapper method"""
+    cert_doc = frappe.get_doc("Exam Certificate", certificate_name)
+    
+    # Allow access if user is the candidate or has read permission
+    if cert_doc.candidate != frappe.session.user and not frappe.has_permission("Exam Certificate", "read", cert_doc.name):
+        frappe.throw("You don't have permission to view email status for this certificate")
+    
+    return cert_doc.get_email_status()
+
+@frappe.whitelist()
 def send_certificate_email(certificate_name):
     """Send certificate email - wrapper method for doctype"""
     # Check if user has permission to send email for this certificate
@@ -167,7 +206,14 @@ def send_certificate_email(certificate_name):
     # Send the certificate email
     try:
         cert_doc.send_email()
-        return {"success": True, "message": "Certificate email sent successfully"}
+        
+        # Return success message with Email Queue link if available
+        response = {"success": True, "message": "Certificate email sent successfully"}
+        if cert_doc.email_queue_name:
+            response["email_queue"] = cert_doc.email_queue_name
+            response["email_sent_date"] = cert_doc.email_sent_date
+        
+        return response
         
     except Exception as e:
         frappe.throw(f"Error sending certificate email: {str(e)}")
