@@ -1,5 +1,4 @@
 import frappe
-import base64
 from frappe import _
 
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams
@@ -33,8 +32,13 @@ def get_context(context):
     submit_candidate_pending_exams()
     
     try:
-        # Decode the base64 invite code
-        schedule_name = base64.b64decode(invite_code).decode('utf-8')
+        # Look up the exam schedule by short_uuid
+        schedule_name = frappe.db.get_value("Exam Schedule", {"short_uuid": invite_code}, "name")
+        
+        if not schedule_name:
+            context.message = _("Invalid invitation link. The invitation code could not be found.")
+            context.invite_valid = False
+            return context
         
         # Get the exam schedule document
         schedule = frappe.get_doc("Exam Schedule", schedule_name)

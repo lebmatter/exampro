@@ -8,6 +8,7 @@
  "field_order": [
   "section_break_lmge",
   "candidate",
+  "short_uuid",
   "candidate_name",
   "exam_schedule",
   "exam",
@@ -61,6 +62,14 @@
    "options": "User",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "short_uuid",
+   "fieldtype": "Data", 
+   "label": "Unique ID",
+   "read_only": 1,
+   "set_only_once": 1,
+   "unique": 1
   },
   {
    "default": "Registered",

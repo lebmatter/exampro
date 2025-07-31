@@ -8,6 +8,7 @@
  "field_order": [
   "schedule_settings_section",
   "exam",
+  "short_uuid",
   "start_date_time",
   "schedule_type",
   "schedule_expire_in_days",
@@ -38,6 +39,14 @@
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "short_uuid",
+   "fieldtype": "Data",
+   "label": "Unique ID",
+   "read_only": 1,
+   "set_only_once": 1,
+   "unique": 1
   },
   {
    "fieldname": "examiners",

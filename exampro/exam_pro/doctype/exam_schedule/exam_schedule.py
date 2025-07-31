@@ -5,6 +5,7 @@ from datetime import timedelta, datetime, date
 from dateutil.parser import parse
 import frappe
 import base64
+import uuid
 
 from frappe.utils import now
 from frappe.model.document import Document
@@ -18,6 +19,14 @@ class ExamSchedule(Document):
 	_standard_fieldnames = ['name', 'owner', 'creation', 'modified', 'modified_by',
 		'parent', 'parentfield', 'parenttype', 'idx', 'docstatus',
 		'naming_series', 'status']
+
+	def generate_short_uuid(self):
+		"""Generate a short UUID (8 characters)"""
+		return str(uuid.uuid4()).replace('-', '')[:8]
+
+	def before_insert(self):
+		if not self.short_uuid:
+			self.short_uuid = self.generate_short_uuid()
 
 	def _validate_user_role(self, user_id, role_name):
 		"""
@@ -247,11 +256,12 @@ class ExamSchedule(Document):
 		if not domain.startswith(('http://', 'https://')):
 			domain = "http://" + domain
 			
-		# Encode the schedule name in base64
-		encoded_name = base64.b64encode(self.name.encode('utf-8')).decode('utf-8')
+		# Use the short_uuid as the invite code
+		if not self.short_uuid:
+			self.short_uuid = self.generate_short_uuid()
 		
-		# Create the invite link
-		invite_link = f"{domain}/exam/invite/{encoded_name}"
+		# Create the invite link using short_uuid
+		invite_link = f"{domain}/exam/invite/{self.short_uuid}"
 		
 		# Update the document
 		self.schedule_invite_link = invite_link

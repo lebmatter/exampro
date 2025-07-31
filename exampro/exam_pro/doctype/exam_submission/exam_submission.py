@@ -5,6 +5,7 @@ import random
 import base64
 import os
 import requests
+import uuid
 from datetime import datetime, timedelta
 
 import frappe
@@ -159,6 +160,10 @@ def create_website_user(full_name, email):
     return email
 
 
+def generate_short_uuid():
+	"""Generate a short UUID (8 characters)"""
+	return str(uuid.uuid4()).replace('-', '')[:8]
+
 class ExamSubmission(Document):
 
 	def can_start_exam(self):
@@ -250,6 +255,9 @@ class ExamSubmission(Document):
 		sched.save(ignore_permissions=True)
 	
 	def before_insert(self):
+		if not self.short_uuid:
+			self.short_uuid = generate_short_uuid()
+			
 		last_login = frappe.db.get_value("User", self.candidate, "last_login")
 		if not last_login:
 			self.new_user = 1

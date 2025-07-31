@@ -4,6 +4,7 @@
 import re
 import random
 import frappe
+import uuid
 from frappe.model.document import Document
 from exampro.exam_pro.doctype.exam_settings.exam_settings import validate_video_settings
 
@@ -51,7 +52,15 @@ def slugify(title, used_slugs=None):
 			return new_slug
 		count = count + 1
 
+def generate_short_uuid():
+	"""Generate a short UUID (8 characters)"""
+	return str(uuid.uuid4()).replace('-', '')[:8]
+
 class Exam(Document):
+
+	def before_insert(self):
+		if not self.short_uuid:
+			self.short_uuid = generate_short_uuid()
 
 	def validate(self):
 		self.image = validate_image(self.image)

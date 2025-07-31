@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
+  "short_uuid",
   "section_break_wkvo",
   "duration",
   "pass_percentage",
@@ -53,6 +54,14 @@
    "label": "Title",
    "reqd": 1,
    "width": "200"
+  },
+  {
+   "fieldname": "short_uuid",
+   "fieldtype": "Data",
+   "label": "Unique ID",
+   "read_only": 1,
+   "set_only_once": 1,
+   "unique": 1
   },
   {
    "fieldname": "image",
