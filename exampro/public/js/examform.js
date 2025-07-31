@@ -658,6 +658,11 @@ function endExam() {
 };
 
 function startExam() {
+    // Check if media permissions are granted before starting exam (only if video proctoring is enabled)
+    if (typeof checkMediaPermissionsBeforeStart === 'function' && !checkMediaPermissionsBeforeStart()) {
+        return; // Don't start exam if permissions not granted
+    }
+    
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.start_exam",
         type: "POST",
