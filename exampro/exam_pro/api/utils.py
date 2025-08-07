@@ -320,6 +320,11 @@ def submit_candidate_pending_exams(member=None):
 			doc.evaluation_status = evaluation_status
 			doc.result_status = result_status
 			doc.save(ignore_permissions=True)
+
+			# delete frappe cache data
+			cache_key = f"tracking_data:{doc.name}"
+			frappe.cache().delete(cache_key)
+
 			frappe.db.commit()
 
 def can_show_exam_results_for_leaderboard(exam_doc, submission_doc):

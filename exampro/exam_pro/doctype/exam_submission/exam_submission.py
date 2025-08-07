@@ -378,6 +378,9 @@ def end_exam(exam_submission=None):
 		raise PermissionError("You don't have access to this exam.")
 	
 	if doc.status == "Started":
+		save_tracking_info(doc.name)
+		doc.reload()
+
 		doc.status = "Submitted"
 		total_marks, evaluation_status, result_status = evaluation_values(
 			doc.exam, doc.submitted_answers
@@ -387,6 +390,11 @@ def end_exam(exam_submission=None):
 		doc.evaluation_status = evaluation_status
 		doc.result_status = result_status
 		doc.save(ignore_permissions=True)
+
+		# delete frappe cache data
+		cache_key = f"tracking_data:{doc.name}"
+		frappe.cache().delete(cache_key)
+
 		frappe.db.commit()
 
 	# return result details
@@ -471,6 +479,7 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 		raise PermissionError("You don't have access to submit and answer.")
 
 	can_process_question(submission)
+	save_tracking_info(exam_submission)
 
 	answer_docname = frappe.db.get_value("Exam Answer", {"parent": exam_submission, "exam_question": qs_name}, "name")
 	if not answer_docname:
@@ -892,3 +901,64 @@ def has_submission_ended(exam_submission):
 		return True, end_time
 	
 	return False, end_time
+
+@frappe.whitelist()
+def post_tracking_info(info=None):
+	"""
+	Save tracking information for exam operations.
+	"""
+	assert info, "Tracking info is required"
+
+	info = frappe.parse_json(info)
+	exam_submission = info.get("exam_submission")
+	if not exam_submission:
+		return
+
+	# Extract only the required tracking values
+	face_count_changes = info.get("faceCountChanges", 0)
+	total_away_time = info.get("totalAwayTime", 0)
+	total_distracted_time = info.get("totalDistractedTime", 0)
+
+	# Get cache key for this exam submission
+	cache_key = f"tracking_data:{exam_submission}"
+
+	# Get existing cache data or initialize with zeros
+	existing_data = frappe.cache().get_value(cache_key) or {
+		"face_count_changes": 0,
+		"total_away_time": 0.0,
+		"total_distracted_time": 0.0
+	}
+	
+	# Add new tracking data to existing data
+	existing_data["face_count_changes"] += face_count_changes
+	existing_data["total_away_time"] += total_away_time
+	existing_data["total_distracted_time"] += total_distracted_time
+	
+	# Store updated data back to cache
+	frappe.cache().set_value(cache_key, existing_data)
+	
+	return {"status": "success", "cached_data": existing_data}
+
+
+def save_tracking_info(exam_submission):
+	"""
+	Save accumulated tracking metrics from cache to exam submission doctype.
+	"""
+	# Get cache key for this exam submission
+	cache_key = f"tracking_data:{exam_submission}"
+	
+	# Get cached tracking data
+	cached_data = frappe.cache().get_value(cache_key)
+	if not cached_data:
+		return False
+
+	# Update the exam submission document directly using frappe.db.set_value
+	frappe.db.set_value("Exam Submission", exam_submission, {
+		"face_count_changes": cached_data.get("face_count_changes", 0),
+		"total_away_time": cached_data.get("total_away_time", 0.0),
+		"total_distracted_time": cached_data.get("total_distracted_time", 0.0)
+	})
+	
+	frappe.db.commit()
+	
+	return True
