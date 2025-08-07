@@ -20,7 +20,6 @@
   "exam_started_time",
   "additional_time_given",
   "exam_submitted_time",
-  "warning_count",
   "video_section",
   "candidate_video",
   "result_tab",
@@ -32,7 +31,14 @@
   "assigned_proctor",
   "evaluation_status",
   "section_break_rxvo",
-  "submitted_answers"
+  "submitted_answers",
+  "proctor_tab",
+  "invigilation_metrics_section",
+  "attention_score",
+  "warning_count",
+  "face_count_changes",
+  "total_away_time",
+  "total_distracted_time"
  ],
  "fields": [
   {
@@ -65,7 +71,7 @@
   },
   {
    "fieldname": "short_uuid",
-   "fieldtype": "Data", 
+   "fieldtype": "Data",
    "label": "Unique ID",
    "read_only": 1,
    "set_only_once": 1,
@@ -214,7 +220,42 @@
    "description": "Critical warnings given to the candidate",
    "fieldname": "warning_count",
    "fieldtype": "Int",
-   "label": "Warning Count",
+   "label": "Warning count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proctor_tab",
+   "fieldtype": "Tab Break",
+   "label": "Proctor Metrics (BETA)"
+  },
+  {
+   "fieldname": "invigilation_metrics_section",
+   "fieldtype": "Section Break",
+   "label": "Invigilation metrics"
+  },
+  {
+   "fieldname": "face_count_changes",
+   "fieldtype": "Int",
+   "label": "Face count changes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_away_time",
+   "fieldtype": "Float",
+   "label": "Total away time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_distracted_time",
+   "fieldtype": "Float",
+   "label": "Total distracted time",
+   "read_only": 1
+  },
+  {
+   "description": "80-100 = Good. 60-79 Moderate. 0-60 = Poor.",
+   "fieldname": "attention_score",
+   "fieldtype": "Int",
+   "label": "Attention score (BETA)",
    "read_only": 1
   }
  ],
@@ -229,7 +270,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-07-30 21:29:13.084262",
+ "modified": "2025-08-07 15:01:28.835251",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Submission",
