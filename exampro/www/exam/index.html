@@ -532,10 +532,19 @@ Alert!
 <script type="text/javascript"> var exam = {{ exam | tojson }};</script>
 
 <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+<script src="/assets/exampro/js/bootstrap-calculator.js"></script>
+
+{% if exam.enable_video_proctoring %}
+<!-- MediaPipe dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<!-- Gazer.js library -->
+<script type="text/javascript" src="/assets/exampro/js/gazer.js"></script>
+{% endif %}
 <script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/inactivityDetector.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/examform.js"></script>
-<script src="/assets/exampro/js/bootstrap-calculator.js"></script>
 <script>
     // Global variable to track media permissions
     let mediaPermissionsGranted = false;

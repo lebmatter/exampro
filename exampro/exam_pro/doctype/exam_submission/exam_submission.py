@@ -16,6 +16,7 @@ from werkzeug.utils import secure_filename
 
 from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_status
 from exampro.exam_pro.api.examops import evaluation_values
+from exampro.exam_pro.api.utils import calculate_attention_score
 
 import boto3
 from botocore.client import Config
@@ -910,6 +911,8 @@ def post_tracking_info(info=None):
 	assert info, "Tracking info is required"
 
 	info = frappe.parse_json(info)
+	print("*"*100)
+	print("Tracking Info:", info)
 	exam_submission = info.get("exam_submission")
 	if not exam_submission:
 		return
@@ -949,6 +952,8 @@ def save_tracking_info(exam_submission):
 	
 	# Get cached tracking data
 	cached_data = frappe.cache().get_value(cache_key)
+	print("#"*100)
+	print("Cached Data:", cached_data)
 	if not cached_data:
 		return False
 
@@ -960,5 +965,7 @@ def save_tracking_info(exam_submission):
 	})
 	
 	frappe.db.commit()
-	
+	calculate_attention_score(exam_submission)
+
+
 	return True

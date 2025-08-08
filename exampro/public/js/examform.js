@@ -3,6 +3,7 @@ var visibleTime = 0;
 var examOverview;
 var currentQuestion;
 var detector;
+var gazer;
 
 // Function to update the countdown timer
 function updateTimer() {
@@ -42,6 +43,7 @@ var currentQsNo = 1;
 // Initialize variables
 let recorder;
 let stream;
+let gazerStream;
 let recordingInterval;
 
 function sendVideoBlob(blob) {
@@ -68,6 +70,10 @@ function startRecording() {
     navigator.mediaDevices.getUserMedia(constraints)
         .then(function (mediaStream) {
             stream = mediaStream;
+            
+            // Clone the stream for gazer to avoid conflicts
+            gazerStream = stream.clone();
+            
             // Add track event listeners
             stream.getTracks().forEach(track => {
                 track.addEventListener('ended', function () {
@@ -79,8 +85,95 @@ function startRecording() {
                 });
             });
 
-            // Attach the stream to the video element
+            // Attach the original stream to the video element
             document.getElementById('webcam-stream').srcObject = stream;
+
+            // Create a hidden video element for gazer if it doesn't exist
+            // Remove existing gazer-video if present, then add a new one
+            const existingGazerVideo = document.getElementById('gazer-video');
+            if (existingGazerVideo) {
+                existingGazerVideo.remove();
+            }
+            const gazerVideo = document.createElement('video');
+            gazerVideo.id = 'gazer-video';
+            gazerVideo.style.display = 'none';
+            gazerVideo.autoplay = true;
+            gazerVideo.muted = true;
+            document.body.appendChild(gazerVideo);
+            
+            // Attach the cloned stream to the gazer video element
+            document.getElementById('gazer-video').srcObject = gazerStream;
+
+            // Initialize gazer after the video element is created and stream is attached
+            if (exam.enable_video_proctoring && !gazer) {
+                gazer = new Gazer("gazer-video", {
+                    postTrackingDataInterval: 15,
+                    
+                    // Display options
+                    showFaceRectangle: true,
+                    showGazeVector: true,
+                    showEyePoints: true,
+                    enableLogs: true, 
+                    
+                    // Callback functions
+                    onPostTrackingData: (trackingData) => {
+                        console.log("=== TRACKING DATA (Low Performance Mode) ===");
+                        console.log("Timestamp:", new Date(trackingData.timestamp).toLocaleString());
+                        console.log("Session Duration:", trackingData.sessionDuration + "s");
+                        console.log("Face Count Changes:", trackingData.faceCountChanges);
+                        console.log("Total Away Time:", trackingData.totalAwayTime + "s");
+                        console.log("Total Distracted Time:", trackingData.totalDistractedTime + "s");
+                        console.log("Current Face Count:", trackingData.currentFaceCount);
+                        console.log("Current Gaze State:", trackingData.currentGazeState);
+                        console.log("Processing FPS:", trackingData.processingFps);
+                        console.log("Frames Skipped:", trackingData.framesSkipped);
+                        console.log("Canvas Updates:", trackingData.canvasUpdates);
+                        console.log("Is Running:", trackingData.isRunning);
+                        console.log("Is Idle:", trackingData.isIdle);
+                        console.log("============================================");
+                        
+                        // Send tracking data to server
+                        frappe.call({
+                            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_tracking_info",
+                            type: "POST",
+                            args: {
+                                'info': JSON.stringify({
+                                    'exam_submission': exam["exam_submission"],
+                                    // 'timestamp': trackingData.timestamp,
+                                    // 'sessionDuration': trackingData.sessionDuration,
+                                    'faceCountChanges': trackingData.faceCountChanges,
+                                    'totalAwayTime': trackingData.totalAwayTime,
+                                    'totalDistractedTime': trackingData.totalDistractedTime,
+                                    // 'currentFaceCount': trackingData.currentFaceCount,
+                                    // 'currentGazeState': trackingData.currentGazeState,
+                                    // 'processingFps': trackingData.processingFps,
+                                    // 'framesSkipped': trackingData.framesSkipped,
+                                    // 'canvasUpdates': trackingData.canvasUpdates,
+                                    // 'isRunning': trackingData.isRunning,
+                                    // 'isIdle': trackingData.isIdle
+                                })
+                            },
+                            callback: (data) => {
+                                console.log("Tracking data sent successfully:", data);
+                            },
+                            error: (error) => {
+                                console.error("Failed to send tracking data:", error);
+                            }
+                        });
+                    },
+                });
+
+                // Apply low performance preset
+                gazer.setPerformanceMode('low');
+
+                // Apply relaxed sensitivity preset  
+                gazer.setSensitivityMode('relaxed');
+
+                // Start gazer if exam is already started
+                if (exam.submission_status === "Started") {
+                    gazer.start();
+                }
+            }
 
             if (exam["submission_status"] === "Started") { 
             // Create a recorder instance
@@ -123,18 +216,43 @@ function stopRecording() {
     clearInterval(recordingInterval);
     if (recorder) {
         recorder.stopRecording(function () {
-            // Release the stream
+            // Release the original stream
             if (stream) {
                 stream.getTracks().forEach(function (track) {
                     track.stop();
                 });
             }
+            // Release the cloned gazer stream
+            if (gazerStream) {
+                gazerStream.getTracks().forEach(function (track) {
+                    track.stop();
+                });
+            }
+            // Clean up the hidden gazer video element
+            const gazerVideo = document.getElementById('gazer-video');
+            if (gazerVideo) {
+                gazerVideo.srcObject = null;
+                gazerVideo.remove();
+            }
         });
-    } else if (stream) {
-        // If recorder is not defined but stream exists, stop the tracks
-        stream.getTracks().forEach(function (track) {
-            track.stop();
-        });
+    } else {
+        // If recorder is not defined but streams exist, stop the tracks
+        if (stream) {
+            stream.getTracks().forEach(function (track) {
+                track.stop();
+            });
+        }
+        if (gazerStream) {
+            gazerStream.getTracks().forEach(function (track) {
+                track.stop();
+            });
+        }
+        // Clean up the hidden gazer video element
+        const gazerVideo = document.getElementById('gazer-video');
+        if (gazerVideo) {
+            gazerVideo.srcObject = null;
+            gazerVideo.remove();
+        }
     }
 }
 
@@ -288,7 +406,6 @@ frappe.ready(() => {
     $(document).on('change', '#markedForLater', function() {
         submitAnswer();
     });
-
 
 });
 
