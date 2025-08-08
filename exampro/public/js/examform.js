@@ -130,6 +130,7 @@ function startRecording() {
                         console.log("Canvas Updates:", trackingData.canvasUpdates);
                         console.log("Is Running:", trackingData.isRunning);
                         console.log("Is Idle:", trackingData.isIdle);
+                        console.log("Retina Locations:", trackingData.retinaLocations || []);
                         console.log("============================================");
                         
                         // Send tracking data to server
@@ -139,18 +140,10 @@ function startRecording() {
                             args: {
                                 'info': JSON.stringify({
                                     'exam_submission': exam["exam_submission"],
-                                    // 'timestamp': trackingData.timestamp,
-                                    // 'sessionDuration': trackingData.sessionDuration,
                                     'faceCountChanges': trackingData.faceCountChanges,
                                     'totalAwayTime': trackingData.totalAwayTime,
                                     'totalDistractedTime': trackingData.totalDistractedTime,
-                                    // 'currentFaceCount': trackingData.currentFaceCount,
-                                    // 'currentGazeState': trackingData.currentGazeState,
-                                    // 'processingFps': trackingData.processingFps,
-                                    // 'framesSkipped': trackingData.framesSkipped,
-                                    // 'canvasUpdates': trackingData.canvasUpdates,
-                                    // 'isRunning': trackingData.isRunning,
-                                    // 'isIdle': trackingData.isIdle
+                                    'retinaLocations': trackingData.retinaLocations || []
                                 })
                             },
                             callback: (data) => {

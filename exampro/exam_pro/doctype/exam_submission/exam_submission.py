@@ -921,6 +921,7 @@ def post_tracking_info(info=None):
 	face_count_changes = info.get("faceCountChanges", 0)
 	total_away_time = info.get("totalAwayTime", 0)
 	total_distracted_time = info.get("totalDistractedTime", 0)
+	retina_locations = info.get("retinaLocations", [])
 
 	# Get cache key for this exam submission
 	cache_key = f"tracking_data:{exam_submission}"
@@ -929,13 +930,15 @@ def post_tracking_info(info=None):
 	existing_data = frappe.cache().get_value(cache_key) or {
 		"face_count_changes": 0,
 		"total_away_time": 0.0,
-		"total_distracted_time": 0.0
+		"total_distracted_time": 0.0,
+		"retina_locations": []
 	}
 	
 	# Add new tracking data to existing data
 	existing_data["face_count_changes"] += face_count_changes
 	existing_data["total_away_time"] += total_away_time
 	existing_data["total_distracted_time"] += total_distracted_time
+	existing_data["retina_locations"].extend(retina_locations)
 	
 	# Store updated data back to cache
 	frappe.cache().set_value(cache_key, existing_data)
@@ -957,15 +960,39 @@ def save_tracking_info(exam_submission):
 	if not cached_data:
 		return False
 
+	# Get existing retina location log from database
+	existing_retina_log = frappe.db.get_value("Exam Submission", exam_submission, "retina_location_log")
+	
+	# Parse existing log or initialize empty list
+	if existing_retina_log:
+		try:
+			retina_locations = frappe.parse_json(existing_retina_log) if isinstance(existing_retina_log, str) else existing_retina_log
+			if not isinstance(retina_locations, list):
+				retina_locations = []
+		except Exception:
+			retina_locations = []
+	else:
+		retina_locations = []
+	
+	# Add new retina locations from cache
+	if cached_data.get("retina_locations"):
+		retina_locations.extend(cached_data["retina_locations"])
+
 	# Update the exam submission document directly using frappe.db.set_value
-	frappe.db.set_value("Exam Submission", exam_submission, {
+	update_data = {
 		"face_count_changes": cached_data.get("face_count_changes", 0),
 		"total_away_time": cached_data.get("total_away_time", 0.0),
-		"total_distracted_time": cached_data.get("total_distracted_time", 0.0)
-	})
+		"total_distracted_time": cached_data.get("total_distracted_time", 0.0),
+		"retina_location_log": frappe.as_json(retina_locations)
+	}
+	
+	print("#"*100)
+	print("Update Data:", update_data)
+	print("Retina Locations Count:", len(retina_locations))
+	
+	frappe.db.set_value("Exam Submission", exam_submission, update_data)
 	
 	frappe.db.commit()
 	calculate_attention_score(exam_submission)
-
 
 	return True

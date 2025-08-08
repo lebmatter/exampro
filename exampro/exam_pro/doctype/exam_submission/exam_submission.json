@@ -38,7 +38,8 @@
   "warning_count",
   "face_count_changes",
   "total_away_time",
-  "total_distracted_time"
+  "total_distracted_time",
+  "retina_location_log"
  ],
  "fields": [
   {
@@ -57,7 +58,8 @@
    "in_list_view": 1,
    "label": "Exam",
    "options": "Exam",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "candidate",
@@ -257,6 +259,15 @@
    "fieldtype": "Int",
    "label": "Attention score (BETA)",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_szvf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "retina_location_log",
+   "fieldtype": "JSON",
+   "label": "Retina Location Log"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -270,7 +281,7 @@
    "link_fieldname": "exam_submission"
   }
  ],
- "modified": "2025-08-07 15:01:28.835251",
+ "modified": "2025-08-08 18:53:54.579249",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Submission",
