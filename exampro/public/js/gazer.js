@@ -2,9 +2,6 @@
  * Gazer.js - MediaPipe-based Gaze Tracking Library
  * A standalone library for face detection and gaze tracking using MediaPipe
  * 
- *  
- * GitHub: https://github.com/lebmatter/gazerjs
- * 
  * @version 1.1.0
  * @author Gazer.js
  * @license MIT
@@ -140,6 +137,7 @@ class Gazer {
     this.initializeMediaPipe();
   }
 
+  // Fixed canvas creation and sizing methods
   createCanvas() {
     const canvas = document.createElement("canvas");
     canvas.style.position = "absolute";
@@ -147,8 +145,13 @@ class Gazer {
     canvas.style.left = "0";
     canvas.style.pointerEvents = "none";
     canvas.style.zIndex = "10";
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
+    
+    // Make sure parent container has position relative
+    if (this.video.parentNode.style.position !== 'relative' && 
+        this.video.parentNode.style.position !== 'absolute' && 
+        this.video.parentNode.style.position !== 'fixed') {
+      this.video.parentNode.style.position = 'relative';
+    }
     
     // Insert canvas after video element
     this.video.parentNode.insertBefore(canvas, this.video.nextSibling);
@@ -213,7 +216,19 @@ class Gazer {
     }
   }
 
-  // Update canvas size to match video display size
+  // Helper method to get video position relative to its parent
+  getVideoPosition() {
+    const videoRect = this.video.getBoundingClientRect();
+    const parentRect = this.video.parentNode.getBoundingClientRect();
+    
+    return {
+      left: videoRect.left - parentRect.left,
+      top: videoRect.top - parentRect.top
+    };
+  }
+
+
+  // Improved canvas size update method
   updateCanvasSize() {
     if (!this.video || !this.canvas) return;
     
@@ -223,16 +238,35 @@ class Gazer {
       return;
     }
     
-    // Set canvas internal dimensions to match video resolution
-    this.canvas.width = this.video.videoWidth;
-    this.canvas.height = this.video.videoHeight;
+    // Get the actual displayed size of the video element
+    const videoRect = this.video.getBoundingClientRect();
+    const videoComputedStyle = window.getComputedStyle(this.video);
     
-    // Reset transform to ensure proper scaling
-    this.canvas.style.transform = "none";
-    this.canvas.style.transformOrigin = "top left";
+    // Get the video's display dimensions (accounting for CSS styling)
+    const displayWidth = this.video.offsetWidth;
+    const displayHeight = this.video.offsetHeight;
     
-    this.log(`Canvas updated to ${this.canvas.width}x${this.canvas.height}`, "info");
+    // Set canvas display size to match video display size
+    this.canvas.style.width = displayWidth + 'px';
+    this.canvas.style.height = displayHeight + 'px';
+    
+    // Calculate the scale factors between video resolution and display size
+    this.videoScaleX = displayWidth / this.video.videoWidth;
+    this.videoScaleY = displayHeight / this.video.videoHeight;
+    
+    // Set canvas internal dimensions to match video display size for proper coordinate mapping
+    this.canvas.width = displayWidth;
+    this.canvas.height = displayHeight;
+    
+    // Position canvas to exactly overlay the video
+    const videoPosition = this.getVideoPosition();
+    this.canvas.style.left = videoPosition.left + 'px';
+    this.canvas.style.top = videoPosition.top + 'px';
+    
+    this.log(`Canvas updated to ${displayWidth}x${displayHeight} (display) from video ${this.video.videoWidth}x${this.video.videoHeight} (resolution)`, "info");
+    this.log(`Scale factors: X=${this.videoScaleX.toFixed(3)}, Y=${this.videoScaleY.toFixed(3)}`, "info");
   }
+
 
   initializeState() {
     // MediaPipe instances
@@ -488,6 +522,20 @@ class Gazer {
     );
   }
 
+  // Additional method to handle video element changes
+  handleVideoResize() {
+    // Debounce resize events
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+    
+    this.resizeTimeout = setTimeout(() => {
+      this.updateCanvasSize();
+      this.resizeTimeout = null;
+    }, 100);
+  }
+
+
   // Handle face detection results
   onFaceDetectionResults(results) {
     if (!this.ctx) return;
@@ -610,6 +658,7 @@ class Gazer {
   }
 
   // Draw face rectangles
+  // Fixed drawFaces method with proper coordinate mapping
   drawFaces(faces) {
     if (!this.config.showFaceRectangle) return;
 
@@ -617,15 +666,19 @@ class Gazer {
       const bbox = detection.boundingBox || detection.bbox;
       if (!bbox) return;
 
-      const x = bbox.xCenter * this.canvas.width - (bbox.width * this.canvas.width) / 2;
-      const y = bbox.yCenter * this.canvas.height - (bbox.height * this.canvas.height) / 2;
+      // Convert normalized coordinates (0-1) to canvas coordinates
+      // The detection coordinates are relative to the video resolution, not display size
+      const x = (bbox.xCenter - bbox.width / 2) * this.canvas.width;
+      const y = (bbox.yCenter - bbox.height / 2) * this.canvas.height;
       const width = bbox.width * this.canvas.width;
       const height = bbox.height * this.canvas.height;
 
+      // Draw face rectangle
       this.ctx.strokeStyle = "#00ff00";
       this.ctx.lineWidth = 3;
       this.ctx.strokeRect(x, y, width, height);
 
+      // Calculate confidence
       let confidence = 0;
       if (detection.score && detection.score.length > 0) {
         confidence = Math.round(detection.score[0] * 100);
@@ -637,16 +690,23 @@ class Gazer {
         confidence = 85;
       }
 
+      // Draw confidence label
       this.ctx.fillStyle = "#00ff00";
       this.ctx.font = "16px Arial";
-      this.ctx.fillText(`Face ${index + 1}: ${confidence}%`, x, y - 10);
+      this.ctx.textBaseline = "bottom";
+      
+      // Position label above the rectangle, with padding
+      const labelY = Math.max(20, y - 5); // Ensure label doesn't go off-screen
+      this.ctx.fillText(`Face ${index + 1}: ${confidence}%`, x, labelY);
     });
   }
 
-  // Draw gaze indicators
+
+  // Fixed drawGazeIndicators method with proper coordinate mapping
   drawGazeIndicators(landmarks, gazeData) {
     if (!landmarks || !gazeData) return;
 
+    // Draw eye points
     if (this.config.showEyePoints) {
       const leftEyeCenter = {
         x: gazeData.leftEyeCenter.x * this.canvas.width,
@@ -658,31 +718,73 @@ class Gazer {
         y: gazeData.rightEyeCenter.y * this.canvas.height,
       };
 
-      this.ctx.fillStyle = gazeData.direction === "screen" ? "#00ff00" : "#ff6600";
+      // Set color based on gaze direction
+      const eyeColor = gazeData.direction === "screen" ? "#00ff00" : "#ff6600";
+      this.ctx.fillStyle = eyeColor;
+      
+      // Draw left eye point
       this.ctx.beginPath();
-      this.ctx.arc(leftEyeCenter.x, leftEyeCenter.y, 4, 0, 2 * Math.PI);
+      this.ctx.arc(leftEyeCenter.x, leftEyeCenter.y, 6, 0, 2 * Math.PI);
       this.ctx.fill();
+      
+      // Add a small border for better visibility
+      this.ctx.strokeStyle = "#ffffff";
+      this.ctx.lineWidth = 1;
+      this.ctx.stroke();
 
+      // Draw right eye point
       this.ctx.beginPath();
-      this.ctx.arc(rightEyeCenter.x, rightEyeCenter.y, 4, 0, 2 * Math.PI);
+      this.ctx.arc(rightEyeCenter.x, rightEyeCenter.y, 6, 0, 2 * Math.PI);
       this.ctx.fill();
+      this.ctx.stroke();
     }
 
+    // Draw gaze vector
     if (this.config.showGazeVector && gazeData.faceCenter) {
       const faceCenter = {
         x: gazeData.faceCenter.x * this.canvas.width,
         y: gazeData.faceCenter.y * this.canvas.height,
       };
 
-      this.ctx.strokeStyle = gazeData.direction === "screen" ? "#00ff00" : "#ff6600";
-      this.ctx.lineWidth = 2;
+      // Calculate vector endpoint with proper scaling
+      const vectorLength = 80; // Increased for better visibility
+      const endX = faceCenter.x + gazeData.horizontal * vectorLength;
+      const endY = faceCenter.y + gazeData.vertical * vectorLength;
+
+      // Set color and style based on gaze direction
+      const vectorColor = gazeData.direction === "screen" ? "#00ff00" : "#ff6600";
+      this.ctx.strokeStyle = vectorColor;
+      this.ctx.lineWidth = 3;
+      this.ctx.lineCap = "round";
+
+      // Draw main gaze vector
       this.ctx.beginPath();
       this.ctx.moveTo(faceCenter.x, faceCenter.y);
+      this.ctx.lineTo(endX, endY);
+      this.ctx.stroke();
+
+      // Draw arrowhead for better direction indication
+      const arrowSize = 10;
+      const angle = Math.atan2(endY - faceCenter.y, endX - faceCenter.x);
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(endX, endY);
       this.ctx.lineTo(
-        faceCenter.x + gazeData.horizontal * 50,
-        faceCenter.y + gazeData.vertical * 50
+        endX - arrowSize * Math.cos(angle - Math.PI / 6),
+        endY - arrowSize * Math.sin(angle - Math.PI / 6)
+      );
+      this.ctx.moveTo(endX, endY);
+      this.ctx.lineTo(
+        endX - arrowSize * Math.cos(angle + Math.PI / 6),
+        endY - arrowSize * Math.sin(angle + Math.PI / 6)
       );
       this.ctx.stroke();
+
+      // Draw center point
+      this.ctx.fillStyle = vectorColor;
+      this.ctx.beginPath();
+      this.ctx.arc(faceCenter.x, faceCenter.y, 4, 0, 2 * Math.PI);
+      this.ctx.fill();
     }
   }
 
@@ -838,6 +940,7 @@ class Gazer {
   }
 
   // Public API methods
+  // Updated start method with better event handling
   async start() {
     if (!this.isModelLoaded) {
       throw new Error("MediaPipe models not loaded yet");
@@ -866,15 +969,25 @@ class Gazer {
 
       await this.camera.start();
 
-      // Set canvas size to match video
+      // Set initial canvas size
       this.updateCanvasSize();
       
-      // Add resize listener to keep canvas aligned
-      this.resizeListener = () => this.updateCanvasSize();
+      // Add comprehensive event listeners
+      this.resizeListener = () => this.handleVideoResize();
       window.addEventListener('resize', this.resizeListener);
       
-      // Also update canvas size when video metadata loads
+      // Listen for video dimension changes
       this.video.addEventListener('loadedmetadata', this.resizeListener);
+      this.video.addEventListener('loadeddata', this.resizeListener);
+      this.video.addEventListener('canplay', this.resizeListener);
+      
+      // Handle video element style changes
+      if (window.ResizeObserver) {
+        this.videoResizeObserver = new ResizeObserver(() => {
+          this.handleVideoResize();
+        });
+        this.videoResizeObserver.observe(this.video);
+      }
 
       this.isRunning = true;
       
@@ -892,6 +1005,8 @@ class Gazer {
     }
   }
 
+
+  // Updated stop method to clean up all listeners
   async stop() {
     this.isRunning = false;
 
@@ -903,16 +1018,30 @@ class Gazer {
       this.camera = null;
     }
 
-    // Remove event listeners
+    // Remove all event listeners
     if (this.resizeListener) {
       window.removeEventListener('resize', this.resizeListener);
       this.video.removeEventListener('loadedmetadata', this.resizeListener);
+      this.video.removeEventListener('loadeddata', this.resizeListener);
+      this.video.removeEventListener('canplay', this.resizeListener);
       this.resizeListener = null;
+    }
+    
+    // Clean up ResizeObserver
+    if (this.videoResizeObserver) {
+      this.videoResizeObserver.disconnect();
+      this.videoResizeObserver = null;
+    }
+    
+    // Clear resize timeout
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = null;
     }
 
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Reset stats
+    // Reset all tracking states
     this.faceCount = 0;
     this.lastFaceCount = -1;
     this.awayStartTime = null;

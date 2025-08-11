@@ -43,7 +43,7 @@ var currentQsNo = 1;
 // Initialize variables
 let recorder;
 let stream;
-let gazerStream;
+let recordingStream;
 let recordingInterval;
 
 function sendVideoBlob(blob) {
@@ -71,8 +71,8 @@ function startRecording() {
         .then(function (mediaStream) {
             stream = mediaStream;
             
-            // Clone the stream for gazer to avoid conflicts
-            gazerStream = stream.clone();
+            // Clone the stream for RecordRTC to avoid conflicts
+            recordingStream = stream.clone();
             
             // Add track event listeners
             stream.getTracks().forEach(track => {
@@ -88,25 +88,10 @@ function startRecording() {
             // Attach the original stream to the video element
             document.getElementById('webcam-stream').srcObject = stream;
 
-            // Create a hidden video element for gazer if it doesn't exist
-            // Remove existing gazer-video if present, then add a new one
-            const existingGazerVideo = document.getElementById('gazer-video');
-            if (existingGazerVideo) {
-                existingGazerVideo.remove();
-            }
-            const gazerVideo = document.createElement('video');
-            gazerVideo.id = 'gazer-video';
-            gazerVideo.style.display = 'none';
-            gazerVideo.autoplay = true;
-            gazerVideo.muted = true;
-            document.body.appendChild(gazerVideo);
-            
-            // Attach the cloned stream to the gazer video element
-            document.getElementById('gazer-video').srcObject = gazerStream;
-
             // Initialize gazer after the video element is created and stream is attached
+            // Use the main webcam-stream video element for gazer (better tracking with original stream)
             if (exam.enable_video_proctoring && !gazer) {
-                gazer = new Gazer("gazer-video", {
+                gazer = new Gazer("webcam-stream", {
                     postTrackingDataInterval: 15,
                     
                     // Display options
@@ -169,8 +154,8 @@ function startRecording() {
             }
 
             if (exam["submission_status"] === "Started") { 
-            // Create a recorder instance
-            recorder = RecordRTC(stream, {
+            // Create a recorder instance using the cloned stream
+            recorder = RecordRTC(recordingStream, {
                 type: 'video',
                 mimeType: 'video/webm',
                 videoBitsPerSecond: 8000
@@ -187,8 +172,8 @@ function startRecording() {
                     let blob = recorder.getBlob();
 
                     sendVideoBlob(blob);
-                    // Reset the recorder
-                    recorder = RecordRTC(stream, { type: 'video' });
+                    // Reset the recorder with the cloned stream
+                    recorder = RecordRTC(recordingStream, { type: 'video' });
                     recorder.startRecording();
                 });
             }, 10000);
@@ -215,17 +200,11 @@ function stopRecording() {
                     track.stop();
                 });
             }
-            // Release the cloned gazer stream
-            if (gazerStream) {
-                gazerStream.getTracks().forEach(function (track) {
+            // Release the cloned recording stream
+            if (recordingStream) {
+                recordingStream.getTracks().forEach(function (track) {
                     track.stop();
                 });
-            }
-            // Clean up the hidden gazer video element
-            const gazerVideo = document.getElementById('gazer-video');
-            if (gazerVideo) {
-                gazerVideo.srcObject = null;
-                gazerVideo.remove();
             }
         });
     } else {
@@ -235,16 +214,10 @@ function stopRecording() {
                 track.stop();
             });
         }
-        if (gazerStream) {
-            gazerStream.getTracks().forEach(function (track) {
+        if (recordingStream) {
+            recordingStream.getTracks().forEach(function (track) {
                 track.stop();
             });
-        }
-        // Clean up the hidden gazer video element
-        const gazerVideo = document.getElementById('gazer-video');
-        if (gazerVideo) {
-            gazerVideo.srcObject = null;
-            gazerVideo.remove();
         }
     }
 }
