@@ -87,47 +87,70 @@
   </form>
 </div>
 <div class="col-md-12">
-{% if exam.submission_status == "Started" %}
-    <div class="card navigation-card">
-        <div
-            class="card-header bg-light d-flex justify-content-between align-items-center"
-        >
-            <h5 class="card-title mb-0 fw-semibold text-dark">Questions</h5>
-
-            <div class="d-flex align-items-center gap-4">
-                <!-- Answered Status -->
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-circle-fill text-warning" style="font-size: 1rem"></i>
-                    <span class="small ms-2">Answered</span>
-                    <span
-                        class="badge bg-light text-dark px-2 py-1 rounded"
-                        style="font-size: 0.9rem"
-                        id="answeredCount"
-                        >00</span
-                    >
-                </div>
-
-                <!-- Marked for Review Status -->
-                <div class="d-flex align-items-center gap-2"></div>
-                    <i class="bi bi-circle-fill text-info" style="font-size: 1rem"></i>
-                    <span class="small ms-2">Review later</span>
-                    <span
-                        class="badge bg-light text-dark px-2 py-1 rounded"
-                        style="font-size: 0.9rem"
-                        id="markedForLaterCount"
-                        >00</span
-                    >
-                </div>
-            </div>
+  {% if exam.submission_status == "Started" %}
+  <div
+    class="card common-card-style"
+    x-data="{ isNavGridCollapsed: false }"
+    id="navigation-card"
+  >
+    <div
+      class="card-header d-flex justify-content-between align-items-center"
+      @click="isNavGridCollapsed = !isNavGridCollapsed"
+      @keydown.enter="isNavGridCollapsed = !isNavGridCollapsed"
+      @keydown.space.prevent="isNavGridCollapsed = !isNavGridCollapsed"
+      tabindex="0"
+      role="button"
+      :aria-expanded="!isNavGridCollapsed"
+      aria-controls="instruction"
+    >
+      <h5 class="card-title mb-0 fw-semibold text-dark">Questions</h5>
+      <div class="d-flex align-items-center gap-4">
+        <!-- Answered Status -->
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-circle-fill text-warning" style="font-size: 1rem"></i>
+          <span class="small ms-2">Answered</span>
+          <span
+            class="badge bg-light text-dark px-2 py-1 rounded"
+            style="font-size: 0.9rem"
+            id="answeredCount"
+            >00</span
+          >
         </div>
 
-        <div class="card-body">
-            <div id="button-grid">
-                <!-- Buttons will be added here -->
-            </div>
+        <!-- Marked for Review Status -->
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-circle-fill text-info" style="font-size: 1rem"></i>
+          <span class="small ms-2">Review later</span>
+          <span
+            class="badge bg-light text-dark px-2 py-1 rounded"
+            style="font-size: 0.9rem"
+            id="markedForLaterCount"
+            >00</span
+          >
         </div>
+      </div>
+      <span class="text-info arrow-icon" style="font-size: 1.2rem">
+        <i
+          :class="isNavGridCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
+        ></i>
+      </span>
     </div>
-{% endif %}
+    <div
+      class="card-body"
+      x-show="!isNavGridCollapsed"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0 transform -translate-y-2"
+      x-transition:enter-end="opacity-100 transform translate-y-0"
+      x-transition:leave="transition ease-in duration-300"
+      x-transition:leave-start="opacity-100 transform translate-y-0"
+      x-transition:leave-end="opacity-0 transform -translate-y-2"
+    >
+      <div id="button-grid">
+        <!-- Buttons will be added here -->
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <style>
     /* Option styles from questions.html */
@@ -287,7 +310,7 @@
       border-color: #495057 !important;
     }
     #button-grid .text-grey {
-        color: #adb5bd !important;
+      color: #adb5bd !important;
     }
 
     /* Form controls */
@@ -327,7 +350,6 @@
       padding: 0.35em 0.5em;
       font-size: 0.75rem;
     }
-
 
     /* "Answer later" checkbox styling */
     #markedForLater:checked {
