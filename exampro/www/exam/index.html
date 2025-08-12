@@ -401,14 +401,14 @@ head_include %}
                 x-data="{ timerVisible: true }"
             >
                 <!-- Alpine.js confirmation dialog before calling endExam -->
-                <button class="btn btn-primary btn-sm me-2 d-inline-block"
+                <button class="btn btn-primary me-2 d-inline-block"
                     onclick="if(confirm('Are you sure you want to submit the exam? This action can not be undone.')) { endExam(); }">
                     <span class="d-flex align-items-center"> Submit </span>
                 </button>
                 <button
                     type="button"
                     @click="timerVisible = !timerVisible"
-                    class="btn btn-warning btn-sm"
+                    class="btn btn-warning"
                     data-bs-toggle="tooltip"
                     :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
                     style="cursor: pointer"
