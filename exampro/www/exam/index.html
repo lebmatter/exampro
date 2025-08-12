@@ -425,50 +425,63 @@ head_include %}
         <div class="col-md-12">
           {% if exam.instructions %}
 
-          <div class="card common-card-style" x-data="{ isCollapsed: false }">
+        {% if exam.submission_status == "Started" %}
+        <div class="card common-card-style" x-data="{ isCollapsed: true }">
             <div
-              class="card-header d-flex justify-content-between align-items-center"
-              @click="isCollapsed = !isCollapsed"
-              @keydown.enter="isCollapsed = !isCollapsed"
-              @keydown.space.prevent="isCollapsed = !isCollapsed"
-              tabindex="0"
-              role="button"
-              :aria-expanded="!isCollapsed"
-              aria-controls="instruction"
+            class="card-header d-flex justify-content-between align-items-center"
+            @click="isCollapsed = !isCollapsed"
+            @keydown.enter="isCollapsed = !isCollapsed"
+            @keydown.space.prevent="isCollapsed = !isCollapsed"
+            tabindex="0"
+            role="button"
+            :aria-expanded="!isCollapsed"
+            aria-controls="instruction"
             >
-              <h5 class="card-title mb-0 fw-semibold text-dark">
+            <h5 class="card-title mb-0 fw-semibold text-dark">
                 Instructions
-              </h5>
-              <span class="text-info arrow-icon" style="font-size: 1.2rem">
+            </h5>
+            <span class="text-info arrow-icon" style="font-size: 1.2rem">
                 <i
-                  :class="isCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
+                :class="isCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
                 ></i>
-              </span>
+            </span>
             </div>
             <div
-              class="card-body"
-              id="instruction"
-              x-show="!isCollapsed"
-              x-transition:enter="transition ease-out duration-300"
-              x-transition:enter-start="opacity-0 transform -translate-y-2"
-              x-transition:enter-end="opacity-100 transform translate-y-0"
-              x-transition:leave="transition ease-in duration-300"
-              x-transition:leave-start="opacity-100 transform translate-y-0"
-              x-transition:leave-end="opacity-0 transform -translate-y-2"
+            class="card-body"
+            id="instruction"
+            x-show="!isCollapsed"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform -translate-y-2"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform -translate-y-2"
             >
-              {{ exam.instructions | safe }}
-              <!-- Start Exam Button -->
-              {% if exam.submission_status == "Registered" %}
-              <div class="text-center my-3">
-                <button
-                  class="btn-lg btn-info btn-start-quiz m-4"
-                  id="quiz-btn"
-                  style="display: none"
-                ></button>
-              </div>
-              {% endif %}
+            {{ exam.instructions | safe }}
             </div>
-          </div>
+        </div>
+        {% else %}
+        <div class="card common-card-style">
+            <div class="card-header d-flex align-items-center">
+                <h5 class="card-title mb-0 fw-semibold text-dark">
+                    Instructions
+                </h5>
+            </div>
+            <div class="card-body" id="instruction">
+                {{ exam.instructions | safe }}
+                <!-- Start Exam Button -->
+                {% if exam.submission_status == "Registered" %}
+                <div class="text-center my-3">
+                    <button
+                        class="btn-lg btn-primary btn-start-quiz m-4"
+                        id="quiz-btn"
+                        style="display: none"
+                    >Start exam</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
 
           {% endif %}
         </div>

@@ -406,7 +406,7 @@ function updateOverviewMap() {
             }
             for (let i = 1; i <= data.message.total_questions; i++) {
                 let btnCls = "btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-between rounded-pill";
-                let circleColor = "text-secondary"; // Default grey for unanswered
+                let circleColor = "text-grey"; // Default grey for unanswered
                 
                 // Determine circle color based on question status
                 if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
@@ -418,7 +418,7 @@ function updateOverviewMap() {
                 // If this is the current question, highlight it with custom styling
                 if (currentQuestion && i === currentQuestion["no"]) {
                     btnCls = "btn btn-sm btn-outline-dark d-flex align-items-center justify-content-between rounded-pill current-question-btn";
-                    circleColor = "text-secondary"; // Dark circle for current question
+                    circleColor = "text-grey";
                 }
                 
                 // Create a new button
