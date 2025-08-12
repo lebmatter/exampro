@@ -73,7 +73,7 @@ frappe.ui.form.on("Exam Submission", {
                         <label class="control-label">Retina Location Plot</label>
                     </div>
                     <div class="control-input-wrapper">
-                        <canvas id="plotCanvas" width="400" height="200" style="border: 1px solid #ddd; border-radius: 4px;"></canvas>
+                        <canvas id="plotCanvas" width="300" height="300" style="border: 1px solid #ddd; border-radius: 4px;"></canvas>
                         <div style="margin-top: 10px; display: flex; gap: 20px; font-size: 12px;">
                             <div style="display: flex; align-items: center; gap: 5px;">
                                 <div style="width: 12px; height: 12px; border-radius: 50%; background-color: #27ae60;"></div>
