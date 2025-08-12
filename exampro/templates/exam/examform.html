@@ -1,15 +1,8 @@
 <div class="col-md-12">
-  <div
-    id="start-banner"
-    class="common-card-style column-card align-items-center mt-3"
-  >
+  <!-- Exam Summary Container (hidden by default, shown when user wants to submit) -->
+  <div id="exam-summary" class="common-card-style column-card hide">
     <div class="text-center my-10" id="quiz-box">
       <div class="bold-heading" id="quiz-title"></div>
-      <button
-        class="btn-lg btn-info btn-start-quiz m-4"
-        id="quiz-btn"
-        style="display: none"
-      ></button>
       <p id="quiz-message" style="display: none"></p>
     </div>
   </div>
@@ -72,7 +65,7 @@
         </div>
         <div>
           <button
-            class="btn btn-primary btn-sm ms-2"
+            class="btn btn-primary btn-sm ms-2 exam-navigation-btn"
             id="nextQs"
             style="display: none"
           >
@@ -237,18 +230,18 @@
     }
 
     /* Navigation buttons */
-    #nextQs,
+    .btn-primary,
     #finish {
-      background-color: #0d6efd;
-      border-color: #0d6efd;
+      background-color: #0d6efd !important;
+      border-color: #0d6efd !important;
       margin-left: 1rem !important;
       transition: all 0.2s ease;
     }
 
-    #nextQs:hover,
+    .btn-primary:hover,
     #finish:hover {
-      background-color: #0b5ed7;
-      border-color: #0a58ca;
+      background-color: #0b5ed7 !important;
+      border-color: #0a58ca !important;
     }
 
     /* Question navigation grid */

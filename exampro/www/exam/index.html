@@ -1,535 +1,583 @@
-{% extends "exampro/templates/exam_base.html" %}
-
-{% block title %}
-{% if alert %}
-Alert!
-{% else %}
-{{ exam.title }}
-{% endif %}
-{% endblock %}
-
-
-{% block head_include %}
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-{% for ext in page_extensions %}
-{{ ext.render_header() }}
-{% endfor %}
+{% extends "exampro/templates/exam_base.html" %} {% block title %} {% if alert
+%} Alert! {% else %} {{ exam.title }} {% endif %} {% endblock %} {% block
+head_include %}
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+/>
+{% for ext in page_extensions %} {{ ext.render_header() }} {% endfor %}
 <style>
-    .web-footer {
-        display: none;
-    }
+  .web-footer {
+    display: none;
+  }
 
-    /* Common styling from examform.html */
-    .bold-heading {
-        font-weight: 600;
-        font-size: 1.25rem;
-        margin-bottom: 0.75rem;
-        color: #212529;
-    }
+  /* Common styling from examform.html */
+  .bold-heading {
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #212529;
+  }
 
-    .common-card-style {
-        background-color: #fff;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        border: none;
-        margin-bottom: 1.25rem;
-    }
+  .common-card-style {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: none;
+    margin-bottom: 1.25rem;
+  }
 
-    .column-card {
-        display: flex;
-        flex-direction: column;
-    }
+  .column-card {
+    display: flex;
+    flex-direction: column;
+  }
 
-    /* Zerodha-style chat container with updated styling */
-    #messages {
-        max-height: 380px;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-        padding: 8px;
-        font-size: 13px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
+  /* Zerodha-style chat container with updated styling */
+  #messages {
+    max-height: 380px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    padding: 8px;
+    font-size: 13px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
 
-    /* Chat bubble styling */
-    .chat-bubble {
-        padding: 6px 10px;
-        margin-bottom: 6px;
-        border-radius: 4px;
-        max-width: 85%;
-        word-wrap: break-word;
-    }
+  /* Chat bubble styling */
+  .chat-bubble {
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    max-width: 85%;
+    word-wrap: break-word;
+  }
 
-    .chat-left {
-        background-color: #e6f3ff;
-        align-self: flex-start;
-    }
+  .chat-left {
+    background-color: #e6f3ff;
+    align-self: flex-start;
+  }
 
-    .chat-right {
-        background-color: #f0f0f0;
-        align-self: flex-end;
-        margin-left: auto;
-    }
+  .chat-right {
+    background-color: #f0f0f0;
+    align-self: flex-end;
+    margin-left: auto;
+  }
 
-    .chat-timestamp-right {
-        font-size: 10px;
-        color: #6c757d;
-        margin-bottom: 1px;
-        align-self: flex-end;
-        margin-left: auto;
-    }
+  .chat-timestamp-right {
+    font-size: 10px;
+    color: #6c757d;
+    margin-bottom: 1px;
+    align-self: flex-end;
+    margin-left: auto;
+  }
 
-    /* Timestamp styling */
-    .chat-timestamp {
-        font-size: 10px;
-        color: #6c757d;
-        margin-bottom: 1px;
-    }
+  /* Timestamp styling */
+  .chat-timestamp {
+    font-size: 10px;
+    color: #6c757d;
+    margin-bottom: 1px;
+  }
 
-    /* Chat container styles */
-    .chat-container {
-        height: 280px;
-        overflow-y: auto;
-        border-radius: 4px;
-        background-color: #f9f9f9;
-        padding: 8px;
-        margin-bottom: 8px;
-    }
+  /* Chat container styles */
+  .chat-container {
+    height: 280px;
+    overflow-y: auto;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
 
-    /* Chat input container styles */
-    .chat-input-container {
-        position: sticky;
-        bottom: 0;
-        background-color: #f9f9f9;
-        padding-top: 6px;
-    }
+  /* Chat input container styles */
+  .chat-input-container {
+    position: sticky;
+    bottom: 0;
+    background-color: #f9f9f9;
+    padding-top: 6px;
+  }
 
-    /* Input box styling */
-    #chat-input {
-        border: 1px solid #dee2e6;
-        border-radius: 4px 0 0 4px;
-        padding: 6px;
-        font-size: 13px;
-        height: 32px;
-    }
+  /* Input box styling */
+  #chat-input {
+    border: 1px solid #dee2e6;
+    border-radius: 4px 0 0 4px;
+    padding: 6px;
+    font-size: 13px;
+    height: 32px;
+  }
 
-    /* Send button styling */
-    #send-message {
-        background-color: #0d6efd;
-        color: white;
-        border: none;
-        border-radius: 0 4px 4px 0;
-        padding: 6px 10px;
-        font-size: 13px;
-        height: 32px;
-        line-height: 20px;
-        transition: all 0.2s ease;
-    }
+  /* Send button styling */
+  #send-message {
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    padding: 6px 10px;
+    font-size: 13px;
+    height: 32px;
+    line-height: 20px;
+    transition: all 0.2s ease;
+  }
 
-    /* Adjust input group */
-    .input-group {
-        display: flex;
-    }
+  /* Adjust input group */
+  .input-group {
+    display: flex;
+  }
 
-    .input-group .form-control {
-        flex: 1;
-    }
+  .input-group .form-control {
+    flex: 1;
+  }
 
-    .input-group-append {
-        display: flex;
-    }
+  .input-group-append {
+    display: flex;
+  }
 
-    #send-message:hover {
-        background-color: #0b5ed7;
-    }
-    
-    .focus-ring {
-      outline: 2px solid #0d6efd;
-      outline-offset: 2px;
-    }
-    
-    /* Navigation tabs styling */
-    .nav-tabs {
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    .nav-tabs .nav-item .nav-link {
-        border: none;
-        color: #495057;
-        font-weight: 500;
-        padding: 0.5rem 0.75rem;
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s ease;
-        font-size: 0.875rem;
-    }
-    
-    .nav-tabs .nav-item .nav-link.active {
-        color: #0d6efd;
-        background-color: transparent;
-        border-bottom: 2px solid #0d6efd;
-    }
-    
-    .tab-content {
-        padding: 1rem 0;
-    }
-    
-    /* Badge styling */
-    .badge {
-        font-weight: 500;
-        padding: 0.35em 0.5em;
-        font-size: 0.75rem;
-    }
-    
-    .badge-pill {
-        border-radius: 50rem;
-    }
-    
-    .badge-warning {
-        background-color: #ffc107;
-        color: #212529;
-    }
-    
-    /* Button styling */
-    .btn {
-        font-weight: 500;
-        padding: 0.25rem 0.6rem;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-        font-size: 0.875rem;
-    }
-    
-    .btn-sm {
-        padding: 0.2rem 0.4rem;
-        font-size: 0.8125rem;
-    }
-    
-    .btn-info {
-        background-color: #0dcaf0;
-        border-color: #0dcaf0;
-        color: #000;
-    }
-    
-    .btn-info:hover {
-        background-color: #31d2f2;
-        border-color: #25cff2;
-    }
-    
-    .btn-light {
-        background-color: #f8f9fa;
-        border-color: #f8f9fa;
-        color: #212529;
-    }
-    
-    .btn-light:hover {
-        background-color: #e2e6ea;
-        border-color: #dae0e5;
-    }
-    
-    .btn-primary {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
-    
-    .btn-primary:hover {
-        background-color: #0b5ed7;
-        border-color: #0a58ca;
-    }
-    
-    .btn-outline-info {
-        color: #0dcaf0;
-        border-color: #0dcaf0;
-    }
-    
-    .btn-outline-info:hover {
-        background-color: #0dcaf0;
-        color: #000;
-    }
-    
-    /* Alert styling */
-    .alert-info {
-        color: #055160;
-        background-color: #cff4fc;
-        border-color: #b6effb;
-        border-left: 4px solid #0dcaf0;
-    }
-    
-    /* Card styling */
-    .card {
-        border: none;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
-    }
-    
-    .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid rgba(0,0,0,0.1);
-        padding: 0.75rem;
-        font-size: 0.9rem;
-    }
-    
-    .card-body {
-        padding: 1rem;
-        font-size: 0.9rem;
-    }
-    
-    .card-footer {
-        background-color: #f8f9fa;
-        border-top: 1px solid rgba(0,0,0,0.1);
-        padding: 0.5rem 1rem;
-    }
+  #send-message:hover {
+    background-color: #0b5ed7;
+  }
+
+  .focus-ring {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+  }
+
+  /* Navigation tabs styling */
+  .nav-tabs {
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .nav-tabs .nav-item .nav-link {
+    border: none;
+    color: #495057;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+  }
+
+  .nav-tabs .nav-item .nav-link.active {
+    color: #0d6efd;
+    background-color: transparent;
+    border-bottom: 2px solid #0d6efd;
+  }
+
+  .tab-content {
+    padding: 1rem 0;
+  }
+
+  /* Badge styling */
+  .badge {
+    font-weight: 500;
+    padding: 0.35em 0.5em;
+    font-size: 0.75rem;
+  }
+
+  .badge-pill {
+    border-radius: 50rem;
+  }
+
+  .badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+
+  /* Button styling */
+  .btn {
+    font-weight: 500;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+  }
+
+  .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8125rem;
+  }
+
+  .btn-info {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+    color: #000;
+  }
+
+  .btn-info:hover {
+    background-color: #31d2f2;
+    border-color: #25cff2;
+  }
+
+  .btn-light {
+    background-color: #f8f9fa;
+    border-color: #f8f9fa;
+    color: #212529;
+  }
+
+  .btn-light:hover {
+    background-color: #e2e6ea;
+    border-color: #dae0e5;
+  }
+
+  .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+  }
+
+  .btn-outline-info {
+    color: #0dcaf0;
+    border-color: #0dcaf0;
+  }
+
+  .btn-outline-info:hover {
+    background-color: #0dcaf0;
+    color: #000;
+  }
+
+  /* Alert styling */
+  .alert-info {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #b6effb;
+    border-left: 4px solid #0dcaf0;
+  }
+
+  /* Card styling */
+  .card {
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+  }
+
+  .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 1rem;
+  }
 </style>
-{% endblock %}
-
-{% block page_content %}
+{% endblock %} {% block page_content %}
 
 <div class="container mt-10">
-    {% if alert %}
-    <div class="row justify-content-center mt-10 mb-10">
+  {% if alert %}
+  <div class="row justify-content-center mt-10 mb-10">
+    <div class="col-md-6">
+      <div class="common-card-style">
+        <div class="card-body text-center">
+          <h5 class="bold-heading">{{ alert.title }}</h5>
+          <p class="card-text">{{ alert.text }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="row">
+    <div class="col-md-3">
+      <!-- Sidebar content -->
+      <div class="bold-heading mb-3">{{ exam.title }}</div>
+      <!-- Bootstrap Navigation -->
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active" data-toggle="tab" href="#messages">
+            <span class="d-flex align-items-center">
+              <i class="bi bi-chat-text me-2"></i>
+              Chat {% if exam.enable_chat %}
+              <span
+                class="badge badge-pill badge-warning ms-2"
+                id="msgCount"
+              ></span>
+              {% endif %}
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-toggle="tab" href="#calculator">
+            <span class="d-flex align-items-center">
+              <i class="bi bi-calculator me-2"></i>
+              Calculator
+            </span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content mt-3">
+        <div id="messages" class="tab-pane fade show active">
+          {% if exam.enable_chat %}
+          <!-- Tab 1 Content Goes Here -->
+          <div class="chat-container">
+            <div id="chat-messages" class="d-flex flex-column mb-3"></div>
+          </div>
+          <div class="chat-input-container">
+            <div class="input-group">
+              <input
+                type="text"
+                id="chat-input"
+                class="form-control"
+                placeholder="Message your proctor..."
+              />
+              <div class="input-group-append">
+                <button class="btn" type="button" id="send-message">
+                  <span class="d-flex align-items-center">
+                    Send
+                    <i class="bi bi-send ms-2"></i>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <p class="card-text">Chat disabled.</p>
+          {% endif %}
+        </div>
+        <div id="calculator" class="tab-pane fade">
+          {% if exam.enable_calculator %}
+          <!-- Tab 2 Content Goes Here -->
+          <div class="tab-pane fade show active" id="exam-calculator"></div>
+          {% else %}
+          <p class="card-text">Calculator disabled.</p>
+          {% endif %}
+        </div>
+      </div>
+      <!-- Updated Video Section with Alpine.js -->
+      <div class="common-card-style mt-4" x-data="{ videoVisible: true }">
+        <div x-show="videoVisible" class="card-body">
+          {% if exam.enable_video_proctoring %}
+          <video
+            id="webcam-stream"
+            autoplay
+            style="max-width: 100%; border-radius: 4px"
+          ></video>
+          {% else %}
+          <p class="card-text">Video proctoring disabled.</p>
+          {% endif %}
+        </div>
+        {% if exam.enable_video_proctoring %}
+        <div class="card-footer d-flex justify-content-end">
+          <button
+            @click="videoVisible = !videoVisible"
+            class="btn btn-sm btn-outline-info"
+            type="button"
+          >
+            <span class="d-flex align-items-center">
+              <i class="bi bi-camera-video me-2"></i>
+              <span x-text="videoVisible ? 'Hide Video' : 'Show Video'"></span>
+            </span>
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-9">
+      <!-- Main content -->
+      {% if exam.submission_status == "Started" %}
+      <div class="row mb-3">
         <div class="col-md-6">
-            <div class="common-card-style">
-                <div class="card-body text-center">
-                    <h5 class="bold-heading">{{ alert.title }}</h5>
-                    <p class="card-text">{{ alert.text }}</p>
-                </div>
+          <div class="d-flex justify-content-start"></div>
+        </div>
+        <div class="col-md-6">
+            <!-- Updated Timer Section with Alpine.js -->
+            <div
+                class="d-flex justify-content-end align-items-center"
+                id="timerdiv"
+                x-data="{ timerVisible: true }"
+            >
+                <button class="btn btn-primary btn-sm me-2" id="submitBtn">
+                    <span class="d-flex align-items-center"> Submit </span>
+                </button>
+                <button
+                    type="button"
+                    @click="timerVisible = !timerVisible"
+                    class="btn btn-warning btn-sm"
+                    data-bs-toggle="tooltip"
+                    :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
+                    style="cursor: pointer"
+                >
+                    <span x-show="timerVisible" class="timer">--:--</span>
+                    <span x-show="!timerVisible">Show Timer</span>
+                </button>
             </div>
         </div>
-    </div>
-    {% else %}
-    <div class="row">
-        <div class="col-md-3">
-            <!-- Sidebar content -->
-            <div class="bold-heading mb-3">
-                {{ exam.title }}
-            </div>
-            <!-- Bootstrap Navigation -->
-            <ul class="nav nav-tabs">
-                <li class="nav-item">
-                    <a class="nav-link active" data-toggle="tab" href="#messages">
-                        <span class="d-flex align-items-center">
-                            <i class="bi bi-chat-text me-2"></i>
-                            Chat
-                            {% if exam.enable_chat %}
-                            <span class="badge badge-pill badge-warning ms-2" id="msgCount"></span>
-                            {% endif %}
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" href="#calculator">
-                        <span class="d-flex align-items-center">
-                            <i class="bi bi-calculator me-2"></i>
-                            Calculator
-                        </span>
-                    </a>
-                </li>
-            </ul>
+      </div>
+      {% endif %}
 
-            <!-- Tab Content -->
-            <div class="tab-content mt-3">
-                
-                <div id="messages" class="tab-pane fade show active">
-                    {% if exam.enable_chat %}
-                    <!-- Tab 1 Content Goes Here -->
-                    <div class="chat-container">
-                        <div id="chat-messages" class="d-flex flex-column mb-3"></div>
-                    </div>
-                    <div class="chat-input-container">
-                        <div class="input-group">
-                            <input type="text" id="chat-input" class="form-control" placeholder="Message your proctor...">
-                            <div class="input-group-append">
-                                <button class="btn" type="button" id="send-message">
-                                    <span class="d-flex align-items-center">
-                                        Send
-                                        <i class="bi bi-send ms-2"></i>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% else %}
-                    <p class="card-text">Chat disabled.</p>
-                    {% endif %}
-                </div>
-                <div id="calculator" class="tab-pane fade">
-                    {% if exam.enable_calculator %}
-                    <!-- Tab 2 Content Goes Here -->
-                    <div class="tab-pane fade show active" id="exam-calculator">
-                    </div>
-                    {% else %}
-                    <p class="card-text">Calculator disabled.</p>
-                    {% endif %}
-                </div>
-            </div>
-            <!-- Updated Video Section with Alpine.js -->
-            <div class="common-card-style mt-4" x-data="{ videoVisible: true }">
-                <div x-show="videoVisible" class="card-body">
-                    {% if exam.enable_video_proctoring %}
-                    <video id="webcam-stream" autoplay style="max-width: 100%; border-radius: 4px;"></video>
-                    {% else %}
-                    <p class="card-text">Video proctoring disabled.</p>
-                    {% endif %}
-                </div>
-                {% if exam.enable_video_proctoring %}
-                <div class="card-footer d-flex justify-content-end">
-                    <button @click="videoVisible = !videoVisible" class="btn btn-sm btn-outline-info" type="button">
-                        <span class="d-flex align-items-center">
-                            <i class="bi bi-camera-video me-2"></i>
-                            <span x-text="videoVisible ? 'Hide Video' : 'Show Video'"></span>
-                        </span>
-                    </button>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        <div class="col-md-9">
-            <!-- Main content -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-start">
-                        {% if exam.instructions != "" %}
-                        <button class="btn btn-info btn-sm me-2" id="toggleInstruction">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-info-circle me-2"></i>
-                                Hide instructions
-                            </span>
-                        </button>
-                        {% endif %}
-                        <button class="btn btn-light btn-sm" id="submitTopBtn">
-                            <span class="d-flex align-items-center">
-                                <i class="bi bi-check2-circle me-2"></i>
-                                Submit
-                            </span>
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <!-- Updated Timer Section with Alpine.js -->
-                    <div class="d-flex justify-content-end" id="timerdiv" x-data="{ timerVisible: true }">
-                        <button type="button" @click="timerVisible = !timerVisible" class="btn btn-warning btn-sm" 
-                                data-bs-toggle="tooltip" :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
-                                style="cursor: pointer;">
-                            <span x-show="timerVisible" class="timer">--:--</span>
-                            <span x-show="!timerVisible">Show Timer</span>
-                        </button>
-                    </div>
-                </div>
-                </div>
+      <div class="row">
+        <div class="col-md-12">
+          {% if exam.instructions %}
 
-                <div class="row">
-                    <div class="col-md-12">
-                    {% if exam.instructions %}
-                    <div id="instruction" class="mt-3">
-                        <div class="alert alert-info pl-9">
-                            {{ exam.instructions }}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-                </div>
-                <div class="row">
-                {{ frappe.render_template('templates/exam/examform.html', {"exam": exam}) }}
-                </div>
+          <div class="card common-card-style" x-data="{ isCollapsed: false }">
+            <div
+              class="card-header d-flex justify-content-between align-items-center"
+              @click="isCollapsed = !isCollapsed"
+              @keydown.enter="isCollapsed = !isCollapsed"
+              @keydown.space.prevent="isCollapsed = !isCollapsed"
+              tabindex="0"
+              role="button"
+              :aria-expanded="!isCollapsed"
+              aria-controls="instruction"
+            >
+              <h5 class="card-title mb-0 fw-semibold text-dark">
+                Instructions
+              </h5>
+              <span class="text-info arrow-icon" style="font-size: 1.2rem">
+                <i
+                  :class="isCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
+                ></i>
+              </span>
             </div>
-        </div>
-    </div>
-    {% endif %}
-    <!-- Bootstrap Modal with updated styling -->
-    <div class="modal" id="examAlert">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="alertTitle"></h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body" id="alertText">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-info" data-dismiss="modal">Close</button>
-                </div>
+            <div
+              class="card-body"
+              id="instruction"
+              x-show="!isCollapsed"
+              x-transition:enter="transition ease-out duration-300"
+              x-transition:enter-start="opacity-0 transform -translate-y-2"
+              x-transition:enter-end="opacity-100 transform translate-y-0"
+              x-transition:leave="transition ease-in duration-300"
+              x-transition:leave-start="opacity-100 transform translate-y-0"
+              x-transition:leave-end="opacity-0 transform -translate-y-2"
+            >
+              {{ exam.instructions | safe }}
+              <!-- Start Exam Button -->
+              {% if exam.submission_status == "Registered" %}
+              <div class="text-center my-3">
+                <button
+                  class="btn-lg btn-info btn-start-quiz m-4"
+                  id="quiz-btn"
+                  style="display: none"
+                ></button>
+              </div>
+              {% endif %}
             </div>
+          </div>
+
+          {% endif %}
         </div>
+        </div>
+        <div class="row">
+          {{ frappe.render_template('templates/exam/examform.html', {"exam":
+          exam}) }}
+        </div>
+      </div>
     </div>
+  </div>
+  {% endif %}
+  <!-- Bootstrap Modal with updated styling -->
+  <div class="modal" id="examAlert">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="alertTitle"></h5>
+          <button type="button" class="close" data-dismiss="modal">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body" id="alertText"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-info" data-dismiss="modal">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Additional helper classes -->
 <style>
-.me-2 {
+  .me-2 {
     margin-right: 0.5rem !important;
-}
+  }
 
-.ms-2 {
+  .ms-2 {
     margin-left: 0.5rem !important;
-}
+  }
 
-.d-flex {
+  .d-flex {
     display: flex !important;
-}
+  }
 
-.align-items-center {
+  .align-items-center {
     align-items: center !important;
-}
+  }
 
-.justify-content-end {
+  .justify-content-end {
     justify-content: flex-end !important;
-}
+  }
 
-.justify-content-start {
+  .justify-content-start {
     justify-content: flex-start !important;
-}
+  }
 
-/* Custom calculator styling - these override the default Bootstrap classes */
-.calculator-wrapper .calc-display {
+  /* Custom calculator styling - these override the default Bootstrap classes */
+  .calculator-wrapper .calc-display {
     background-color: #2d3748;
     color: #e2e8f0;
     border: 2px solid #4a5568;
-    font-family: 'Courier New', monospace;
+    font-family: "Courier New", monospace;
     font-size: 1.25rem;
     font-weight: bold;
-}
+  }
 
-.calculator-wrapper .calc-btn {
+  .calculator-wrapper .calc-btn {
     height: 60px;
     font-size: 1rem;
     font-weight: 600;
     margin: 2px;
     border-radius: 8px;
     transition: all 0.2s ease;
-}
+  }
 
-.calculator-wrapper .calc-btn:hover {
+  .calculator-wrapper .calc-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
 
-.calculator-wrapper .calc-btn:active {
+  .calculator-wrapper .calc-btn:active {
     transform: translateY(0);
-}
+  }
 
-.calculator-wrapper .number-btn {
+  .calculator-wrapper .number-btn {
     background-color: #f7fafc;
     border-color: #e2e8f0;
     color: #2d3748;
-}
+  }
 
-.calculator-wrapper .number-btn:hover {
+  .calculator-wrapper .number-btn:hover {
     background-color: #edf2f7;
     border-color: #cbd5e0;
-}
+  }
 
-.calculator-wrapper .card {
+  .calculator-wrapper .card {
     border-radius: 15px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-}
+  }
 </style>
 {% endblock %}
 
 <!-- Scripts -->
-{%- block script %}
-{{ super() }}
-{% if exam %}
-<script type="text/javascript"> var exam = {{ exam | tojson }};</script>
+{%- block script %} {{ super() }} {% if exam %}
+<script type="text/javascript">
+  var exam = {{ exam | tojson }};
+</script>
 
 <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
 <script src="/assets/exampro/js/bootstrap-calculator.js"></script>
@@ -543,55 +591,58 @@ Alert!
 <script type="text/javascript" src="/assets/exampro/js/gazer.js"></script>
 {% endif %}
 <script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
-<script type="text/javascript" src="/assets/exampro/js/inactivityDetector.js"></script>
+<script
+  type="text/javascript"
+  src="/assets/exampro/js/inactivityDetector.js"
+></script>
 <script type="text/javascript" src="/assets/exampro/js/examform.js"></script>
 <script>
-    // Global variable to track media permissions
-    let mediaPermissionsGranted = false;
-    let mediaStream = null;
+  // Global variable to track media permissions
+  let mediaPermissionsGranted = false;
+  let mediaStream = null;
 
-    // Request camera and audio access on window load (only if video proctoring is enabled)
-    window.addEventListener('load', function() {
-        if (exam.enable_video_proctoring) {
-            requestMediaAccess();
-        }
+  // Request camera and audio access on window load (only if video proctoring is enabled)
+  window.addEventListener("load", function () {
+    if (exam.enable_video_proctoring) {
+      requestMediaAccess();
+    }
+  });
+
+  async function requestMediaAccess() {
+    try {
+      // Request both video and audio permissions
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+
+      console.log("Media permissions granted");
+      mediaPermissionsGranted = true;
+
+      // Set up the video stream (this function is only called when video proctoring is enabled)
+      const videoElement = document.getElementById("webcam-stream");
+      if (videoElement) {
+        videoElement.srcObject = mediaStream;
+      }
+    } catch (error) {
+      console.error("Error accessing media devices:", error);
+      mediaPermissionsGranted = false;
+
+      // Show error message to user
+      showMediaPermissionError();
+    }
+  }
+
+  function showMediaPermissionError() {
+    frappe.show_alert({
+      message:
+        "Camera and microphone access is required to start the exam. Please allow access and refresh the page.",
+      indicator: "red",
     });
 
-    async function requestMediaAccess() {
-        try {
-            // Request both video and audio permissions
-            mediaStream = await navigator.mediaDevices.getUserMedia({ 
-                video: true, 
-                audio: true 
-            });
-            
-            console.log('Media permissions granted');
-            mediaPermissionsGranted = true;
-            
-            // Set up the video stream (this function is only called when video proctoring is enabled)
-            const videoElement = document.getElementById('webcam-stream');
-            if (videoElement) {
-                videoElement.srcObject = mediaStream;
-            }
-            
-        } catch (error) {
-            console.error('Error accessing media devices:', error);
-            mediaPermissionsGranted = false;
-            
-            // Show error message to user
-            showMediaPermissionError();
-        }
-    }
-
-    function showMediaPermissionError() {
-        frappe.show_alert({
-            message: 'Camera and microphone access is required to start the exam. Please allow access and refresh the page.',
-            indicator: 'red'
-        });
-        
-        // Show modal with more detailed instructions
-        $('#alertTitle').text('Media Access Required');
-        $('#alertText').html(`
+    // Show modal with more detailed instructions
+    $("#alertTitle").text("Media Access Required");
+    $("#alertText").html(`
             <p>This exam requires access to your camera and microphone for proctoring purposes.</p>
             <p>Please:</p>
             <ol>
@@ -601,57 +652,57 @@ Alert!
             </ol>
             <p><strong>You cannot start the exam without granting these permissions.</strong></p>
         `);
-        $('#examAlert').modal('show');
+    $("#examAlert").modal("show");
+  }
+
+  function checkMediaPermissionsBeforeStart() {
+    // Only check permissions if video proctoring is enabled
+    if (exam.enable_video_proctoring && !mediaPermissionsGranted) {
+      frappe.show_alert({
+        message:
+          "Please grant camera and microphone permissions before starting the exam.",
+        indicator: "red",
+      });
+      return false;
+    }
+    return true;
+  }
+
+  $(document).ready(function () {
+    // Create calculator instance only if calculator is enabled
+    if (exam.enable_calculator) {
+      calculator = new BootstrapCalculator("#exam-calculator");
+      calculator.init();
     }
 
-    function checkMediaPermissionsBeforeStart() {
-        // Only check permissions if video proctoring is enabled
-        if (exam.enable_video_proctoring && !mediaPermissionsGranted) {
-            frappe.show_alert({
-                message: 'Please grant camera and microphone permissions before starting the exam.',
-                indicator: 'red'
-            });
-            return false;
-        }
-        return true;
+    // Only add toggle functionality if instructions exist
+    if (exam.instructions) {
+      $("#toggleInstruction").click(function () {
+        $("#instruction").toggle();
+        $(this).html(function (i, html) {
+          if (html.includes("Hide instructions")) {
+            return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Show instructions</span>';
+          } else {
+            return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Hide instructions</span>';
+          }
+        });
+      });
     }
 
-    $(document).ready(function () {
-        // Create calculator instance only if calculator is enabled
-        if (exam.enable_calculator) {
-            calculator = new BootstrapCalculator('#exam-calculator');
-            calculator.init();
-        }
-        
-        // Only add toggle functionality if instructions exist
-        if (exam.instructions) {
-            $('#toggleInstruction').click(function () {
-                $('#instruction').toggle();
-                $(this).html(function (i, html) {
-                    if (html.includes("Hide instructions")) {
-                        return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Show instructions</span>';
-                    } else {
-                        return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Hide instructions</span>';
-                    }
-                });
-            });
-        }
+    // Timer toggle is now handled by Alpine.js - no jQuery code needed
+    // Video toggle is now handled by Alpine.js - no jQuery code needed
 
-        // Timer toggle is now handled by Alpine.js - no jQuery code needed
-        // Video toggle is now handled by Alpine.js - no jQuery code needed
-
-        // Chat functionality
-        $('#send-message').click(function() {
-            sendChatMessage();
-        });
-
-        $('#chat-input').keypress(function(e) {
-            if(e.which == 13) {
-                sendChatMessage();
-                return false;
-            }
-        });
+    // Chat functionality
+    $("#send-message").click(function () {
+      sendChatMessage();
     });
+
+    $("#chat-input").keypress(function (e) {
+      if (e.which == 13) {
+        sendChatMessage();
+        return false;
+      }
+    });
+  });
 </script>
-{% endif %}
-{% endblock %}
+{% endif %} {% endblock %}

@@ -302,7 +302,6 @@ frappe.ready(() => {
         });
     } else {
         $('#submitTopBtn').show();
-        $("#start-banner").addClass("hide");
         $("#quiz-form").removeClass("hide");
         // on first load, show the last question loaded
         getQuestion(exam["current_qs"]);
@@ -396,7 +395,7 @@ function updateOverviewMap() {
                 }
             }
 
-            document.getElementById("answeredCount").innerHTML = data.message.total_answered;
+            document.getElementById("answeredCount").innerHTML = data.message.total_answered.toString().padStart(2, '0');
             // document.getElementById("notattempted").innerHTML = data.message.total_not_attempted;
             document.getElementById("markedForLaterCount").innerHTML = data.message.total_marked_for_later.toString().padStart(2, '0');
             $("#question-length").text(data.message.total_questions);
@@ -498,7 +497,6 @@ function displayQuestion(current_qs) {
         "marked_for_later": current_qs.marked_for_later
     }
 
-    $("#start-banner").addClass("hide");
     $("#quiz-form").removeClass("hide");
     $("#current-question").text(currentQuestion["no"])
     $('#markedForLater').prop("checked", false);
@@ -759,7 +757,6 @@ function startExam() {
                 exam.end_time = data.message.end_time;
             }
             
-            $("#start-banner").addClass("hide");
             $("#quiz-form").removeClass("hide");
             // getQuestion(1);
             // updateTimer();
@@ -803,7 +800,7 @@ function showSubmitConfirmPage() {
             success: (data) => {
                 examOverview = data.message;
                 
-                $("#start-banner").removeClass("hide");
+                $("#exam-summary").removeClass("hide");
                 $("#quiz-form").addClass("hide");
 
                 $("#quiz-title").html();
