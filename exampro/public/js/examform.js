@@ -405,37 +405,29 @@ function updateOverviewMap() {
                 $("#button-grid").html('');
             }
             for (let i = 1; i <= data.message.total_questions; i++) {
-                let btnCls = "btn-outline-secondary";
-                let btnStyle = "";
+                let btnCls = "btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-between rounded-pill";
+                let circleColor = "text-secondary"; // Default grey for unanswered
                 
-                // Determine button style based on question status
+                // Determine circle color based on question status
                 if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
-                    btnCls = "btn-warning text-white";
-                    btnStyle = "";
+                    circleColor = "text-info"; // Blue for marked for later
                 } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
-                    btnCls = "btn-outline-success";
-                    btnStyle = "border-width: 2px;";
+                    circleColor = "text-warning"; // Yellow/orange for answered
                 }
                 
-                // If this is the current question, highlight it
+                // If this is the current question, highlight it with custom styling
                 if (currentQuestion && i === currentQuestion["no"]) {
-                    btnCls = "btn-primary";
+                    btnCls = "btn btn-sm btn-outline-dark d-flex align-items-center justify-content-between rounded-pill current-question-btn";
+                    circleColor = "text-secondary"; // Dark circle for current question
                 }
                 
                 // Create a new button
                 const button = $("<button></button>");
-                button.addClass("exam-map-btn btn " + btnCls);
+                button.addClass(btnCls);
                 button.attr("id", "button-" + i);
-                button.attr("style", btnStyle);
                 
-                // Set the button content based on question status
-                if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
-                    button.html(answrLater + ' ' + i);
-                } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
-                    button.html(answrdCheck + ' ' + i);
-                } else {
-                    button.text(i);
-                }
+                // Set the button content with the new structure
+                button.html(`<i class="bi bi-circle-fill ${circleColor}"></i><span class="fw-bold text-dark">${i}</span>`);
                 
                 // Append the button to the grid
                 $("#button-grid").append(button);
@@ -829,7 +821,7 @@ function showSubmitConfirmPage() {
                         </ul>
                         </div>
                         <div class="card-footer">
-                        <button class="btn btn-success w-100" id="quizSubmit" onClick=endExam();>Submit Exam</button>
+                        <button class="btn btn-primary w-100" id="quizSubmit" onClick=endExam();>Submit Exam</button>
                         </div>
                     </div>
                     </div>

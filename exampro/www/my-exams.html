@@ -22,7 +22,7 @@ Exams') }} {% endblock %} {% block head_include %}
             <strong>{{ _("Next Exam: ") }}</strong>
             {{ next_exam_message }}
           </div>
-          <a href="{{ next_exam_link }}" class="btn btn-info btn-sm ml-2">
+          <a href="{{ next_exam_link }}" class="btn btn-primary btn-sm ml-2">
             {{ next_exam_link_text }}
           </a>
         </div>
@@ -85,7 +85,7 @@ Exams') }} {% endblock %} {% block head_include %}
                 >
                 {% elif exam.status == "Submitted" %} {% if not
                 exam.can_show_results %}
-                <span class="badge bg-light text-dark">Pending</span>
+                <span class="badge bg-light text-dark">Result Pending</span>
                 {% elif exam.result_status %} {% if exam.result_status ==
                 "Passed" %}
                 <span class="badge bg-success text-white"

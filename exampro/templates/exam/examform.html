@@ -121,7 +121,7 @@
     </div>
 
     <div class="card-body">
-      <div class="navigation-grid" id="button-grid">
+      <div id="button-grid">
         <!-- Buttons will be added here -->
       </div>
     </div>
@@ -234,7 +234,6 @@
     #finish {
       background-color: #0d6efd !important;
       border-color: #0d6efd !important;
-      margin-left: 1rem !important;
       transition: all 0.2s ease;
     }
 
@@ -250,21 +249,40 @@
       flex-wrap: wrap;
       gap: 0.4rem;
       margin-top: 0.75rem;
-    }
-
-    .exam-map-btn {
-      min-width: 2.2rem;
-      height: 2.2rem;
-      display: flex;
+      justify-content: flex-start;
       align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      font-size: 0.85rem;
     }
 
-    .exam-map-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    /* Navigation button styling */
+    #button-grid .btn {
+      min-width: 2.8rem;
+      height: 2rem;
+      transition: all 0.2s ease;
+      /* font-weight: 500; */
+      padding: 0.25rem 0.5rem;
+      /* font-size: 0.8rem; */
+      border: 1px solid #bbb;
+    }
+
+    #button-grid .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    #button-grid .btn .bi-circle-fill {
+      font-size: 0.65rem;
+    }
+
+    /* Current question button styling */
+    #button-grid .current-question-btn {
+      background-color: #f8f9fa !important;
+      border-color: #0b5ed7 !important;
+      border-width: 2px !important;
+      font-weight: 600 !important;
+    }
+
+    #button-grid .current-question-btn:hover {
+      border-color: #495057 !important;
     }
 
     /* Form controls */
@@ -298,12 +316,6 @@
       border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     }
 
-    .navigation-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
     /* Badge styling */
     .badge {
       font-weight: 500;
@@ -316,20 +328,14 @@
     }
 
     /* "Answer later" checkbox styling */
-    .form-check-label {
-      font-weight: 500;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
-
-    .form-switch .form-check-input {
-      width: 2.5em;
-      margin-right: 0.5rem;
-    }
-
     #markedForLater:checked {
-      background-color: #ffc107;
-      border-color: #ffc107;
+      background-color: var(--bs-info) !important;
+      border-color: var(--bs-info) !important;
+    }
+
+    #markedForLater:focus {
+      border-color: var(--bs-info) !important;
+      box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25) !important;
     }
   </style>
 </div>
