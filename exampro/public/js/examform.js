@@ -396,9 +396,9 @@ function updateOverviewMap() {
                 }
             }
 
-            // document.getElementById("answered").innerHTML = data.message.total_answered;
+            document.getElementById("answeredCount").innerHTML = data.message.total_answered;
             // document.getElementById("notattempted").innerHTML = data.message.total_not_attempted;
-            document.getElementById("markedforlater").innerHTML = data.message.total_marked_for_later;
+            document.getElementById("markedForLaterCount").innerHTML = data.message.total_marked_for_later.toString().padStart(2, '0');
             $("#question-length").text(data.message.total_questions);
 
             // populate buttons
@@ -520,6 +520,7 @@ function displayQuestion(current_qs) {
         instruction = "Enter the correct answer";
     }
     $('#question-number').html(`<span class="question-number-text">Question ${currentQuestion["no"]}</span> <span class="question-instruction">${instruction}</span>`);
+    $('#current-question-number').text(`Question ${currentQuestion["no"]}`);
 
     // Set question text with description image
     $('#question-text').html('');

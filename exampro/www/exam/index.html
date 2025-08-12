@@ -617,11 +617,11 @@ Alert!
     }
 
     $(document).ready(function () {
-        // Create calculator instance
-        calculator = new BootstrapCalculator('#exam-calculator');
-
-        // Initialize the calculator
-        calculator.init();
+        // Create calculator instance only if calculator is enabled
+        if (exam.enable_calculator) {
+            calculator = new BootstrapCalculator('#exam-calculator');
+            calculator.init();
+        }
         
         // Only add toggle functionality if instructions exist
         if (exam.instructions) {

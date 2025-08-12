@@ -1,293 +1,342 @@
 <div class="col-md-12">
-    <div id="start-banner" class="common-card-style column-card align-items-center mt-3">
-
-        <div class="text-center my-10" id="quiz-box">
-            <div class="bold-heading" id="quiz-title">
-            </div>
-            <button class="btn-lg btn-info btn-start-quiz m-4" id="quiz-btn" style="display: none;">
-            </button>
-            <p id="quiz-message" style="display: none;"></p>
-        </div>
+  <div
+    id="start-banner"
+    class="common-card-style column-card align-items-center mt-3"
+  >
+    <div class="text-center my-10" id="quiz-box">
+      <div class="bold-heading" id="quiz-title"></div>
+      <button
+        class="btn-lg btn-info btn-start-quiz m-4"
+        id="quiz-btn"
+        style="display: none"
+      ></button>
+      <p id="quiz-message" style="display: none"></p>
     </div>
+  </div>
 
-    <form id="quiz-form" class="common-card-style column-card hide">
-        <div class="question" id="question" data-name="" data-type="" data-multi="">
-            <div>
-                <div class="question-number" id="question-number"></div>
-                <div class="question-text" id="question-text"></div>
-                <div class="question-image" style="display: none;"><img src="" class="img-fluid" alt=""
-                        id="question-image"></div>
-            </div>
-
-            <div id="choices"></div>
-
-            <div class="control-input-wrapper" id="examTextInput" style="display: none;">
-                <div class="control-input">
-                    <div class="form-floating">
-                        <textarea type="text" autocomplete="off"
-                            class="input-with-feedback form-control possibility" style="height: 150px; font-size: 1rem;"
-                            spellcheck="false" placeholder="Enter your answer here"></textarea>
-                        <label for="floatingTextarea">Your answer</label>
-                    </div>
-                    <small class="form-text text-muted mt-2">Type your answer in the text area above.</small>
-                </div>
-            </div>
-
+  <form id="quiz-form" class="common-card-style column-card hide">
+    <div class="question" id="question" data-name="" data-type="" data-multi="">
+      <div>
+        <div class="question-number" id="question-number"></div>
+        <div class="question-text" id="question-text"></div>
+        <div class="question-image" style="display: none">
+          <img src="" class="img-fluid" alt="" id="question-image" />
         </div>
+      </div>
 
-        <div class="quiz-footer">
-            <span>
-                Question
-                <span class="current-question" id="current-question">-</span>
-                of
-                <span id="question-length"></span>
-                <span id="savingStatus" class="ml-5 text-muted" style="display: none;">Status: Not saved yet.</span>
+      <div id="choices"></div>
+
+      <div
+        class="control-input-wrapper"
+        id="examTextInput"
+        style="display: none"
+      >
+        <div class="control-input">
+          <div class="form-floating">
+            <textarea
+              type="text"
+              autocomplete="off"
+              class="input-with-feedback form-control possibility"
+              style="height: 150px; font-size: 1rem"
+              spellcheck="false"
+              placeholder="Enter your answer here"
+            ></textarea>
+            <label for="floatingTextarea">Your answer</label>
+          </div>
+          <small class="form-text text-muted mt-2"
+            >Type your answer in the text area above.</small
+          >
+        </div>
+      </div>
+    </div>
+    <div class="quiz-footer"></div>
+    <div class="quiz-footer">
+      <div class="d-flex justify-content-between align-items-center w-100">
+        <div
+          class="form-check form-switch d-flex align-items-center mb-0"
+          style="gap: 0.5rem"
+        >
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="markedForLater"
+            style="margin-top: 0"
+          />
+          <label
+            class="form-check-label mb-0"
+            for="markedForLater"
+            style="margin-bottom: 0"
+          >
+            Review later
+          </label>
+        </div>
+        <div>
+          <button
+            class="btn btn-primary btn-sm ms-2"
+            id="nextQs"
+            style="display: none"
+          >
+            <span class="d-flex align-items-center">
+              Next
+              <i class="bi bi-arrow-right ms-2"></i>
             </span>
-
-            <div class="d-flex justify-content-end align-items-center">
-                <div class="form-check form-switch me-3">
-                    <input class="form-check-input" type="checkbox" id="markedForLater">
-                    <label class="form-check-label" for="markedForLater">
-                        <span class="d-flex align-items-center">
-                            <i class="bi bi-flag-fill me-2"></i>
-                            Review later
-                        </span>
-                    </label>
-                </div>
-                <button class="btn btn-primary btn-sm ms-2" id="nextQs" style="display: none;">
-                    <span class="d-flex align-items-center">
-                        Next Question
-                        <i class="bi bi-arrow-right ms-2"></i>
-                    </span>
-                </button>
-                <button class="btn btn-success btn-sm ms-2" id="finish" style="display: none;">
-                    <span class="d-flex align-items-center">
-                        Submit Answers
-                        <i class="bi bi-check2-circle ms-2"></i>
-                    </span>
-                </button>
-            </div>
+          </button>
+          <button
+            class="btn btn-success btn-sm ms-2"
+            id="finish"
+            style="display: none"
+          >
+            <span class="d-flex align-items-center"> Submit</span>
+          </button>
         </div>
-    </form>
-
+      </div>
+    </div>
+  </form>
 </div>
 <div class="col-md-12">
-    <div class="card navigation-card">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Question Navigation</h5>
-            <span class="badge bg-warning text-dark">
-                <i class="bi bi-clock-history me-2"></i>
-                Marked for review: <span id="markedforlater" class="fw-bold">-</span>
-            </span>
+  <div class="card navigation-card">
+    <div
+      class="card-header bg-light d-flex justify-content-between align-items-center"
+    >
+      <h5 class="card-title mb-0 fw-semibold text-dark">Questions</h5>
+
+      <div class="d-flex align-items-center gap-4">
+        <!-- Answered Status -->
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-circle-fill text-warning" style="font-size: 1rem"></i>
+          <span class="small ms-2">Answered</span>
+          <span
+            class="badge bg-light text-dark px-2 py-1 rounded"
+            style="font-size: 0.9rem"
+            id="answeredCount"
+            >00</span
+          >
         </div>
-        <div class="card-body">
-            <div class="navigation-grid" id="button-grid">
-                <!-- Buttons will be added here -->
-            </div>
+
+        <!-- Marked for Review Status -->
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-circle-fill text-info" style="font-size: 1rem"></i>
+          <span class="small ms-2">Review later</span>
+          <span
+            class="badge bg-light text-dark px-2 py-1 rounded"
+            style="font-size: 0.9rem"
+            id="markedForLaterCount"
+            >00</span
+          >
         </div>
+      </div>
     </div>
+
+    <div class="card-body">
+      <div class="navigation-grid" id="button-grid">
+        <!-- Buttons will be added here -->
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Option styles from questions.html */
+    .option-item {
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      padding: 0.6rem !important;
+      margin-bottom: 0.6rem;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+    }
+    .option-item:hover {
+      border-color: #007bff;
+      background-color: rgba(0, 123, 255, 0.05);
+    }
+    .option-item.selected {
+      border-color: #28a745;
+      background-color: rgba(40, 167, 69, 0.1);
+    }
+    .option-item .option-text {
+      margin-left: 10px;
+      display: inline-block;
+    }
+    .option-item .option-image {
+      margin-top: 0.5rem;
+      max-width: 100%;
+    }
+    .option-item .option-image img {
+      max-height: 150px;
+      border-radius: 4px;
+    }
+
+    /* Question styling */
+    .question-number {
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .question-number-text {
+      font-weight: 600;
+      color: #343a40;
+    }
+
+    .question-instruction {
+      font-weight: 400;
+      color: #6c757d;
+      font-style: italic;
+      margin-left: 8px;
+    }
+
+    .question-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+      color: #212529;
+    }
+
+    .question-content {
+      padding: 0.4rem 0.2rem;
+    }
+
+    .question-image {
+      margin: 0.75rem 0;
+      text-align: center;
+    }
+
+    .question-image img {
+      max-width: 100%;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Question container styling */
+    #question {
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 1.1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Quiz footer styling */
+    .quiz-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      background-color: #f8f9fa;
+      border-radius: 0 0 5px 5px;
+      font-size: 0.9rem;
+    }
+
+    .quiz-footer .current-question,
+    .quiz-footer #question-length {
+      font-weight: bold;
+      color: #0d6efd;
+    }
+
+    /* Navigation buttons */
+    #nextQs,
+    #finish {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      margin-left: 1rem !important;
+      transition: all 0.2s ease;
+    }
+
+    #nextQs:hover,
+    #finish:hover {
+      background-color: #0b5ed7;
+      border-color: #0a58ca;
+    }
+
+    /* Question navigation grid */
+    #button-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+
+    .exam-map-btn {
+      min-width: 2.2rem;
+      height: 2.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-size: 0.85rem;
+    }
+
+    .exam-map-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Form controls */
+    .form-check-input:checked {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+
+    /* Better styling for radio buttons and checkboxes */
+    input[type="radio"],
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      margin-right: 6px;
+    }
+
+    input[type="radio"]:checked,
+    input[type="checkbox"]:checked {
+      accent-color: #0d6efd;
+    }
+
+    /* Navigation card styling */
+    .navigation-card {
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      border: none;
+      border-radius: 5px;
+    }
+
+    .navigation-card .card-header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .navigation-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* Badge styling */
+    .badge {
+      font-weight: 500;
+      padding: 0.35em 0.5em;
+      font-size: 0.75rem;
+    }
+
+    .timer {
+      font-size: 1rem;
+    }
+
+    /* "Answer later" checkbox styling */
+    .form-check-label {
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .form-switch .form-check-input {
+      width: 2.5em;
+      margin-right: 0.5rem;
+    }
+
+    #markedForLater:checked {
+      background-color: #ffc107;
+      border-color: #ffc107;
+    }
+  </style>
 </div>
-
-<style>
-/* Option styles from questions.html */
-.option-item {
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    padding: 0.6rem !important;
-    margin-bottom: 0.6rem;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-}
-.option-item:hover {
-    border-color: #007bff;
-    background-color: rgba(0, 123, 255, 0.05);
-}
-.option-item.selected {
-    border-color: #28a745;
-    background-color: rgba(40, 167, 69, 0.1);
-}
-.option-item .option-text {
-    margin-left: 10px;
-    display: inline-block;
-}
-.option-item .option-image {
-    margin-top: 0.5rem;
-    max-width: 100%;
-}
-.option-item .option-image img {
-    max-height: 150px;
-    border-radius: 4px;
-}
-
-/* Question styling */
-.question-number {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-}
-
-.question-number-text {
-    font-weight: 600;
-    color: #343a40;
-}
-
-.question-instruction {
-    font-weight: 400;
-    color: #6c757d;
-    font-style: italic;
-    margin-left: 8px;
-}
-
-.question-text {
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin-bottom: 1rem;
-    color: #212529;
-}
-
-.question-content {
-    padding: 0.4rem 0.2rem;
-}
-
-.question-image {
-    margin: 0.75rem 0;
-    text-align: center;
-}
-
-.question-image img {
-    max-width: 100%;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Question container styling */
-#question {
-    background-color: #fff;
-    border-radius: 5px;
-    padding: 1.1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-/* Quiz footer styling */
-.quiz-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    border-top: 1px solid rgba(0,0,0,0.1);
-    background-color: #f8f9fa;
-    border-radius: 0 0 5px 5px;
-    font-size: 0.9rem;
-}
-
-.quiz-footer .current-question,
-.quiz-footer #question-length {
-    font-weight: bold;
-    color: #0d6efd;
-}
-
-/* Navigation buttons */
-#nextQs, #finish {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-    margin-left: 1rem !important;
-    transition: all 0.2s ease;
-}
-
-#nextQs:hover, #finish:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
-}
-
-/* Question navigation grid */
-#button-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.75rem;
-}
-
-.exam-map-btn {
-    min-width: 2.2rem;
-    height: 2.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    font-size: 0.85rem;
-}
-
-.exam-map-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-/* Form controls */
-.form-check-input:checked {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-}
-
-/* Better styling for radio buttons and checkboxes */
-input[type="radio"], 
-input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    margin-right: 6px;
-}
-
-input[type="radio"]:checked,
-input[type="checkbox"]:checked {
-    accent-color: #0d6efd;
-}
-
-/* Navigation card styling */
-.navigation-card {
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border: none;
-    border-radius: 5px;
-}
-
-.navigation-card .card-header {
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-}
-
-.navigation-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-/* Badge styling */
-.badge {
-    font-weight: 500;
-    padding: 0.35em 0.5em;
-    font-size: 0.75rem;
-}
-
-.timer {
-    font-size: 1rem;
-}
-
-/* "Answer later" checkbox styling */
-.form-check-label {
-    font-weight: 500;
-    cursor: pointer;
-    font-size: 0.85rem;
-}
-
-.form-switch .form-check-input {
-    width: 2.5em;
-    margin-right: 0.5rem;
-}
-
-#markedForLater:checked {
-    background-color: #ffc107;
-    border-color: #ffc107;
-}
-</style>
