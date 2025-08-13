@@ -770,6 +770,9 @@ function getQuestion(qsno) {
             "qsno": qsno,
         },
         callback: (data) => {
+            // Hide exam summary and show quiz form
+            $("#exam-summary").addClass("hide");
+            $("#quiz-form").removeClass("hide");
             displayQuestion(data.message);
             currentQsNo = data.message.qs_no;
             updateOverviewMap();
