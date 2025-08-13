@@ -225,6 +225,10 @@ head_include %}
     border-color: #0d6efd;
   }
 
+  .text-primary {
+    color: #0d6efd !important;
+  }
+
   .btn-primary:hover {
     background-color: #0b5ed7;
     border-color: #0a58ca;
@@ -358,8 +362,37 @@ head_include %}
         </div>
       </div>
       <!-- Updated Video Section with Alpine.js -->
-      <div class="common-card-style mt-4" x-data="{ videoVisible: true }">
-        <div x-show="videoVisible" class="card-body">
+      <div class="card common-card-style mt-4" x-data="{ videoVisible: true }">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+          @click="videoVisible = !videoVisible"
+          @keydown.enter="videoVisible = !videoVisible"
+          @keydown.space.prevent="videoVisible = !videoVisible"
+          tabindex="0"
+          role="button"
+          :aria-expanded="videoVisible"
+          aria-controls="video-content"
+        >
+          <span class="d-flex align-items-center text-dark fw-semibold" style="font-size: 1.1rem;">
+            <i class="bi bi-camera-video me-2"></i>
+          </span>
+          <span class="text-primary arrow-icon" style="font-size: 1.2rem">
+            <i
+              :class="videoVisible ? 'bi bi-chevron-down' : 'bi bi-chevron-up'"
+            ></i>
+          </span>
+        </div>
+        <div
+          class="card-body"
+          id="video-content"
+          x-show="videoVisible"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="opacity-0 transform -translate-y-2"
+          x-transition:enter-end="opacity-100 transform translate-y-0"
+          x-transition:leave="transition ease-in duration-300"
+          x-transition:leave-start="opacity-100 transform translate-y-0"
+          x-transition:leave-end="opacity-0 transform -translate-y-2"
+        >
           {% if exam.enable_video_proctoring %}
           <video
             id="webcam-stream"
@@ -370,20 +403,6 @@ head_include %}
           <p class="card-text">Video proctoring disabled.</p>
           {% endif %}
         </div>
-        {% if exam.enable_video_proctoring %}
-        <div class="card-footer d-flex justify-content-end">
-          <button
-            @click="videoVisible = !videoVisible"
-            class="btn btn-sm btn-outline-info"
-            type="button"
-          >
-            <span class="d-flex align-items-center">
-              <i class="bi bi-camera-video me-2"></i>
-              <span x-text="videoVisible ? 'Hide Video' : 'Show Video'"></span>
-            </span>
-          </button>
-        </div>
-        {% endif %}
       </div>
     </div>
     <div class="col-md-9">
@@ -438,7 +457,7 @@ head_include %}
             <h5 class="card-title mb-0 fw-semibold text-dark">
                 Instructions
             </h5>
-            <span class="text-info arrow-icon" style="font-size: 1.2rem">
+            <span class="text-primary arrow-icon" style="font-size: 1.2rem">
                 <i
                 :class="isCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
                 ></i>

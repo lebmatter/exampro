@@ -334,14 +334,6 @@ frappe.ready(() => {
         showSubmitConfirmPage();
     });
 
-    var collapseElement = $('#videoCollapse');
-    collapseElement.on('shown.bs.collapse', function () {
-        $('#toggleButton').text('Hide Video');
-    });
-    collapseElement.on('hidden.bs.collapse', function () {
-        $('#toggleButton').text('Show Video');
-    });
-
     // frappe.realtime.on('newcandidatemsg', (data) => {
     //     convertedTime = timeAgo(data.creation);
     //     addChatBubble(convertedTime, data.message, data.type_of_message)
