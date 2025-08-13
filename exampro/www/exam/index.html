@@ -413,7 +413,7 @@ head_include %}
                     :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
                     style="cursor: pointer"
                 >
-                    <span x-show="timerVisible" class="timer">--:--</span>
+                    <span x-show="timerVisible" class="timer" id="exam-timer">--:--</span>
                     <span x-show="!timerVisible">Show Timer</span>
                 </button>
             </div>
@@ -506,7 +506,7 @@ head_include %}
         </div>
         <div class="modal-body" id="alertText"></div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary" data-dismiss="modal">
+          <button type="button" class="btn btn-primary" data-dismiss="modal" id="alertCloseButton">
             Close
           </button>
         </div>

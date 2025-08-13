@@ -11,7 +11,11 @@ function updateTimer() {
         var remainingTime = new Date(exam.end_time) - new Date().getTime();
         if (remainingTime <= 0) {
             // Display "0m 0s" when time is up
-            document.getElementById("timer").innerHTML = "00:00";
+            document.getElementById("exam-timer").innerHTML = "00:00";
+            
+            // Show exam alert when time is up
+            examAlert("Time's Up!", "Your exam time has expired. Click OK to proceed.");
+            
             endExam();
             return; // Stop the timer from updating further
         }
@@ -646,13 +650,6 @@ function displayQuestion(current_qs) {
         $('#examTextInput').show();
         var inputTextArea = $("#examTextInput").find("textarea");
         inputTextArea.val(currentQuestion["answer"]);
-    }
-
-    if (exam.time) {
-        $('#exam-timer').attr('data-time', exam.time);
-        $('#exam-timer').show();
-    } else {
-        $('#exam-timer').hide();
     }
 
 };
