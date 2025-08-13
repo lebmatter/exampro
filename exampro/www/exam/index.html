@@ -425,15 +425,20 @@ head_include %}
                     <span class="d-flex align-items-center"> Submit </span>
                 </button>
                 <button
-                    type="button"
-                    @click="timerVisible = !timerVisible"
-                    class="btn btn-warning"
-                    data-bs-toggle="tooltip"
-                    :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
-                    style="cursor: pointer"
+                  type="button"
+                  @click="timerVisible = !timerVisible"
+                  class="btn btn-warning d-flex align-items-center"
+                  data-bs-toggle="tooltip"
+                  :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
+                  style="cursor: pointer"
                 >
-                    <span x-show="timerVisible" class="timer" id="exam-timer">--:--</span>
-                    <span x-show="!timerVisible">Show Timer</span>
+                  <span x-show="timerVisible" class="timer" id="exam-timer">--:--</span>
+                  <span x-show="!timerVisible">Show Timer</span>
+                  <i
+                    class="ms-2"
+                    :class="timerVisible ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                    aria-label="Toggle timer visibility"
+                  ></i>
                 </button>
             </div>
         </div>
