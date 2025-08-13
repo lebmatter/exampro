@@ -23,7 +23,6 @@
         --secondary-color: #ffbf10;
         --black: #222222;
         --text-grey: #888888;
-        --bg-grey: #f8f8f8;
         --light-grey: #f7f7f7;
       }
 
@@ -41,7 +40,7 @@
         line-height: 1.6;
       }
 
-      /* Navigation - Notion Style */
+      /* Navigation */
       .navbar {
         background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(10px);
@@ -62,36 +61,25 @@
       .navbar-brand:hover {
         color: var(--black);
       }
+
       .logo-img {
         width: 140px;
         height: 32px;
         object-fit: contain;
       }
+
       @media (max-width: 768px) {
         .logo-img {
           width: 110px;
           height: 28px;
         }
       }
+
       @media (max-width: 480px) {
         .logo-img {
           width: 90px;
           height: 24px;
         }
-      }
-
-      .logo-icon {
-        width: 32px;
-        height: 32px;
-        background: var(--primary-color);
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 600;
-        font-size: 1rem;
-        margin-right: 0.5rem;
       }
 
       .nav-link {
@@ -124,7 +112,7 @@
         color: white;
       }
 
-      /* Hero Section - Notion Style */
+      /* Hero Section */
       .hero {
         padding: 5rem 0 8rem 0;
         background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
@@ -212,7 +200,7 @@
         border-radius: 8px;
       }
 
-      /* Features Section - Notion Style */
+      /* Features Section */
       .features {
         padding: 6rem 0;
         background: white;
@@ -306,7 +294,7 @@
         font-weight: 600;
       }
 
-      /* Showcase Section - Notion Style */
+      /* Showcase Section */
       .showcase {
         padding: 6rem 0;
         background: var(--light-grey);
@@ -402,7 +390,7 @@
         transform: scale(1.2);
       }
 
-      /* Installation Section - Notion Style */
+      /* Installation Section */
       .installation {
         padding: 6rem 0;
         background: white;
@@ -463,53 +451,18 @@
         text-decoration: underline;
       }
 
-      /* Footer - Notion Style */
+      /* Footer */
       footer {
         background: var(--light-grey);
         padding: 4rem 0 2rem 0;
         border-top: 1px solid rgba(0, 0, 0, 0.06);
-      }
-
-      .footer-content {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 2rem;
-        margin-bottom: 2rem;
-      }
-
-      .footer-section h4 {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--black);
-        margin-bottom: 1rem;
-      }
-
-      .footer-section ul {
-        list-style: none;
-        padding: 0;
-      }
-
-      .footer-section li {
-        margin-bottom: 0.5rem;
-      }
-
-      .footer-link {
-        color: var(--text-grey);
-        text-decoration: none;
-        font-size: 0.9rem;
-        transition: color 0.2s ease;
-      }
-
-      .footer-link:hover {
-        color: var(--primary-color);
-      }
-
-      .footer-bottom {
         text-align: center;
-        padding-top: 2rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
+      }
+
+      footer p {
         color: var(--text-grey);
         font-size: 0.9rem;
+        margin: 0;
       }
 
       /* Responsive Design */
@@ -588,6 +541,7 @@
         </div>
       </div>
     </nav>
+
     <!-- Hero Section -->
     <section class="hero">
       <div class="container">
@@ -778,51 +732,7 @@
     <!-- Footer -->
     <footer>
       <div class="container">
-        <div class="footer-content">
-          <div class="footer-section">
-            <h4>ExamPro</h4>
-            <p
-              style="
-                color: var(--text-grey);
-                font-size: 0.9rem;
-                margin-bottom: 0;
-              "
-            >
-              Secure, reliable proctored examinations built for the Frappe
-              ecosystem.
-            </p>
-          </div>
-          <div class="footer-section">
-            <h4>Product</h4>
-            <ul>
-              <li><a href="#" class="footer-link">Features</a></li>
-              <li><a href="#" class="footer-link">Pricing</a></li>
-              <li><a href="#" class="footer-link">Security</a></li>
-              <li><a href="#" class="footer-link">Updates</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Resources</h4>
-            <ul>
-              <li><a href="#" class="footer-link">Documentation</a></li>
-              <li><a href="#" class="footer-link">API Reference</a></li>
-              <li><a href="#" class="footer-link">Examples</a></li>
-              <li><a href="#" class="footer-link">Community</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h4>Support</h4>
-            <ul>
-              <li><a href="#" class="footer-link">Help Center</a></li>
-              <li><a href="#" class="footer-link">Contact Us</a></li>
-              <li><a href="#" class="footer-link">Status</a></li>
-              <li><a href="#" class="footer-link">Changelog</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p>&copy; 2025 ExamPro. Built with ❤️ for the Frappe community.</p>
-        </div>
+        <p>&copy; 2025 ExamPro. Built with ❤️ for the Frappe community.</p>
       </div>
     </footer>
 
