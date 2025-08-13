@@ -95,28 +95,13 @@ function startRecording() {
                     postTrackingDataInterval: 15,
                     
                     // Display options
-                    showFaceRectangle: true,
-                    showGazeVector: true,
-                    showEyePoints: true,
-                    enableLogs: true, 
+                    showFaceRectangle: false,
+                    showGazeVector: false,
+                    showEyePoints: false,
+                    enableLogs: false, 
                     
                     // Callback functions
                     onPostTrackingData: (trackingData) => {
-                        console.log("=== TRACKING DATA (Low Performance Mode) ===");
-                        console.log("Timestamp:", new Date(trackingData.timestamp).toLocaleString());
-                        console.log("Session Duration:", trackingData.sessionDuration + "s");
-                        console.log("Face Count Changes:", trackingData.faceCountChanges);
-                        console.log("Total Away Time:", trackingData.totalAwayTime + "s");
-                        console.log("Total Distracted Time:", trackingData.totalDistractedTime + "s");
-                        console.log("Current Face Count:", trackingData.currentFaceCount);
-                        console.log("Current Gaze State:", trackingData.currentGazeState);
-                        console.log("Processing FPS:", trackingData.processingFps);
-                        console.log("Frames Skipped:", trackingData.framesSkipped);
-                        console.log("Canvas Updates:", trackingData.canvasUpdates);
-                        console.log("Is Running:", trackingData.isRunning);
-                        console.log("Is Idle:", trackingData.isIdle);
-                        console.log("Retina Locations:", trackingData.retinaLocations || []);
-                        console.log("============================================");
                         
                         // Send tracking data to server
                         frappe.call({
