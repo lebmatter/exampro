@@ -516,7 +516,7 @@ function displayQuestion(current_qs) {
             questionContentHtml += `
             <div class="question-description-image mt-3">
                 <img src="${imageSrc}" class="img-fluid" alt="Question description image" 
-                     style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                     style="max-width: 70%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
                      onerror="this.style.display='none'; console.warn('Failed to load question description image');">
             </div>`;
         }
