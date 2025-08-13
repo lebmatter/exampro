@@ -423,8 +423,6 @@ head_include %}
 
       <div class="row">
         <div class="col-md-12">
-          {% if exam.instructions %}
-
         {% if exam.submission_status == "Started" %}
         <div class="card common-card-style" x-data="{ isCollapsed: true }">
             <div
@@ -457,7 +455,17 @@ head_include %}
             x-transition:leave-start="opacity-100 transform translate-y-0"
             x-transition:leave-end="opacity-0 transform -translate-y-2"
             >
-            {{ exam.instructions | safe }}
+            {% if exam.instructions %}
+                {{ exam.instructions | safe }}
+            {% else %}
+                <p>Please read the following general instructions carefully before starting the exam:</p>
+                <ul>
+                    <li>Read each question carefully before answering</li>
+                    <li>Make sure you have a stable internet connection</li>
+                    <li>Do not refresh the page or navigate away during the exam</li>
+                    <li>Submit your answers before the time limit expires</li>
+                </ul>
+            {% endif %}
             </div>
         </div>
         {% else %}
@@ -468,7 +476,18 @@ head_include %}
                 </h5>
             </div>
             <div class="card-body" id="instruction">
-                {{ exam.instructions | safe }}
+                {% if exam.instructions %}
+                    {{ exam.instructions | safe }}
+                {% else %}
+                    <p>Please read the following general instructions carefully before starting the exam:</p>
+                    <ul>
+                        <li>Read each question carefully before answering</li>
+                        <li>Make sure you have a stable internet connection</li>
+                        <li>Do not refresh the page or navigate away during the exam</li>
+                        <li>Submit your answers before the time limit expires</li>
+                        <li>If you encounter any technical issues, contact your proctor immediately</li>
+                    </ul>
+                {% endif %}
                 <!-- Start Exam Button -->
                 {% if exam.submission_status == "Registered" %}
                 <div class="text-center my-3">
@@ -482,8 +501,6 @@ head_include %}
             </div>
         </div>
         {% endif %}
-
-          {% endif %}
         </div>
         </div>
         <div class="row">

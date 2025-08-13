@@ -384,9 +384,11 @@ function updateOverviewMap() {
                 }
             }
 
+            if (currentQuestion) {
             document.getElementById("answeredCount").innerHTML = data.message.total_answered.toString().padStart(2, '0');
             // document.getElementById("notattempted").innerHTML = data.message.total_not_attempted;
             document.getElementById("markedForLaterCount").innerHTML = data.message.total_marked_for_later.toString().padStart(2, '0');
+            }
             $("#question-length").text(data.message.total_questions);
 
             // populate buttons
