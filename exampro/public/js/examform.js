@@ -393,9 +393,9 @@ function updateOverviewMap() {
                 
                 // Determine circle color based on question status
                 if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
-                    circleColor = "text-info"; // Blue for marked for later
+                    circleColor = "text-warning"; // Yellow/orange for marked for later
                 } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
-                    circleColor = "text-warning"; // Yellow/orange for answered
+                    circleColor = "text-info"; // Blue for answered
                 }
                 
                 // If this is the current question, highlight it with custom styling
