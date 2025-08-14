@@ -421,7 +421,7 @@ head_include %}
             >
                 <!-- Alpine.js confirmation dialog before calling endExam -->
                 <button class="btn btn-primary me-2 d-inline-block"
-                    onclick="if(confirm('Are you sure you want to submit the exam? This action can not be undone.')) { endExam(); }">
+                    @click="showSubmitConfirmPage()">
                     <span class="d-flex align-items-center"> Submit </span>
                 </button>
                 <button
