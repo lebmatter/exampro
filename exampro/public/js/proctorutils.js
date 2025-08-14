@@ -523,6 +523,11 @@ function setupVideoEventListeners() {
     const exam_submission = video.getAttribute("data-videoid");
     if (!exam_submission) return;
     
+    // Check if listeners are already set up for this video
+    if (video.hasAttribute('data-listeners-setup')) {
+      return; // Skip if already set up
+    }
+    
     // Add event listeners to video elements
     video.addEventListener("click", togglePlay);
     video.addEventListener("play", updatetogglePlayBtn);
@@ -530,33 +535,49 @@ function setupVideoEventListeners() {
     video.addEventListener("timeupdate", handleProgress);
     video.addEventListener("loadedmetadata", onLoanMetaData);
     
+    // Mark this video as having listeners set up
+    video.setAttribute('data-listeners-setup', 'true');
+    
     // Add event listeners to control elements using ID-specific selectors
     const togglePlayBtn = document.getElementById(`togglePlayBtn-${exam_submission}`);
-    if (togglePlayBtn) togglePlayBtn.addEventListener("click", togglePlay);
+    if (togglePlayBtn && !togglePlayBtn.hasAttribute('data-listeners-setup')) {
+      togglePlayBtn.addEventListener("click", togglePlay);
+      togglePlayBtn.setAttribute('data-listeners-setup', 'true');
+    }
     
     const goLiveBtn = document.getElementById(`goLive-${exam_submission}`);
-    if (goLiveBtn) goLiveBtn.addEventListener("click", playLastVideo);
+    if (goLiveBtn && !goLiveBtn.hasAttribute('data-listeners-setup')) {
+      goLiveBtn.addEventListener("click", playLastVideo);
+      goLiveBtn.setAttribute('data-listeners-setup', 'true');
+    }
     
     const skipBackBtn = document.getElementById(`skipBack-${exam_submission}`);
-    if (skipBackBtn) skipBackBtn.addEventListener("click", playPreviousVideo);
+    if (skipBackBtn && !skipBackBtn.hasAttribute('data-listeners-setup')) {
+      skipBackBtn.addEventListener("click", playPreviousVideo);
+      skipBackBtn.setAttribute('data-listeners-setup', 'true');
+    }
     
     const skipFwdBtn = document.getElementById(`skipFwd-${exam_submission}`);
-    if (skipFwdBtn) skipFwdBtn.addEventListener("click", playNextVideo);
+    if (skipFwdBtn && !skipFwdBtn.hasAttribute('data-listeners-setup')) {
+      skipFwdBtn.addEventListener("click", playNextVideo);
+      skipFwdBtn.setAttribute('data-listeners-setup', 'true');
+    }
     
     const chatBtn = document.getElementById(`chat-btn-${exam_submission}`);
-    if (chatBtn) {
-      // Remove any existing event listeners first to prevent duplicates
-      chatBtn.removeEventListener("click", openChatModal);
+    if (chatBtn && !chatBtn.hasAttribute('data-listeners-setup')) {
       chatBtn.addEventListener("click", openChatModal);
+      chatBtn.setAttribute('data-listeners-setup', 'true');
       console.log(`Added click listener to chat button for ${exam_submission}`);
     }
   });
   
   // Set up event listeners for message cards in the sidebar
   document.querySelectorAll('.message-card').forEach(card => {
-    card.removeEventListener('click', openChatModal);
-    card.addEventListener('click', openChatModal);
-    card.style.cursor = 'pointer';
+    if (!card.hasAttribute('data-listeners-setup')) {
+      card.addEventListener('click', openChatModal);
+      card.style.cursor = 'pointer';
+      card.setAttribute('data-listeners-setup', 'true');
+    }
   });
 }
 
@@ -690,7 +711,6 @@ function updateSidebarMessages() {
           
           // Only animate if it's a meaningful change
           if (shouldAnimate) {
-            console.log(`Animating message card for ${msg.exam_submission}`);
             // Remove existing animation class if present
             card.classList.remove('has-new-message');
             
@@ -721,13 +741,13 @@ function updateSidebarMessages() {
       
       // Process submissions that have video tiles but no message cards
       if (missingMessageCards.length > 0) {
-        console.log(`Found ${missingMessageCards.length} submissions missing message cards:`, missingMessageCards);
+        // console.log(`Found ${missingMessageCards.length} submissions missing message cards:`, missingMessageCards);
         addMissingMessageCards(missingMessageCards);
       }
       
       // Process new submissions that need video tiles
       if (newSubmissions.length > 0) {
-        console.log(`Found ${newSubmissions.length} new submissions to add:`, newSubmissions);
+        // console.log(`Found ${newSubmissions.length} new submissions to add:`, newSubmissions);
         addNewVideoTiles(newSubmissions);
       }
     }
@@ -756,10 +776,7 @@ frappe.ready(() => {
     // Check for new submissions and update sidebar
     updateSidebarMessages();
     
-    // Ensure all event listeners are properly set up
-    setupVideoEventListeners();
-    
-    // Setup dynamic observer for new content
+    // Setup dynamic observer for new content (only if not already set up)
     setupDynamicObservers();
   }, 5000); // 5 seconds
   
@@ -1057,7 +1074,7 @@ function addNewVideoTiles(newSubmissions) {
           }
         }
         
-        console.log(`Added new message card for ${candidate_name} (${exam_submission})`);
+        // console.log(`Added new message card for ${candidate_name} (${exam_submission})`);
         
         // Update the last known message for this submission
         lastKnownMessages[exam_submission] = {
@@ -1269,7 +1286,7 @@ function updateControlElementIds() {
         });
     });
     
-    // After updating IDs, set up the event listeners
+    // Set up event listeners for any new elements that don't have them yet
     setupVideoEventListeners();
 }
 
@@ -1352,7 +1369,7 @@ function updateMessageCardStatus(exam_submission, status) {
             
             // Only update if status is actually changing
             if (currentStatus !== newStatus) {
-                console.log(`Status changing for ${exam_submission}: ${currentStatus} -> ${newStatus}`);
+                // console.log(`Status changing for ${exam_submission}: ${currentStatus} -> ${newStatus}`);
                 
                 // Remove all status classes
                 statusBadge.classList.remove('status-started', 'status-offline', 'status-terminated', 'status-registered');
@@ -1366,7 +1383,7 @@ function updateMessageCardStatus(exam_submission, status) {
                 // Store the status in the data attribute for future reference
                 statusBadge.setAttribute('data-submission-status', status.charAt(0).toUpperCase() + status.slice(1));
             } else {
-                console.log(`Status unchanged for ${exam_submission}: ${currentStatus}`);
+                // console.log(`Status unchanged for ${exam_submission}: ${currentStatus}`);
             }
         }
     }
