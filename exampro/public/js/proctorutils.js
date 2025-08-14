@@ -680,21 +680,35 @@ function updateSidebarMessages() {
             statusBadge.textContent = msg.status;
           }
           
-          // Remove existing animation class if present
-          card.classList.remove('has-new-message');
+          // Check if this is a meaningful change that should trigger animation
+          // Don't animate for initial "Exam started" messages or repeated same messages
+          const isInitialMessage = msg.message === "Exam started" || msg.message === "No messages yet";
+          const isFirstTimeSeeing = !lastMessage;
+          const shouldAnimate = (messageChanged || statusChanged) && 
+                               !(isInitialMessage && isFirstTimeSeeing);
           
-          // Trigger reflow to restart animation
-          void card.offsetWidth;
           
-          // Add animation class
-          card.classList.add('has-new-message');
-          
-          // Remove animation class after animation completes
-          setTimeout(() => {
-            if (card.classList.contains('has-new-message')) {
-              card.classList.remove('has-new-message');
-            }
-          }, 2000);
+          // Only animate if it's a meaningful change
+          if (shouldAnimate) {
+            console.log(`Animating message card for ${msg.exam_submission}`);
+            // Remove existing animation class if present
+            card.classList.remove('has-new-message');
+            
+            // Trigger reflow to restart animation
+            void card.offsetWidth;
+            
+            // Add animation class
+            card.classList.add('has-new-message');
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+              if (card.classList.contains('has-new-message')) {
+                card.classList.remove('has-new-message');
+              }
+            }, 2000);
+          } else {
+            console.log(`Skipping animation for ${msg.exam_submission} - initial message`);
+          }
           
           // Update cache
           lastKnownMessages[msg.exam_submission] = {
@@ -1332,27 +1346,28 @@ function updateMessageCardStatus(exam_submission, status) {
         const statusBadge = messageCard.querySelector('.status-badge');
         
         if (statusBadge) {
-            // Remove all status classes
-            statusBadge.classList.remove('status-started', 'status-offline', 'status-terminated', 'status-registered');
+            // Get current status to check if it's actually changing
+            const currentStatus = statusBadge.textContent.toLowerCase();
+            const newStatus = status.toLowerCase();
             
-            // Add appropriate status class
-            statusBadge.classList.add(`status-${status.toLowerCase()}`);
-            
-            // Update the text content (capitalize first letter for display)
-            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-            
-            // Store the status in the data attribute for future reference
-            statusBadge.setAttribute('data-submission-status', status.charAt(0).toUpperCase() + status.slice(1));
-            
-            // Add a subtle animation to highlight the change
-            messageCard.classList.remove('has-new-message');
-            void messageCard.offsetWidth; // Force reflow to restart animation
-            messageCard.classList.add('has-new-message');
-            
-            // Remove animation class after it completes
-            setTimeout(() => {
-                messageCard.classList.remove('has-new-message');
-            }, 2000);
+            // Only update if status is actually changing
+            if (currentStatus !== newStatus) {
+                console.log(`Status changing for ${exam_submission}: ${currentStatus} -> ${newStatus}`);
+                
+                // Remove all status classes
+                statusBadge.classList.remove('status-started', 'status-offline', 'status-terminated', 'status-registered');
+                
+                // Add appropriate status class
+                statusBadge.classList.add(`status-${newStatus}`);
+                
+                // Update the text content (capitalize first letter for display)
+                statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                
+                // Store the status in the data attribute for future reference
+                statusBadge.setAttribute('data-submission-status', status.charAt(0).toUpperCase() + status.slice(1));
+            } else {
+                console.log(`Status unchanged for ${exam_submission}: ${currentStatus}`);
+            }
         }
     }
 }
