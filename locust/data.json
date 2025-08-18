@@ -1,0 +1,172 @@
+{
+  "questions": [
+    {
+      "question": "What is the primary purpose of load testing?",
+      "options": [
+        "To measure system performance under expected load",
+        "To find security vulnerabilities",
+        "To check code quality",
+        "To validate user interface design"
+      ],
+      "correct": 0
+    },
+    {
+      "question": "Which HTTP status code indicates a successful request?",
+      "options": [
+        "404",
+        "500",
+        "200",
+        "301"
+      ],
+      "correct": 2
+    },
+    {
+      "question": "What does API stand for?",
+      "options": [
+        "Advanced Programming Interface",
+        "Application Programming Interface",
+        "Automated Process Integration",
+        "Application Process Interface"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "Which of these is a NoSQL database?",
+      "options": [
+        "PostgreSQL",
+        "MySQL",
+        "MongoDB",
+        "SQLite"
+      ],
+      "correct": 2
+    },
+    {
+      "question": "What is the purpose of caching in web applications?",
+      "options": [
+        "To improve performance by storing frequently accessed data",
+        "To encrypt sensitive information",
+        "To validate user permissions",
+        "To compress data for storage"
+      ],
+      "correct": 0
+    },
+    {
+      "question": "Which HTTP method is typically used to create new resources?",
+      "options": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What is the main advantage of microservices architecture?",
+      "options": [
+        "Simpler deployment process",
+        "Better scalability and maintainability",
+        "Reduced memory usage",
+        "Faster development time"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "Which tool is commonly used for API testing?",
+      "options": [
+        "Photoshop",
+        "Excel",
+        "Postman",
+        "PowerPoint"
+      ],
+      "correct": 2
+    },
+    {
+      "question": "What does JSON stand for?",
+      "options": [
+        "Java Standard Object Notation",
+        "JavaScript Object Notation",
+        "Just Simple Object Names",
+        "Java Serialized Object Network"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "Which of these is a version control system?",
+      "options": [
+        "Docker",
+        "Git",
+        "Jenkins",
+        "Apache"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What is the purpose of a CDN (Content Delivery Network)?",
+      "options": [
+        "To store user passwords securely",
+        "To deliver content faster by using geographically distributed servers",
+        "To manage database transactions",
+        "To compile source code"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "Which protocol is used for secure web communication?",
+      "options": [
+        "HTTP",
+        "FTP",
+        "HTTPS",
+        "SMTP"
+      ],
+      "correct": 2
+    },
+    {
+      "question": "What is the main purpose of unit testing?",
+      "options": [
+        "To test individual components in isolation",
+        "To test the entire system end-to-end",
+        "To test user interface elements",
+        "To test database performance"
+      ],
+      "correct": 0
+    },
+    {
+      "question": "Which of these is a container orchestration platform?",
+      "options": [
+        "Docker",
+        "Kubernetes",
+        "Git",
+        "Jenkins"
+      ],
+      "correct": 1
+    },
+    {
+      "question": "What does CRUD stand for in database operations?",
+      "options": [
+        "Create, Read, Update, Delete",
+        "Connect, Retrieve, Upload, Download",
+        "Copy, Remove, Undo, Debug",
+        "Compile, Run, Update, Deploy"
+      ],
+      "correct": 0
+    }
+  ],
+  "exam_config": {
+    "title": "ExamPro Load Test Exam",
+    "description": "Sample exam for load testing the ExamPro system",
+    "duration_minutes": 15,
+    "pass_percentage": 50.0,
+    "randomize_questions": true,
+    "show_result": "After Exam Submission",
+    "max_warning_count": 5
+  },
+  "schedule_config": {
+    "schedule_type": "Fixed",
+    "start_delay_seconds": 30
+  },
+  "user_config": {
+    "prefix": "loadtest",
+    "password": "TestPass123!",
+    "role": "Exam Candidate"
+  }
+}
