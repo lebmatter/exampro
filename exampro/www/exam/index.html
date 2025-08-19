@@ -277,18 +277,181 @@ head_include %}
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     padding: 0.5rem 1rem;
   }
+
+  /* Alert Card Styling - Consistent with result.html */
+  .alert-card {
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+    border: none;
+    background-color: #fff;
+  }
+
+  .alert-card-header {
+    padding: 15px 20px;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    background-color: #e9ecef;
+    border-bottom: 3px solid #6c757d;
+  }
+
+  .alert-card-header h4 {
+    font-weight: 600;
+    margin: 0;
+    color: #495057;
+  }
+
+  .alert-card-header i {
+    margin-right: 8px;
+    color: #6c757d;
+    font-size: 1.2rem;
+  }
+
+  .alert-card-body {
+    padding: 25px;
+    text-align: center;
+  }
+
+  .alert-icon-section {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .alert-icon-section i {
+    font-size: 64px;
+    color: #dc3545;
+  }
+
+  .alert-status {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #dc3545;
+  }
+
+  .alert-message-box {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-left: 4px solid #dc3545;
+  }
+
+  .alert-message-box p {
+    margin-bottom: 0;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .alert-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .alert-button {
+    padding: 8px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .alert-button:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+
+  .alert-button-primary {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+  }
+
+  .alert-button-primary:hover {
+    background-color: #0056b3;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+  }
+
+  .alert-button-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: 1px solid #6c757d;
+  }
+
+  .alert-button-secondary:hover {
+    background-color: #545b62;
+    color: white;
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
+  }
+
+  .alert-button i {
+    margin-right: 8px;
+  }
+
+  /* Responsive adjustments for alert card */
+  @media (max-width: 767px) {
+    .alert-card {
+      margin: 0 10px;
+    }
+    
+    .alert-icon-section i {
+      font-size: 48px;
+    }
+    
+    .alert-status {
+      font-size: 20px;
+    }
+
+    .alert-actions {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .alert-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
 {% endblock %} {% block page_content %}
 
-<div class="container mt-10">
+<div class="container mt-4 mb-4">
   {% if alert %}
-  <div class="row justify-content-center mt-10 mb-10">
-    <div class="col-md-6">
-      <div class="common-card-style">
-        <div class="card-body text-center">
-          <h5 class="bold-heading">{{ alert.title }}</h5>
-          <p class="card-text">{{ alert.text }}</p>
-        </div>
+  <div class="alert-card">
+    <div class="alert-card-header">
+      <h4 class="mb-0">
+        <i class="fas fa-exclamation-triangle"></i> Alert
+      </h4>
+    </div>
+    <div class="alert-card-body">
+      <div class="alert-icon-section">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="alert-status">{{ alert.title }}</div>
+      <div class="alert-message-box">
+        <p>{{ alert.text }}</p>
+      </div>
+      <div class="alert-actions">
+        <a href="javascript:window.history.back()" class="alert-button alert-button-secondary">
+          <i class="fas fa-arrow-left"></i>Go Back
+        </a>
+        <a href="javascript:location.reload()" class="alert-button alert-button-primary">
+          <i class="fas fa-sync-alt"></i>Refresh
+        </a>
       </div>
     </div>
   </div>
