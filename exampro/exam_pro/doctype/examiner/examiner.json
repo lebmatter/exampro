@@ -8,9 +8,7 @@
  "field_order": [
   "examiner",
   "can_proctor",
-  "can_evaluate",
-  "proctoring_count",
-  "evaluation_count"
+  "can_evaluate"
  ],
  "fields": [
   {
@@ -34,28 +32,12 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Can Evaluate"
-  },
-  {
-   "default": "0",
-   "fieldname": "proctoring_count",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Proctoring Count",
-   "non_negative": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "evaluation_count",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Evaluation Count",
-   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-11 15:31:35.428063",
+ "modified": "2025-08-11 15:31:35.428063",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Examiner",
