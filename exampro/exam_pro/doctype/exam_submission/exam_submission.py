@@ -256,6 +256,21 @@ class ExamSubmission(Document):
 		sched.save(ignore_permissions=True)
 	
 	def before_insert(self):
+		# Check if there are any existing submissions for the same candidate and schedule
+		# that are NOT in ["Terminated", "Submitted"]
+		existing_doctypes = frappe.get_all(
+			"Exam Submission",
+			filters={
+				"candidate": self.candidate,
+				"exam_schedule": self.exam_schedule,
+				"status": ("not in", ["Terminated", "Submitted"])
+			}
+		)
+		if existing_doctypes:
+			frappe.throw("An active submission already exists for this candidate and schedule.")
+			return
+
+
 		if not self.short_uuid:
 			self.short_uuid = generate_short_uuid()
 			
