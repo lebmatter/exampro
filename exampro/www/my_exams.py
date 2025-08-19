@@ -281,7 +281,7 @@ def get_context(context):
 				"message": f"You have {len(urgent_events)} proctoring session{'' if len(urgent_events) == 1 else 's'} scheduled in the next 24 hours with {total_candidates} candidates{'' if total_candidates == 1 else 's'}.",
 				"link": "/proctor",
 				"link_text": "View Details",
-				"icon": "fas fa-eye"
+				"icon": "bi bi-eye"
 			}
 	
 	# Get evaluator alert
@@ -293,7 +293,7 @@ def get_context(context):
 				"message": f"You have {pending_count} exam evaluation{'' if pending_count == 1 else 's'} pending. Please complete before the deadline.",
 				"link": "/evaluate",
 				"link_text": "View Details",
-				"icon": "fas fa-clipboard-check"
+				"icon": "bi bi-clipboard-check"
 			}
 	
 	context.metatags = {

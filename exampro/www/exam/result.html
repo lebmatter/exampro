@@ -8,10 +8,10 @@ ext.render_header() }} {% endfor %}
     <div class="card-header header-{{ result_type }}">
       <h4 class="mb-0">
         {% if result_type == "scorecard" %}
-        <i class="fas fa-award"></i> Exam Score Card {% elif result_type ==
-        "pending" %} <i class="fas fa-hourglass-half"></i> Result Pending {%
+        <i class="bi bi-award"></i> Exam Score Card {% elif result_type ==
+        "pending" %} <i class="bi bi-hourglass-split"></i> Result Pending {%
         elif result_type == "terminated" %}
-        <i class="fas fa-exclamation-triangle"></i> Exam Terminated {% endif %}
+        <i class="bi bi-exclamation-triangle"></i> Exam Terminated {% endif %}
       </h4>
     </div>
 
@@ -47,7 +47,7 @@ ext.render_header() }} {% endfor %}
       {% elif result_type == "pending" %}
       <div class="text-center mb-4">
         <div class="result-icon">
-          <i class="fas fa-hourglass-half icon-pending"></i>
+          <i class="bi bi-hourglass-split icon-pending"></i>
         </div>
         <div class="result-status status-pending">Exam Completed</div>
       </div>
@@ -57,7 +57,7 @@ ext.render_header() }} {% endfor %}
       {% elif result_type == "terminated" %}
       <div class="text-center mb-4">
         <div class="result-icon">
-          <i class="fas fa-exclamation-triangle icon-terminated"></i>
+          <i class="bi bi-exclamation-triangle icon-terminated"></i>
         </div>
         <div class="result-status status-terminated">Exam Terminated</div>
       </div>
@@ -68,7 +68,7 @@ ext.render_header() }} {% endfor %}
 
       <div class="text-center mt-4">
         <a href="/my-exams" class="btn btn-primary back-button">
-          <i class="fas fa-arrow-left mr-2"></i>Back to exams
+          <i class="bi bi-arrow-left me-2"></i>Back to exams
         </a>
       </div>
     </div>

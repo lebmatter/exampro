@@ -1,179 +1,179 @@
-{% extends "exampro/templates/exam_base.html" %}
-
-{% block title %}Exam Invitation{% endblock %}
-
-{% block head_include %}
-<link rel="stylesheet" href="/assets/exampro/css/exam-result.css">
+{% extends "exampro/templates/exam_base.html" %} {% block title %}Exam
+Invitation{% endblock %} {% block head_include %}
+<link rel="stylesheet" href="/assets/exampro/css/exam-result.css" />
 <style>
-    .header-invite {
-        background-color: #e7f1ff;
-        border-bottom: 3px solid #007bff;
-    }
-    .invite-icon i {
-        font-size: 64px;
-        color: #007bff;
-    }
-    .invite-details {
-        background-color: #f8f9fa;
-        border-radius: 6px;
-        padding: 15px 20px;
-        margin-bottom: 20px;
-        text-align: left;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .invite-action {
-        margin-top: 2rem;
-    }
-    .login-message {
-        margin-top: 1rem;
-        font-style: italic;
-    }
+  .header-invite {
+    background-color: #e7f1ff;
+    border-bottom: 3px solid #007bff;
+  }
+  .invite-icon i {
+    font-size: 64px;
+    color: #007bff;
+  }
+  .invite-details {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  .invite-action {
+    margin-top: 2rem;
+  }
+  .login-message {
+    margin-top: 1rem;
+    font-style: italic;
+  }
 </style>
-{% endblock %}
-
-{% block page_content %}
+{% endblock %} {% block page_content %}
 <div class="container mt-4 mb-4">
-    <div class="card exam-result-card">
-        <div class="card-header header-invite">
-            <h4 class="mb-0">
-                <i class="fas fa-envelope"></i> Exam Invitation
-            </h4>
-        </div>
-        
-        <div class="card-body text-center">
-            {% if invite_valid %}
-                <div class="result-icon invite-icon">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                
-                <div class="result-status">You are invited to take an exam</div>
-                
-                <div class="invite-details">
-                    <div class="row">
-                        <div class="col-md-6 text-md-right">
-                            <p><strong>Exam:</strong></p>
-                        </div>
-                        <div class="col-md-6 text-md-left">
-                            <p>{{ exam.name }}</p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 text-md-right">
-                            <p><strong>Duration:</strong></p>
-                        </div>
-                        <div class="col-md-6 text-md-left">
-                            <p>{{ exam_schedule.duration }} minutes</p>
-                        </div>
-                    </div>
-                    {% if exam_schedule.schedule_type == 'Fixed' %}
-                    <div class="row">
-                        <div class="col-md-6 text-md-right">
-                            <p><strong>Start Date:</strong></p>
-                        </div>
-                        <div class="col-md-6 text-md-left">
-                            <p>{{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}</p>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="row">
-                        <div class="col-md-6 text-md-right">
-                            <p><strong>Available From:</strong></p>
-                        </div>
-                        <div class="col-md-6 text-md-left">
-                            <p>{{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}</p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 text-md-right">
-                            <p><strong>Available For:</strong></p>
-                        </div>
-                        <div class="col-md-6 text-md-left">
-                            <p>{{ exam_schedule.schedule_expire_in_days }} days</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class="row">
-                        <div class="col-md-6 text-md-right">
-                            <p><strong>Status:</strong></p>
-                        </div>
-                        <div class="col-md-6 text-md-left">
-                            <p>{{ status }}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    {% if has_submission %}
-                            <div class="message-box box-pending mb-4">
-                                <p>You have already accepted this invitation.</p>
-                            </div>
-                            <a href="/my-exams" class="btn btn-primary back-button">
-                                <i class="fas fa-list-alt mr-2"></i>Go to My Exams
-                            </a>
-                    {% elif status == "Completed" %}
-                        <div class="message-box box-terminated mb-4">
-                            <p>This exam schedule has expired.</p>
-                        </div>
-                        <a href="/my-exams" class="btn btn-secondary back-button">
-                            <i class="fas fa-home mr-2"></i>Back to Home
-                        </a>
-                    {% else %}
-                        <button id="accept-invite" class="btn btn-success back-button">
-                            <i class="fas fa-check-circle mr-2"></i>Accept Invitation
-                        </button>
-                    {% endif %}
-                </div>
-            {% else %}
-                <div class="result-icon">
-                    <i class="fas fa-exclamation-circle icon-terminated"></i>
-                </div>
-                <div class="result-status status-terminated">Invalid Invitation</div>
-                <div class="message-box box-terminated">
-                    <p>{{ message }}</p>
-                </div>
-                <div class="text-center mt-4">
-                    <a href="/" class="btn btn-primary back-button">
-                        <i class="fas fa-home mr-2"></i>Back to Home
-                    </a>
-                </div>
-            {% endif %}
-        </div>
+  <div class="card exam-result-card">
+    <div class="card-header header-invite">
+      <h4 class="mb-0"><i class="bi bi-envelope"></i> Exam Invitation</h4>
     </div>
-</div>
-{% endblock %}
 
-{% block script %}
-{{ super() }}
+    <div class="card-body text-center">
+      {% if invite_valid %}
+      <div class="result-icon invite-icon">
+        <i class="bi bi-file-earmark-text"></i>
+      </div>
+
+      <div class="result-status">You are invited to take an exam</div>
+
+      <div class="invite-details">
+        <div class="row">
+          <div class="col-md-6 text-md-right">
+            <p><strong>Exam:</strong></p>
+          </div>
+          <div class="col-md-6 text-md-left">
+            <p>{{ exam.name }}</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 text-md-right">
+            <p><strong>Duration:</strong></p>
+          </div>
+          <div class="col-md-6 text-md-left">
+            <p>{{ exam_schedule.duration }} minutes</p>
+          </div>
+        </div>
+        {% if exam_schedule.schedule_type == 'Fixed' %}
+        <div class="row">
+          <div class="col-md-6 text-md-right">
+            <p><strong>Start Date:</strong></p>
+          </div>
+          <div class="col-md-6 text-md-left">
+            <p>
+              {{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
+            </p>
+          </div>
+        </div>
+        {% else %}
+        <div class="row">
+          <div class="col-md-6 text-md-right">
+            <p><strong>Available From:</strong></p>
+          </div>
+          <div class="col-md-6 text-md-left">
+            <p>
+              {{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
+            </p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 text-md-right">
+            <p><strong>Available For:</strong></p>
+          </div>
+          <div class="col-md-6 text-md-left">
+            <p>{{ exam_schedule.schedule_expire_in_days }} days</p>
+          </div>
+        </div>
+        {% endif %}
+        <div class="row">
+          <div class="col-md-6 text-md-right">
+            <p><strong>Status:</strong></p>
+          </div>
+          <div class="col-md-6 text-md-left">
+            <p>{{ status }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        {% if has_submission %}
+        <div class="message-box box-pending mb-4">
+          <p>You have already accepted this invitation.</p>
+        </div>
+        <a href="/my-exams" class="btn btn-primary back-button">
+          <i class="bi bi-list-check mr-2"></i>Go to My Exams
+        </a>
+        {% elif status == "Completed" %}
+        <div class="message-box box-terminated mb-4">
+          <p>This exam schedule has expired.</p>
+        </div>
+        <a href="/my-exams" class="btn btn-secondary back-button">
+          <i class="bi bi-house-door mr-2"></i>Back to Home
+        </a>
+        {% else %}
+        <button id="accept-invite" class="btn btn-success back-button">
+          <i class="bi bi-check-circle mr-2"></i>Accept Invitation
+        </button>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="result-icon">
+        <i class="bi bi-exclamation-circle icon-terminated"></i>
+      </div>
+      <div class="result-status status-terminated">Invalid Invitation</div>
+      <div class="message-box box-terminated">
+        <p>{{ message }}</p>
+      </div>
+      <div class="text-center mt-4">
+        <a href="/" class="btn btn-primary back-button">
+          <i class="bi bi-house-door mr-2"></i>Back to Home
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %} {% block script %} {{ super() }}
 <script>
-    $(document).ready(function() {
-        $("#accept-invite").click(function() {
-            var $btn = $(this);
-            $btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing...');
-            
-            frappe.call({
-                method: "exampro.www.exam.invite.accept_invitation",
-                args: {
-                    "schedule_name": "{{ schedule_name }}"
-                },
-                callback: function(r) {
-                    if(r.message && r.message.success) {
-                        frappe.show_alert({
-                            message: r.message.message,
-                            indicator: 'green'
-                        });
-                        setTimeout(function() {
-                            window.location.href = "/my-exams";
-                        }, 1500);
-                    } else {
-                        $btn.prop("disabled", false).html('<i class="fas fa-check-circle mr-2"></i>Accept Invitation');
-                        frappe.show_alert({
-                            message: r.message ? r.message.message : "Something went wrong. Please try again.",
-                            indicator: 'red'
-                        });
-                    }
-                }
+  $(document).ready(function () {
+    $("#accept-invite").click(function () {
+      var $btn = $(this);
+      $btn
+        .prop("disabled", true)
+        .html('<i class="bi bi-arrow-repeat mr-2"></i>Processing...');
+
+      frappe.call({
+        method: "exampro.www.exam.invite.accept_invitation",
+        args: {
+          schedule_name: "{{ schedule_name }}",
+        },
+        callback: function (r) {
+          if (r.message && r.message.success) {
+            frappe.show_alert({
+              message: r.message.message,
+              indicator: "green",
             });
-        });
+            setTimeout(function () {
+              window.location.href = "/my-exams";
+            }, 1500);
+          } else {
+            $btn
+              .prop("disabled", false)
+              .html('<i class="bi bi-check-circle mr-2"></i>Accept Invitation');
+            frappe.show_alert({
+              message: r.message
+                ? r.message.message
+                : "Something went wrong. Please try again.",
+              indicator: "red",
+            });
+          }
+        },
+      });
     });
+  });
 </script>
 {% endblock %}
