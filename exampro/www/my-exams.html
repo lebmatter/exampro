@@ -118,8 +118,8 @@ Exams') }} {% endblock %} {% block head_include %}
               </td>
               <td>{{ exam.duration }}</td>
               <td>
-                {% if exam.status == "Upcoming" %}
-                <span class="badge bg-info text-white">{{ exam.status }}</span>
+                {% if exam.status == "Registered" %}
+                <span class="badge bg-light text-dark">Upcoming</span>
                 {% elif exam.status == "Started" %}
                 <span class="badge bg-warning text-dark"
                   >{{ exam.status }}</span
@@ -152,10 +152,10 @@ Exams') }} {% endblock %} {% block head_include %}
               </td>
               <td>
                 <div class="btn-group" role="group" aria-label="Exam Actions">
-                  {% if exam.status == "Upcoming" %}
-                  <button type="button" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-eye me-2"></i>View
-                  </button>
+                  {% if exam.status == "Registered" %}
+                  <a href="/exam" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-2"></i>View Details
+                  </a>
                   {% elif exam.status == "Started" %}
                   <button type="button" class="btn btn-sm btn-primary">
                     <i class="bi bi-play-circle me-2"></i>Continue Exam
