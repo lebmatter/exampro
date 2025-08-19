@@ -694,6 +694,7 @@ def recompute_results_for_schedule(schedule):
 	max_additional_time = frappe.db.get_value("Exam Submission", {"exam_schedule": schedule}, "max(additional_time_given)") or 0
 	if sched.get_status(additional_time=max_additional_time) != "Completed":
 		frappe.throw("Cannot recompute results since the exam schedule is not completed.")
+		return {"status": "failed"}
 
 	submissions = frappe.get_all(
 		"Exam Submission", 
@@ -714,4 +715,6 @@ def recompute_results_for_schedule(schedule):
 		doc.result_status = result_status
 		doc.save()
 		frappe.db.commit()
+
+	return {"status": "success"}
 

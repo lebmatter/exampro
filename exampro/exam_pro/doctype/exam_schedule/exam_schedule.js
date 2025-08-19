@@ -21,35 +21,55 @@ frappe.ui.form.on('Exam Schedule', {
                     
                     // Add the status indicator to the form
                     frm.page.set_indicator(status, color);
+                    
+                    // Add Actions dropdown based on status
+                    add_status_based_actions(frm, status);
                 }
             })
             .catch(err => {
                 console.error("Error fetching exam schedule status:", err);
                 // Set a default indicator if there's an error
                 frm.page.set_indicator("Unknown", "gray");
+                // Add all actions as fallback
+                add_status_based_actions(frm, "Unknown");
             });
-            
-        // Add Actions dropdown with Generate Invite Link, Send Certificates, and Recompute Results
-        frm.add_custom_button(__('Generate Invite Link'), function() {
-            generate_invite_link(frm);
-        }, __('Actions'));
-        
-        frm.add_custom_button(__('Send Certificates'), function() {
-            send_certificates(frm);
-        }, __('Actions'));
-        
-        frm.add_custom_button(__('Recompute Results'), function() {
-            recompute_results(frm);
-        }, __('Actions'));
-        
-        frm.add_custom_button(__('Bulk Add Submissions'), function() {
-            bulk_add_submissions(frm);
-        }, __('Actions'));
         
         // Load examiner assignment counts dynamically
         load_examiner_assignment_counts(frm);
     }
 });
+
+function add_status_based_actions(frm, status) {
+    // Clear any existing actions to avoid duplicates
+    frm.page.clear_actions_menu();
+    
+    // Add actions based on status
+    if (status !== "Completed") {
+        // Generate Invite Link - show for Upcoming and Ongoing, not for Completed
+        frm.add_custom_button(__('Generate Invite Link'), function() {
+            generate_invite_link(frm);
+        }, __('Actions'));
+    }
+    
+    if (status === "Completed") {
+        // Send Certificates - only show if status is Completed
+        frm.add_custom_button(__('Send Certificates'), function() {
+            send_certificates(frm);
+        }, __('Actions'));
+        
+        // Recompute Results - only for Completed
+        frm.add_custom_button(__('Recompute Results'), function() {
+            recompute_results(frm);
+        }, __('Actions'));
+    }
+    
+    if (status !== "Completed") {
+        // Bulk Add Submissions - not for Completed schedules
+        frm.add_custom_button(__('Bulk Add Submissions'), function() {
+            bulk_add_submissions(frm);
+        }, __('Actions'));
+    }
+}
 
 function generate_invite_link(frm) {
     frappe.show_alert({
