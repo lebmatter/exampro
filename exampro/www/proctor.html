@@ -351,9 +351,159 @@ ext.render_header() }} {% endfor %}
       opacity: 0.6;
     }
   }
+
+  /* Alert Card Styling - Consistent with result.html */
+  .alert-card {
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: none;
+    background-color: #fff;
+  }
+
+  .alert-card-header {
+    padding: 15px 20px;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: #e9ecef;
+    border-bottom: 3px solid #6c757d;
+  }
+
+  .alert-card-header h4 {
+    font-weight: 600;
+    margin: 0;
+    color: #495057;
+  }
+
+  .alert-card-header i {
+    margin-right: 8px;
+    color: #6c757d;
+    font-size: 1.2rem;
+  }
+
+  .alert-card-body {
+    padding: 25px;
+    text-align: center;
+  }
+
+  .alert-icon-section {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .alert-icon-section i {
+    font-size: 64px;
+    color: #17a2b8;
+  }
+
+  .alert-status {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #17a2b8;
+  }
+
+  .alert-message-box {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #17a2b8;
+  }
+
+  .alert-message-box p {
+    margin-bottom: 0;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .alert-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .alert-button {
+    padding: 8px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .alert-button:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+
+  .alert-button-primary {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+  }
+
+  .alert-button-primary:hover {
+    background-color: #0056b3;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+  }
+
+  .alert-button i {
+    margin-right: 8px;
+  }
+
+  /* Responsive adjustments for alert card */
+  @media (max-width: 767px) {
+    .alert-card {
+      margin: 0 10px;
+    }
+
+    .alert-icon-section i {
+      font-size: 48px;
+    }
+
+    .alert-status {
+      font-size: 20px;
+    }
+  }
 </style>
-{% endblock %} {% block page_content %} {% if submissions|length > 0 or
-pending_candidates|length > 0 %}
+{% endblock %} {% block page_content %} {% if alert %}
+<div class="container mt-4 mb-4">
+  <div class="alert-card">
+    <div class="alert-card-header">
+      <h4 class="mb-0">
+        <i class="bi bi-clock"></i> Upcoming Proctoring Sessions
+      </h4>
+    </div>
+    <div class="alert-card-body">
+      <div class="alert-icon-section">
+        <i class="bi bi-eye"></i>
+      </div>
+      <div class="alert-status">{{ alert.title }}</div>
+      <div class="alert-message-box">
+        <p>{{ alert.text }}</p>
+      </div>
+      <div class="alert-actions">
+        <a href="/my-exams" class="alert-button alert-button-primary">
+          <i class="bi bi-arrow-left"></i>My Exams
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %} {% if submissions|length > 0 or pending_candidates|length > 0 %}
 <div class="container-fluid" style="width: 80%">
   {% else %}
   <div class="container">
@@ -614,7 +764,7 @@ pending_candidates|length > 0 %}
       </div>
     </div>
   </div>
-  {% endblock %}
+  {% endif %} {% endblock %}
 
   <!-- Scripts -->
   {%- block script %} {{ super() }}
