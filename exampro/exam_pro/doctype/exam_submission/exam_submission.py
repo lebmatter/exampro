@@ -306,13 +306,12 @@ class ExamSubmission(Document):
 			}
 			self.append('submitted_answers', qs_)
 
+@frappe.whitelist()
 def get_examiner_assignment_counts(exam_schedule):
 	"""
 	Get the current assignment counts for all examiners for a specific exam schedule.
-	
 	Args:
-		exam_schedule (str): The exam schedule name
-		
+		exam_schedule (str): The exam schedule name		
 	Returns:
 		dict: Dictionary with examiner as key and counts as value
 			  Format: {examiner_id: {'proctoring_count': int, 'evaluation_count': int}}

@@ -45,6 +45,9 @@ frappe.ui.form.on('Exam Schedule', {
         frm.add_custom_button(__('Bulk Add Submissions'), function() {
             bulk_add_submissions(frm);
         }, __('Actions'));
+        
+        // Load examiner assignment counts dynamically
+        load_examiner_assignment_counts(frm);
     }
 });
 
@@ -273,4 +276,52 @@ function bulk_add_submissions(frm) {
     });
     
     dialog.show();
+}
+
+function load_examiner_assignment_counts(frm) {
+    if (!frm.doc.examiners || frm.doc.examiners.length === 0) {
+        return;
+    }
+    
+    // Prevent multiple calls by checking if we're already loading
+    if (frm._loading_examiner_counts) {
+        return;
+    }
+    frm._loading_examiner_counts = true;
+    
+    // Call the backend function to get examiner assignment counts
+    frappe.call({
+        method: 'exampro.exam_pro.doctype.exam_submission.exam_submission.get_examiner_assignment_counts',
+        args: {
+            exam_schedule: frm.doc.name
+        },
+        callback: function(r) {
+            if (r.message) {
+                let assignment_counts = r.message;
+                console.log('Assignment counts from server:', assignment_counts);
+                
+                // Update each examiner row with the counts
+                frm.doc.examiners.forEach((examiner, idx) => {
+                    let counts = assignment_counts[examiner.examiner] || {
+                        proctoring_count: 0,
+                        evaluation_count: 0
+                    };
+                    
+                    console.log(`Setting counts for ${examiner.examiner}:`, counts);
+                    
+                    // Set the values directly in the doc
+                    examiner.proctoring_count = counts.proctoring_count;
+                    examiner.evaluation_count = counts.evaluation_count;
+                });
+                
+                // Refresh the examiners field to show updated values
+                frm.refresh_field('examiners');
+            }
+            frm._loading_examiner_counts = false;
+        },
+        error: function(r) {
+            console.error('Error loading examiner assignment counts:', r);
+            frm._loading_examiner_counts = false;
+        }
+    });
 }

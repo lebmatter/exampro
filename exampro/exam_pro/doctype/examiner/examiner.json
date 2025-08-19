@@ -8,7 +8,9 @@
  "field_order": [
   "examiner",
   "can_proctor",
-  "can_evaluate"
+  "can_evaluate",
+  "proctoring_count",
+  "evaluation_count"
  ],
  "fields": [
   {
@@ -32,6 +34,20 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Can Evaluate"
+  },
+  {
+   "fieldname": "proctoring_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Proctoring Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluation_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Evaluation Count",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
