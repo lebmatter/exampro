@@ -52,7 +52,7 @@ Exams') }} {% endblock %} {% block head_include %}
   {% endif %} {% if evaluator_alert %}
   <div class="row mb-4">
     <div class="col">
-      <div class="alert alert-danger evaluator-alert-banner" role="alert">
+      <div class="alert alert-warning evaluator-alert-banner" role="alert">
         <div class="d-flex align-items-center justify-content-between">
           <div>
             <i class="{{ evaluator_alert.icon }} me-2 pr-2"></i>
@@ -61,7 +61,7 @@ Exams') }} {% endblock %} {% block head_include %}
           </div>
           <a
             href="{{ evaluator_alert.link }}"
-            class="btn btn-danger btn-sm ml-2"
+            class="btn btn-warning btn-sm ml-2"
           >
             {{ evaluator_alert.link_text }}
           </a>

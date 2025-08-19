@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from datetime import datetime, timedelta
 from exampro.exam_pro.doctype.exam_submission.exam_submission import evaluation_values
 
 def get_evaluator_live_exams(evaluator=None):
@@ -43,6 +44,21 @@ def get_evaluator_live_exams(evaluator=None):
 
 	return res
 
+def get_pending_evaluations_count(evaluator=None):
+	"""
+	Get count of all pending evaluations for an evaluator.
+	Returns count of Exam Submissions where assigned_evaluator is the user and evaluation_status != "Finished"
+	"""
+	evaluator = evaluator or frappe.session.user
+	count = frappe.db.count(
+		"Exam Submission",
+		filters={
+			"assigned_evaluator": evaluator,
+			"evaluation_status": ["!=", "Finished"]
+		}
+	)
+	return count
+
 def get_context(context):
 	context.no_cache = 1
 
@@ -50,11 +66,17 @@ def get_context(context):
 		raise frappe.PermissionError(_("Please login to access this page."))
 	if "Exam Evaluator" not in frappe.get_roles():
 		raise frappe.PermissionError("You are not authorized to access this page")
-
-
-		
+	
 	# Get assigned exams for the evaluator
 	context.assigned_exams = get_evaluator_live_exams()
+	
+	# Get pending evaluations count and add alert if any
+	pending_count = get_pending_evaluations_count()
+	if pending_count > 0:
+		context.alert = {
+			"title": f"You have {pending_count} evaluation{'s' if pending_count > 1 else ''} pending",
+			"text": f"Please complete the evaluation{'s' if pending_count > 1 else ''} before the deadline to avoid any delays."
+		}
 	
 	context.page_context = {}
 
