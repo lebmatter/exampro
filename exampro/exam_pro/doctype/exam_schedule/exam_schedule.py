@@ -140,6 +140,119 @@ class ExamSchedule(Document):
 			message = f"Created {submissions_created} new exam submissions ({', '.join(batch_messages)})"
 			frappe.msgprint(message)
 
+	def on_update(self):
+		"""
+		Detect changes in examiners child table and reassign exam submissions if needed
+		"""
+		old_doc = self.get_doc_before_save()
+		if not old_doc:
+			return  # This is a new document, no need to check for changes
+		
+		# Check if examiners have changed
+		examiners_changed = self._have_examiners_changed(old_doc)
+		
+		if examiners_changed:
+			frappe.msgprint(
+				msg="Examiner assignments have been modified. All exam submissions will be reassigned to maintain balanced distribution.",
+				title="Reassigning Exam Submissions",
+				indicator="blue"
+			)
+			self._reassign_all_submissions()
+	
+	def _have_examiners_changed(self, old_doc):
+		"""
+		Check if examiners child table has been modified
+		"""
+		# Get current and old examiners
+		current_examiners = {
+			(ex.examiner, ex.can_proctor, ex.can_evaluate) 
+			for ex in (self.examiners or [])
+		}
+		
+		old_examiners = {
+			(ex.examiner, ex.can_proctor, ex.can_evaluate) 
+			for ex in (old_doc.examiners or [])
+		}
+		
+		# Check if there are any differences
+		return current_examiners != old_examiners
+	
+	def _reassign_all_submissions(self):
+		"""
+		Reassign all exam submissions for this schedule
+		"""
+		if not self.examiners:
+			frappe.msgprint("No examiners available for assignment.", indicator="orange")
+			return
+		
+		# Get all exam submissions for this schedule
+		submissions = frappe.get_all(
+			"Exam Submission",
+			filters={"exam_schedule": self.name},
+			fields=["name", "exam"]
+		)
+		
+		if not submissions:
+			return
+		
+		# Check exam requirements
+		exam_doc = frappe.get_doc("Exam", self.exam)
+		needs_proctoring = getattr(exam_doc, 'needs_proctoring', True)
+		needs_evaluation = exam_doc.question_type != "Choices"
+		
+		if not needs_proctoring and not needs_evaluation:
+			return  # No assignment needed
+		
+		# Get available examiners
+		proctors = [ex.examiner for ex in self.examiners if ex.can_proctor] if needs_proctoring else []
+		evaluators = [ex.examiner for ex in self.examiners if ex.can_evaluate] if needs_evaluation else []
+		
+		if needs_proctoring and not proctors:
+			frappe.msgprint("No examiners available for proctoring.", indicator="orange")
+		if needs_evaluation and not evaluators:
+			frappe.msgprint("No examiners available for evaluation.", indicator="orange")
+		
+		# Track assignments for round-robin distribution
+		proctor_assignments = {proctor: 0 for proctor in proctors}
+		evaluator_assignments = {evaluator: 0 for evaluator in evaluators}
+		
+		updated_count = 0
+		
+		# Reassign all submissions
+		for submission_data in submissions:
+			submission = frappe.get_doc("Exam Submission", submission_data.name)
+			updated = False
+			
+			# Assign proctor
+			if needs_proctoring and proctors:
+				# Find proctor with least assignments
+				next_proctor = min(proctor_assignments, key=proctor_assignments.get)
+				if submission.assigned_proctor != next_proctor:
+					submission.assigned_proctor = next_proctor
+					updated = True
+				proctor_assignments[next_proctor] += 1
+			
+			# Assign evaluator
+			if needs_evaluation and evaluators:
+				# Find evaluator with least assignments
+				next_evaluator = min(evaluator_assignments, key=evaluator_assignments.get)
+				if submission.assigned_evaluator != next_evaluator:
+					submission.assigned_evaluator = next_evaluator
+					updated = True
+				evaluator_assignments[next_evaluator] += 1
+			
+			# Save if updated
+			if updated:
+				submission.save(ignore_permissions=True)
+				updated_count += 1
+		
+		if updated_count > 0:
+			frappe.db.commit()
+			frappe.msgprint(
+				f"Successfully reassigned {updated_count} exam submissions.",
+				indicator="green"
+			)
+
 	def after_save(self):
 		self.send_proctor_emails()
 	
