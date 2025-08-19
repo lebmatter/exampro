@@ -3,6 +3,60 @@ import frappe
 from frappe.utils import now, format_datetime
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams, can_show_exam_results_for_leaderboard
 
+def get_proctor_upcoming_events(proctor=None):
+	"""Get upcoming proctoring events for the next 7 days"""
+	proctor = proctor or frappe.session.user
+	
+	# Check if user has proctor role
+	if "Exam Proctor" not in frappe.get_roles():
+		return []
+	
+	# Get current time and 7 days from now
+	current_time = frappe.utils.now_datetime()
+	week_later = current_time + timedelta(days=7)
+	
+	# Get upcoming exam schedules where user is assigned as proctor
+	upcoming_schedules = frappe.get_all(
+		"Exam Schedule",
+		filters={
+			"start_date_time": ["between", [current_time, week_later]],
+			"status": ["in", ["Scheduled", "Active"]]
+		},
+		fields=[
+			"name",
+			"exam",
+			"start_date_time", 
+			"duration",
+			"status"
+		],
+		order_by="start_date_time"
+	)
+	
+	upcoming_events = []
+	for schedule in upcoming_schedules:
+		# Count assigned candidates for this proctor in this schedule
+		candidate_count = frappe.db.count(
+			"Exam Submission",
+			{
+				"exam_schedule": schedule.name,
+				"assigned_proctor": proctor,
+				"status": ["not in", ["Registration Cancelled", "Aborted"]]
+			}
+		)
+		
+		if candidate_count > 0:
+			exam_title = frappe.db.get_value("Exam", schedule.exam, "title")
+			upcoming_events.append({
+				"schedule_name": schedule.name,
+				"exam_title": exam_title,
+				"start_time": schedule.start_date_time,
+				"duration": schedule.duration,
+				"candidate_count": candidate_count,
+				"status": schedule.status
+			})
+	
+	return upcoming_events
+
 
 def get_user_exams(member=None, page=1, page_size=10):
 	"""
@@ -201,7 +255,7 @@ def get_context(context):
 			context.next_exam_link_text = "Continue Exam"
 		elif next_exam["schedule_type"] == "Fixed" and next_exam["schedule_status"] == "Upcoming":
 			time_until = get_time_until(next_exam["start_time"])
-			context.next_exam_message = "Your next exam '{}' is scheduled to start in {}.".format(next_exam["exam_name"], time_until)
+			context.next_exam_message = "Your next exam '{}' is scheduled to start in {}.".format(next_exam["exam_title"], time_until)
 			context.next_exam_link = "/exam"
 			context.next_exam_link_text = "View Details"
 		elif next_exam["schedule_type"] == "Flexible":
@@ -211,6 +265,24 @@ def get_context(context):
 			)
 			context.next_exam_link = "/exam"
 			context.next_exam_link_text = "Start Exam"
+	
+	# Get proctor upcoming events
+	upcoming_proctor_events = get_proctor_upcoming_events()
+	if upcoming_proctor_events:
+		# Show alert if there are upcoming events in next 24 hours
+		next_24_hours = frappe.utils.now_datetime() + timedelta(hours=24)
+		urgent_events = [e for e in upcoming_proctor_events if e['start_time'] <= next_24_hours]
+		
+		if urgent_events:
+			total_candidates = sum(e['candidate_count'] for e in urgent_events)
+			context.proctor_alert = {
+				"title": f"Upcoming Proctoring Session{'' if len(urgent_events) == 1 else 's'}",
+				"message": f"You have {len(urgent_events)} proctoring session{'' if len(urgent_events) == 1 else 's'} scheduled in the next 24 hours with {total_candidates} candidates{'' if total_candidates == 1 else 's'}.",
+				"link": "/proctor",
+				"link_text": "View Details",
+				"icon": "fas fa-eye"
+			}
+	context.evaluator_alert = ""
 	
 	context.metatags = {
 		"title": "My Exams",

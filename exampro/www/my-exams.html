@@ -29,7 +29,48 @@ Exams') }} {% endblock %} {% block head_include %}
       </div>
     </div>
   </div>
-  {% else %}
+  {% endif %} {% if proctor_alert %}
+  <div class="row mb-4">
+    <div class="col">
+      <div class="alert alert-warning proctor-alert-banner" role="alert">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <i class="{{ proctor_alert.icon }} me-2 pr-2"></i>
+            <strong>{{ proctor_alert.title }}: </strong>
+            {{ proctor_alert.message }}
+          </div>
+          <a
+            href="{{ proctor_alert.link }}"
+            class="btn btn-warning btn-sm ml-2"
+          >
+            {{ proctor_alert.link_text }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %} {% if evaluator_alert %}
+  <div class="row mb-4">
+    <div class="col">
+      <div class="alert alert-danger evaluator-alert-banner" role="alert">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <i class="{{ evaluator_alert.icon }} me-2 pr-2"></i>
+            <strong>{{ evaluator_alert.title }}: </strong>
+            {{ evaluator_alert.message }}
+          </div>
+          <a
+            href="{{ evaluator_alert.link }}"
+            class="btn btn-danger btn-sm ml-2"
+          >
+            {{ evaluator_alert.link_text }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %} {% if not next_exam and not proctor_alert and not evaluator_alert
+  %}
   <div class="row mb-4">
     <div class="col">
       <div class="alert alert-secondary" role="alert">
@@ -291,13 +332,31 @@ Exams') }} {% endblock %} {% block head_include %}
     padding: 1rem;
   }
 
-  .next-exam-banner {
+  .alert-warning {
+    border-left: 4px solid #ffc107;
+    background-color: rgba(255, 193, 7, 0.1);
+    border: none;
+    padding: 1rem;
+  }
+
+  .alert-danger {
+    border-left: 4px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
+    border: none;
+    padding: 1rem;
+  }
+
+  .next-exam-banner,
+  .proctor-alert-banner,
+  .evaluator-alert-banner {
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
 
-  .next-exam-banner i {
+  .next-exam-banner i,
+  .proctor-alert-banner i,
+  .evaluator-alert-banner i {
     font-size: 1.2rem;
     margin-right: 0.5rem;
   }
@@ -311,6 +370,30 @@ Exams') }} {% endblock %} {% block head_include %}
   .btn-info:hover {
     background-color: #138496;
     border-color: #117a8b;
+    color: white;
+  }
+
+  .btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+  }
+
+  .btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    color: #212529;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
     color: white;
   }
 
