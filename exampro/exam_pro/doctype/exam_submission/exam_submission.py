@@ -218,7 +218,52 @@ class ExamSubmission(Document):
 			if "Exam Candidate" not in roles:
 				user.add_roles("Exam Candidate")
 				user.save(ignore_permissions=True)
-	
+
+		sched = frappe.get_doc("Exam Schedule", self.exam_schedule)
+		if sched.examiners:
+			# Check if exam needs proctoring and evaluation before assigning
+			exam_doc = frappe.get_doc("Exam", self.exam)
+			needs_proctoring = getattr(exam_doc, 'needs_proctoring', True)
+			needs_evaluation = exam_doc.question_type != "Choices"
+			
+			# Only assign if needed and not already assigned
+			if (needs_proctoring and not self.assigned_proctor) or (needs_evaluation and not self.assigned_evaluator):
+				self.assign_proctor_evaluator()
+
+	def assign_proctor_evaluator(self):
+		"""
+		Assign a proctor and evaluator keeping round robin distribution
+		Only assign if proctoring/evaluation is required
+		"""
+		sched = frappe.get_doc("Exam Schedule", self.exam_schedule)
+		
+		# Check if exam needs proctoring and evaluation
+		exam_doc = frappe.get_doc("Exam", self.exam)
+		needs_proctoring = getattr(exam_doc, 'needs_proctoring', True)  # Default to True if field doesn't exist
+		needs_evaluation = exam_doc.question_type != "Choices"  # Non-choice questions need manual evaluation
+		
+		if not needs_proctoring and not needs_evaluation:
+			return  # No assignment needed
+		
+		# Get current assignment counts from database dynamically
+		current_counts = get_examiner_assignment_counts(self.exam_schedule)
+		
+		# Proctor assignment
+		if needs_proctoring and not self.assigned_proctor:
+			proctors = [ex.examiner for ex in sched.examiners if ex.can_proctor]
+			if proctors:
+				# Find proctor with least assignments
+				next_proctor = min(proctors, key=lambda x: current_counts.get(x, {}).get('proctoring_count', 0))
+				self.assigned_proctor = next_proctor
+
+		# Evaluator assignment
+		if needs_evaluation and not self.assigned_evaluator:
+			evaluators = [ex.examiner for ex in sched.examiners if ex.can_evaluate]
+			if evaluators:
+				# Find evaluator with least assignments
+				next_evaluator = min(evaluators, key=lambda x: current_counts.get(x, {}).get('evaluation_count', 0))
+				self.assigned_evaluator = next_evaluator
+
 	def before_insert(self):
 		# Check if there are any existing submissions for the same candidate and schedule
 		# that are NOT in ["Terminated", "Submitted"]
@@ -260,6 +305,56 @@ class ExamSubmission(Document):
 					"evaluation_status": "Not Attempted"
 			}
 			self.append('submitted_answers', qs_)
+
+def get_examiner_assignment_counts(exam_schedule):
+	"""
+	Get the current assignment counts for all examiners for a specific exam schedule.
+	
+	Args:
+		exam_schedule (str): The exam schedule name
+		
+	Returns:
+		dict: Dictionary with examiner as key and counts as value
+			  Format: {examiner_id: {'proctoring_count': int, 'evaluation_count': int}}
+	"""
+	# Get proctoring counts
+	proctor_counts = frappe.db.sql("""
+		SELECT assigned_proctor, COUNT(*) as count
+		FROM `tabExam Submission`
+		WHERE exam_schedule = %s 
+		AND assigned_proctor IS NOT NULL 
+		AND assigned_proctor != ''
+		GROUP BY assigned_proctor
+	""", (exam_schedule,), as_dict=True)
+	
+	# Get evaluation counts
+	evaluator_counts = frappe.db.sql("""
+		SELECT assigned_evaluator, COUNT(*) as count
+		FROM `tabExam Submission`
+		WHERE exam_schedule = %s 
+		AND assigned_evaluator IS NOT NULL 
+		AND assigned_evaluator != ''
+		GROUP BY assigned_evaluator
+	""", (exam_schedule,), as_dict=True)
+	
+	# Build the result dictionary
+	result = {}
+	
+	# Add proctoring counts
+	for row in proctor_counts:
+		examiner = row['assigned_proctor']
+		if examiner not in result:
+			result[examiner] = {'proctoring_count': 0, 'evaluation_count': 0}
+		result[examiner]['proctoring_count'] = row['count']
+	
+	# Add evaluation counts
+	for row in evaluator_counts:
+		examiner = row['assigned_evaluator']
+		if examiner not in result:
+			result[examiner] = {'proctoring_count': 0, 'evaluation_count': 0}
+		result[examiner]['evaluation_count'] = row['count']
+	
+	return result
 
 def can_process_question(doc, member=None):
 	"""

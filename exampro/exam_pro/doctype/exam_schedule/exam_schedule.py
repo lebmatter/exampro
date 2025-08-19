@@ -602,35 +602,3 @@ def recompute_results_for_schedule(schedule):
 		doc.save()
 		frappe.db.commit()
 
-
-
-# def assign_proctor_evaluator(schedule):
-# 	"""
-# 	Assign a proctor keeping round robin
-# 	"""
-# 	sched = frappe.get_doc("Exam Schedule", schedule)
-# 	# proctor
-# 	pcount = {
-# 		ex.examiner: ex.proctoring_count for ex in sched.examiners if ex.can_proctor
-# 	}
-# 	if pcount:
-# 		# Determine the examiner with the least number of assignments
-# 		next_proctor = min(pcount, key=pcount.get)
-# 		self.assigned_proctor = next_proctor
-# 		pcount[next_proctor] += 1
-
-# 	# examiner asignement
-# 	ecount = {
-# 		ex.examiner: ex.evaluation_count for ex in sched.examiners if ex.can_evaluate
-# 	}
-# 	if ecount:
-# 		# Determine the examiner with the least number of assignments
-# 		next_evaluator = min(ecount, key=pcount.get)
-# 		self.assigned_evaluator = next_evaluator
-# 		ecount[next_evaluator] += 1
-	
-# 	# set the updated counts
-# 	for ex_ in sched.examiners:
-# 		ex_.proctoring_count = pcount[ex_.examiner]
-# 		ex_.evaluation_count = ecount[ex_.examiner]
-# 	sched.save(ignore_permissions=True)
