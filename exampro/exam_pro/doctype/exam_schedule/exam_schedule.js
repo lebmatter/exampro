@@ -41,6 +41,10 @@ frappe.ui.form.on('Exam Schedule', {
         frm.add_custom_button(__('Recompute Results'), function() {
             recompute_results(frm);
         }, __('Actions'));
+        
+        frm.add_custom_button(__('Bulk Add Submissions'), function() {
+            bulk_add_submissions(frm);
+        }, __('Actions'));
     }
 });
 
@@ -192,4 +196,81 @@ function recompute_results(frm) {
             });
         }
     );
+}
+
+function bulk_add_submissions(frm) {
+    let dialog = new frappe.ui.Dialog({
+        title: __('Bulk Add Exam Submissions'),
+        fields: [
+            {
+                label: __('Email Addresses'),
+                fieldname: 'email_list',
+                fieldtype: 'Long Text',
+                reqd: 1,
+                description: __('Enter email addresses separated by commas, semicolons, or new lines')
+            }
+        ],
+        primary_action_label: __('Add Submissions'),
+        primary_action: function(values) {
+            if (!values.email_list) {
+                frappe.msgprint(__('Please enter at least one email address'));
+                return;
+            }
+            
+            // Show processing message
+            frappe.show_alert({
+                message: __('Processing email addresses...'),
+                indicator: 'blue'
+            });
+            
+            // Call the bulk add submissions function
+            frappe.call({
+                method: 'exampro.exam_pro.doctype.exam_schedule.exam_schedule.bulk_add_submissions',
+                args: {
+                    schedule_name: frm.doc.name,
+                    email_list: values.email_list
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        let result = r.message;
+                        let message = __('Bulk submission process completed!<br><br>');
+                        
+                        if (result.added > 0) {
+                            message += __('<strong>Successfully added:</strong> {0} submissions<br>', [result.added]);
+                        }
+                        
+                        if (result.duplicates > 0) {
+                            message += __('<strong>Skipped duplicates:</strong> {0} submissions<br>', [result.duplicates]);
+                        }
+                        
+                        if (result.invalid_users && result.invalid_users.length > 0) {
+                            message += __('<strong>Invalid/Non-existent users:</strong><br>');
+                            result.invalid_users.forEach(email => {
+                                message += __('• {0}<br>', [email]);
+                            });
+                        }
+                        
+                        frappe.msgprint({
+                            title: __('Bulk Add Submissions Completed'),
+                            message: message,
+                            indicator: result.invalid_users && result.invalid_users.length > 0 ? 'orange' : 'green'
+                        });
+                    }
+                    dialog.hide();
+                    frm.refresh();
+                },
+                error: function(r) {
+                    frappe.msgprint({
+                        title: __('Error Adding Submissions'),
+                        message: __('An error occurred while adding submissions:<br><br>{0}', [r.message || 'Unknown error occurred']),
+                        indicator: 'red'
+                    });
+                },
+                freeze: true,
+                freeze_message: __('Adding submissions...')
+            });
+        }
+    });
+    
+    dialog.show();
 }

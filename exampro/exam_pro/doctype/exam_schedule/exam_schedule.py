@@ -270,6 +270,101 @@ class ExamSchedule(Document):
 		return invite_link
 
 
+@frappe.whitelist()
+def bulk_add_submissions(schedule_name, email_list):
+	"""
+	Bulk add exam submissions for the given email addresses
+	"""
+	# Check user permissions
+	user_roles = frappe.get_roles()
+	if "System Manager" not in user_roles and "Exam Manager" not in user_roles:
+		frappe.throw("You do not have permission to bulk add submissions.")
+	
+	# Get the exam value directly from the database to avoid document modification issues
+	exam_name = frappe.db.get_value("Exam Schedule", schedule_name, "exam")
+	if not exam_name:
+		frappe.throw("Exam Schedule not found or exam not set.")
+	
+	# Parse email list - handle commas, semicolons, and newlines
+	import re
+	emails = re.split(r'[,;\n\r]+', email_list.strip())
+	emails = [email.strip() for email in emails if email.strip()]
+	
+	if not emails:
+		frappe.throw("No valid email addresses provided.")
+	
+	# Get existing submissions to avoid duplicates
+	# Only consider submissions that are not Terminated or Submitted
+	existing_submissions = frappe.get_all("Exam Submission", 
+		filters={
+			"exam_schedule": schedule_name,
+			"status": ["not in", ["Terminated", "Submitted"]]
+		},
+		fields=["candidate"]
+	)
+	existing_candidates = set([s.candidate for s in existing_submissions])
+	
+	added_count = 0
+	duplicate_count = 0
+	invalid_users = []
+	
+	# Process emails in smaller batches to avoid long-running transactions
+	batch_size = 10
+	for i in range(0, len(emails), batch_size):
+		batch_emails = emails[i:i + batch_size]
+		
+		for email in batch_emails:
+			# Skip if already exists
+			if email in existing_candidates:
+				duplicate_count += 1
+				continue
+			
+			# Check if user exists
+			user_exists = frappe.db.exists("User", email)
+			if not user_exists:
+				invalid_users.append(email)
+				continue
+			
+			try:
+				# Create new submission with minimal document interaction to avoid conflicts
+				submission = frappe.get_doc({
+					'doctype': 'Exam Submission',
+					'exam_schedule': schedule_name,
+					'exam': exam_name,
+					'candidate': email,
+					'status': 'Registered'
+				})
+				
+				# Insert with flags to reduce hook execution and conflicts
+				submission.insert(ignore_permissions=True, ignore_mandatory=True)
+				
+				added_count += 1
+				
+				# Add to existing candidates to avoid duplicates in this batch
+				existing_candidates.add(email)
+				
+			except Exception as e:
+				frappe.logger().error(f"Error creating submission for {email}: {str(e)}")
+				invalid_users.append(f"{email} (Error: {str(e)})")
+		
+		# Commit after each batch and clear any cached documents
+		frappe.db.commit()
+		frappe.clear_cache(doctype="Exam Schedule")
+		frappe.clear_cache(doctype="Exam Submission")
+	
+	return {
+		"added": added_count,
+		"duplicates": duplicate_count,
+		"invalid_users": invalid_users
+	}
+	
+	return {
+		"added": added_count,
+		"duplicates": duplicate_count,
+		"invalid_users": invalid_users
+	}
+
+
 def _send_certificates(schedule_name):
 	"""
 	send certificates if applicable
@@ -506,3 +601,36 @@ def recompute_results_for_schedule(schedule):
 		doc.result_status = result_status
 		doc.save()
 		frappe.db.commit()
+
+
+
+# def assign_proctor_evaluator(schedule):
+# 	"""
+# 	Assign a proctor keeping round robin
+# 	"""
+# 	sched = frappe.get_doc("Exam Schedule", schedule)
+# 	# proctor
+# 	pcount = {
+# 		ex.examiner: ex.proctoring_count for ex in sched.examiners if ex.can_proctor
+# 	}
+# 	if pcount:
+# 		# Determine the examiner with the least number of assignments
+# 		next_proctor = min(pcount, key=pcount.get)
+# 		self.assigned_proctor = next_proctor
+# 		pcount[next_proctor] += 1
+
+# 	# examiner asignement
+# 	ecount = {
+# 		ex.examiner: ex.evaluation_count for ex in sched.examiners if ex.can_evaluate
+# 	}
+# 	if ecount:
+# 		# Determine the examiner with the least number of assignments
+# 		next_evaluator = min(ecount, key=pcount.get)
+# 		self.assigned_evaluator = next_evaluator
+# 		ecount[next_evaluator] += 1
+	
+# 	# set the updated counts
+# 	for ex_ in sched.examiners:
+# 		ex_.proctoring_count = pcount[ex_.examiner]
+# 		ex_.evaluation_count = ecount[ex_.examiner]
+# 	sched.save(ignore_permissions=True)
