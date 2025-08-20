@@ -1,14 +1,11 @@
 {% extends "exampro/templates/exam_base.html" %} {% block title %} {% if alert
 %} Alert! {% else %} {{ exam.title }} {% endif %} {% endblock %} {% block
 head_include %}
+{{ super() }}
 <script
   defer
   src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
 ></script>
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-/>
 {% for ext in page_extensions %} {{ ext.render_header() }} {% endfor %}
 <style>
   .web-footer {

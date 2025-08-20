@@ -1,6 +1,6 @@
 {% extends "exampro/templates/exam_base.html" %} {% block title %} Exam
-Evaluation {% endblock %} {% block head_include %} {% for ext in page_extensions
-%} {{ ext.render_header() }} {% endfor %}
+Evaluation {% endblock %} {% block head_include %} {{ super() }} {% for ext in
+page_extensions %} {{ ext.render_header() }} {% endfor %}
 
 <style>
   /* Alert Card Styling - Consistent with result.html */
