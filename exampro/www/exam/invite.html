@@ -1,31 +1,7 @@
 {% extends "exampro/templates/exam_base.html" %} {% block title %}Exam
 Invitation{% endblock %} {% block head_include %} {{ super() }}
 <link rel="stylesheet" href="/assets/exampro/css/exam-result.css" />
-<style>
-  .header-invite {
-    background-color: #e7f1ff;
-    border-bottom: 3px solid #007bff;
-  }
-  .invite-icon i {
-    font-size: 64px;
-    color: #007bff;
-  }
-  .invite-details {
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    text-align: left;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
-  .invite-action {
-    margin-top: 2rem;
-  }
-  .login-message {
-    margin-top: 1rem;
-    font-style: italic;
-  }
-</style>
+<link rel="stylesheet" href="/assets/exampro/css/exam-invite.css" />
 {% endblock %} {% block page_content %}
 <div class="container mt-4 mb-4">
   <div class="card exam-result-card">
@@ -115,7 +91,7 @@ Invitation{% endblock %} {% block head_include %} {{ super() }}
           <i class="bi bi-house-door mr-2"></i>Back to Home
         </a>
         {% else %}
-        <button id="accept-invite" class="btn btn-success back-button">
+        <button id="accept-invite" class="btn btn-success back-button" onclick="acceptInvitation('{{ schedule_name }}')">
           <i class="bi bi-check-circle mr-2"></i>Accept Invitation
         </button>
         {% endif %}
@@ -138,42 +114,5 @@ Invitation{% endblock %} {% block head_include %} {{ super() }}
   </div>
 </div>
 {% endblock %} {% block script %} {{ super() }}
-<script>
-  $(document).ready(function () {
-    $("#accept-invite").click(function () {
-      var $btn = $(this);
-      $btn
-        .prop("disabled", true)
-        .html('<i class="bi bi-arrow-repeat mr-2"></i>Processing...');
-
-      frappe.call({
-        method: "exampro.www.exam.invite.accept_invitation",
-        args: {
-          schedule_name: "{{ schedule_name }}",
-        },
-        callback: function (r) {
-          if (r.message && r.message.success) {
-            frappe.show_alert({
-              message: r.message.message,
-              indicator: "green",
-            });
-            setTimeout(function () {
-              window.location.href = "/my-exams";
-            }, 1500);
-          } else {
-            $btn
-              .prop("disabled", false)
-              .html('<i class="bi bi-check-circle mr-2"></i>Accept Invitation');
-            frappe.show_alert({
-              message: r.message
-                ? r.message.message
-                : "Something went wrong. Please try again.",
-              indicator: "red",
-            });
-          }
-        },
-      });
-    });
-  });
-</script>
+<script type="text/javascript" src="/assets/exampro/js/exam-invite.js"></script>
 {% endblock %}
