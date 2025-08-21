@@ -103,7 +103,12 @@ function startRecording() {
                     showGazeVector: false,
                     showEyePoints: false,
                     enableLogs: false, 
-                    
+                    onFaceDetected: (faces) => {
+                        if (faces.length === 0) {
+                            examAlert("No Face Detected!", "Please ensure your face is visible to the camera. This is a critical warning.");
+                            sendMessage('No face detected in camera view', 'Critical', 'noface');
+                        }
+                    },
                     // Callback functions
                     onPostTrackingData: (trackingData) => {
                         
