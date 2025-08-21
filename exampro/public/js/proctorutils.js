@@ -587,6 +587,21 @@ setupVideoEventListeners();
 // Remove the class-based approach to avoid double event binding
 // addEventListenerToClass("menu", "click", openChatModal);
 
+/**
+ * Update candidate counts by counting actual video tiles
+ */
+function updateCandidateCounts() {
+  // Count live candidates (video tiles with video elements)
+  const videoTiles = document.querySelectorAll('.video-card .video');
+  const liveCount = videoTiles.length;
+  
+  // Update live candidates count
+  const liveCountBadge = document.getElementById('live-candidates-count');
+  if (liveCountBadge) {
+    liveCountBadge.textContent = liveCount;
+  }
+}
+
 function updateVideoList() {
   for (var i = 0; i < videos.length; i++) {
     // Check if the element is an HTML5 video
@@ -747,6 +762,14 @@ function updateSidebarMessages() {
       
       // Process new submissions that need video tiles
       if (newSubmissions.length > 0) {
+        // Reduce pending count by the number of new submissions being added
+        const pendingCountBadge = document.getElementById('pending-candidates-count');
+        if (pendingCountBadge) {
+          const currentPendingCount = parseInt(pendingCountBadge.textContent) || 0;
+          const newPendingCount = Math.max(0, currentPendingCount - newSubmissions.length);
+          pendingCountBadge.textContent = newPendingCount;
+        }
+        
         // console.log(`Found ${newSubmissions.length} new submissions to add:`, newSubmissions);
         addNewVideoTiles(newSubmissions);
       }
@@ -767,6 +790,7 @@ frappe.ready(() => {
   // First run of updates
   updateVideoList();
   updateSidebarMessages();
+  updateCandidateCounts();
   
   // Set up interval for regular updates
   setInterval(function () {
@@ -775,6 +799,9 @@ frappe.ready(() => {
     
     // Check for new submissions and update sidebar
     updateSidebarMessages();
+    
+    // Update live candidate count (pending count is updated when new submissions are processed)
+    updateCandidateCounts();
     
     // Setup dynamic observer for new content (only if not already set up)
     setupDynamicObservers();
@@ -1098,12 +1125,8 @@ function addNewVideoTiles(newSubmissions) {
     // Initialize the video controls and fetch videos for this submission
     updateControlElementIds();
     
-    // Update the video counter
-    const liveCountBadge = document.querySelector('.btn-primary .badge');
-    if (liveCountBadge) {
-      const currentCount = parseInt(liveCountBadge.textContent) || 0;
-      liveCountBadge.textContent = currentCount + 1;
-    }
+    // Update the candidate counts
+    updateCandidateCounts();
     
     // Fetch videos for this new submission
     fetchVideosForSubmission(exam_submission);

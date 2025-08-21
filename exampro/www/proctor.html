@@ -79,11 +79,13 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
             <div class="d-flex justify-content-start">
               <button type="button" class="btn btn-primary mr-2">
                 Live candidates
-                <span class="badge badge-light">{{ submissions|length }}</span>
+                <span class="badge badge-light" id="live-candidates-count"
+                  >{{ submissions|length }}</span
+                >
               </button>
               <button type="button" class="btn btn-secondary">
                 Pending candidates
-                <span class="badge badge-light"
+                <span class="badge badge-light" id="pending-candidates-count"
                   >{{ pending_candidates|length }}</span
                 >
               </button>
