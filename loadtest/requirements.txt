@@ -1,0 +1,4 @@
+locust>=2.14.0
+frappeclient>=1.0.0
+requests>=2.28.0
+python-dotenv>=1.0.0

@@ -1,4 +1,46 @@
 {
+  "frappe_config": {
+    "site_url": "http://localhost:8000",
+    "admin_username": "Administrator",
+    "admin_password": "admin"
+  },
+  "test_config": {
+    "num_candidates": 10,
+    "num_exams": 1,
+    "exam_duration_minutes": 30,
+    "concurrent_users": 10,
+    "spawn_rate": 2,
+    "test_duration_minutes": 10,
+    "session_id": "GHXHXJ123"
+  },
+  "User": {
+    "search_field": "email",
+    "data": []
+  },
+  "Exam Question Category": {
+    "search_field": "name", 
+    "data": [
+      "LoadTest_General_GHXHXJ123",
+      "LoadTest_Technical_GHXHXJ123", 
+      "LoadTest_Mixed_GHXHXJ123"
+    ]
+  },
+  "Exam Question": {
+    "search_field": "question",
+    "data": []
+  },
+  "Exam": {
+    "search_field": "title",
+    "data": []
+  },
+  "Exam Schedule": {
+    "search_field": "name",
+    "data": []
+  },
+  "Exam Submission": {
+    "search_field": "candidate",
+    "data": []
+  },
   "questions": [
     {
       "question": "What is the primary purpose of load testing?",
@@ -151,22 +193,41 @@
       "correct": 0
     }
   ],
-  "exam_config": {
-    "title": "ExamPro Load Test Exam",
-    "description": "Sample exam for load testing the ExamPro system",
-    "duration_minutes": 15,
-    "pass_percentage": 50.0,
-    "randomize_questions": true,
-    "show_result": "After Exam Submission",
-    "max_warning_count": 5
-  },
-  "schedule_config": {
-    "schedule_type": "Fixed",
-    "start_delay_seconds": 30
-  },
-  "user_config": {
-    "prefix": "loadtest",
-    "password": "TestPass123!",
-    "role": "Exam Candidate"
+  "exam_templates": [
+    {
+      "title": "Load Test MCQ Exam",
+      "description": "Automated load testing exam with multiple choice questions",
+      "duration": 30,
+      "pass_percentage": 60.0,
+      "question_type": "Choices",
+      "randomize_questions": 1,
+      "show_result": "After Exam Submission",
+      "max_warning_count": 3,
+      "enable_video_proctoring": 0,
+      "enable_calculator": 1,
+      "enable_chat": 0,
+      "start_time_type": "Fixed"
+    },
+    {
+      "title": "Load Test Mixed Exam",
+      "description": "Mixed question types for comprehensive load testing",
+      "duration": 45,
+      "pass_percentage": 70.0,
+      "question_type": "Mixed",
+      "randomize_questions": 1,
+      "show_result": "After Exam Submission",
+      "max_warning_count": 5,
+      "enable_video_proctoring": 1,
+      "enable_calculator": 0,
+      "enable_chat": 1,
+      "start_time_type": "Flexible"
+    }
+  ],
+  "candidate_config": {
+    "email_domain": "@loadtest.example.com",
+    "first_name_prefix": "TestStudent",
+    "last_name_prefix": "LoadTest",
+    "default_password": "TestPass123!",
+    "user_type": "Website User"
   }
 }
