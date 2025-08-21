@@ -28,7 +28,8 @@ class ExamproClient:
         """Insert a document"""
         try:
             return self.conn.insert(doc)
-        except Exception:
+        except Exception as e:
+            print(e)
             print(f"Failed to insert {doc.get('doctype', 'Unknown')} document")
             return None
 
@@ -113,8 +114,8 @@ class ExamproClient:
         result = self.insert(exam_data)
         return result.get("name") if result else None
 
-    def create_exam_schedule(self, exam: str, start_time: str, end_time: str = None,
-                           schedule_type: str = "Fixed") -> Optional[str]:
+    def create_exam_schedule(self, exam: str, start_time: str, schedule_name: str = None,
+                           end_time: str = None, schedule_type: str = "Fixed") -> Optional[str]:
         """Create an exam schedule"""
         from datetime import datetime, timedelta
         
@@ -124,8 +125,15 @@ class ExamproClient:
             end_datetime = start_datetime + timedelta(hours=2)
             end_time = end_datetime.isoformat()
         
+        # Generate a name if not provided (required for autoname: prompt)
+        if not schedule_name:
+            # Create a readable name with exam and timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            schedule_name = f"{exam}_Schedule_{timestamp}"
+        
         schedule_data = {
             "doctype": "Exam Schedule",
+            "name": schedule_name,  # Always provide a name
             "exam": exam,
             "start_date_time": start_time,
             "schedule_type": schedule_type
