@@ -133,6 +133,14 @@
 /* Navigation tabs styling */
 .nav-tabs {
   border-bottom: 1px solid #dee2e6;
+  overflow-x: hidden;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
+
+.nav-tabs .nav-item {
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .nav-tabs .nav-item .nav-link {
@@ -143,6 +151,9 @@
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
   font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-tabs .nav-item .nav-link.active {
