@@ -20,14 +20,19 @@ def cleanup_request():
 def get_website_context(context):
     user_roles = frappe.get_roles(frappe.session.user)
     top_bar_items = []
-    
-    if "Exam Proctor" in user_roles:
+
+    is_proctor = "Exam Proctor" in user_roles
+    is_evaluator = "Exam Evaluator" in user_roles
+
+    if is_proctor:
         top_bar_items.append({"label": "Proctor Exam", "url": "/proctor"})
-    
-    if "Exam Evaluator" in user_roles:
+
+    if is_evaluator:
         top_bar_items.append({"label": "Evaluate Exam", "url": "/evaluate"})
-    
+
     context.top_bar_items = top_bar_items
+    context.is_proctor = is_proctor
+    context.is_evaluator = is_evaluator
     return context
 
 def create_sample_exams():

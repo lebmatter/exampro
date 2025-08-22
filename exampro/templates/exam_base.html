@@ -13,45 +13,96 @@
   .user-email-display {
     color: #6c757d;
     font-size: 0.9rem;
-    margin-right: 10px;
     display: flex;
     align-items: center;
   }
   .user-email-display i {
     margin-right: 5px;
   }
+
+  /* Style for navigation links */
+  .navbar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    transition: color 0.2s ease;
+    font-size: 1.1rem;
+  }
+
+  .navbar-nav .nav-link:hover {
+    color: #0056b3;
+  }
+
+  .navbar-nav .nav-link i {
+    margin-right: 5px;
+  }
+
+  /* Alternative CSS-only approach to hide avatar and show email */
+  .avatar-image,
+  .avatar-frame {
+    display: none !important;
+  }
+
+  .navbar .dropdown-toggle::after {
+    content: none;
+  }
 </style>
 {% endblock %} {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
   <div class="container">
-    <a class="navbar-brand" href="/">
-      <img
-        src="/assets/exampro/img/exampro-logo.png"
-        alt="ExamPro Logo"
-        style="max-height: 30px"
-      />
-    </a>
-
-    <div class="navbar-nav ms-auto">
-      {% if frappe.session.user != "Guest" %}
-      <div class="nav-item dropdown">
-        <a
-          class="nav-link dropdown-toggle user-email-display"
-          href="#"
-          role="button"
-          data-bs-toggle="dropdown"
+    <div class="d-flex w-100 justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
         >
-          <i class="bi bi-person-circle"></i>
-          {{ frappe.session.user }}
-        </a>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="/me">Profile</a></li>
-          <li><a class="dropdown-item" href="/logout">Logout</a></li>
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            {% if frappe.session.user != "Guest" %}
+            <!-- Dashboard link for all users -->
+            <li class="nav-item">
+              <a class="nav-link" href="/my-exams">Dashboard</a>
+            </li>
+            {% if is_proctor %}
+            <li class="nav-item">
+              <a class="nav-link" href="/proctor">Proctor Exams</a>
+            </li>
+            {% endif %} {% if is_evaluator %}
+            <li class="nav-item">
+              <a class="nav-link" href="/evaluate">Evaluate Exams</a>
+            </li>
+            {% endif %} {% endif %}
+          </ul>
+        </div>
+      </div>
+      <div>
+        <ul class="navbar-nav">
+          {% if frappe.session.user != "Guest" %}
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle user-email-display"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
+              <i class="bi bi-person-circle"></i>
+              {{ frappe.session.user }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/me">Profile</a></li>
+              <li><a class="dropdown-item" href="/logout">Logout</a></li>
+            </ul>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="/login">Login</a>
+          </li>
+          {% endif %}
         </ul>
       </div>
-      {% else %}
-      <a class="nav-link" href="/login">Login</a>
-      {% endif %}
     </div>
   </div>
 </nav>
@@ -64,8 +115,38 @@ get_telemetry_boot_info() %}
   if (telemetry_boot_info && Object.keys(telemetry_boot_info).length)
   Object.assign(frappe.boot, telemetry_boot_info)
 </script>
-{% endif %} {{ include_script("telemetry.bundle.js") }} {%- endblock -%} {%
-block footer %}
+{% endif %} {{ include_script("telemetry.bundle.js") }}
+
+<script>
+  // Replace avatar with email display
+  $(document).ready(function () {
+    // Find avatar elements and replace with email
+    $(".avatar-image, .avatar-frame").each(function () {
+      const userEmail = frappe.session.user;
+      if (userEmail && userEmail !== "Guest") {
+        $(this).replaceWith(`
+                <span class="user-email-display">
+                    <i class="bi bi-person-circle"></i>
+                    ${userEmail}
+                </span>
+            `);
+      }
+    });
+
+    // Alternative: modify existing dropdown text
+    $(".navbar .dropdown-toggle").each(function () {
+      const $this = $(this);
+      if ($this.find(".avatar-image").length > 0) {
+        $this.html(`
+                <i class="bi bi-person-circle"></i>
+                ${frappe.session.user}
+                <span class="caret"></span>
+            `);
+      }
+    });
+  });
+</script>
+{%- endblock -%} {% block footer %}
 <footer class="web-footer">
   <div class="container">
     <div class="row">
