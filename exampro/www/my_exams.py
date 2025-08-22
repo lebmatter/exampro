@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import frappe
 from frappe.utils import now, format_datetime
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams, can_show_exam_results_for_leaderboard
-from exampro.www.evaluate import get_pending_evaluations_count
+from exampro.www.evaluate import get_evaluator_live_exams
 
 def get_proctor_upcoming_events(proctor=None):
 	"""Get upcoming proctoring events for the next 7 days"""
@@ -286,7 +286,8 @@ def get_context(context):
 	
 	# Get evaluator alert
 	if "Exam Evaluator" in frappe.get_roles():
-		pending_count = get_pending_evaluations_count()
+		pending_evaluations = get_evaluator_live_exams(evaluator=frappe.session.user, completed=False)
+		pending_count = len(pending_evaluations)
 		if pending_count > 0:
 			context.evaluator_alert = {
 				"title": f"Evaluation{'' if pending_count == 1 else 's'} Pending",

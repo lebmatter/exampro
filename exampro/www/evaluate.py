@@ -1,21 +1,26 @@
 import frappe
 from frappe import _
+from frappe.utils import add_days, now_datetime
 from datetime import datetime, timedelta
 from exampro.exam_pro.doctype.exam_submission.exam_submission import evaluation_values
 
-def get_evaluator_live_exams(evaluator=None):
+def get_evaluator_live_exams(evaluator=None, completed=True):
 	"""
 	Get upcoming/ongoing exam of an evaluator.
 	Shows submissions ready for evaluation only after exam schedule has ended.
 	"""
 	evaluator = evaluator or frappe.session.user
-	submissions = frappe.get_all(
-		"Exam Submission",
-		filters={
+	evalfilters = {
 			"assigned_evaluator": evaluator,
 			"evaluation_status": "Pending",
-			"status": "Submitted"
-		},
+	}
+	if completed:
+		evalfilters["status"] = "Submitted"
+	else:
+		evalfilters["status"] = ["in", ["Registered", "Started", "Submitted"]]
+	submissions = frappe.get_all(
+		"Exam Submission",
+		filters=evalfilters,
 		fields=[
 			"name as submission_id", 
 			"exam", 
@@ -33,8 +38,8 @@ def get_evaluator_live_exams(evaluator=None):
 		# default 3 days for evaluation
 		evaluation_ends_days = frappe.db.get_value("Exam", exam.name,  "evaluation_ends_in_days") or 3
 		# end time is exam_submitted time + evaluation_ends_days 
-		evaluation_end_time = frappe.utils.add_days(submission.exam_submitted_time, evaluation_ends_days)
-		if evaluation_end_time < frappe.utils.now_datetime():
+		evaluation_end_time = add_days(submission.exam_submitted_time, evaluation_ends_days)
+		if evaluation_end_time < now_datetime():
 			continue
 
 		submission.title = exam.title
@@ -43,21 +48,6 @@ def get_evaluator_live_exams(evaluator=None):
 		res.append(submission)
 
 	return res
-
-def get_pending_evaluations_count(evaluator=None):
-	"""
-	Get count of all pending evaluations for an evaluator.
-	Returns count of Exam Submissions where assigned_evaluator is the user and evaluation_status != "Finished"
-	"""
-	evaluator = evaluator or frappe.session.user
-	count = frappe.db.count(
-		"Exam Submission",
-		filters={
-			"assigned_evaluator": evaluator,
-			"evaluation_status": ["!=", "Finished"]
-		}
-	)
-	return count
 
 def get_context(context):
 	context.no_cache = 1
@@ -68,10 +58,10 @@ def get_context(context):
 		raise frappe.PermissionError("You are not authorized to access this page")
 	
 	# Get assigned exams for the evaluator
-	context.assigned_exams = get_evaluator_live_exams()
+	context.assigned_exams = get_evaluator_live_exams(evaluator=frappe.session.user, completed=True)
 	
 	# Get pending evaluations count and add alert if any
-	pending_count = get_pending_evaluations_count()
+	pending_count = len(context.assigned_exams)
 	if pending_count > 0:
 		context.alert = {
 			"title": f"You have {pending_count} evaluation{'s' if pending_count > 1 else ''} pending",
