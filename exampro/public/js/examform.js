@@ -359,6 +359,18 @@ frappe.ready(() => {
         submitAnswer();
     });
 
+    // Attach event listener for textarea in subjective questions
+    $(document).on('input change', '#examTextInput textarea', function() {
+        // Only submit if there's actual content or if marked for later
+        let textContent = $(this).val();
+        let mrkForLtr = $("#markedForLater").prop('checked');
+        
+        // Submit if there's meaningful content or if marked for later
+        if ((textContent && textContent.trim() !== "") || mrkForLtr) {
+            submitAnswer();
+        }
+    });
+
     // Global updater for chat bubble timestamps
     setInterval(function() {
         $(".chat-time").each(function() {
@@ -659,6 +671,11 @@ function displayQuestion(current_qs) {
         $('#examTextInput').show();
         var inputTextArea = $("#examTextInput").find("textarea");
         inputTextArea.val(currentQuestion["answer"]);
+        
+        // Restore marked for later state for subjective questions
+        if (currentQuestion["marked_for_later"]) {
+            $('#markedForLater').prop("checked", true);
+        }
     }
 
 };
@@ -839,6 +856,21 @@ function submitAnswer(loadNext) {
         answer = checkedValues.join(",");
     } else {
         answer = $("#examTextInput").find("textarea").val();
+        // For subjective questions, check if answer is empty or just whitespace
+        // If loadNext is true (navigating away) and answer is empty, don't submit unless marked for later
+        if (loadNext && !mrkForLtr && (!answer || answer.trim() === "")) {
+            // Don't submit empty subjective answers when navigating, just load next question
+            if (loadNext) {
+                if (currentQuestion["no"] < examOverview["total_questions"]) {
+                    let nextQs = currentQuestion["no"] + 1;
+                    getQuestion(nextQs);
+                    updateOverviewMap();
+                } else {
+                    showSubmitConfirmPage();
+                }
+            }
+            return;
+        }
     }
 
     frappe.call({
