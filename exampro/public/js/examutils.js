@@ -47,11 +47,9 @@ function videoDisconnected(lastVideoURL) {
 
 const addChatBubble = (timestamp, message, messageType, messageFrom) => {
     var chatContainer = $('#chat-messages');
-    if (messageFrom === "Candidate") {
-        var chatTimestamp = $('<div class="chat-timestamp-right">' + timestamp + '</div>');
-    } else {
-        var chatTimestamp = $('<div class="chat-timestamp">' + timestamp + '</div>');
-    }
+    var timestampDivClass = messageFrom === "Candidate" ? "chat-timestamp-right" : "chat-timestamp";
+    // Store original timestamp as data-timestamp
+    var chatTimestamp = $('<div class="' + timestampDivClass + '"><span class="chat-time" data-timestamp="' + timestamp + '">' + timeAgo(timestamp) + '</span></div>');
 
     var msgWithPill = message;
     if (messageType === "Warning") {
@@ -59,20 +57,13 @@ const addChatBubble = (timestamp, message, messageType, messageFrom) => {
     } else if (messageType === "Critical") {
         msgWithPill = '<span class="badge badge-danger mr-1">Critical</span>' + message;
     }
-    if (messageFrom === "Candidate") {
-        var chatBubble = $('<div class="chat-bubble chat-right">' + msgWithPill + '</div>');
-    } else {
-        var chatBubble = $('<div class="chat-bubble chat-left">' + msgWithPill + '</div>');
-    }
-    
-    var chatWrapper = $('<div class="d-flex flex-column mb-2"></div>');
+    var chatBubble = $('<div class="' + (messageFrom === "Candidate" ? "chat-bubble chat-right" : "chat-bubble chat-left") + '">' + msgWithPill + '</div>');
 
+    var chatWrapper = $('<div class="d-flex flex-column mb-2"></div>');
     chatWrapper.append(chatTimestamp);
     chatWrapper.append(chatBubble);
-    
     // Append the new chat bubble to the chat messages container
     chatContainer.append(chatWrapper);
-    
 }
 
 const updateMessages = (exam_submission) => {
@@ -95,7 +86,6 @@ const updateMessages = (exam_submission) => {
                     return;
                 }
 
-                convertedTime = timeAgo(chatmsg.creation);
                 if (chatmsg.type_of_message === "Critical") {
                     frappe.msgprint({
                         title: 'Critial',
@@ -110,7 +100,7 @@ const updateMessages = (exam_submission) => {
                         window.location.reload()
                     }, 5000); // 5 seconds delay
                 } else {
-                    addChatBubble(convertedTime, chatmsg.message, chatmsg.type_of_message, chatmsg.from);
+                    addChatBubble(chatmsg.creation, chatmsg.message, chatmsg.type_of_message, chatmsg.from);
                 }
 
                 existingMessages[exam_submission].push(chatmsg.creation);

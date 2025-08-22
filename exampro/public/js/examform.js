@@ -126,7 +126,6 @@ function startRecording() {
                                 })
                             },
                             callback: (data) => {
-                                console.log("Tracking data sent successfully:", data);
                             },
                             error: (error) => {
                                 console.error("Failed to send tracking data:", error);
@@ -152,7 +151,8 @@ function startRecording() {
             recorder = RecordRTC(recordingStream, {
                 type: 'video',
                 mimeType: 'video/webm',
-                videoBitsPerSecond: 8000
+                videoBitsPerSecond: 8000,
+                disableLogs: true
 
             });
 
@@ -167,7 +167,8 @@ function startRecording() {
 
                     sendVideoBlob(blob);
                     // Reset the recorder with the cloned stream
-                    recorder = RecordRTC(recordingStream, { type: 'video' });
+                    recorder = RecordRTC(recordingStream, { type: 'video', disableLogs: true });
+
                     recorder.startRecording();
                 });
             }, 10000);
@@ -357,6 +358,15 @@ frappe.ready(() => {
     $(document).on('change', '#markedForLater', function() {
         submitAnswer();
     });
+
+    // Global updater for chat bubble timestamps
+    setInterval(function() {
+        $(".chat-time").each(function() {
+            var ts = $(this).data("timestamp");
+            $(this).text(timeAgo(ts));
+        });
+    }, 60000); // update every minute
+
 
 });
 
