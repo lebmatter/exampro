@@ -1,52 +1,93 @@
-{% extends "templates/web.html" %}
-
-{% block head_include %}
-{{ super() }}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+{% extends "templates/web.html" %} {% block head_include %} {{ super() }}
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+/>
 <script
   src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
   integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
   crossorigin="anonymous"
 ></script>
-{% endblock %}
 
+<style>
+  .user-email-display {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+  }
+  .user-email-display i {
+    margin-right: 5px;
+  }
+</style>
+{% endblock %} {% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <img
+        src="/assets/exampro/img/exampro-logo.png"
+        alt="ExamPro Logo"
+        style="max-height: 30px"
+      />
+    </a>
 
-{% block content %}
-{% block page_content %}
-Hello, world!
-{% endblock %}
-{% endblock %}
-
-{%- block script -%}
-{{ super() }}
-{% if frappe.get_system_settings("enable_telemetry") %}
-{% set telemetry_boot_info = get_telemetry_boot_info() %}
+    <div class="navbar-nav ms-auto">
+      {% if frappe.session.user != "Guest" %}
+      <div class="nav-item dropdown">
+        <a
+          class="nav-link dropdown-toggle user-email-display"
+          href="#"
+          role="button"
+          data-bs-toggle="dropdown"
+        >
+          <i class="bi bi-person-circle"></i>
+          {{ frappe.session.user }}
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="/me">Profile</a></li>
+          <li><a class="dropdown-item" href="/logout">Logout</a></li>
+        </ul>
+      </div>
+      {% else %}
+      <a class="nav-link" href="/login">Login</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+{% endblock %} {% block content %} {% block page_content %} Hello, world! {%
+endblock %} {% endblock %} {%- block script -%} {{ super() }} {% if
+frappe.get_system_settings("enable_telemetry") %} {% set telemetry_boot_info =
+get_telemetry_boot_info() %}
 <script>
-	const telemetry_boot_info = {{ get_telemetry_boot_info() }}
-	if (telemetry_boot_info && Object.keys(telemetry_boot_info).length)
-		Object.assign(frappe.boot, telemetry_boot_info)
+  const telemetry_boot_info = {{ get_telemetry_boot_info() }}
+  if (telemetry_boot_info && Object.keys(telemetry_boot_info).length)
+  Object.assign(frappe.boot, telemetry_boot_info)
 </script>
-{% endif %}
-{{ include_script("telemetry.bundle.js") }}
-{%- endblock -%}
-
-{% block footer %}
+{% endif %} {{ include_script("telemetry.bundle.js") }} {%- endblock -%} {%
+block footer %}
 <footer class="web-footer">
-	<div class="container">
-		<div class="row">
-			<div class="col-12">
-				<div class="d-flex align-items-center justify-content-between">
-					<div class="footer-logo">
-						<a href="https://lebmatter.github.io/exampro/" target="_blank">
-							<img src="/assets/exampro/img/exampro-logo.png" alt="ExamPro Logo" class="img-fluid" style="max-height: 20px;">
-						</a>
-					</div>
-					<div class="footer-credit text-end">
-						Built on <a href="https://frappeframework.com" target="_blank">Frappe</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="footer-logo">
+            <a href="https://lebmatter.github.io/exampro/" target="_blank">
+              <img
+                src="/assets/exampro/img/exampro-logo.png"
+                alt="ExamPro Logo"
+                class="img-fluid"
+                style="max-height: 20px"
+              />
+            </a>
+          </div>
+          <div class="footer-credit text-end">
+            Built on
+            <a href="https://frappeframework.com" target="_blank">Frappe</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </footer>
-{% endblock %}</div>
+{% endblock %}
