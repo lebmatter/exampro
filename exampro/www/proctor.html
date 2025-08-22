@@ -36,7 +36,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
         <h4>👀 Proctor Dashboard</h4>
       </div>
     </div>
-    <div class="row">
+    <div class="row mb-5">
       {% if submissions|length > 0 or pending_candidates|length > 0 %}
       <!-- Message Sidebar -->
       <div class="col-md-3">
@@ -190,7 +190,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
         </div>
       </div>
       {% else %}
-      <div class="col-12">
+      <div class="col-12 mb-10">
         <div
           class="d-flex justify-content-center align-items-center"
           style="min-height: 400px"
@@ -298,6 +298,5 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
     type="text/javascript"
     src="/assets/exampro/js/proctorutils.js"
   ></script>
-
   {% endblock %}
 </div>
