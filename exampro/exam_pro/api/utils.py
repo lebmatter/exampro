@@ -23,6 +23,7 @@ def get_website_context(context):
 
     is_proctor = "Exam Proctor" in user_roles
     is_evaluator = "Exam Evaluator" in user_roles
+    is_manager = "Exam Manager" in user_roles
 
     if is_proctor:
         top_bar_items.append({"label": "Proctor Exam", "url": "/proctor"})
@@ -30,9 +31,13 @@ def get_website_context(context):
     if is_evaluator:
         top_bar_items.append({"label": "Evaluate Exam", "url": "/evaluate"})
 
+    if is_manager:
+        top_bar_items.append({"label": "Manage", "url": "/app/exam"})
+
     context.top_bar_items = top_bar_items
     context.is_proctor = is_proctor
     context.is_evaluator = is_evaluator
+    context.is_manager = is_manager
     return context
 
 def create_sample_exams():

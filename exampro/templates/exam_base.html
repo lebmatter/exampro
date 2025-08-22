@@ -78,6 +78,39 @@
             <li class="nav-item">
               <a class="nav-link" href="/evaluate">Evaluate Exams</a>
             </li>
+            {% endif %} {% if is_manager %}
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                Manage
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/app/exam">Exam</a></li>
+                <li>
+                  <a class="dropdown-item" href="/app/exam-schedule"
+                    >Exam Schedule</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="/app/exam-submission"
+                    >Exam Submission</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="/app/exam-batch">Exam Batch</a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="/app/exam-question"
+                    >Exam Question</a
+                  >
+                </li>
+              </ul>
+            </li>
             {% endif %} {% endif %}
           </ul>
         </div>
