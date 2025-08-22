@@ -12,12 +12,13 @@ def get_evaluator_live_exams(evaluator=None, completed=True):
 	evaluator = evaluator or frappe.session.user
 	evalfilters = {
 			"assigned_evaluator": evaluator,
-			"evaluation_status": "Pending",
 	}
 	if completed:
 		evalfilters["status"] = "Submitted"
+		evalfilters["evaluation_status"] = "Pending"
 	else:
 		evalfilters["status"] = ["in", ["Registered", "Started", "Submitted"]]
+		evalfilters["evaluation_status"] = ["in", ["Pending", "NA"]]
 	submissions = frappe.get_all(
 		"Exam Submission",
 		filters=evalfilters,
