@@ -46,6 +46,13 @@ def get_evaluator_live_exams(evaluator=None, completed=True):
 		submission.title = exam.title
 		submission.name = exam.name  # This is needed for the data-exam-id in template
 		submission.candidate_name = "Candiate {}".format(idx + 1)
+		# Convert datetime fields to string
+		if hasattr(submission, "exam_submitted_time") and submission.exam_submitted_time:
+			if isinstance(submission.exam_submitted_time, (datetime,)):
+				submission.exam_submitted_time = submission.exam_submitted_time.strftime("%Y-%m-%d %H:%M:%S")
+		if hasattr(submission, "exam_schedule") and submission.exam_schedule:
+			if isinstance(submission.exam_schedule, (datetime,)):
+				submission.exam_schedule = submission.exam_schedule.strftime("%Y-%m-%d %H:%M:%S")
 		res.append(submission)
 
 	return res
