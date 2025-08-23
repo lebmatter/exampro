@@ -1,0 +1,22 @@
+<!-- Reusable Chat Component -->
+<div class="chat-container">
+    <div id="chat-messages" class="d-flex flex-column mb-3"></div>
+</div>
+<div class="chat-input-container">
+    <div class="input-group">
+        <input
+            type="text"
+            id="chat-input"
+            class="form-control"
+            placeholder="{{ placeholder or 'Message your proctor...' }}"
+        />
+        <div class="input-group-append">
+            <button class="btn" type="button" id="send-message">
+                <span class="d-flex align-items-center">
+                    Send
+                    <i class="bi bi-send ms-2"></i>
+                </span>
+            </button>
+        </div>
+    </div>
+</div>

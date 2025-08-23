@@ -3,6 +3,7 @@ var currentVideoIndex = {};
 var videoBlobStore = {};
 const MAX_BLOB_CACHE_SIZE = 4;
 var activeChat = "";
+var chatUpdateInterval = null; // Store the interval reference
 const videos = document.getElementsByClassName("video");
 const togglePlayBtn = document.getElementsByClassName("togglePlayBtn");
 
@@ -443,10 +444,18 @@ function openChatModal(event) {
   $("#chat-messages").empty();
   existingMessages[videoId] = [];
   
+  // Clear any existing interval to prevent duplicates
+  if (chatUpdateInterval) {
+    clearInterval(chatUpdateInterval);
+  }
+  
   console.log(`Chat modal opened for: ${candName} (${videoId})`);
 
-  setInterval(function () {
-    updateProcMessages(videoId);
+  // Set up interval for updating messages
+  chatUpdateInterval = setInterval(function () {
+    if (activeChat === videoId) { // Only update if this chat is still active
+      updateProcMessages(videoId);
+    }
   }, 1000); // 1 seconds
 }
 
@@ -819,21 +828,58 @@ frappe.ready(() => {
   // });
 
   // chatModal controls
-  // Handle send button click event
-  $("#proc-send-message").click(function () {
-    var message = $("#chat-input").val();
-    sendProcMessage(message);
-    $("#chat-input").val("");
-  });
+  // Function to send a message
+  function sendProcMessage(message) {
+    if (message.trim() !== "") {
+      frappe.call({
+        method:
+          "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
+        type: "POST",
+        args: {
+          exam_submission: activeChat,
+          message: message,
+          type_of_message: "General",
+          from: "Proctor"
+        },
+        callback: (data) => {
+          console.log(data);
+        },
+      });
+    }
+  }
 
-  // Handle enter key press event
-  $("#chat-input").keypress(function (e) {
-    if (e.which == 13) {
+  // Wrapper function for chatbox integration
+  function sendProcChatMessage() {
+    var message = getChatInputValue();
+    if (message) {
+      sendProcMessage(message);
+      clearChatInput();
+    }
+  }
+
+  // Initialize chatbox for proctor modal
+  if (typeof initializeChatbox === 'function') {
+    initializeChatbox({
+      sendButtonId: 'proc-send-message',
+      sendFunction: sendProcChatMessage
+    });
+  } else {
+    // Fallback to original event handlers if chatbox.js is not loaded
+    $("#proc-send-message").click(function () {
       var message = $("#chat-input").val();
       sendProcMessage(message);
       $("#chat-input").val("");
-    }
-  });
+    });
+
+    // Handle enter key press event
+    $("#chat-input").keypress(function (e) {
+      if (e.which == 13) {
+        var message = $("#chat-input").val();
+        sendProcMessage(message);
+        $("#chat-input").val("");
+      }
+    });
+  }
 
   $("#terminateExam").click(function () {
     var result = prompt(
@@ -859,28 +905,13 @@ frappe.ready(() => {
     }
   });
 
-  // Function to send a message
-  function sendProcMessage(message) {
-    if (message.trim() !== "") {
-      frappe.call({
-        method:
-          "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
-        type: "POST",
-        args: {
-          exam_submission: activeChat,
-          message: message,
-          type_of_message: "General",
-          from: "Proctor"
-        },
-        callback: (data) => {
-          console.log(data);
-        },
-      });
-    }
-  }
-
   $("#chatModal").on("hidden.bs.modal", function () {
     activeChat = "";
+    // Clear the chat update interval when modal is closed
+    if (chatUpdateInterval) {
+      clearInterval(chatUpdateInterval);
+      chatUpdateInterval = null;
+    }
   });
 
 

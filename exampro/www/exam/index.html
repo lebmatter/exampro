@@ -70,28 +70,8 @@ head_include %}
       <div class="tab-content mt-3">
         <div id="messages" class="tab-pane fade show active">
           {% if exam.enable_chat %}
-          <!-- Tab 1 Content Goes Here -->
-          <div class="chat-container">
-            <div id="chat-messages" class="d-flex flex-column mb-3"></div>
-          </div>
-          <div class="chat-input-container">
-            <div class="input-group">
-              <input
-                type="text"
-                id="chat-input"
-                class="form-control"
-                placeholder="Message your proctor..."
-              />
-              <div class="input-group-append">
-                <button class="btn" type="button" id="send-message">
-                  <span class="d-flex align-items-center">
-                    Send
-                    <i class="bi bi-send ms-2"></i>
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <!-- Reusable Chatbox Template -->
+          {% include "exampro/templates/chatbox.html" %}
           {% else %}
           <p class="card-text">Chat disabled.</p>
           {% endif %}
@@ -326,4 +306,15 @@ head_include %}
 ></script>
 <script type="text/javascript" src="/assets/exampro/js/examform.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/exam-index.js"></script>
+<script type="text/javascript" src="/assets/exampro/js/chatbox.js"></script>
+<script type="text/javascript">
+  // Initialize chatbox for exam page
+  $(document).ready(function() {
+    if (exam.enable_chat) {
+      initializeChatbox({
+        sendFunction: sendChatMessage
+      });
+    }
+  });
+</script>
 {% endif %} {% endblock %}

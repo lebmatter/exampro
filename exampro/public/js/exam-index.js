@@ -93,15 +93,18 @@ $(document).ready(function () {
   // Timer toggle is now handled by Alpine.js - no jQuery code needed
   // Video toggle is now handled by Alpine.js - no jQuery code needed
 
-  // Chat functionality
-  $("#send-message").click(function () {
-    sendChatMessage();
-  });
-
-  $("#chat-input").keypress(function (e) {
-    if (e.which == 13) {
+  // Chat functionality - these are now handled by initializeChatbox() if chatbox.js is loaded
+  // Fallback handlers in case chatbox.js is not available
+  if (typeof initializeChatbox !== 'function') {
+    $("#send-message").click(function () {
       sendChatMessage();
-      return false;
-    }
-  });
+    });
+
+    $("#chat-input").keypress(function (e) {
+      if (e.which == 13) {
+        sendChatMessage();
+        return false;
+      }
+    });
+  }
 });

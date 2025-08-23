@@ -261,6 +261,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
             <!-- Chat Column (Right) -->
             <div class="col-md-7">
               <div id="messages" class="tab-pane fade show active">
+                <!-- Reusable Chatbox Template with custom placeholder and send button ID -->
                 <div class="chat-container">
                   <div id="chat-messages" class="d-flex flex-column mb-3"></div>
                 </div>
@@ -273,7 +274,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                       placeholder="Type your message..."
                     />
                     <div class="input-group-append">
-                      <button class="btn" type="button" id="proc-send-message">
+                      <button class="btn btn-primary" type="button" id="proc-send-message">
                         <span class="d-flex align-items-center">
                           Send
                           <i class="bi bi-send ms-2"></i>
@@ -298,5 +299,65 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
     type="text/javascript"
     src="/assets/exampro/js/proctorutils.js"
   ></script>
+  <script type="text/javascript" src="/assets/exampro/js/chatbox.js"></script>
+  
+  <style>
+    /* Fix modal chatbox styling with very specific selectors */
+    #chatModal .modal-dialog {
+      max-width: 1200px !important;
+    }
+    
+    #chatModal .modal-body {
+      height: 700px !important;
+      min-height: 700px !important;
+    }
+    
+    #chatModal .modal-body .row {
+      height: 100% !important;
+    }
+    
+    #chatModal .modal-body .col-md-7 {
+      height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    
+    #chatModal .modal-body .col-md-7 #messages {
+      height: 100% !important;
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    
+    #chatModal .modal-body .col-md-7 #messages .chat-container {
+      border: 1px solid #dee2e6 !important;
+      border-radius: 0.375rem !important;
+      background-color: #f8f9fa !important;
+      padding: 0.75rem !important;
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      height: 600px !important;
+      min-height: 600px !important;
+    }
+    
+    #chatModal .modal-body .col-md-7 #messages .chat-container #chat-messages {
+      flex: 1 !important;
+      height: 520px !important;
+      min-height: 520px !important;
+      max-height: 520px !important;
+      overflow-y: auto !important;
+      scrollbar-width: thin !important;
+      border: 1px solid #ccc !important;
+      padding: 10px !important;
+    }
+    
+    #chatModal .modal-body .col-md-7 #messages .chat-input-container {
+      border-top: 1px solid #dee2e6 !important;
+      padding-top: 0.75rem !important;
+      margin-top: 0.75rem !important;
+      flex-shrink: 0 !important;
+    }
+  </style>
   {% endblock %}
 </div>
