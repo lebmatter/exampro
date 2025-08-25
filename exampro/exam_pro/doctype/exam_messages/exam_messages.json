@@ -5,70 +5,70 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-    "exam_submission",
-    "from",
-    "from_user",
-    "message",
-    "type_of_message",
-    "warning_type",
-    "timestamp"
-   ],
-"fields": [
-    {
-     "fieldname": "exam_submission",
-     "fieldtype": "Link",
-     "in_list_view": 1,
-     "label": "Exam Submission",
-     "options": "Exam Submission",
-     "reqd": 1,
-     "search_index": 1
-    },
-    {
-     "fieldname": "from",
-     "fieldtype": "Select",
-     "in_list_view": 1,
-     "label": "From",
-     "options": "Candidate\nProctor\nSystem",
-     "reqd": 1
-    },
-    {
-     "fieldname": "from_user",
-     "fieldtype": "Link",
-     "label": "From User",
-     "options": "User"
-    },
-    {
-     "fieldname": "message",
-     "fieldtype": "Data",
-     "in_list_view": 1,
-     "label": " Message",
-     "reqd": 1
-    },
-    {
-     "fieldname": "type_of_message",
-     "fieldtype": "Select",
-     "in_list_view": 1,
-     "label": "Type of Message",
-     "options": "General\nWarning\nCritical"
-    },
-    {
-     "fieldname": "warning_type",
-     "fieldtype": "Select",
-     "label": "Warning Type",
-     "options": "tabchange\nmonitorchange\nnowebcam\nother"
-    },
-    {
-     "fieldname": "timestamp",
-     "fieldtype": "Datetime",
-     "in_list_view": 1,
-     "label": "Timestamp",
-     "reqd": 1
-    }
-   ],
+  "exam_submission",
+  "from",
+  "from_user",
+  "message",
+  "type_of_message",
+  "warning_type",
+  "timestamp"
+ ],
+ "fields": [
+  {
+   "fieldname": "exam_submission",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Exam Submission",
+   "options": "Exam Submission",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "from",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "From",
+   "options": "Candidate\nProctor\nSystem",
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_user",
+   "fieldtype": "Link",
+   "label": "From User",
+   "options": "User"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": " Message",
+   "reqd": 1
+  },
+  {
+   "fieldname": "type_of_message",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type of Message",
+   "options": "General\nWarning\nCritical"
+  },
+  {
+   "fieldname": "warning_type",
+   "fieldtype": "Select",
+   "label": "Warning Type",
+   "options": "tabchange\nmonitorchange\nnowebcam\nnoface\nother"
+  },
+  {
+   "fieldname": "timestamp",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Timestamp",
+   "reqd": 1
+  }
+ ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-04 13:20:59.679738",
- "modified_by": "Administrator",
+ "modified": "2025-08-25 11:09:25.560282",
+ "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Messages",
  "owner": "Administrator",
@@ -99,6 +99,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
