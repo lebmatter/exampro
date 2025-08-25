@@ -13,6 +13,10 @@
   border-left: 4px solid #e0e0e0;
 }
 
+.message-card:hover {
+  border-left-color: #ffbf10;
+}
+
 .message-card.has-new-message {
   border-left-color: #007bff;
   animation: pulseBackground 2s ease-in-out;
