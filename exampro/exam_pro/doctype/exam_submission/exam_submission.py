@@ -28,36 +28,53 @@ def get_s3_client():
     
     Returns:
         boto3.client: S3 client with appropriate configuration
+        
+    Raises:
+        Exception: If S3 configuration is invalid or connection fails
     """
     # Check if we already have a client in the current request
     if hasattr(frappe.local, "s3_client"):
         return frappe.local.s3_client
         
-    # Get settings
-    settings = frappe.get_single("Exam Settings")
-    cfdomain = settings.get_storage_endpoint()
-    if not cfdomain:
-        frappe.throw(_("Storage endpoint is not configured. Please check Exam Settings."))
+    try:
+        # Get settings
+        settings = frappe.get_single("Exam Settings")
+        cfdomain = settings.get_storage_endpoint()
+        if not cfdomain:
+            frappe.throw(_("Storage endpoint is not configured. Please check Exam Settings."))
+            
+        # Validate required credentials
+        if not settings.aws_key or not settings.get_password("aws_secret"):
+            frappe.throw(_("AWS credentials are not configured. Please check Exam Settings."))
         
-    # Create a new client
-    s3_client = boto3.client(
-        's3',
-        endpoint_url=cfdomain,
-        aws_access_key_id=settings.aws_key,
-        aws_secret_access_key=settings.get_password("aws_secret"),
-        config=Config(
-            signature_version='s3v4',
-            # Add connection pooling settings
-            max_pool_connections=50,  # Reuse connections
-            connect_timeout=5,        # Connection timeout
-            read_timeout=60           # Read timeout for uploads
+        # Create a new client with more conservative timeout settings
+        s3_client = boto3.client(
+            's3',
+            endpoint_url=cfdomain,
+            aws_access_key_id=settings.aws_key,
+            aws_secret_access_key=settings.get_password("aws_secret"),
+            config=Config(
+                signature_version='s3v4',
+                # Connection settings optimized for reliability
+                max_pool_connections=25,     # Reduced from 50 for stability
+                connect_timeout=10,          # Increased from 5 seconds
+                read_timeout=120,            # Increased from 60 seconds
+                retries={'max_attempts': 3}, # Add retry logic
+                region_name='auto'           # Let boto3 determine region
+            )
         )
-    )
-    
-    # Store in frappe.local for this request
-    frappe.local.s3_client = s3_client
-    
-    return s3_client
+        
+        # Store in frappe.local for this request
+        frappe.local.s3_client = s3_client
+        
+        return s3_client
+        
+    except Exception as e:
+        error_msg = f"Failed to create S3 client: {str(e)}"
+        frappe.log_error(error_msg, "S3 Client Creation Error")
+        
+        # Re-raise with more context
+        frappe.throw(_("Unable to connect to video storage. Please check your storage configuration or contact administrator."))
 
 def convert_image_to_base64(image_path):
     """
@@ -745,34 +762,46 @@ def get_videos(exam_submission, ttl=None):
 	"""
 	Get list of videos. Optional cache the urls with ttl
 	"""
-	settings = frappe.get_single("Exam Settings")
-	s3_client = get_s3_client()
-	res = {"videos": {}}
+	try:
+		settings = frappe.get_single("Exam Settings")
+		s3_client = get_s3_client()
+		res = {"videos": {}}
 
-	# Paginator to handle buckets with many objects
-	paginator = s3_client.get_paginator('list_objects_v2')
-	for page in paginator.paginate(Bucket=settings.s3_bucket, Prefix=exam_submission):
-		if 'Contents' in page:
-			for obj in page['Contents']:
-				if not obj['Key'].endswith('.webm'):
-					continue
+		# Paginator to handle buckets with many objects
+		paginator = s3_client.get_paginator('list_objects_v2')
+		for page in paginator.paginate(Bucket=settings.s3_bucket, Prefix=exam_submission):
+			if 'Contents' in page:
+				for obj in page['Contents']:
+					if not obj['Key'].endswith('.webm'):
+						continue
 
-				# check cache for presigned url
-				filetimestamp = obj['Key'].split("/")[-1][:-4]
-				cached_url = frappe.cache().get(obj['Key'])
-				if not cached_url:
-					presigned_url = s3_client.generate_presigned_url(
-						'get_object', Params={
-							'Bucket': settings.s3_bucket,
-							'Key': obj['Key']},
-							ExpiresIn=ttl
-					)
-					res["videos"][filetimestamp] = presigned_url
-					if ttl:
-						frappe.cache().setex(obj['Key'], ttl, presigned_url)
-				else:
-					res["videos"][filetimestamp] = cached_url.decode()
-	return res
+					# check cache for presigned url
+					filetimestamp = obj['Key'].split("/")[-1][:-4]
+					cached_url = frappe.cache().get(obj['Key'])
+					if not cached_url:
+						presigned_url = s3_client.generate_presigned_url(
+							'get_object', Params={
+								'Bucket': settings.s3_bucket,
+								'Key': obj['Key']},
+								ExpiresIn=ttl
+						)
+						res["videos"][filetimestamp] = presigned_url
+						if ttl:
+							frappe.cache().setex(obj['Key'], ttl, presigned_url)
+					else:
+						res["videos"][filetimestamp] = cached_url.decode()
+		return res
+	except Exception as e:
+		# Log the specific error for debugging
+		frappe.log_error(f"S3 connection error in get_videos for {exam_submission}: {str(e)}", "S3 Connection Error")
+		
+		# Check for common botocore/S3 connection issues
+		error_msg = str(e).lower()
+		if any(keyword in error_msg for keyword in ['connection', 'timeout', 'network', 'botocore', 'endpoint']):
+			frappe.logger().warning(f"S3 connectivity issue for exam_submission {exam_submission}: {str(e)}")
+		
+		# Return empty videos dict instead of crashing
+		return {"videos": {}}
 
 @frappe.whitelist()
 def exam_video_list(exam_submission):
@@ -815,7 +844,18 @@ def proctor_video_list(exam_submission=None):
 		"Exam Submission", exam_submission, "exam"
 	)
 	ttl = frappe.get_cached_value("Exam", exam, "duration") * 60 + 900  # ttl is exam duration + 15 min buffer
-	res = get_videos(exam_submission, ttl)
+	
+	try:
+		res = get_videos(exam_submission, ttl)
+	except Exception as e:
+		frappe.log_error(f"Error retrieving videos for exam submission {exam_submission}: {str(e)}", "proctor_video_list error")
+		# Return empty video list instead of failing
+		res = {"videos": {}}
+		
+		# Check if it's a botocore connection error specifically
+		if "botocore" in str(type(e).__module__) and ("connection" in str(e).lower() or "timeout" in str(e).lower()):
+			frappe.msgprint(_("Unable to connect to video storage. Videos may be temporarily unavailable."), 
+							title=_("Storage Connection Error"), indicator="orange")
 
 	return res
 
