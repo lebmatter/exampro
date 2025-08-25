@@ -25,6 +25,7 @@ function proctorApp() {
     currentVideoIndex: {},
     videoBlobStore: {},
     existingMessages: {},
+    offlineStatus: {}, // Track offline status for each submission
     
     // Initialize the app
     async init() {
@@ -114,12 +115,61 @@ function proctorApp() {
         
         console.log(`Processed ${videoList.length} videos for ${examSubmission}`);
         
-        // Play the latest video if available and not currently playing
-        if (this.videoStore[examSubmission] && this.videoStore[examSubmission].length > 0) {
-          const video = document.getElementById(examSubmission);
-          // Only auto-play if the video is not currently playing something
-          if (video && (video.paused || video.ended || !video.src)) {
+        // Check if candidate is offline based on latest video timestamp
+        const currentTime = Math.floor(Date.now() / 1000); // Current Unix timestamp
+        const wasOffline = this.offlineStatus[examSubmission] || false;
+        let isOffline = false;
+        
+        if (videoList.length > 0) {
+          const latestVideoTimestamp = videoList[videoList.length - 1].unixtimestamp;
+          const timeDifference = currentTime - latestVideoTimestamp;
+          isOffline = timeDifference > 15; // Offline if last video is older than 15 seconds
+        } else {
+          isOffline = true; // No videos means offline
+        }
+        
+        // Update offline status
+        this.offlineStatus[examSubmission] = isOffline;
+        
+        // Get DOM elements
+        const video = document.getElementById(examSubmission);
+        const offlineOverlay = document.getElementById(`offline-overlay-${examSubmission}`);
+        const videoContainer = document.querySelector(`.video-container[data-videoid="${examSubmission}"]`);
+        
+        if (isOffline) {
+          // Show offline message and disable controls
+          if (offlineOverlay) {
+            offlineOverlay.classList.add('show');
+          }
+          if (videoContainer) {
+            videoContainer.setAttribute("data-islive", "0");
+          }
+          if (video) {
+            // video.controls = false;
+            video.pause();
+          }
+          console.log(`${examSubmission} is offline - last video older than 15 seconds`);
+        } else {
+          // Hide offline message and enable controls
+          if (offlineOverlay) {
+            offlineOverlay.classList.remove('show');
+          }
+          if (videoContainer) {
+            videoContainer.setAttribute("data-islive", "1");
+          }
+          // if (video) {
+          //   video.controls = true;
+          // }
+          
+          // If was previously offline and now online, play the latest video
+          if (wasOffline && this.videoStore[examSubmission] && this.videoStore[examSubmission].length > 0) {
+            console.log(`${examSubmission} came back online - playing latest video`);
             this.playVideoAtIndex(examSubmission, this.videoStore[examSubmission].length - 1);
+          } else if (this.videoStore[examSubmission] && this.videoStore[examSubmission].length > 0) {
+            // Only auto-play if the video is not currently playing something
+            if (video && (video.paused || video.ended || !video.src)) {
+              this.playVideoAtIndex(examSubmission, this.videoStore[examSubmission].length - 1);
+            }
           }
         }
       } catch (error) {
@@ -251,15 +301,43 @@ function proctorApp() {
     
     toggleOfflineStatus(examSubmission) {
       const offlineOverlay = document.getElementById(`offline-overlay-${examSubmission}`);
+      const video = document.getElementById(examSubmission);
+      const videoContainer = document.querySelector(`.video-container[data-videoid="${examSubmission}"]`);
+      
       if (offlineOverlay) {
         if (offlineOverlay.classList.contains('show')) {
+          // Bring back online
           offlineOverlay.classList.remove('show');
-          const videoContainer = document.querySelector(`.video-container[data-videoid="${examSubmission}"]`);
           if (videoContainer) {
             videoContainer.setAttribute("data-islive", "1");
           }
+          // if (video) {
+          //   video.controls = true;
+          // }
+          this.offlineStatus[examSubmission] = false;
+          
+          // Play latest video if available
+          if (this.videoStore[examSubmission] && this.videoStore[examSubmission].length > 0) {
+            this.playVideoAtIndex(examSubmission, this.videoStore[examSubmission].length - 1);
+          }
+        } else {
+          // Mark as offline
+          offlineOverlay.classList.add('show');
+          if (videoContainer) {
+            videoContainer.setAttribute("data-islive", "0");
+          }
+          if (video) {
+            video.controls = false;
+            video.pause();
+          }
+          this.offlineStatus[examSubmission] = true;
         }
       }
+    },
+    
+    // Check if a candidate is currently offline
+    isOffline(examSubmission) {
+      return this.offlineStatus[examSubmission] || false;
     },
     
     // Chat methods
