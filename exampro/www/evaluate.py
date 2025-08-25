@@ -68,12 +68,13 @@ def get_context(context):
 	# Get assigned exams for the evaluator
 	context.assigned_exams = get_evaluator_live_exams(evaluator=frappe.session.user, completed=True)
 	
-	# Get pending evaluations count and add alert if any
+	# Only show alert if there are NO assigned exams
+	# If there are exams, show the evaluation UI instead
 	pending_count = len(context.assigned_exams)
-	if pending_count > 0:
+	if pending_count == 0:
 		context.alert = {
-			"title": f"You have {pending_count} evaluation{'s' if pending_count > 1 else ''} pending",
-			"text": f"Please complete the evaluation{'s' if pending_count > 1 else ''} before the deadline to avoid any delays."
+			"title": "No evaluations pending",
+			"text": "There are currently no exam submissions assigned to you for evaluation."
 		}
 	
 	context.page_context = {}

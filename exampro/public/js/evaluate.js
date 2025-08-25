@@ -399,6 +399,7 @@ document.addEventListener('alpine:initialized', () => {
   // Find the Alpine component instance
   const appElement = document.querySelector('[x-data*="evaluationApp"]');
   if (appElement) {
-    window.evaluationAppInstance = Alpine.getScope(appElement);
+    // In Alpine.js v3, use _x_dataStack to access component data
+    window.evaluationAppInstance = appElement._x_dataStack ? appElement._x_dataStack[0] : null;
   }
 });
