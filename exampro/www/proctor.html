@@ -2,355 +2,388 @@
 endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
 %} {{ ext.render_header() }} {% endfor %}
 <link rel="stylesheet" href="/assets/exampro/css/proctor.css" />
-{% endblock %} {% block page_content %} 
+{% endblock %} {% block page_content %}
 <div x-data="window.proctorApp()" x-init="init()">
-{% if alert %}
-<div class="container mt-4 mb-4">
-  <div class="alert-card">
-    <div class="alert-card-header">
-      <h4 class="mb-0">
-        <i class="bi bi-clock"></i> Upcoming Proctoring Sessions
-      </h4>
-    </div>
-    <div class="alert-card-body">
-      <div class="alert-icon-section">
-        <i class="bi bi-eye"></i>
+  {% if alert %}
+  <div class="container mt-4 mb-4">
+    <div class="alert-card">
+      <div class="alert-card-header">
+        <h4 class="mb-0">
+          <i class="bi bi-clock"></i> Upcoming Proctoring Sessions
+        </h4>
       </div>
-      <div class="alert-status">{{ alert.title }}</div>
-      <div class="alert-message-box">
-        <p>{{ alert.text }}</p>
-      </div>
-      <div class="alert-actions">
-        <a href="/my-exams" class="alert-button alert-button-primary">
-          <i class="bi bi-arrow-left"></i>My Exams
-        </a>
+      <div class="alert-card-body">
+        <div class="alert-icon-section">
+          <i class="bi bi-eye"></i>
+        </div>
+        <div class="alert-status">{{ alert.title }}</div>
+        <div class="alert-message-box">
+          <p>{{ alert.text }}</p>
+        </div>
+        <div class="alert-actions">
+          <a href="/my-exams" class="alert-button alert-button-primary">
+            <i class="bi bi-arrow-left"></i>My Exams
+          </a>
+        </div>
       </div>
     </div>
   </div>
-</div>
-{% else %} {% if submissions|length > 0 or pending_candidates|length > 0 %}
-<div class="container-fluid" style="width: 80%">
-  {% else %}
-  <div class="container">
-    {% endif %}
-    <div class="row mb-5">
-      <div class="col">
-        <h4>👀 Proctor Dashboard</h4>
+  {% else %} {% if submissions|length > 0 or pending_candidates|length > 0 %}
+  <div class="container-fluid" style="width: 80%">
+    {% else %}
+    <div class="container">
+      {% endif %}
+      <div class="row mb-5">
+        <div class="col">
+          <h4>👀 Proctor Dashboard</h4>
+        </div>
       </div>
-    </div>
-    <div class="row mb-5">
-      {% if submissions|length > 0 or pending_candidates|length > 0 %}
-      <!-- Message Sidebar -->
-      <div class="col-md-3">
-        <div class="card">
-          <div class="card-header">
-            <h5 class="card-title mb-0">Latest Messages</h5>
-          </div>
-          <div class="card-body messages-sidebar">
-            <template x-for="msg in latestMessages" :key="msg.exam_submission">
+      <div class="row mb-5">
+        {% if submissions|length > 0 or pending_candidates|length > 0 %}
+        <!-- Message Sidebar -->
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title mb-0">Latest Messages</h5>
+            </div>
+            <div class="card-body messages-sidebar">
+              <template
+                x-for="msg in latestMessages"
+                :key="msg.exam_submission"
+              >
+                <div
+                  class="card mb-2 message-card"
+                  :data-submission="msg.exam_submission"
+                  @click="console.log('Clicking message card:', msg); openChatModal({name: msg.exam_submission, candidate_name: msg.candidate_name})"
+                  style="cursor: pointer"
+                >
+                  <div class="card-body p-2">
+                    <div
+                      class="d-flex justify-content-between align-items-center mb-1"
+                    >
+                      <h6
+                        class="card-subtitle text-muted mb-0"
+                        x-text="msg.candidate_name"
+                      ></h6>
+                      <span
+                        class="badge status-badge"
+                        :class="`status-${msg.status.toLowerCase()}`"
+                        :data-submission-status="msg.status"
+                        x-text="msg.status"
+                      ></span>
+                    </div>
+                    <p
+                      class="card-text message-text mb-0"
+                      x-text="msg.message"
+                    ></p>
+                  </div>
+                </div>
+              </template>
+              <!-- Fallback for server-side rendering -->
+              {% for msg in latest_messages %}
               <div
                 class="card mb-2 message-card"
-                :data-submission="msg.exam_submission"
-                @click="console.log('Clicking message card:', msg); openChatModal({name: msg.exam_submission, candidate_name: msg.candidate_name})"
-                style="cursor: pointer;"
+                data-submission="{{ msg.exam_submission }}"
+                x-show="false"
               >
                 <div class="card-body p-2">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="card-subtitle text-muted mb-0" x-text="msg.candidate_name"></h6>
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-1"
+                  >
+                    <h6 class="card-subtitle text-muted mb-0">
+                      {{ msg.candidate_name }}
+                    </h6>
                     <span
-                      class="badge status-badge"
-                      :class="`status-${msg.status.toLowerCase()}`"
-                      :data-submission-status="msg.status"
-                      x-text="msg.status"
-                    ></span>
+                      class="badge status-badge status-{{ msg.status.lower() }}"
+                      data-submission-status="{{ msg.status }}"
+                      >{{ msg.status }}</span
+                    >
                   </div>
-                  <p class="card-text message-text mb-0" x-text="msg.message"></p>
+                  <p class="card-text message-text mb-0">{{ msg.message }}</p>
                 </div>
               </div>
-            </template>
-            <!-- Fallback for server-side rendering -->
-            {% for msg in latest_messages %}
-            <div
-              class="card mb-2 message-card"
-              data-submission="{{ msg.exam_submission }}"
-              x-show="false"
-            >
-              <div class="card-body p-2">
-                <div
-                  class="d-flex justify-content-between align-items-center mb-1"
-                >
-                  <h6 class="card-subtitle text-muted mb-0">
-                    {{ msg.candidate_name }}
-                  </h6>
-                  <span
-                    class="badge status-badge status-{{ msg.status.lower() }}"
-                    data-submission-status="{{ msg.status }}"
-                    >{{ msg.status }}</span
-                  >
-                </div>
-                <p class="card-text message-text mb-0">{{ msg.message }}</p>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
-      <!-- Main Video Grid -->
-      <div class="col-md-9">
-        <!-- Main content -->
-        <div class="row">
-          <div class="col-md-6">
-            <div class="d-flex justify-content-start">
-              <button type="button" class="btn btn-primary mr-2">
-                Live candidates
-                <span class="badge badge-light" x-text="liveCandidatesCount">{{ submissions|length }}</span>
-              </button>
-              <button type="button" class="btn btn-secondary">
-                Pending candidates
-                <span class="badge badge-light" x-text="pendingCandidatesCount">{{ pending_candidates|length }}</span>
-              </button>
+              {% endfor %}
             </div>
           </div>
-          <div class="col-md-6"></div>
         </div>
 
-        <!-- Video Cards Grid - 4 per row -->
-        <div class="row mt-4">
-          <template x-for="submission in submissions" :key="submission.name">
-            <div class="col-md-3 col-sm-6 mb-3">
-              <div class="card video-card">
-                <div class="card-header p-2 d-flex justify-content-between align-items-center">
-                  <small class="text-truncate me-2" x-text="submission.candidate_name"></small>
-                </div>
-                <div class="card-body p-0">
-                  <div
-                    class="video-container"
-                    :data-videoid="submission.name"
-                    :data-candidatename="submission.candidate_name"
-                    data-islive="0"
-                  >
-                    <video
-                      class="video"
-                      :id="submission.name"
-                      :data-videoid="submission.name"
-                      preload="metadata"
-                    >
-                      <p>Your browser doesn't support HTML5 video.</p>
-                    </video>
-                  </div>
-                  <!-- Offline Overlay -->
-                  <div
-                    class="offline-overlay"
-                    :id="`offline-overlay-${submission.name}`"
-                  >
-                    <div
-                      class="offline-button"
-                      @click="toggleOfflineStatus(submission.name)"
-                    >
-                      <i class="bi bi-wifi-off"></i>
-                      <span>Offline</span>
-                    </div>
-                  </div>
-                  <!-- Controls moved below video as centered button group -->
-                  <div class="video-controls">
-                    <small
-                      class="file-timestamp fileTimeStamp"
-                      :id="`fileTimeStamp-${submission.name}`"
-                    ></small>
-                    <button
-                      class="controls__button togglePlayBtn"
-                      :id="`togglePlayBtn-${submission.name}`"
-                      title="Toggle Play"
-                      :data-videoid="submission.name"
-                      @click="togglePlay(submission.name)"
-                    >
-                      <i class="bi bi-play-fill"></i>
-                    </button>
-                    <button
-                      class="controls__button skipBack"
-                      :id="`skipBack-${submission.name}`"
-                      title="Skip back"
-                      :data-videoid="submission.name"
-                      @click="playPreviousVideo(submission.name)"
-                    >
-                      <i class="bi bi-rewind-fill"></i>
-                    </button>
-                    <button
-                      class="controls__button skipFwd"
-                      :id="`skipFwd-${submission.name}`"
-                      title="Skip forward"
-                      :data-videoid="submission.name"
-                      @click="playNextVideo(submission.name)"
-                    >
-                      <i class="bi bi-fast-forward-fill"></i>
-                    </button>
-                    <button
-                      class="controls__button goLive"
-                      :id="`goLive-${submission.name}`"
-                      title="Go Live"
-                      :data-videoid="submission.name"
-                      @click="playLastVideo(submission.name)"
-                    >
-                      <i class="bi bi-broadcast-pin"></i>
-                    </button>
-                    <button
-                      type="button"
-                      class="controls__button chat-btn menu"
-                      :id="`chat-btn-${submission.name}`"
-                      title="Chat"
-                      :data-videoid="submission.name"
-                      @click="openChatModal(submission)"
-                    >
-                      <i class="bi bi-chat-square-text-fill"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-          <!-- Fallback for server-side rendering -->
-          {% for submission in submissions %}
-          <div class="col-md-3 col-sm-6 mb-3" x-show="false">
-            <div class="card video-card">
-              <div class="card-header p-2 d-flex justify-content-between align-items-center">
-                <small class="text-truncate me-2">{{ submission.candidate_name }}</small>
-              </div>
-              <div class="card-body p-0">
-                <div
-                  class="video-container"
-                  data-videoid="{{ submission.name }}"
-                  data-candidatename="{{ submission.candidate_name }}"
-                  data-islive="0"
-                >
-                  <video
-                    class="video"
-                    id="{{ submission.name }}"
-                    data-videoid="{{ submission.name }}"
-                    preload="metadata"
-                  >
-                    <p>Your browser doesn't support HTML5 video.</p>
-                  </video>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% else %}
-      <div class="col-12 mb-10">
-        <div
-          class="d-flex justify-content-center align-items-center"
-          style="min-height: 400px"
-        >
-          <div class="text-center" style="max-width: 600px">
-            <img
-              src="/assets/exampro/img/nothing-to-proc.png"
-              alt="Nothing to proctor"
-              class="img-fluid mb-4"
-              style="max-width: 600px; opacity: 0.8"
-            />
-            <h4 class="text-muted mb-3">No Exams to Proctor</h4>
-            <p class="text-muted mb-0" style="line-height: 1.6">
-              There are currently no exam submissions assigned to you for
-              proctoring. New submissions will appear here when they become
-              available.
-            </p>
-          </div>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div
-    class="modal fade"
-    id="chatModal"
-    tabindex="-1"
-    aria-labelledby="chatVideoModalLabel"
-    aria-hidden="true"
-  >
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="chatVideoModalLabel">
-            Chat with: <span x-text="currentChatCandidate"></span>
-          </h5>
-          <button
-            type="button"
-            class="btn-close"
-            @click="closeChatModal()"
-            aria-label="Close"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-        <div class="modal-body">
+        <!-- Main Video Grid -->
+        <div class="col-md-9">
+          <!-- Main content -->
           <div class="row">
-            <!-- Video Column (Left) -->
-            <div class="col-md-5">
-              <div class="modal-video-container">
-                <video id="modalVideoElement" controls>
-                  <source src="" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <div class="mt-3 text-center">
-                  <button
-                    type="button"
-                    class="btn btn-danger"
-                    @click="terminateExam()"
+            <div class="col-md-6">
+              <div class="d-flex justify-content-start">
+                <button type="button" class="btn btn-primary mr-2">
+                  Live candidates
+                  <span class="badge badge-light" x-text="liveCandidatesCount"
+                    >{{ submissions|length }}</span
                   >
-                    Terminate Exam
-                  </button>
-                </div>
+                </button>
+                <button type="button" class="btn btn-secondary">
+                  Pending candidates
+                  <span
+                    class="badge badge-light"
+                    x-text="pendingCandidatesCount"
+                    >{{ pending_candidates|length }}</span
+                  >
+                </button>
               </div>
             </div>
+            <div class="col-md-6"></div>
+          </div>
 
-            <!-- Chat Column (Right) -->
-            <div class="col-md-7">
-              <div id="messages" class="tab-pane fade show active">
-                <!-- Reusable Chatbox Template with custom placeholder and send button ID -->
-                <div class="chat-container">
-                  <div id="chat-messages" class="d-flex flex-column mb-3"></div>
-                </div>
-                <div class="chat-input-container">
-                  <div class="input-group">
-                    <input
-                      type="text"
-                      id="chat-input"
-                      class="form-control"
-                      placeholder="Type your message..."
-                      x-model="chatMessage"
-                      @keydown.enter="sendMessage()"
-                    />
-                    <div class="input-group-append">
-                      <button class="btn btn-primary" type="button" @click="sendMessage()">
-                        <span class="d-flex align-items-center">
-                          Send
-                          <i class="bi bi-send ms-2"></i>
-                        </span>
+          <!-- Video Cards Grid - 4 per row -->
+          <div class="row mt-4">
+            <template x-for="submission in submissions" :key="submission.name">
+              <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card video-card">
+                  <div
+                    class="card-header p-2 d-flex justify-content-between align-items-center"
+                  >
+                    <small
+                      class="text-truncate me-2"
+                      x-text="submission.candidate_name"
+                    ></small>
+                  </div>
+                  <div class="card-body p-0">
+                    <div
+                      class="video-container"
+                      :data-videoid="submission.name"
+                      :data-candidatename="submission.candidate_name"
+                      data-islive="0"
+                    >
+                      <video
+                        class="video"
+                        :id="submission.name"
+                        :data-videoid="submission.name"
+                        preload="metadata"
+                      >
+                        <p>Your browser doesn't support HTML5 video.</p>
+                      </video>
+                    </div>
+                    <!-- Offline Overlay -->
+                    <div
+                      class="offline-overlay"
+                      :id="`offline-overlay-${submission.name}`"
+                    >
+                      <div
+                        class="offline-button"
+                        @click="toggleOfflineStatus(submission.name)"
+                      >
+                        <i class="bi bi-wifi-off"></i>
+                        <span>Offline</span>
+                      </div>
+                    </div>
+                    <!-- Controls moved below video as centered button group -->
+                    <div class="video-controls">
+                      <small
+                        class="file-timestamp fileTimeStamp"
+                        :id="`fileTimeStamp-${submission.name}`"
+                      ></small>
+                      <button
+                        class="controls__button togglePlayBtn"
+                        :id="`togglePlayBtn-${submission.name}`"
+                        title="Toggle Play"
+                        :data-videoid="submission.name"
+                        @click="togglePlay(submission.name)"
+                      >
+                        <i class="bi bi-play-fill"></i>
+                      </button>
+                      <button
+                        class="controls__button skipBack"
+                        :id="`skipBack-${submission.name}`"
+                        title="Skip back"
+                        :data-videoid="submission.name"
+                        @click="playPreviousVideo(submission.name)"
+                      >
+                        <i class="bi bi-rewind-fill"></i>
+                      </button>
+                      <button
+                        class="controls__button skipFwd"
+                        :id="`skipFwd-${submission.name}`"
+                        title="Skip forward"
+                        :data-videoid="submission.name"
+                        @click="playNextVideo(submission.name)"
+                      >
+                        <i class="bi bi-fast-forward-fill"></i>
+                      </button>
+                      <button
+                        class="controls__button goLive"
+                        :id="`goLive-${submission.name}`"
+                        title="Go Live"
+                        :data-videoid="submission.name"
+                        @click="playLastVideo(submission.name)"
+                      >
+                        <i class="bi bi-broadcast-pin"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="controls__button chat-btn menu"
+                        :id="`chat-btn-${submission.name}`"
+                        title="Chat"
+                        :data-videoid="submission.name"
+                        @click="openChatModal(submission)"
+                      >
+                        <i class="bi bi-chat-square-text-fill"></i>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
+            </template>
+            <!-- Fallback for server-side rendering -->
+            {% for submission in submissions %}
+            <div class="col-md-3 col-sm-6 mb-3" x-show="false">
+              <div class="card video-card">
+                <div
+                  class="card-header p-2 d-flex justify-content-between align-items-center"
+                >
+                  <small class="text-truncate me-2"
+                    >{{ submission.candidate_name }}</small
+                  >
+                </div>
+                <div class="card-body p-0">
+                  <div
+                    class="video-container"
+                    data-videoid="{{ submission.name }}"
+                    data-candidatename="{{ submission.candidate_name }}"
+                    data-islive="0"
+                  >
+                    <video
+                      class="video"
+                      id="{{ submission.name }}"
+                      data-videoid="{{ submission.name }}"
+                      preload="metadata"
+                    >
+                      <p>Your browser doesn't support HTML5 video.</p>
+                    </video>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <div class="col-12 mb-10">
+          <div
+            class="d-flex justify-content-center align-items-center"
+            style="min-height: 400px"
+          >
+            <div class="text-center" style="max-width: 600px">
+              <img
+                src="/assets/exampro/img/nothing-to-proc.png"
+                alt="Nothing to proctor"
+                class="img-fluid mb-4"
+                style="max-width: 600px; opacity: 0.8"
+              />
+              <h4 class="text-muted mb-3">No Exams to Proctor</h4>
+              <p class="text-muted mb-0" style="line-height: 1.6">
+                There are currently no exam submissions assigned to you for
+                proctoring. New submissions will appear here when they become
+                available.
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="chatModal"
+      tabindex="-1"
+      aria-labelledby="chatVideoModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="chatVideoModalLabel">
+              Chat with: <span x-text="currentChatCandidate"></span>
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              @click="closeChatModal()"
+              aria-label="Close"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <!-- Video Column (Left) -->
+              <div class="col-md-5">
+                <div class="modal-video-container">
+                  <video id="modalVideoElement" controls>
+                    <source src="" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  <div class="mt-3 text-center">
+                    <button
+                      type="button"
+                      class="btn btn-danger"
+                      @click="terminateExam()"
+                    >
+                      Terminate Exam
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat Column (Right) -->
+              <div class="col-md-7">
+                <div id="messages" class="tab-pane fade show active">
+                  <!-- Reusable Chatbox Template with custom placeholder and send button ID -->
+                  <div class="chat-container">
+                    <div
+                      id="chat-messages"
+                      class="d-flex flex-column mb-3"
+                    ></div>
+                  </div>
+                  <div class="chat-input-container">
+                    <div class="input-group">
+                      <input
+                        type="text"
+                        id="chat-input"
+                        class="form-control"
+                        placeholder="Type your message..."
+                        x-model="chatMessage"
+                        @keydown.enter="sendMessage()"
+                      />
+                      <div class="input-group-append">
+                        <button
+                          class="btn btn-primary"
+                          type="button"
+                          @click="sendMessage()"
+                        >
+                          <span class="d-flex align-items-center">
+                            Send
+                            <i class="bi bi-send ms-2"></i>
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    {% endif %}
   </div>
-  {% endif %}
-</div>
-{% endblock %}
+  {% endblock %}
 
   <!-- Scripts -->
   {%- block script %} {{ super() }}
   <script type="text/javascript" src="/assets/exampro/js/api-utils.js"></script>
   <script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
   <script type="text/javascript" src="/assets/exampro/js/chatbox.js"></script>
-  
+
   <script>
     // Pass server data to Alpine.js app
     window.proctorData = {
@@ -359,43 +392,49 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
       pendingCandidates: {{ pending_candidates|tojson|safe }}
     };
   </script>
-  
-  <script type="text/javascript" src="/assets/exampro/js/proctorutils.js"></script>
+
+  <script
+    type="text/javascript"
+    src="/assets/exampro/js/proctorutils.js"
+  ></script>
   <script>
     // Debug: Check if proctorApp is loaded
-    console.log('proctorApp function available:', typeof window.proctorApp);
-    console.log('proctorData available:', window.proctorData);
+    console.log("proctorApp function available:", typeof window.proctorApp);
+    console.log("proctorData available:", window.proctorData);
   </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+  ></script>
+
   <style>
     /* Fix modal chatbox styling with very specific selectors */
     #chatModal .modal-dialog {
       max-width: 1200px !important;
     }
-    
+
     #chatModal .modal-body {
       height: 700px !important;
       min-height: 700px !important;
     }
-    
+
     #chatModal .modal-body .row {
       height: 100% !important;
     }
-    
+
     #chatModal .modal-body .col-md-7 {
       height: 100% !important;
       display: flex !important;
       flex-direction: column !important;
     }
-    
+
     #chatModal .modal-body .col-md-7 #messages {
       height: 100% !important;
       flex: 1 !important;
       display: flex !important;
       flex-direction: column !important;
     }
-    
+
     #chatModal .modal-body .col-md-7 #messages .chat-container {
       border: 1px solid #dee2e6 !important;
       border-radius: 0.375rem !important;
@@ -407,7 +446,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
       height: 600px !important;
       min-height: 600px !important;
     }
-    
+
     #chatModal .modal-body .col-md-7 #messages .chat-container #chat-messages {
       flex: 1 !important;
       height: 520px !important;
@@ -418,13 +457,71 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
       border: 1px solid #ccc !important;
       padding: 10px !important;
     }
-    
+
     #chatModal .modal-body .col-md-7 #messages .chat-input-container {
       border-top: 1px solid #dee2e6 !important;
       padding-top: 0.75rem !important;
       margin-top: 0.75rem !important;
       flex-shrink: 0 !important;
     }
+
+    /* Message card hover highlighting for associated video cards */
+    .video-card {
+      transition: all 0.2s ease;
+    }
+
+    .video-card.highlighted {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .video-card.highlighted .card-header {
+      background-color: #ffbf10 !important;
+      color: #222222 !important;
+    }
+
+    /* Add spacing above and below video */
+    .video-container {
+      margin: 10px 0;
+    }
   </style>
+
+  <script>
+    // Add message card hover functionality
+    document.addEventListener("DOMContentLoaded", function () {
+      const messageCards = document.querySelectorAll(".message-card");
+
+      messageCards.forEach((messageCard) => {
+        const submissionId = messageCard.getAttribute("data-submission");
+
+        messageCard.addEventListener("mouseenter", function () {
+          // Find the associated video card
+          const videoContainer = document.querySelector(
+            `[data-videoid="${submissionId}"]`
+          );
+          if (videoContainer) {
+            const videoCard = videoContainer.closest(".video-card");
+            if (videoCard) {
+              videoCard.classList.add("highlighted");
+            }
+          }
+        });
+
+        messageCard.addEventListener("mouseleave", function () {
+          // Remove highlight from the associated video card
+          const videoContainer = document.querySelector(
+            `[data-videoid="${submissionId}"]`
+          );
+          if (videoContainer) {
+            const videoCard = videoContainer.closest(".video-card");
+            if (videoCard) {
+              videoCard.classList.remove("highlighted");
+            }
+          }
+        });
+      });
+    });
+  </script>
+
   {% endblock %}
 </div>
