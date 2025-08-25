@@ -4,6 +4,59 @@ var examOverview;
 var currentQuestion;
 var detector;
 var gazer;
+var lastNoFaceAlertTime = 0;
+var noFaceAlertCooldown = 10000; // 10 seconds cooldown between no face alerts
+var lastWebcamErrorTime = 0;
+var webcamErrorCooldown = 5000; // 5 seconds cooldown between webcam error alerts
+var recordingInitialized = false; // Prevent multiple recording initializations
+
+// Simple notification function as fallback
+function showNotification(message, type = 'info') {
+    // Try to use toastr first
+    if (typeof toastr !== 'undefined') {
+        switch(type) {
+            case 'warning':
+                toastr.warning(message);
+                break;
+            case 'error':
+                toastr.error(message);
+                break;
+            case 'success':
+                toastr.success(message);
+                break;
+            default:
+                toastr.info(message);
+        }
+    } else {
+        // Fallback to console and simple visual indicator
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        
+        // Create a simple notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2196f3'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            z-index: 10000;
+            font-size: 14px;
+            max-width: 300px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    }
+}
 
 // Function to update the countdown timer
 function updateTimer() {
@@ -65,6 +118,13 @@ function sendVideoBlob(blob) {
 
 // Function to start recording
 function startRecording() {
+    // Prevent multiple initializations
+    if (recordingInitialized) {
+        console.log('Recording already initialized');
+        return;
+    }
+    
+    recordingInitialized = true;
     // Get the webcam stream
     const constraints = {
         audio: false,
@@ -81,11 +141,15 @@ function startRecording() {
             // Add track event listeners
             stream.getTracks().forEach(track => {
                 track.addEventListener('ended', function () {
-                    examAlert(
-                        'Webcam was disabled or stopped',
-                        'Exam will be terminated. Refresh the page or fix the issue.'
-                    );
-                    sendMessage('Webcam was disabled or stopped', 'Warning', 'nowebcam');
+                    const currentTime = Date.now();
+                    if (currentTime - lastWebcamErrorTime > webcamErrorCooldown) {
+                        console.error('Webcam was disabled or stopped');
+                        sendMessage('Webcam was disabled or stopped', 'Warning', 'nowebcam');
+                        lastWebcamErrorTime = currentTime;
+                        
+                        // Show a less intrusive notification
+                        showNotification('Webcam was disabled or stopped. Please fix the issue.', 'error');
+                    }
                 });
             });
 
@@ -95,54 +159,72 @@ function startRecording() {
             // Initialize gazer after the video element is created and stream is attached
             // Use the main webcam-stream video element for gazer (better tracking with original stream)
             if (exam.enable_video_proctoring && !gazer) {
-                gazer = new Gazer("webcam-stream", {
-                    postTrackingDataInterval: 15,
-                    
-                    // Display options
-                    showFaceRectangle: false,
-                    showGazeVector: false,
-                    showEyePoints: false,
-                    enableLogs: false, 
-                    onFaceDetected: (faces) => {
-                        if (faces.length === 0) {
-                            examAlert("No Face Detected!", "Please ensure your face is visible to the camera. This is a critical warning.");
-                            sendMessage('No face detected in camera view', 'Critical', 'noface');
-                        }
-                    },
-                    // Callback functions
-                    onPostTrackingData: (trackingData) => {
+                try {
+                    gazer = new Gazer("webcam-stream", {
+                        postTrackingDataInterval: 15,
                         
-                        // Send tracking data to server
-                        frappe.call({
-                            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_tracking_info",
-                            type: "POST",
-                            args: {
-                                'info': JSON.stringify({
-                                    'exam_submission': exam["exam_submission"],
-                                    'faceCountChanges': trackingData.faceCountChanges,
-                                    'totalAwayTime': trackingData.totalAwayTime,
-                                    'totalDistractedTime': trackingData.totalDistractedTime,
-                                    'retinaLocations': trackingData.retinaLocations || []
-                                })
-                            },
-                            callback: (data) => {
-                            },
-                            error: (error) => {
-                                console.error("Failed to send tracking data:", error);
+                        // Display options
+                        showFaceRectangle: false,
+                        showGazeVector: false,
+                        showEyePoints: false,
+                        enableLogs: false, 
+                        onFaceDetected: (faces) => {
+                            const currentTime = Date.now();
+                            if (faces.length === 0) {
+                                // Only show alert if enough time has passed since last alert
+                                if (currentTime - lastNoFaceAlertTime > noFaceAlertCooldown) {
+                                    console.warn('No face detected in camera view');
+                                    sendMessage('No face detected in camera view', 'Warning', 'noface');
+                                    lastNoFaceAlertTime = currentTime;
+                                    
+                                    // Show a less intrusive notification
+                                    showNotification('Please ensure your face is visible to the camera', 'warning');
+                                }
                             }
-                        });
-                    },
-                });
+                        },
+                        // Callback functions
+                        onPostTrackingData: (trackingData) => {
+                            
+                            // Send tracking data to server
+                            frappe.call({
+                                method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_tracking_info",
+                                type: "POST",
+                                args: {
+                                    'info': JSON.stringify({
+                                        'exam_submission': exam["exam_submission"],
+                                        'faceCountChanges': trackingData.faceCountChanges,
+                                        'totalAwayTime': trackingData.totalAwayTime,
+                                        'totalDistractedTime': trackingData.totalDistractedTime,
+                                        'retinaLocations': trackingData.retinaLocations || []
+                                    })
+                                },
+                                callback: (data) => {
+                                },
+                                error: (error) => {
+                                    console.error("Failed to send tracking data:", error);
+                                }
+                            });
+                        },
+                        onError: (error) => {
+                            console.error("Gazer error:", error);
+                            // Don't show alert for gazer errors to prevent loops
+                        }
+                    });
 
-                // Apply low performance preset
-                gazer.setPerformanceMode('low');
+                    // Apply low performance preset
+                    gazer.setPerformanceMode('low');
 
-                // Apply relaxed sensitivity preset  
-                gazer.setSensitivityMode('relaxed');
+                    // Apply relaxed sensitivity preset  
+                    gazer.setSensitivityMode('relaxed');
 
-                // Start gazer if exam is already started
-                if (exam.submission_status === "Started") {
-                    gazer.start();
+                    // Start gazer if exam is already started
+                    if (exam.submission_status === "Started") {
+                        gazer.start();
+                    }
+                } catch (error) {
+                    console.error("Failed to initialize gazer:", error);
+                    // Continue without gazer if it fails to initialize
+                    gazer = null;
                 }
             }
 
@@ -175,11 +257,18 @@ function startRecording() {
             }
         })
         .catch(function (error) {
-            examAlert(
-                'No webcam detected',
-                'Exam will be terminated. Refresh the page or fix the issue.'
-            );
-            sendMessage('Webcam was not detected', 'Warning', 'nowebcam');
+            console.error('Webcam detection error:', error);
+            const currentTime = Date.now();
+            if (currentTime - lastWebcamErrorTime > webcamErrorCooldown) {
+                sendMessage('Webcam was not detected', 'Warning', 'nowebcam');
+                lastWebcamErrorTime = currentTime;
+                
+                // Show a less intrusive notification
+                showNotification('No webcam detected. Please check your camera permissions.', 'error');
+            }
+            
+            // Reset recording flag if initialization failed
+            recordingInitialized = false;
         });
 }
 
@@ -215,6 +304,9 @@ function stopRecording() {
             });
         }
     }
+    
+    // Reset recording flag so it can be reinitialized if needed
+    recordingInitialized = false;
 }
 
 function activateDetector(){
