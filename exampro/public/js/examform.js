@@ -9,6 +9,8 @@ var noFaceAlertCooldown = 10000; // 10 seconds cooldown between no face alerts
 var lastWebcamErrorTime = 0;
 var webcamErrorCooldown = 5000; // 5 seconds cooldown between webcam error alerts
 var recordingInitialized = false; // Prevent multiple recording initializations
+var submitAnswerTimeout; // Debounce timeout for textarea input
+var isSubmittingAnswer = false; // Flag to prevent concurrent submissions
 
 // Simple notification function as fallback
 function showNotification(message, type = 'info') {
@@ -453,11 +455,30 @@ frappe.ready(() => {
 
     // Attach event listener for textarea in subjective questions
     $(document).on('input change', '#examTextInput textarea', function() {
+        // Clear any existing timeout
+        clearTimeout(submitAnswerTimeout);
+        
         // Only submit if there's actual content or if marked for later
         let textContent = $(this).val();
         let mrkForLtr = $("#markedForLater").prop('checked');
         
         // Submit if there's meaningful content or if marked for later
+        if ((textContent && textContent.trim() !== "") || mrkForLtr) {
+            // Debounce the submission to avoid too many calls while typing
+            submitAnswerTimeout = setTimeout(function() {
+                submitAnswer();
+            }, 1000); // Wait 1 second after user stops typing
+        }
+    });
+
+    // Also submit immediately when user moves away from textarea
+    $(document).on('blur', '#examTextInput textarea', function() {
+        // Clear any pending timeout and submit immediately
+        clearTimeout(submitAnswerTimeout);
+        
+        let textContent = $(this).val();
+        let mrkForLtr = $("#markedForLater").prop('checked');
+        
         if ((textContent && textContent.trim() !== "") || mrkForLtr) {
             submitAnswer();
         }
@@ -858,6 +879,9 @@ function startExam() {
 };
 
 function getQuestion(qsno) {
+    // Clear any pending textarea submission timeout
+    clearTimeout(submitAnswerTimeout);
+    
     // Only submit the current answer if we're on a question after the first one
     if (currentQuestion && currentQuestion.no > 1) {
         submitAnswer(false);
@@ -881,6 +905,9 @@ function getQuestion(qsno) {
 };
 
 function showSubmitConfirmPage() {
+        // Clear any pending textarea submission timeout
+        clearTimeout(submitAnswerTimeout);
+        
         // Submit the current answer before showing the summary
         submitAnswer(false);
         
@@ -936,6 +963,14 @@ function showSubmitConfirmPage() {
 
 
 function submitAnswer(loadNext) {
+    // Prevent concurrent submissions
+    if (isSubmittingAnswer && !loadNext) {
+        console.log("Answer submission already in progress, skipping...");
+        return;
+    }
+    
+    isSubmittingAnswer = true;
+    
     let answer;
     var mrkForLtr = $("#markedForLater").prop('checked') ? 1 : 0;
     if (currentQuestion["type"] == "Choices") {
@@ -961,6 +996,7 @@ function submitAnswer(loadNext) {
                     showSubmitConfirmPage();
                 }
             }
+            isSubmittingAnswer = false;
             return;
         }
     }
@@ -968,7 +1004,7 @@ function submitAnswer(loadNext) {
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.submit_question_response",
         type: "POST",
-        async: false,
+        async: loadNext ? false : true, // Only use sync for navigation, async for auto-save
         args: {
             'exam_submission': exam["exam_submission"],
             'qs_name': currentQuestion["name"],
@@ -977,6 +1013,8 @@ function submitAnswer(loadNext) {
         },
         callback: (data) => {
             console.log("submitted answer.");
+            isSubmittingAnswer = false;
+            
             // check if this is the last question
             if (loadNext) {
                 if (data.message.qs_no < examOverview["total_questions"]) {
@@ -988,5 +1026,9 @@ function submitAnswer(loadNext) {
                 }
             }
         },
+        error: (error) => {
+            console.error("Error submitting answer:", error);
+            isSubmittingAnswer = false;
+        }
     });
 };
