@@ -450,36 +450,8 @@ frappe.ready(() => {
 
     // Attach event listener for the "markedForLater" checkbox
     $(document).on('change', '#markedForLater', function() {
-        submitAnswer();
-    });
-
-    // Attach event listener for textarea in subjective questions
-    $(document).on('input change', '#examTextInput textarea', function() {
-        // Clear any existing timeout
-        clearTimeout(submitAnswerTimeout);
-        
-        // Only submit if there's actual content or if marked for later
-        let textContent = $(this).val();
-        let mrkForLtr = $("#markedForLater").prop('checked');
-        
-        // Submit if there's meaningful content or if marked for later
-        if ((textContent && textContent.trim() !== "") || mrkForLtr) {
-            // Debounce the submission to avoid too many calls while typing
-            submitAnswerTimeout = setTimeout(function() {
-                submitAnswer();
-            }, 1000); // Wait 1 second after user stops typing
-        }
-    });
-
-    // Also submit immediately when user moves away from textarea
-    $(document).on('blur', '#examTextInput textarea', function() {
-        // Clear any pending timeout and submit immediately
-        clearTimeout(submitAnswerTimeout);
-        
-        let textContent = $(this).val();
-        let mrkForLtr = $("#markedForLater").prop('checked');
-        
-        if ((textContent && textContent.trim() !== "") || mrkForLtr) {
+        // Only auto-submit for multiple choice questions
+        if (currentQuestion && currentQuestion["type"] == "Choices") {
             submitAnswer();
         }
     });
@@ -557,12 +529,61 @@ function updateOverviewMap() {
                 
                 // Add click event handler
                 button.click((e) => {
-                    getQuestion(i);
+                    navigateToQuestion(i);
                 });
             }
         },
     });
 };
+
+// Function to handle navigation to a specific question via navigation cards
+function navigateToQuestion(qsno) {
+    // Clear any pending textarea submission timeout
+    clearTimeout(submitAnswerTimeout);
+    
+    // Check if we're currently on a question and it's a subjective question
+    if (currentQuestion && currentQuestion["type"] !== "Choices") {
+        // For subjective questions, check if there's content in the textarea
+        let textContent = $("#examTextInput").find("textarea").val();
+        let mrkForLtr = $("#markedForLater").prop('checked');
+        
+        // Submit if there's meaningful content or if marked for later
+        if ((textContent && textContent.trim() !== "") || mrkForLtr) {
+            // Submit the current subjective answer before navigating
+            frappe.call({
+                method: "exampro.exam_pro.doctype.exam_submission.exam_submission.submit_question_response",
+                type: "POST",
+                async: false, // Use synchronous call to ensure submission completes before navigation
+                args: {
+                    'exam_submission': exam["exam_submission"],
+                    'qs_name': currentQuestion["name"],
+                    'answer': textContent,
+                    'markdflater': mrkForLtr ? 1 : 0,
+                },
+                callback: (data) => {
+                    console.log("Submitted subjective answer before navigation.");
+                    // Now navigate to the new question
+                    getQuestion(qsno);
+                },
+                error: (error) => {
+                    console.error("Error submitting answer before navigation:", error);
+                    // Still navigate even if submission failed
+                    getQuestion(qsno);
+                }
+            });
+        } else {
+            // No content to submit, just navigate
+            getQuestion(qsno);
+        }
+    } else if (currentQuestion && currentQuestion["type"] == "Choices") {
+        // For multiple choice questions, use the existing auto-submit logic
+        submitAnswer(false);
+        getQuestion(qsno);
+    } else {
+        // No current question, just navigate
+        getQuestion(qsno);
+    }
+}
 
 // Helper function to format image source (handles both URL and base64)
 function getImageSrc(imageData) {
@@ -883,7 +904,8 @@ function getQuestion(qsno) {
     clearTimeout(submitAnswerTimeout);
     
     // Only submit the current answer if we're on a question after the first one
-    if (currentQuestion && currentQuestion.no > 1) {
+    // and it's a multiple choice question
+    if (currentQuestion && currentQuestion.no > 1 && currentQuestion["type"] == "Choices") {
         submitAnswer(false);
     }
     frappe.call({
@@ -908,8 +930,10 @@ function showSubmitConfirmPage() {
         // Clear any pending textarea submission timeout
         clearTimeout(submitAnswerTimeout);
         
-        // Submit the current answer before showing the summary
-        submitAnswer(false);
+        // Submit the current answer before showing the summary only for multiple choice questions
+        if (currentQuestion && currentQuestion["type"] == "Choices") {
+            submitAnswer(false);
+        }
         
         // user wants to end the exam
         // Need to fetch the latest overview data to reflect changes from the last question
@@ -983,18 +1007,23 @@ function submitAnswer(loadNext) {
         answer = checkedValues.join(",");
     } else {
         answer = $("#examTextInput").find("textarea").val();
-        // For subjective questions, check if answer is empty or just whitespace
-        // If loadNext is true (navigating away) and answer is empty, don't submit unless marked for later
+        // For subjective questions, only submit when explicitly navigating (loadNext = true)
+        // or when marked for later, but not for auto-save
+        if (!loadNext && !mrkForLtr) {
+            // Don't auto-save subjective answers unless marked for later
+            isSubmittingAnswer = false;
+            return;
+        }
+        
+        // When navigating (loadNext = true), handle empty subjective answers
         if (loadNext && !mrkForLtr && (!answer || answer.trim() === "")) {
             // Don't submit empty subjective answers when navigating, just load next question
-            if (loadNext) {
-                if (currentQuestion["no"] < examOverview["total_questions"]) {
-                    let nextQs = currentQuestion["no"] + 1;
-                    getQuestion(nextQs);
-                    updateOverviewMap();
-                } else {
-                    showSubmitConfirmPage();
-                }
+            if (currentQuestion["no"] < examOverview["total_questions"]) {
+                let nextQs = currentQuestion["no"] + 1;
+                getQuestion(nextQs);
+                updateOverviewMap();
+            } else {
+                showSubmitConfirmPage();
             }
             isSubmittingAnswer = false;
             return;
