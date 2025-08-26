@@ -81,6 +81,12 @@ function proctorApp() {
     // Update video list from server
     async updateVideoList() {
       for (const submission of this.submissions) {
+        // Skip video processing if video proctoring is disabled
+        if (!submission.enable_video_proctoring) {
+          console.log(`Video proctoring is disabled for ${submission.name}, skipping video processing`);
+          continue;
+        }
+        
         try {
           const data = await this.apiCall({
             method: "exampro.exam_pro.doctype.exam_submission.exam_submission.proctor_video_list",
@@ -200,6 +206,21 @@ function proctorApp() {
     
     // Video control methods
     togglePlay(examSubmission) {
+      // Check if video proctoring is enabled for this submission
+      const submission = this.submissions.find(s => s.name === examSubmission);
+      if (submission && !submission.enable_video_proctoring) {
+        console.log('Video proctoring is disabled for this submission');
+        if (typeof frappe !== 'undefined' && frappe.show_alert) {
+          frappe.show_alert({
+            message: 'Video proctoring is disabled for this exam',
+            indicator: 'orange'
+          });
+        } else {
+          alert('Video proctoring is disabled for this exam');
+        }
+        return;
+      }
+      
       const video = document.getElementById(examSubmission);
       if (video) {
         if (video.paused || video.ended) {
@@ -260,6 +281,13 @@ function proctorApp() {
     },
     
     playNextVideo(examSubmission) {
+      // Check if video proctoring is enabled for this submission
+      const submission = this.submissions.find(s => s.name === examSubmission);
+      if (submission && !submission.enable_video_proctoring) {
+        console.log('Video proctoring is disabled for this submission');
+        return;
+      }
+      
       if (!this.videoStore[examSubmission] || this.videoStore[examSubmission].length === 0) {
         console.log('No videos available for', examSubmission);
         return;
@@ -276,6 +304,13 @@ function proctorApp() {
     },
     
     playPreviousVideo(examSubmission) {
+      // Check if video proctoring is enabled for this submission
+      const submission = this.submissions.find(s => s.name === examSubmission);
+      if (submission && !submission.enable_video_proctoring) {
+        console.log('Video proctoring is disabled for this submission');
+        return;
+      }
+      
       if (!this.videoStore[examSubmission] || this.videoStore[examSubmission].length === 0) {
         console.log('No videos available for', examSubmission);
         return;
@@ -292,6 +327,13 @@ function proctorApp() {
     },
     
     playLastVideo(examSubmission) {
+      // Check if video proctoring is enabled for this submission
+      const submission = this.submissions.find(s => s.name === examSubmission);
+      if (submission && !submission.enable_video_proctoring) {
+        console.log('Video proctoring is disabled for this submission');
+        return;
+      }
+      
       if (this.videoStore[examSubmission] && this.videoStore[examSubmission].length > 0) {
         this.playVideoAtIndex(examSubmission, this.videoStore[examSubmission].length - 1);
       } else {
@@ -343,6 +385,21 @@ function proctorApp() {
     // Chat methods
     openChatModal(submission) {
       console.log('Opening chat modal for:', submission);
+      
+      // Check if chat is enabled for this submission
+      if (!submission.enable_chat) {
+        console.log('Chat is disabled for this submission');
+        if (typeof frappe !== 'undefined' && frappe.show_alert) {
+          frappe.show_alert({
+            message: 'Chat is disabled for this exam',
+            indicator: 'orange'
+          });
+        } else {
+          alert('Chat is disabled for this exam');
+        }
+        return;
+      }
+      
       this.currentChatSubmission = submission.name;
       this.currentChatCandidate = submission.candidate_name;
       this.chatMessage = '';

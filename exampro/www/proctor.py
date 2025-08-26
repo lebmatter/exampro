@@ -72,6 +72,7 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 			"name",
 			"candidate_name",
 			"exam_schedule",
+			"exam",
 			"status",
 			"exam_started_time",
 			"exam_submitted_time",
@@ -87,6 +88,11 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 		if sched.get_status(additional_time=submission["additional_time_given"]) == "Completed":
 			continue
 
+		# Get exam settings
+		exam_doc = frappe.get_doc("Exam", submission["exam"])
+		enable_video_proctoring = exam_doc.get("enable_video_proctoring", 0)
+		enable_chat = exam_doc.get("enable_chat", 0)
+
 		# end time is schedule start time + duration + additional time given
 		end_time = sched.start_date_time + timedelta(minutes=sched.duration) + \
 			timedelta(minutes=submission["additional_time_given"])
@@ -98,7 +104,9 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 			userdata = {
 				"name": submission["name"],
 				"candidate_name": submission["candidate_name"],
-				"status": submission["status"]
+				"status": submission["status"],
+				"enable_video_proctoring": enable_video_proctoring,
+				"enable_chat": enable_chat
 			}
 			if submission["status"] == "Started":
 				# if tracker exists, candidate started the exam
@@ -139,7 +147,9 @@ def get_latest_messages(proctor=None):
 			"exam_submission": submission["name"],
 			"candidate_name": submission["candidate_name"],
 			"message": msg_text,
-			"status": submission["status"]
+			"status": submission["status"],
+			"enable_video_proctoring": submission.get("enable_video_proctoring", 0),
+			"enable_chat": submission.get("enable_chat", 0)
 		})
 
 	return result
