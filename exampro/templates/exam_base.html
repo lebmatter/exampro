@@ -188,15 +188,15 @@ get_telemetry_boot_info() %}
 
     // Set active navigation item based on current URL
     const currentPath = window.location.pathname;
-    $('.navbar-nav .nav-item').removeClass('active');
-    
+    $(".navbar-nav .nav-item").removeClass("active");
+
     // Map URLs to navigation items
-    if (currentPath === '/my-exams' || currentPath === '/') {
-      $('a[href="/my-exams"]').closest('.nav-item').addClass('active');
-    } else if (currentPath === '/proctor') {
-      $('a[href="/proctor"]').closest('.nav-item').addClass('active');
-    } else if (currentPath === '/evaluate') {
-      $('a[href="/evaluate"]').closest('.nav-item').addClass('active');
+    if (currentPath === "/my-exams" || currentPath === "/") {
+      $('a[href="/my-exams"]').closest(".nav-item").addClass("active");
+    } else if (currentPath === "/proctor") {
+      $('a[href="/proctor"]').closest(".nav-item").addClass("active");
+    } else if (currentPath === "/evaluate") {
+      $('a[href="/evaluate"]').closest(".nav-item").addClass("active");
     }
   });
 </script>
