@@ -33,7 +33,10 @@ frappe.ui.form.on('Exam Schedule', {
                 // Add all actions as fallback
                 add_status_based_actions(frm, "Unknown");
             });
-
+    },
+    
+    show_assignment_count: function(frm) {
+        show_assignment_counts(frm);
     }
 });
 
@@ -294,4 +297,149 @@ function bulk_add_submissions(frm) {
     });
     
     dialog.show();
+}
+
+function show_assignment_counts(frm) {
+    // Show processing message
+    frappe.show_alert({
+        message: __('Loading assignment counts...'),
+        indicator: 'blue'
+    });
+    
+    // Call the backend function to get examiner assignment counts
+    frappe.call({
+        method: 'exampro.exam_pro.doctype.exam_submission.exam_submission.get_examiner_assignment_counts',
+        args: {
+            exam_schedule: frm.doc.name
+        },
+        callback: function(r) {
+            if (r.message) {
+                let assignment_counts = r.message;
+                console.log('Assignment counts from server:', assignment_counts);
+                
+                // Prepare data for the table
+                let table_data = [];
+                
+                // Add data for each examiner
+                frm.doc.examiners.forEach((examiner_row) => {
+                    let examiner_email = examiner_row.examiner;
+                    let counts = assignment_counts[examiner_email] || {
+                        proctoring_count: 0,
+                        evaluation_count: 0
+                    };
+                    
+                    // Get examiner name from User doctype
+                    let examiner_name = examiner_row.examiner; // fallback to email
+                    
+                    table_data.push([
+                        examiner_name,
+                        examiner_email,
+                        examiner_row.can_proctor ? 'Yes' : 'No',
+                        examiner_row.can_evaluate ? 'Yes' : 'No',
+                        counts.proctoring_count,
+                        counts.evaluation_count,
+                        counts.proctoring_count + counts.evaluation_count
+                    ]);
+                });
+                
+                // Create and show the dialog with table
+                let dialog = new frappe.ui.Dialog({
+                    title: __('Examiner Assignment Counts'),
+                    size: 'extra-large',
+                    fields: [
+                        {
+                            fieldtype: 'HTML',
+                            fieldname: 'assignment_table',
+                            options: generate_assignment_table_html(table_data)
+                        }
+                    ],
+                    primary_action_label: __('Close'),
+                    primary_action: function() {
+                        dialog.hide();
+                    }
+                });
+                
+                dialog.show();
+            }
+        },
+        error: function(r) {
+            console.error('Error loading examiner assignment counts:', r);
+            frappe.msgprint({
+                title: __('Error Loading Assignment Counts'),
+                message: __('An error occurred while loading assignment counts:<br><br>{0}', [r.message || 'Unknown error occurred']),
+                indicator: 'red'
+            });
+        }
+    });
+}
+
+function generate_assignment_table_html(table_data) {
+    let html = `
+        <div class="assignment-counts-table">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>${__('Examiner Name')}</th>
+                        <th>${__('Email')}</th>
+                        <th>${__('Can Proctor')}</th>
+                        <th>${__('Can Evaluate')}</th>
+                        <th>${__('Proctoring Count')}</th>
+                        <th>${__('Evaluation Count')}</th>
+                        <th>${__('Total Assignments')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    if (table_data.length === 0) {
+        html += `
+            <tr>
+                <td colspan="7" class="text-center text-muted">
+                    ${__('No examiners found')}
+                </td>
+            </tr>
+        `;
+    } else {
+        table_data.forEach((row) => {
+            html += `
+                <tr>
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td><span class="badge ${row[2] === 'Yes' ? 'badge-success' : 'badge-secondary'}">${row[2]}</span></td>
+                    <td><span class="badge ${row[3] === 'Yes' ? 'badge-success' : 'badge-secondary'}">${row[3]}</span></td>
+                    <td><span class="badge badge-primary">${row[4]}</span></td>
+                    <td><span class="badge badge-info">${row[5]}</span></td>
+                    <td><strong><span class="badge badge-dark">${row[6]}</span></strong></td>
+                </tr>
+            `;
+        });
+    }
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+        <style>
+            .assignment-counts-table {
+                margin-top: 15px;
+            }
+            .assignment-counts-table table {
+                margin-bottom: 0;
+            }
+            .assignment-counts-table th {
+                background-color: #f8f9fa;
+                font-weight: 600;
+                text-align: center;
+            }
+            .assignment-counts-table td {
+                text-align: center;
+                vertical-align: middle;
+            }
+            .badge {
+                font-size: 0.875em;
+            }
+        </style>
+    `;
+    
+    return html;
 }

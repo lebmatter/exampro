@@ -20,6 +20,7 @@
   "exam_settings_section",
   "column_break_5bke",
   "examiners",
+  "show_assignment_count",
   "assign_by_batch_section",
   "batch_assignments",
   "auto_assign_batch_users"
@@ -140,6 +141,11 @@
    "fieldtype": "Data",
    "label": "Schedule Invitation Link",
    "read_only": 1
+  },
+  {
+   "fieldname": "show_assignment_count",
+   "fieldtype": "Button",
+   "label": "Show Assignment Count"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -155,7 +161,7 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-07-30 13:05:17.153978",
+ "modified": "2025-08-26 16:00:07.924431",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Schedule",
