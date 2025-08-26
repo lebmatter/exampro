@@ -273,7 +273,7 @@
   {
    "fieldname": "view_questions",
    "fieldtype": "Button",
-   "label": "View Questions"
+   "label": "View Available Questions"
   },
   {
    "fieldname": "section_break_qzxq",
@@ -316,7 +316,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-07-30 12:30:36.242682",
+ "modified": "2025-08-26 10:34:09.995488",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam",

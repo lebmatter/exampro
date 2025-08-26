@@ -202,11 +202,12 @@ def get_question_categories(exam):
         exam_doc = frappe.get_doc("Exam", exam)
         
         # Get categories with associated questions and marks
-        # Group questions by category AND mark to show different rows for different mark values
+        # Group questions by category, type, AND mark to show different rows for different combinations
         category_marks_questions = frappe.db.sql("""
             SELECT 
                 eqc.name as category_id,
                 eqc.title as category_name,
+                IFNULL(eq.type, 'User Input') as question_type,
                 IFNULL(eq.mark, 1) as marks_per_question,
                 COUNT(eq.name) as question_count
             FROM 
@@ -216,9 +217,9 @@ def get_question_categories(exam):
             WHERE
                 eq.name IS NOT NULL
             GROUP BY 
-                eqc.name, eq.mark
+                eqc.name, eq.type, eq.mark
             ORDER BY 
-                eqc.title, eq.mark
+                eqc.title, eq.type, eq.mark
         """, as_dict=True)
         
         # Also get categories that don't have questions yet
@@ -226,6 +227,7 @@ def get_question_categories(exam):
             SELECT 
                 eqc.name as category_id,
                 eqc.title as category_name,
+                'User Input' as question_type,
                 1 as marks_per_question,
                 0 as question_count
             FROM 
@@ -249,11 +251,11 @@ def get_question_categories(exam):
         if exam_doc.added_questions:
             for question in exam_doc.added_questions:
                 try:
-                    # Get both category and mark for each question
+                    # Get both category, mark, and type for each question
                     question_data = frappe.db.get_value(
                         "Exam Question", 
                         question.exam_question, 
-                        ["category", "mark"], 
+                        ["category", "mark", "type"], 
                         as_dict=True
                     )
                     
@@ -261,9 +263,10 @@ def get_question_categories(exam):
                         continue
                         
                     marks = question_data.mark or 1  # Default to 1 if mark is None
+                    question_type = question_data.type or "User Input"  # Default to User Input if type is None
                     
-                    # Create a composite key: category_id:marks_per_question
-                    composite_key = f"{question_data.category}:{marks}"
+                    # Create a composite key: category_id:question_type:marks_per_question
+                    composite_key = f"{question_data.category}:{question_type}:{marks}"
                     exam_config[composite_key] = exam_config.get(composite_key, 0) + 1
                         
                 except Exception as e:
@@ -273,12 +276,13 @@ def get_question_categories(exam):
         # Format the categories for the frontend with composite keys
         formatted_categories = []
         for cat in categories:
-            # Create a unique identifier for this category+marks combination
-            composite_key = f"{cat.category_id}:{cat.marks_per_question}"
+            # Create a unique identifier for this category+type+marks combination
+            composite_key = f"{cat.category_id}:{cat.question_type}:{cat.marks_per_question}"
             formatted_cat = {
-                "id": composite_key,  # Unique ID for this category+marks combination
+                "id": composite_key,  # Unique ID for this category+type+marks combination
                 "category_id": cat.category_id,
                 "category_name": cat.category_name,
+                "question_type": cat.question_type,
                 "marks_per_question": cat.marks_per_question,
                 "question_count": cat.question_count
             }

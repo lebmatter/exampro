@@ -17,12 +17,22 @@ frappe.ui.form.on("Exam", {
 
 // Function to show the questions modal
 function showQuestionCategoriesModal(frm) {
+	// Check if exam exists
+	if (!frm.doc.name) {
+		frappe.msgprint({
+			title: __('Error'),
+			indicator: 'red',
+			message: __('Please save the exam first before viewing available questions.')
+		});
+		return;
+	}
+
 	// Show a loading indicator
 	let loadingIndicator = frappe.show_alert(__('Loading questions...'), 15);
 
 	// Call the server-side method to get question categories
 	frappe.call({
-		method: "exampro.www.manage.exams.get_question_categories",
+		method: "exampro.exam_pro.doctype.exam.exam.get_question_categories",
 		args: {
 			exam: frm.doc.name
 		},
@@ -38,10 +48,11 @@ function showQuestionCategoriesModal(frm) {
 				// Create HTML for the table
 				let tableHtml = `
 					<div class="table-responsive">
-						<table class="table table-bordered">
-							<thead>
+						<table class="table table-bordered table-striped">
+							<thead class="table-dark">
 								<tr>
 									<th>${__('Category')}</th>
+									<th>${__('Question Type')}</th>
 									<th>${__('Marks/Question')}</th>
 									<th>${__('Available Questions')}</th>
 									<th>${__('Selected Questions')}</th>
@@ -54,13 +65,16 @@ function showQuestionCategoriesModal(frm) {
 				categories.forEach(cat => {
 					const compositeKey = cat.id;
 					const selectedCount = examConfig[compositeKey] || 0;
+					const availableClass = cat.question_count > 0 ? 'text-success' : 'text-muted';
+					const selectedClass = selectedCount > 0 ? 'text-primary font-weight-bold' : '';
 					
 					tableHtml += `
 						<tr>
 							<td>${cat.category_name}</td>
-							<td>${cat.marks_per_question}</td>
-							<td>${cat.question_count}</td>
-							<td>${selectedCount}</td>
+							<td><span class="badge badge-info">${cat.question_type}</span></td>
+							<td class="text-center">${cat.marks_per_question}</td>
+							<td class="text-center ${availableClass}">${cat.question_count}</td>
+							<td class="text-center ${selectedClass}">${selectedCount}</td>
 						</tr>
 					`;
 				});
@@ -87,7 +101,8 @@ function showQuestionCategoriesModal(frm) {
 				
 				// Create the dialog
 				const d = new frappe.ui.Dialog({
-					title: __('Exam Questions'),
+					title: __('Available Questions Overview'),
+					size: 'large',
 					fields: [
 						{
 							fieldtype: 'HTML',
@@ -98,12 +113,22 @@ function showQuestionCategoriesModal(frm) {
 							fieldtype: 'HTML',
 							fieldname: 'summary',
 							options: `
-								<div class="row">
+								<div class="row mt-3">
 									<div class="col-md-6">
-										<strong>${__('Total Selected Questions')}:</strong> ${totalSelected}
+										<div class="card border-primary">
+											<div class="card-body text-center">
+												<h5 class="card-title text-primary">${totalSelected}</h5>
+												<p class="card-text">${__('Total Selected Questions')}</p>
+											</div>
+										</div>
 									</div>
 									<div class="col-md-6">
-										<strong>${__('Total Marks')}:</strong> ${totalMarks}
+										<div class="card border-success">
+											<div class="card-body text-center">
+												<h5 class="card-title text-success">${totalMarks}</h5>
+												<p class="card-text">${__('Total Marks')}</p>
+											</div>
+										</div>
 									</div>
 								</div>
 							`
