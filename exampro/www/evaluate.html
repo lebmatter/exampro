@@ -4,175 +4,195 @@ page_extensions %} {{ ext.render_header() }} {% endfor %}
 
 <link rel="stylesheet" href="/assets/exampro/css/evaluate-page.css" />
 
-{% endblock %} {% block page_content %} 
+{% endblock %} {% block page_content %}
 <div x-data="window.evaluationApp()" x-init="init()">
-{% if alert %}
-<div class="container mt-4 mb-4">
-  <div class="alert-card">
-    <div class="alert-card-header">
-      <h4 class="mb-0">
-        <i class="bi bi-exclamation-triangle-fill"></i>Upcoming Evaluation
-      </h4>
-    </div>
-    <div class="alert-card-body">
-      <div class="alert-icon-section">
-        <i class="bi bi-clock-fill"></i>
+  {% if alert %}
+  <div class="container mt-4 mb-4">
+    <div class="alert-card">
+      <div class="alert-card-header">
+        <h4 class="mb-0">
+          <i class="bi bi-exclamation-triangle-fill"></i>Upcoming Evaluation
+        </h4>
       </div>
-      <div class="alert-status">{{ alert.title }}</div>
-      <div class="alert-message-box">
-        <p>{{ alert.text }}</p>
-      </div>
-      <div class="alert-actions">
-        <a href="/my-exams" class="alert-button alert-button-primary">
-          <i class="bi bi-arrow-left"></i>My Exams
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-{% else %}
-<div class="container">
-  <div class="row mb-5">
-    <div class="col">
-      <h4>📝 Evaluate Exams</h4>
-    </div>
-  </div>
-  <div class="row">
-    {% if assigned_exams %}
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">Assigned Exams</h5>
+      <div class="alert-card-body">
+        <div class="alert-icon-section">
+          <i class="bi bi-clock-fill"></i>
         </div>
-        <div class="card-body p-0">
-          <div class="list-group list-group-flush" id="exam-list">
-            <template x-for="submission in assignedExams" :key="submission.submission_id">
+        <div class="alert-status">{{ alert.title }}</div>
+        <div class="alert-message-box">
+          <p>{{ alert.text }}</p>
+        </div>
+        <div class="alert-actions">
+          <a href="/my-exams" class="alert-button alert-button-primary">
+            <i class="bi bi-arrow-left"></i>My Exams
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="container">
+    <div class="row mb-5">
+      <div class="col">
+        <h4>📝 Evaluate Exams</h4>
+      </div>
+    </div>
+    <div class="row">
+      {% if assigned_exams %}
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Assigned Exams</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush" id="exam-list">
+              <template
+                x-for="submission in assignedExams"
+                :key="submission.submission_id"
+              >
+                <a
+                  href="#"
+                  class="list-group-item list-group-item-action exam-item"
+                  :data-exam-id="submission.name"
+                  :data-submission-id="submission.submission_id"
+                  @click.prevent="loadExamSubmission(submission.name, submission.submission_id)"
+                >
+                  <div
+                    class="d-flex justify-content-between align-items-center"
+                  >
+                    <div>
+                      <h6 class="mb-1" x-text="submission.title"></h6>
+                      <small
+                        class="text-muted"
+                        x-text="submission.candidate_name"
+                      ></small>
+                    </div>
+                    <span
+                      class="badge"
+                      :class="submission.status == 'Submitted' ? 'bg-warning' : 'bg-success'"
+                      x-text="submission.status"
+                    >
+                    </span>
+                  </div>
+                </a>
+              </template>
+              <!-- Fallback for server-side rendering -->
+              {% for submission in assigned_exams %}
               <a
                 href="#"
                 class="list-group-item list-group-item-action exam-item"
-                :data-exam-id="submission.name"
-                :data-submission-id="submission.submission_id"
-                @click.prevent="loadExamSubmission(submission.name, submission.submission_id)"
+                data-exam-id="{{ submission.name }}"
+                data-submission-id="{{ submission.submission_id }}"
+                x-show="false"
               >
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
-                    <h6 class="mb-1" x-text="submission.title"></h6>
-                    <small class="text-muted" x-text="submission.candidate_name"></small>
+                    <h6 class="mb-1">{{ submission.title }}</h6>
+                    <small class="text-muted"
+                      >{{ submission.candidate_name }}</small
+                    >
                   </div>
                   <span
-                    class="badge"
-                    :class="submission.status == 'Submitted' ? 'bg-warning' : 'bg-success'"
-                    x-text="submission.status"
+                    class="badge {% if submission.status == 'Submitted' %}bg-warning{% else %}bg-success{% endif %}"
                   >
+                    {{ submission.status }}
                   </span>
                 </div>
               </a>
-            </template>
-            <!-- Fallback for server-side rendering -->
-            {% for submission in assigned_exams %}
-            <a
-              href="#"
-              class="list-group-item list-group-item-action exam-item"
-              data-exam-id="{{ submission.name }}"
-              data-submission-id="{{ submission.submission_id }}"
-              x-show="false"
-            >
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 class="mb-1">{{ submission.title }}</h6>
-                  <small class="text-muted">{{ submission.candidate_name }}</small>
-                </div>
-                <span
-                  class="badge {% if submission.status == 'Submitted' %}bg-warning{% else %}bg-success{% endif %}"
-                >
-                  {{ submission.status }}
-                </span>
-              </div>
-            </a>
-            {% endfor %}
+              {% endfor %}
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-md-8">
-      <div class="row mb-3">
-        <div class="col-md-12">
-          <!-- Question Navigation Panel -->
-          <div class="card" id="question-nav-panel" x-show="showQuestionNavPanel">
-            <div class="card-header">
-              <h5 class="mb-0">Questions</h5>
-            </div>
-            <div class="card-body">
-              <div class="question-nav-grid" id="question-nav-buttons">
-                <template x-for="(answer, index) in answers" :key="answer.exam_question">
-                  <button 
-                    class="question-nav-btn btn-sm"
-                    :class="{
+      <div class="col-md-8">
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <!-- Question Navigation Panel -->
+            <div
+              class="card"
+              id="question-nav-panel"
+              x-show="showQuestionNavPanel"
+            >
+              <div class="card-header">
+                <h5 class="mb-0">Questions</h5>
+              </div>
+              <div class="card-body">
+                <div class="question-nav-grid" id="question-nav-buttons">
+                  <template
+                    x-for="(answer, index) in answers"
+                    :key="answer.exam_question"
+                  >
+                    <button
+                      class="question-nav-btn btn-sm"
+                      :class="{
                       'btn-success': answer.evaluation_status === 'Done',
                       'btn-info': answer.evaluation_status === 'Auto', 
                       'btn-warning': answer.evaluation_status === 'Pending',
                       'btn-secondary': answer.question_type === 'Choices',
                       'active': currentQuestionSeqNo === answer.seq_no
                     }"
-                    :data-index="answer.seq_no"
-                    :disabled="answer.question_type === 'Choices'"
-                    @click="showQuestion(answer.seq_no)"
-                    x-text="answer.seq_no"
-                  >
-                  </button>
-                </template>
-              </div>
-              <div
-                class="d-flex justify-content-end mt-3"
-                id="finish-eval-container"
-              >
-                <button
-                  id="finish-evaluation-btn"
-                  class="btn btn-primary"
-                  x-show="showFinishButton"
-                  @click="finishEvaluation()"
+                      :data-index="answer.seq_no"
+                      :disabled="answer.question_type === 'Choices'"
+                      @click="showQuestion(answer.seq_no)"
+                      x-text="answer.seq_no"
+                    ></button>
+                  </template>
+                </div>
+                <div
+                  class="d-flex justify-content-end mt-3"
+                  id="finish-eval-container"
                 >
-                  Finish Evaluation
-                </button>
+                  <button
+                    id="finish-evaluation-btn"
+                    class="btn btn-primary"
+                    x-show="showFinishButton"
+                    @click="finishEvaluation()"
+                  >
+                    Finish Evaluation
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="row mb-5">
-        <!-- Main content -->
-        <div class="col-md-12" id="evaluation-area" x-html="evaluationAreaContent"></div>
-      </div>
-    </div>
-    {% else %}
-    <div class="col-12">
-      <div
-        class="d-flex justify-content-center align-items-center"
-        style="min-height: 400px"
-      >
-        <div class="text-center" style="max-width: 600px">
-          <img
-            src="/assets/exampro/img/nothing-to-eval.png"
-            alt="Nothing to evaluate"
-            class="img-fluid mb-4"
-            style="max-width: 600px; opacity: 0.8"
-          />
-          <h4 class="text-muted mb-3">No Exams to Evaluate</h4>
-          <p class="text-muted mb-0" style="line-height: 1.6">
-            There are currently no exam submissions assigned to you for
-            evaluation. New submissions will appear here when they become
-            available.
-          </p>
+        <div class="row mb-5">
+          <!-- Main content -->
+          <div
+            class="col-md-12"
+            id="evaluation-area"
+            x-html="evaluationAreaContent"
+          ></div>
         </div>
       </div>
+      {% else %}
+      <div class="col-12">
+        <div
+          class="d-flex justify-content-center align-items-center"
+          style="min-height: 400px"
+        >
+          <div class="text-center" style="max-width: 600px">
+            <img
+              src="/assets/exampro/img/nothing-to-eval.png"
+              alt="Nothing to evaluate"
+              class="img-fluid mb-4"
+              style="max-width: 600px; opacity: 0.8"
+            />
+            <h4 class="text-muted mb-3">No Exams to Evaluate</h4>
+            <p class="text-muted mb-0" style="line-height: 1.6">
+              There are currently no exam submissions assigned to you for
+              evaluation. New submissions will appear here when they become
+              available.
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
   </div>
-</div>
 
-{% endif %}
+  {% endif %}
 </div>
 {% endblock %}
 
@@ -189,6 +209,5 @@ page_extensions %} {{ ext.render_header() }} {% endfor %}
 </script>
 
 <script type="text/javascript" src="/assets/exampro/js/evaluate.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 {% endblock %}

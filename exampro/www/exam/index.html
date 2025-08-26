@@ -2,10 +2,6 @@
 %} Alert! {% else %} {{ exam.title }} {% endif %} {% endblock %} {% block
 head_include %}
 {{ super() }}
-<script
-  defer
-  src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-></script>
 {% for ext in page_extensions %} {{ ext.render_header() }} {% endfor %}
 <link rel="stylesheet" href="/assets/exampro/css/exam-index.css" />
 {% endblock %} {% block page_content %}
