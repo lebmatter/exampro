@@ -156,7 +156,34 @@ function startRecording() {
             });
 
             // Attach the original stream to the video element
-            document.getElementById('webcam-stream').srcObject = stream;
+            const videoElement = document.getElementById('webcam-stream');
+            videoElement.srcObject = stream;
+            
+            // Set video properties to prevent autoplay issues
+            videoElement.muted = true;
+            videoElement.playsInline = true;
+            
+            // Handle video play with user interaction requirement
+            const playVideo = () => {
+                videoElement.play().catch(error => {
+                    console.warn('Video autoplay prevented:', error);
+                    // Video will start playing when user interacts with the page
+                });
+            };
+            
+            // Try to play immediately (will work if user has already interacted)
+            playVideo();
+            
+            // Add one-time click listener to start video if autoplay failed
+            const startVideoOnInteraction = () => {
+                playVideo();
+                document.removeEventListener('click', startVideoOnInteraction);
+                document.removeEventListener('keydown', startVideoOnInteraction);
+            };
+            
+            // Listen for any user interaction to start video
+            document.addEventListener('click', startVideoOnInteraction, { once: true });
+            document.addEventListener('keydown', startVideoOnInteraction, { once: true });
 
             // Initialize gazer after the video element is created and stream is attached
             // Use the main webcam-stream video element for gazer (better tracking with original stream)
