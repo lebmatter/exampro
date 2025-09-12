@@ -2,7 +2,7 @@ import frappe
 
 def evaluation_values(exam, submitted_answers):
 	# add marks and evalualtion pending count if applicable
-	objective_marks = sum([s.mark for s in submitted_answers if s.is_correct])
+	objective_marks = sum([s.mark for s in submitted_answers if (s.is_correct and s.evaluation_status == "Auto")])
 	subjective_marks = sum([s.mark for s in submitted_answers if s.evaluation_status == "Done"])
 	total_marks = objective_marks + subjective_marks
 	
