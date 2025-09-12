@@ -2,7 +2,10 @@ import frappe
 
 def evaluation_values(exam, submitted_answers):
 	# add marks and evalualtion pending count if applicable
-	total_marks = sum([s.mark for s in submitted_answers if s.is_correct])
+	objective_marks = sum([s.mark for s in submitted_answers if s.is_correct])
+	subjective_marks = sum([s.mark for s in submitted_answers if s.evaluation_status == "Done"])
+	total_marks = objective_marks + subjective_marks
+	
 	eval_pending = len([s for s in submitted_answers if s.evaluation_status == "Pending"])
 	result_status = "NA"
 	# check result status
@@ -20,5 +23,5 @@ def evaluation_values(exam, submitted_answers):
 	evaluation_status = "NA"
 	if eval_pending > 0:
 		evaluation_status = "Pending"
-	
+
 	return total_marks, evaluation_status, result_status
