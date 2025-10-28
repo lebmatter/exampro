@@ -79,6 +79,12 @@ super() }}
     font-size: 4rem;
     color: #dc3545;
   }
+
+  .form-control[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 1;
+  }
 </style>
 {% endblock %} {% block page_content %}
 <div class="container mt-4 mb-4">
@@ -173,17 +179,20 @@ super() }}
           </div>
         </div>
 
+        {% if is_logged_in %}
         <!-- Personal Information -->
         <div class="row mb-3">
           <div class="col-md-12">
             <label for="candidateName" class="form-label">
               <i class="bi bi-person"></i> Your Name *
             </label>
+            <small class="text-muted d-block mb-2">Name will be appeared in your certificates, if applicable.</small>
             <input
               type="text"
               class="form-control"
               id="candidateName"
               placeholder="Enter your full name"
+              value="{{ user_full_name }}"
               required
             />
           </div>
@@ -192,13 +201,15 @@ super() }}
         <div class="row mb-3">
           <div class="col-md-6">
             <label for="candidateEmail" class="form-label">
-              <i class="bi bi-envelope"></i> Your Email *
+              <i class="bi bi-envelope"></i> Your Email * <small class="text-muted">(cannot be changed)</small>
             </label>
             <input
               type="email"
               class="form-control"
               id="candidateEmail"
               placeholder="your.email@example.com"
+              value="{{ user_email }}"
+              readonly
               required
             />
           </div>
@@ -212,6 +223,7 @@ super() }}
               class="form-control"
               id="candidatePhone"
               placeholder="+1234567890"
+              value="{{ user_phone }}"
             />
           </div>
         </div>
@@ -225,6 +237,21 @@ super() }}
 
         <!-- Message Display -->
         <div id="messageContainer" class="mt-3" style="display: none"></div>
+        {% else %}
+        <!-- Login Prompt for Non-logged-in Users -->
+        <div class="alert alert-info mt-4">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle" style="font-size: 1.5rem; margin-right: 1rem;"></i>
+            <div>
+              <strong>Login Required</strong>
+              <p class="mb-2">Please log in to complete your registration for this exam.</p>
+              <a href="/login?redirect-to={{ current_page_url | urlencode }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-box-arrow-in-right"></i> Login to Register
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </form>
       {% endif %}
     </div>
@@ -234,6 +261,13 @@ super() }}
 {% endblock %} {% block script %} {{ super() }}
 <script>
   $(document).ready(function () {
+    var isLoggedIn = {{ "true" if is_logged_in else "false" }};
+
+    // Ensure email field is readonly for logged-in users
+    if (isLoggedIn) {
+      $("#candidateEmail").prop("readonly", true);
+    }
+
     // Handle schedule card click
     $(".schedule-card").click(function () {
       $(".schedule-card").removeClass("selected");
@@ -245,12 +279,17 @@ super() }}
     $("#registrationForm").submit(function (e) {
       e.preventDefault();
 
+      // If not logged in, prevent submission
+      if (!isLoggedIn) {
+        return;
+      }
+
       const selectedSchedule = $('input[name="schedule"]:checked').val();
       const name = $("#candidateName").val().trim();
       const email = $("#candidateEmail").val().trim();
       const phone = $("#candidatePhone").val().trim();
 
-      if (!selectedSchedule || !name || !email) {
+      if (!selectedSchedule || !name) {
         showMessage("Please fill in all required fields.", "danger");
         return;
       }

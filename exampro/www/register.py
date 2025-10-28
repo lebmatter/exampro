@@ -56,6 +56,25 @@ def get_context(context):
     context.schedules = available_schedules
     context.has_schedules = len(available_schedules) > 0
 
+    # Check if user is logged in
+    context.is_logged_in = frappe.session.user != "Guest"
+    context.current_user = frappe.session.user if context.is_logged_in else None
+
+    # Get user details if logged in
+    if context.is_logged_in:
+        user = frappe.get_doc("User", frappe.session.user)
+        context.user_full_name = user.full_name or ""
+        context.user_email = user.email or ""
+        context.user_phone = user.phone or ""
+    else:
+        context.user_full_name = ""
+        context.user_email = ""
+        context.user_phone = ""
+
+    # Get current page URL for login redirect
+    from frappe.utils import get_url
+    context.current_page_url = get_url(frappe.request.path + "?" + frappe.request.query_string.decode() if frappe.request.query_string else frappe.request.path)
+
     return context
 
 
@@ -113,20 +132,37 @@ def register_for_exam(schedule_name, name, email, phone):
         }
 
     try:
-        # Create or get user
-        if frappe.db.exists("User", email):
-            user_email = email
-            # Update phone number if provided
-            if phone:
-                frappe.db.set_value("User", email, "phone", phone)
-        else:
-            # Create new user
-            from exampro.exam_pro.doctype.exam_submission.exam_submission import create_website_user
-            user_email = create_website_user(name, email)
+        # Check if user is logged in
+        is_logged_in = frappe.session.user != "Guest"
 
-            # Set phone number if provided
+        if is_logged_in:
+            # For logged-in users, use their session email and update their details
+            user_email = frappe.session.user
+            user = frappe.get_doc("User", user_email)
+
+            # Update user details
+            user.full_name = name
             if phone:
-                frappe.db.set_value("User", user_email, "phone", phone)
+                user.phone = phone
+            user.save(ignore_permissions=True)
+        else:
+            # For non-logged-in users, create or get user
+            if frappe.db.exists("User", email):
+                user_email = email
+                # Update phone number and name if provided
+                user = frappe.get_doc("User", email)
+                user.full_name = name
+                if phone:
+                    user.phone = phone
+                user.save(ignore_permissions=True)
+            else:
+                # Create new user
+                from exampro.exam_pro.doctype.exam_submission.exam_submission import create_website_user
+                user_email = create_website_user(name, email)
+
+                # Set phone number if provided
+                if phone:
+                    frappe.db.set_value("User", user_email, "phone", phone)
 
         # Ensure user has Exam Candidate role
         user = frappe.get_doc("User", user_email)
