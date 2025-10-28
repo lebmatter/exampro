@@ -1,22 +1,11 @@
-{% extends "exampro/templates/exam_base.html" %}
-
-{% block title %}Register for {{ exam.title if exam else 'Exam' }}{% endblock %}
-
-{% block head_include %}
-{{ super() }}
+{% extends "exampro/templates/exam_base.html" %} {% block title %}Register for
+{{ exam.title if exam else 'Exam' }}{% endblock %} {% block head_include %} {{
+super() }}
 <link rel="stylesheet" href="/assets/exampro/css/exam-result.css" />
 <style>
   .registration-card {
     max-width: 800px;
     margin: 2rem auto;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  }
-
-  .exam-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem 0.5rem 0 0;
   }
 
   .exam-info {
@@ -27,26 +16,26 @@
   }
 
   .schedule-card {
-    border: 2px solid #e9ecef;
+    border: 1px solid #dee2e6;
     padding: 1rem;
     margin-bottom: 1rem;
-    border-radius: 0.5rem;
+    border-radius: 0.25rem;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
   }
 
   .schedule-card:hover {
-    border-color: #667eea;
-    box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
   }
 
   .schedule-card.selected {
-    border-color: #667eea;
-    background-color: #f0f3ff;
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
   }
 
   .schedule-card input[type="radio"] {
-    transform: scale(1.3);
+    transform: scale(1.2);
     margin-right: 0.75rem;
   }
 
@@ -58,38 +47,26 @@
 
   .schedule-badge {
     display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.85rem;
-    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    margin-left: 0.5rem;
   }
 
   .badge-upcoming {
-    background-color: #d1ecf1;
-    color: #0c5460;
+    background-color: #cfe2ff;
+    color: #084298;
   }
 
   .badge-ongoing {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: #d1e7dd;
+    color: #0f5132;
   }
 
   .form-label {
     font-weight: 600;
     color: #495057;
-  }
-
-  .btn-register {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    padding: 0.75rem 2rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-
-  .btn-register:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    margin-bottom: 0.5rem;
   }
 
   .error-card {
@@ -103,9 +80,7 @@
     color: #dc3545;
   }
 </style>
-{% endblock %}
-
-{% block page_content %}
+{% endblock %} {% block page_content %}
 <div class="container mt-4 mb-4">
   {% if show_error %}
   <div class="card error-card">
@@ -122,10 +97,10 @@
   </div>
   {% else %}
   <div class="card registration-card">
-    <div class="exam-header">
-      <h2 class="mb-0">
+    <div class="card-header">
+      <h5 class="mb-0">
         <i class="bi bi-clipboard-check"></i> Register for Exam
-      </h2>
+      </h5>
     </div>
 
     <div class="card-body">
@@ -137,17 +112,9 @@
         {% endif %}
         <div class="mt-3">
           <div class="row">
-            <div class="col-md-4">
-              <strong><i class="bi bi-clock"></i> Duration:</strong>
-              <span>{{ exam.duration }} minutes</span>
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <strong><i class="bi bi-bar-chart"></i> Pass Percentage:</strong>
               <span>{{ exam.pass_percentage }}%</span>
-            </div>
-            <div class="col-md-4">
-              <strong><i class="bi bi-file-earmark-text"></i> Questions:</strong>
-              <span>{{ exam.total_questions }}</span>
             </div>
           </div>
         </div>
@@ -181,21 +148,23 @@
                 <div class="schedule-info flex-grow-1">
                   <div>
                     <strong>{{ schedule.name }}</strong>
-                    <span class="schedule-badge badge-{{ schedule.status.lower() }}">
+                    <span
+                      class="schedule-badge badge-{{ schedule.status.lower() }}"
+                    >
                       {{ schedule.status }}
                     </span>
                   </div>
                   <div class="text-muted">
                     <i class="bi bi-calendar3"></i>
-                    {% if schedule.schedule_type == 'Fixed' %}
-                    {{ schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
-                    {% else %}
-                    Available from: {{ schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
-                    ({{ schedule.schedule_expire_in_days }} days)
-                    {% endif %}
+                    {% if schedule.schedule_type == 'Fixed' %} {{
+                    schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
+                    {% else %} Available from: {{
+                    schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
+                    ({{ schedule.schedule_expire_in_days }} days) {% endif %}
                   </div>
                   <div class="text-muted">
-                    <i class="bi bi-clock"></i> Duration: {{ schedule.duration }} minutes
+                    <i class="bi bi-clock"></i> Duration: {{ schedule.duration
+                    }} minutes
                   </div>
                 </div>
               </div>
@@ -249,99 +218,112 @@
 
         <!-- Submit Button -->
         <div class="text-center mt-4">
-          <button type="submit" class="btn btn-primary btn-register" id="registerBtn">
+          <button type="submit" class="btn btn-primary" id="registerBtn">
             <i class="bi bi-check-circle"></i> Register for Exam
           </button>
         </div>
 
         <!-- Message Display -->
-        <div id="messageContainer" class="mt-3" style="display: none;"></div>
+        <div id="messageContainer" class="mt-3" style="display: none"></div>
       </form>
       {% endif %}
     </div>
   </div>
   {% endif %}
 </div>
-{% endblock %}
-
-{% block script %}
-{{ super() }}
+{% endblock %} {% block script %} {{ super() }}
 <script>
   $(document).ready(function () {
     // Handle schedule card click
-    $('.schedule-card').click(function () {
-      $('.schedule-card').removeClass('selected');
-      $(this).addClass('selected');
-      $(this).find('input[type="radio"]').prop('checked', true);
+    $(".schedule-card").click(function () {
+      $(".schedule-card").removeClass("selected");
+      $(this).addClass("selected");
+      $(this).find('input[type="radio"]').prop("checked", true);
     });
 
     // Handle form submission
-    $('#registrationForm').submit(function (e) {
+    $("#registrationForm").submit(function (e) {
       e.preventDefault();
 
       const selectedSchedule = $('input[name="schedule"]:checked').val();
-      const name = $('#candidateName').val().trim();
-      const email = $('#candidateEmail').val().trim();
-      const phone = $('#candidatePhone').val().trim();
+      const name = $("#candidateName").val().trim();
+      const email = $("#candidateEmail").val().trim();
+      const phone = $("#candidatePhone").val().trim();
 
       if (!selectedSchedule || !name || !email) {
-        showMessage('Please fill in all required fields.', 'danger');
+        showMessage("Please fill in all required fields.", "danger");
         return;
       }
 
       // Disable submit button
-      $('#registerBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2"></span>Registering...');
+      $("#registerBtn")
+        .prop("disabled", true)
+        .html(
+          '<span class="spinner-border spinner-border-sm mr-2"></span>Registering...'
+        );
 
       // Make API call
       frappe.call({
-        method: 'exampro.www.register.index.register_for_exam',
+        method: "exampro.www.register.index.register_for_exam",
         args: {
           schedule_name: selectedSchedule,
           name: name,
           email: email,
-          phone: phone
+          phone: phone,
         },
         callback: function (r) {
-          $('#registerBtn').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Register for Exam');
+          $("#registerBtn")
+            .prop("disabled", false)
+            .html('<i class="bi bi-check-circle"></i> Register for Exam');
 
           if (r.message && r.message.success) {
-            showMessage(r.message.message, 'success');
+            showMessage(r.message.message, "success");
             // Clear form
-            $('#registrationForm')[0].reset();
-            $('.schedule-card').removeClass('selected');
+            $("#registrationForm")[0].reset();
+            $(".schedule-card").removeClass("selected");
 
             // Redirect to login or exam page after 2 seconds
             setTimeout(function () {
-              window.location.href = '/my-exams';
+              window.location.href = "/my-exams";
             }, 2000);
           } else {
-            showMessage(r.message ? r.message.message : 'Registration failed. Please try again.', 'danger');
+            showMessage(
+              r.message
+                ? r.message.message
+                : "Registration failed. Please try again.",
+              "danger"
+            );
           }
         },
         error: function (err) {
-          $('#registerBtn').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Register for Exam');
-          showMessage('An error occurred. Please try again.', 'danger');
-        }
+          $("#registerBtn")
+            .prop("disabled", false)
+            .html('<i class="bi bi-check-circle"></i> Register for Exam');
+          showMessage("An error occurred. Please try again.", "danger");
+        },
       });
     });
 
     function showMessage(message, type) {
-      const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-      const icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+      const alertClass = type === "success" ? "alert-success" : "alert-danger";
+      const icon =
+        type === "success" ? "bi-check-circle" : "bi-exclamation-triangle";
 
-      $('#messageContainer')
-        .html(`
+      $("#messageContainer")
+        .html(
+          `
           <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
             <i class="bi ${icon}"></i> ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
-        `)
+        `
+        )
         .show();
 
       // Auto-hide success messages after 3 seconds
-      if (type === 'success') {
+      if (type === "success") {
         setTimeout(function () {
-          $('#messageContainer').fadeOut();
+          $("#messageContainer").fadeOut();
         }, 3000);
       }
     }

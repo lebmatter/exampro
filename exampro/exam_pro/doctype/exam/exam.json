@@ -12,6 +12,7 @@
   "pass_percentage",
   "image",
   "column_break_vleg",
+  "visibility",
   "start_time_type",
   "flexible_time_ends_in",
   "column_break_10",
@@ -296,6 +297,14 @@
    "fieldname": "leaderboard_rows",
    "fieldtype": "Int",
    "label": "Leaderboard rows"
+  },
+  {
+   "default": "Private",
+   "description": "Use Private for internal exams. Public exams will get a Registration portal page.",
+   "fieldname": "visibility",
+   "fieldtype": "Select",
+   "label": "Visibility",
+   "options": "Private\nPublic"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -316,8 +325,8 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-08-26 10:34:09.995488",
- "modified_by": "labeeb@zerodha.com",
+ "modified": "2025-10-28 14:31:36.016619",
+ "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",
  "owner": "Administrator",

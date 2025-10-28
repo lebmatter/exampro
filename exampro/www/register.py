@@ -25,6 +25,13 @@ def get_context(context):
 
     # Get exam details
     exam = frappe.get_doc("Exam", exam_name)
+
+    # Check if exam is public
+    if exam.visibility != "Public":
+        context.show_error = True
+        context.error_message = _("This exam is not available for public registration.")
+        return context
+
     context.exam = exam
     context.show_error = False
 
@@ -32,7 +39,7 @@ def get_context(context):
     schedules = frappe.db.sql("""
         SELECT name, exam, start_date_time, duration, schedule_type, schedule_expire_in_days
         FROM `tabExam Schedule`
-        WHERE exam = %s
+        WHERE exam = %s AND public_registration = 1
         ORDER BY start_date_time DESC
     """, exam_name, as_dict=1)
 
@@ -81,6 +88,21 @@ def register_for_exam(schedule_name, name, email, phone):
 
     # Get schedule details
     schedule = frappe.get_doc("Exam Schedule", schedule_name)
+
+    # Check if schedule is open for public registration
+    if not schedule.public_registration:
+        return {
+            "success": False,
+            "message": _("This exam schedule is not open for public registration.")
+        }
+
+    # Check if associated exam is public
+    exam = frappe.get_doc("Exam", schedule.exam)
+    if exam.visibility != "Public":
+        return {
+            "success": False,
+            "message": _("This exam is not available for public registration.")
+        }
 
     # Check if schedule is available for registration
     status = schedule.get_status()

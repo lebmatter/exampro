@@ -12,6 +12,7 @@
   "start_date_time",
   "schedule_type",
   "schedule_expire_in_days",
+  "public_registration",
   "column_break_3",
   "question_type",
   "duration",
@@ -146,6 +147,13 @@
    "fieldname": "show_assignment_count",
    "fieldtype": "Button",
    "label": "Show Assignment Count"
+  },
+  {
+   "default": "0",
+   "description": "Make this schedule available for public registration (Exam visibility should be Public).",
+   "fieldname": "public_registration",
+   "fieldtype": "Check",
+   "label": "Public Registration"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -161,8 +169,8 @@
    "link_fieldname": "exam_schedule"
   }
  ],
- "modified": "2025-08-26 16:00:07.924431",
- "modified_by": "labeeb@zerodha.com",
+ "modified": "2025-10-28 14:45:34.189839",
+ "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam Schedule",
  "naming_rule": "Set by user",
