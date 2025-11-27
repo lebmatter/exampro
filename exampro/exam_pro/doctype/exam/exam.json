@@ -308,11 +308,11 @@
    "options": "Private\nPublic"
   },
   {
-   "default": "0",
-   "description": "For applicable questions, show helper slider when user's answer is wrong",
+   "description": "For applicable questions, show helper slide based on condition",
    "fieldname": "show_question_help_slide",
-   "fieldtype": "Check",
-   "label": "Show Question Help Slide"
+   "fieldtype": "Select",
+   "label": "Show Question Help Slide",
+   "options": "\nAfter Any Answer\nAfter Wrong MCQ Answer"
   }
  ],
  "index_web_pages_for_search": 1,

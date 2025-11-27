@@ -581,8 +581,44 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	result_doc.marked_for_later = markdflater
 	result_doc.evaluation_status = "Pending"
 	result_doc.save(ignore_permissions=True)
-		
-	return {"qs_name": qs_name, "qs_no": result_doc.seq_no}
+
+	res = {"qs_name": qs_name, "qs_no": result_doc.seq_no, "help_slide": "", "help_quiz": []}
+
+	show_question_help_slide = frappe.get_cached_value(
+		"Exam", submission.exam, "show_question_help_slide")
+
+	if show_question_help_slide:
+		question_doc = frappe.get_cached_doc("Exam Question", qs_name)
+		should_show_help = False
+
+		if show_question_help_slide == "After Any Answer":
+			should_show_help = True
+		elif show_question_help_slide == "After Wrong MCQ Answer":
+			if question_doc.type == "Choices":
+				# Get correct answers
+				correct_answers = []
+				for i in range(1, 5):
+					if question_doc.get(f"is_correct_{i}"):
+						correct_answers.append(str(i))
+				correct_answer_str = ",".join(sorted(correct_answers))
+				user_answer_str = ",".join(sorted(answer.split(","))) if answer else ""
+				should_show_help = user_answer_str != correct_answer_str
+
+		if should_show_help:
+			res["help_slide"] = question_doc.help_content or ""
+			res["help_quiz"] = [
+				{
+					"question": q.question,
+					"choice_1": q.choice_1,
+					"choice_2": q.choice_2,
+					"choice_3": q.choice_3,
+					"choice_4": q.choice_4,
+					"correct_choice": q.correct_choice
+				}
+				for q in question_doc.help_content_quiz
+			]
+
+	return res
 
 
 @frappe.whitelist()
