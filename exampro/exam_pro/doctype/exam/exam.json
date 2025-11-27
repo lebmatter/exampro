@@ -38,6 +38,7 @@
   "question_type",
   "randomize_questions",
   "total_questions",
+  "show_question_help_slide",
   "column_break_lgrh",
   "total_marks",
   "evaluation_required",
@@ -305,6 +306,13 @@
    "fieldtype": "Select",
    "label": "Visibility",
    "options": "Private\nPublic"
+  },
+  {
+   "default": "0",
+   "description": "For applicable questions, show helper slider when user's answer is wrong",
+   "fieldname": "show_question_help_slide",
+   "fieldtype": "Check",
+   "label": "Show Question Help Slide"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -325,7 +333,7 @@
    "link_fieldname": "exam"
   }
  ],
- "modified": "2025-10-28 14:31:36.016619",
+ "modified": "2025-11-27 13:11:00.142317",
  "modified_by": "Administrator",
  "module": "Exam Pro",
  "name": "Exam",

@@ -41,7 +41,11 @@
     "possibility_2",
     "possibility_4",
     "section_break_c1lf",
-    "multiple"
+    "multiple",
+    "question_help_tab",
+    "help_content",
+    "help_content_quiz_section",
+    "help_content_quiz"
    ],
    "fields": [
     {
@@ -250,6 +254,28 @@
      "in_list_view": 1,
      "label": "Mark",
      "non_negative": 1
+    },
+    {
+     "depends_on": "eval: doc.type == 'Choices'",
+     "fieldname": "question_help_tab",
+     "fieldtype": "Tab Break",
+     "label": "Question Help"
+    },
+    {
+     "fieldname": "help_content",
+     "fieldtype": "Text",
+     "label": "Help Content"
+    },
+    {
+     "fieldname": "help_content_quiz_section",
+     "fieldtype": "Section Break",
+     "label": "Help Content Quiz"
+    },
+    {
+     "fieldname": "help_content_quiz",
+     "fieldtype": "Table",
+     "label": "Help Content Quiz",
+     "options": "Help Content Quiz"
     }
    ],
  "index_web_pages_for_search": 1,
