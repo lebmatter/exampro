@@ -589,8 +589,16 @@ function navigateToQuestion(qsno) {
                 },
                 callback: (data) => {
                     console.log("Submitted subjective answer before navigation.");
-                    // Now navigate to the new question
-                    getQuestion(qsno);
+                    // Check if helper slide needs to be shown
+                    const hasHelperSlide = checkAndShowHelperSlide(
+                        data.message,
+                        currentQuestion["no"],
+                        currentQuestion["question"],
+                        () => getQuestion(qsno)
+                    );
+                    if (!hasHelperSlide) {
+                        getQuestion(qsno);
+                    }
                 },
                 error: (error) => {
                     console.error("Error submitting answer before navigation:", error);
@@ -1070,15 +1078,28 @@ function submitAnswer(loadNext) {
         callback: (data) => {
             console.log("submitted answer.");
             isSubmittingAnswer = false;
-            
+
             // check if this is the last question
             if (loadNext) {
-                if (data.message.qs_no < examOverview["total_questions"]) {
-                    let nextQs = data.message.qs_no + 1
-                    getQuestion(nextQs);
-                    updateOverviewMap();
-                } else {
-                    showSubmitConfirmPage();
+                const navigateNext = () => {
+                    if (data.message.qs_no < examOverview["total_questions"]) {
+                        let nextQs = data.message.qs_no + 1
+                        getQuestion(nextQs);
+                        updateOverviewMap();
+                    } else {
+                        showSubmitConfirmPage();
+                    }
+                };
+
+                // Check if helper slide needs to be shown
+                const hasHelperSlide = checkAndShowHelperSlide(
+                    data.message,
+                    currentQuestion["no"],
+                    currentQuestion["question"],
+                    navigateNext
+                );
+                if (!hasHelperSlide) {
+                    navigateNext();
                 }
             }
         },

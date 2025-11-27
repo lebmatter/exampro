@@ -113,3 +113,191 @@ const updateMessages = (exam_submission) => {
         $('#messages .chat-container').scrollTop($('#messages .chat-container')[0].scrollHeight);
     });
 };
+
+// Helper Slide Modal Functions
+let helperSlideData = {
+    questionNo: 0,
+    questionText: '',
+    helpContent: '',
+    helpQuiz: [],
+    currentQuizIndex: 0,
+    onComplete: null
+};
+
+const initHelperSlideModal = () => {
+    if ($('#helperSlideModal').length) return;
+
+    const modalHtml = `
+    <div class="modal fade" id="helperSlideModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <span id="helperSlideTitle">Question Help</span>
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 p-3 bg-light rounded">
+                        <small class="text-muted">Question <span id="helperQuestionNo"></span></small>
+                        <div id="helperQuestionText" class="mt-1"></div>
+                    </div>
+
+                    <!-- Page 1: Help Content -->
+                    <div id="helperContentPage">
+                        <div id="helperContentText" class="p-3 border rounded"></div>
+                        <div class="text-right mt-3">
+                            <button type="button" class="btn btn-primary" id="helperNextToQuiz">
+                                Continue to Quiz <i class="fa fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Page 2: Quiz -->
+                    <div id="helperQuizPage" style="display: none;">
+                        <div class="mb-3">
+                            <small class="text-muted">Quiz <span id="helperQuizProgress"></span></small>
+                        </div>
+                        <div id="helperQuizQuestion" class="mb-3 font-weight-bold"></div>
+                        <div id="helperQuizChoices" class="mb-3"></div>
+                        <div id="helperQuizFeedback" class="mb-3" style="display: none;"></div>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-primary" id="helperSubmitQuiz">Submit Answer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    $('body').append(modalHtml);
+
+    // Event handlers
+    $('#helperNextToQuiz').on('click', () => {
+        if (helperSlideData.helpQuiz.length > 0) {
+            $('#helperContentPage').hide();
+            $('#helperQuizPage').show();
+            renderHelperQuiz();
+        } else {
+            closeHelperSlideModal();
+        }
+    });
+
+    $('#helperSubmitQuiz').on('click', submitHelperQuizAnswer);
+};
+
+const showHelperSlideModal = (questionNo, questionText, helpContent, helpQuiz, onComplete) => {
+    initHelperSlideModal();
+
+    helperSlideData = {
+        questionNo,
+        questionText,
+        helpContent,
+        helpQuiz: helpQuiz || [],
+        currentQuizIndex: 0,
+        onComplete
+    };
+
+    $('#helperQuestionNo').text(questionNo);
+    $('#helperQuestionText').html(questionText);
+    $('#helperContentText').html(helpContent || 'No additional help content available.');
+
+    // Reset to first page
+    $('#helperContentPage').show();
+    $('#helperQuizPage').hide();
+    $('#helperQuizFeedback').hide();
+
+    // Update button text based on quiz availability
+    if (helperSlideData.helpQuiz.length > 0) {
+        $('#helperNextToQuiz').text('Continue to Quiz ').append('<i class="fa fa-arrow-right ml-1"></i>');
+    } else {
+        $('#helperNextToQuiz').text('Close');
+    }
+
+    $('#helperSlideModal').modal('show');
+};
+
+const renderHelperQuiz = () => {
+    const quiz = helperSlideData.helpQuiz[helperSlideData.currentQuizIndex];
+    if (!quiz) return;
+
+    $('#helperQuizProgress').text(`${helperSlideData.currentQuizIndex + 1} of ${helperSlideData.helpQuiz.length}`);
+    $('#helperQuizQuestion').text(quiz.question);
+
+    const choicesHtml = ['choice_1', 'choice_2', 'choice_3', 'choice_4']
+        .filter(key => quiz[key])
+        .map((key, idx) => {
+            const choiceLabel = `Choice ${idx + 1}`;
+            return `
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="helperQuizChoice"
+                       id="helperChoice${idx + 1}" value="${choiceLabel}">
+                <label class="form-check-label" for="helperChoice${idx + 1}">
+                    ${quiz[key]}
+                </label>
+            </div>`;
+        }).join('');
+
+    $('#helperQuizChoices').html(choicesHtml);
+    $('#helperQuizFeedback').hide();
+    $('#helperSubmitQuiz').prop('disabled', false).text('Submit Answer');
+};
+
+const submitHelperQuizAnswer = () => {
+    const selectedAnswer = $('input[name="helperQuizChoice"]:checked').val();
+    if (!selectedAnswer) {
+        $('#helperQuizFeedback')
+            .removeClass('alert-success alert-danger')
+            .addClass('alert alert-warning')
+            .text('Please select an answer.')
+            .show();
+        return;
+    }
+
+    const quiz = helperSlideData.helpQuiz[helperSlideData.currentQuizIndex];
+    const isCorrect = selectedAnswer === quiz.correct_choice;
+
+    if (isCorrect) {
+        $('#helperQuizFeedback')
+            .removeClass('alert-warning alert-danger')
+            .addClass('alert alert-success')
+            .text('Correct!')
+            .show();
+
+        // Move to next quiz or close
+        setTimeout(() => {
+            helperSlideData.currentQuizIndex++;
+            if (helperSlideData.currentQuizIndex < helperSlideData.helpQuiz.length) {
+                renderHelperQuiz();
+            } else {
+                closeHelperSlideModal();
+            }
+        }, 1000);
+    } else {
+        $('#helperQuizFeedback')
+            .removeClass('alert-warning alert-success')
+            .addClass('alert alert-danger')
+            .text('Incorrect. Please try again.')
+            .show();
+    }
+};
+
+const closeHelperSlideModal = () => {
+    $('#helperSlideModal').modal('hide');
+    if (helperSlideData.onComplete) {
+        helperSlideData.onComplete();
+    }
+};
+
+const checkAndShowHelperSlide = (response, questionNo, questionText, onComplete) => {
+    if (response.help_slide || (response.help_quiz && response.help_quiz.length > 0)) {
+        showHelperSlideModal(
+            questionNo,
+            questionText,
+            response.help_slide,
+            response.help_quiz,
+            onComplete
+        );
+        return true;
+    }
+    return false;
+};
