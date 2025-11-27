@@ -256,7 +256,6 @@
      "non_negative": 1
     },
     {
-     "depends_on": "eval: doc.type == 'Choices'",
      "fieldname": "question_help_tab",
      "fieldtype": "Tab Break",
      "label": "Question Help"
