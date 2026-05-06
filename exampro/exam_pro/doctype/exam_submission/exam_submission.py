@@ -672,6 +672,26 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 		})
 		terminate_msg.insert(ignore_permissions=True)
 
+	# Terminate when no face has been visible for the full grace period (camera covered/shutter closed)
+	elif warning_type == "nofacetimeout":
+		doc.reload()
+		if doc.status not in ("Terminated", "Submitted"):
+			doc.status = "Terminated"
+			doc.save(ignore_permissions=True)
+			frappe.db.commit()
+
+			terminate_msg = frappe.get_doc({
+				"doctype": "Exam Messages",
+				"exam_submission": exam_submission,
+				"timestamp": frappe.utils.now(),
+				"from": "System",
+				"from_user": "Administrator",
+				"message": "Exam terminated because no face was visible to the camera for 60 seconds.",
+				"type_of_message": "Critical",
+				"warning_type": "nofacetimeout"
+			})
+			terminate_msg.insert(ignore_permissions=True)
+
 	return {"status": 1}
 
 @frappe.whitelist()

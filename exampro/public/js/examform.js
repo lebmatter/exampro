@@ -11,6 +11,10 @@ var webcamErrorCooldown = 5000; // 5 seconds cooldown between webcam error alert
 var recordingInitialized = false; // Prevent multiple recording initializations
 var submitAnswerTimeout; // Debounce timeout for textarea input
 var isSubmittingAnswer = false; // Flag to prevent concurrent submissions
+var faceCurrentlyVisible = false; // Updated by gazer onFaceDetected; gates exam start
+var noFaceTerminationTimer = null; // setTimeout id for the 60s no-face termination
+var noFaceCountdownInterval = null; // setInterval id for the visible countdown
+var NO_FACE_GRACE_SECONDS = 60;
 
 // Simple notification function as fallback
 function showNotification(message, type = 'info') {
@@ -199,21 +203,33 @@ function startRecording() {
                         enableLogs: false, 
                         onFaceDetected: (faces) => {
                             const currentTime = Date.now();
-                            if (faces.length === 0) {
-                                // Only show alert if enough time has passed since last alert
+                            if (faces.length > 0) {
+                                faceCurrentlyVisible = true;
+                                // Face is back: cancel any pending termination
+                                cancelNoFaceCountdown();
+                            } else {
+                                faceCurrentlyVisible = false;
+                                // Existing chat warning (cooldown-throttled)
                                 if (currentTime - lastNoFaceAlertTime > noFaceAlertCooldown) {
                                     console.warn('No face detected in camera view');
                                     sendMessage('No face detected in camera view', 'Warning', 'noface');
                                     lastNoFaceAlertTime = currentTime;
-                                    
+
                                     // Show a less intrusive notification
                                     showNotification('Please ensure your face is visible to the camera', 'warning');
+                                }
+                                // During an active exam, start the 60s grace countdown
+                                if (exam.submission_status === "Started" && !examEnded) {
+                                    startNoFaceCountdown();
                                 }
                             }
                         },
                         // Callback functions
                         onPostTrackingData: (trackingData) => {
-                            
+                            // Don't post tracking data before the exam has started
+                            if (exam.submission_status !== "Started") {
+                                return;
+                            }
                             // Send tracking data to server
                             frappe.call({
                                 method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_tracking_info",
@@ -246,8 +262,9 @@ function startRecording() {
                     // Apply relaxed sensitivity preset  
                     gazer.setSensitivityMode('relaxed');
 
-                    // Start gazer if exam is already started
-                    if (exam.submission_status === "Started") {
+                    // Start gazer for the candidate's session — Registered (so we can verify
+                    // a face is visible before allowing Start) or Started (during the exam).
+                    if (exam.submission_status === "Started" || exam.submission_status === "Registered") {
                         gazer.start();
                     }
                 } catch (error) {
@@ -879,6 +896,77 @@ function sendChatMessage() {
             },
         });
     }
+}
+
+function startNoFaceCountdown() {
+    if (noFaceTerminationTimer) return; // already counting down
+    let secondsLeft = NO_FACE_GRACE_SECONDS;
+    showNoFaceCountdownBanner(secondsLeft);
+    noFaceCountdownInterval = setInterval(() => {
+        secondsLeft -= 1;
+        if (secondsLeft >= 0) {
+            showNoFaceCountdownBanner(secondsLeft);
+        }
+    }, 1000);
+    noFaceTerminationTimer = setTimeout(() => {
+        clearInterval(noFaceCountdownInterval);
+        noFaceCountdownInterval = null;
+        noFaceTerminationTimer = null;
+        terminateForNoFace();
+    }, NO_FACE_GRACE_SECONDS * 1000);
+}
+
+function cancelNoFaceCountdown() {
+    if (noFaceTerminationTimer) {
+        clearTimeout(noFaceTerminationTimer);
+        noFaceTerminationTimer = null;
+    }
+    if (noFaceCountdownInterval) {
+        clearInterval(noFaceCountdownInterval);
+        noFaceCountdownInterval = null;
+    }
+    hideNoFaceCountdownBanner();
+}
+
+function showNoFaceCountdownBanner(secondsLeft) {
+    const banner = document.getElementById('noFaceBanner');
+    if (!banner) return;
+    banner.style.display = 'block';
+    const countdownEl = document.getElementById('noFaceCountdown');
+    if (countdownEl) countdownEl.textContent = secondsLeft;
+}
+
+function hideNoFaceCountdownBanner() {
+    const banner = document.getElementById('noFaceBanner');
+    if (banner) banner.style.display = 'none';
+}
+
+function terminateForNoFace() {
+    if (examEnded) return;
+    examEnded = true;
+    cancelNoFaceCountdown();
+
+    // Post directly: sendMessage() guards on currentQsNo > 1 which can be false
+    // immediately after start. We need this critical message to always reach the server.
+    frappe.call({
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
+        type: "POST",
+        args: {
+            'exam_submission': exam["exam_submission"],
+            'message': 'Exam terminated: face not visible to camera for 60 seconds.',
+            'type_of_message': 'Critical',
+            'warning_type': 'nofacetimeout',
+        },
+        callback: () => {
+            stopRecording();
+            if (detector) detector.destroy();
+            window.location.href = "/exam/" + exam.exam_submission;
+        },
+        error: (error) => {
+            console.error("Failed to post nofacetimeout:", error);
+            window.location.href = "/exam/" + exam.exam_submission;
+        }
+    });
 }
 
 function endExam(isAutoSubmit) {
