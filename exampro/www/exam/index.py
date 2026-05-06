@@ -4,7 +4,7 @@ from frappe.utils import now
 
 from frappe import _
 from frappe.utils.data import markdown
-from exampro.exam_pro.api.utils import submit_candidate_pending_exams
+from exampro.exam_pro.api.utils import submit_candidate_pending_exams, redirect_to_exams_list
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs
@@ -112,6 +112,34 @@ def get_context(context):
 		raise frappe.Redirect
 
 	submit_candidate_pending_exams()
+
+	if frappe.form_dict.get("auto_submitted"):
+		submission = frappe.form_dict.get("submission")
+		if not submission or not frappe.db.exists("Exam Submission", submission) \
+			or frappe.db.get_value("Exam Submission", submission, "candidate") != frappe.session.user:
+			redirect_to_exams_list()
+
+		context.exam = {}
+		context.alert = {
+			"title": "Exam Auto-Submitted",
+			"text": "Your exam time has expired and your exam has been automatically submitted.",
+			"actions": [
+				{
+					"label": "View Result",
+					"icon": "bi-file-earmark-text",
+					"href": "/exam/{}".format(submission),
+					"primary": True,
+				},
+				{
+					"label": "My Exams",
+					"icon": "bi-list-ul",
+					"href": "/my-exams",
+					"primary": False,
+				},
+			],
+		}
+		return
+
 	exam_details = get_live_exam(frappe.session.user)
 	context.page_context = {}
 

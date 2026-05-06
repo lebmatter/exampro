@@ -23,12 +23,20 @@ head_include %}
         <p>{{ alert.text }}</p>
       </div>
       <div class="alert-actions">
+        {% if alert.actions %}
+          {% for action in alert.actions %}
+          <a href="{{ action.href }}" class="alert-button {% if action.primary %}alert-button-primary{% else %}alert-button-secondary{% endif %}">
+            <i class="bi {{ action.icon }}"></i>{{ action.label }}
+          </a>
+          {% endfor %}
+        {% else %}
         <a href="javascript:window.history.back()" class="alert-button alert-button-secondary">
             <i class="bi bi-arrow-left"></i>Go Back
         </a>
         <a href="javascript:location.reload()" class="alert-button alert-button-primary">
             <i class="bi bi-arrow-repeat"></i>Refresh
         </a>
+        {% endif %}
       </div>
     </div>
   </div>

@@ -70,8 +70,8 @@ function updateTimer() {
             
             // Show exam alert when time is up
             examAlert("Time's Up!", "Your exam time has expired. Click OK to proceed.");
-            
-            endExam();
+
+            endExam(true);
             return; // Stop the timer from updating further
         }
         // Calculate minutes and seconds
@@ -880,7 +880,7 @@ function sendChatMessage() {
     }
 }
 
-function endExam() {
+function endExam(isAutoSubmit) {
     if (!examEnded) {
         frappe.call({
             method: "exampro.exam_pro.doctype.exam_submission.exam_submission.end_exam",
@@ -894,7 +894,11 @@ function endExam() {
                 if (detector) {
                     detector.destroy();
                 }
-                window.location.href = "/exam/" + exam.exam_submission;
+                if (isAutoSubmit) {
+                    window.location.href = "/exam?auto_submitted=1&submission=" + encodeURIComponent(exam.exam_submission);
+                } else {
+                    window.location.href = "/exam/" + exam.exam_submission;
+                }
             }
         });
     }
