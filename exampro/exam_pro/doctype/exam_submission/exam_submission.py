@@ -558,7 +558,7 @@ def get_question(exam_submission=None, qsno=1):
 
 
 @frappe.whitelist()
-def submit_question_response(exam_submission=None, qs_name=None, answer="", markdflater=0):
+def submit_question_response(exam_submission=None, qs_name=None, answer="", markdflater=0, qs_no=None):
 	"""
 	Submit response and add marks if applicable
 	"""
@@ -572,7 +572,12 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	can_process_question(submission)
 	save_tracking_info(exam_submission)
 
-	answer_docname = frappe.db.get_value("Exam Answer", {"parent": exam_submission, "exam_question": qs_name}, "name")
+	# A question can be added to an exam at multiple positions, so the same
+	# exam_question may map to multiple Exam Answer rows. Disambiguate by seq_no.
+	answer_filters = {"parent": exam_submission, "exam_question": qs_name}
+	if qs_no:
+		answer_filters["seq_no"] = int(qs_no)
+	answer_docname = frappe.db.get_value("Exam Answer", answer_filters, "name")
 	if not answer_docname:
 		frappe.throw("Invalid question requested.")
 

@@ -584,6 +584,7 @@ function navigateToQuestion(qsno) {
                 args: {
                     'exam_submission': exam["exam_submission"],
                     'qs_name': currentQuestion["name"],
+                    'qs_no': currentQuestion["no"],
                     'answer': textContent,
                     'markdflater': mrkForLtr ? 1 : 0,
                 },
@@ -1068,6 +1069,7 @@ function submitAnswer(loadNext) {
         args: {
             'exam_submission': exam["exam_submission"],
             'qs_name': currentQuestion["name"],
+            'qs_no': currentQuestion["no"],
             'answer': answer,
             'markdflater': mrkForLtr,
         },
