@@ -285,8 +285,11 @@ def get_context(context):
 			}
 	
 	# Get evaluator alert
+	# Use completed=True to count only submissions actually ready for evaluation
+	# (status=Submitted, evaluation_status=Pending) — same filter the /evaluate
+	# page uses, so the banner count matches what the evaluator sees there.
 	if "Exam Evaluator" in frappe.get_roles():
-		pending_evaluations = get_evaluator_live_exams(evaluator=frappe.session.user, completed=False)
+		pending_evaluations = get_evaluator_live_exams(evaluator=frappe.session.user, completed=True)
 		pending_count = len(pending_evaluations)
 		if pending_count > 0:
 			context.evaluator_alert = {
