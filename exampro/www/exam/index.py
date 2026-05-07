@@ -3,6 +3,7 @@ import frappe
 from frappe.utils import now
 
 from frappe import _
+from frappe.utils import sanitize_html
 from frappe.utils.data import markdown
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams, redirect_to_exams_list
 
@@ -167,7 +168,9 @@ def get_context(context):
 		for key, value in exam_details.items():
 			exam[key] = value
 
-		instructions = markdown(exam["instructions"])
+		# markdown() does not strip embedded raw HTML/JS, so sanitize the result
+		# before it is rendered with the | safe filter in the template.
+		instructions = sanitize_html(markdown(exam["instructions"]))
 		if instructions.strip() == "<p></p>" or instructions.strip() == "":
 			instructions = ""
 		exam["instructions"] = instructions if instructions else ""
