@@ -11,6 +11,7 @@ var webcamErrorCooldown = 5000; // 5 seconds cooldown between webcam error alert
 var recordingInitialized = false; // Prevent multiple recording initializations
 var submitAnswerTimeout; // Debounce timeout for textarea input
 var isSubmittingAnswer = false; // Flag to prevent concurrent submissions
+var pendingNavigation = false; // Set when a Next/Finish click arrives during an in-flight save
 var faceCurrentlyVisible = false; // Updated by gazer onFaceDetected; gates exam start
 var noFaceTerminationTimer = null; // setTimeout id for the 60s no-face termination
 var noFaceCountdownInterval = null; // setInterval id for the visible countdown
@@ -1022,12 +1023,8 @@ function startExam() {
 function getQuestion(qsno) {
     // Clear any pending textarea submission timeout
     clearTimeout(submitAnswerTimeout);
-    
-    // Only submit the current answer if we're on a question after the first one
-    // and it's a multiple choice question
-    if (currentQuestion && currentQuestion.no > 1 && currentQuestion["type"] == "Choices") {
-        submitAnswer(false);
-    }
+    // Callers (Next click, navigateToQuestion, subjective branches) save the
+    // current answer before invoking getQuestion, so no save is done here.
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_question",
         type: "POST",
@@ -1107,14 +1104,16 @@ function showSubmitConfirmPage() {
 
 
 function submitAnswer(loadNext) {
-    // Prevent concurrent submissions
-    if (isSubmittingAnswer && !loadNext) {
-        console.log("Answer submission already in progress, skipping...");
+    // If a save is already in flight, drop this call. If the dropped call was a
+    // Next/Finish click, remember it so the in-flight callback navigates after
+    // the save resolves — preserves ordering without using deprecated sync XHR.
+    if (isSubmittingAnswer) {
+        if (loadNext) {
+            pendingNavigation = true;
+        }
         return;
     }
-    
-    isSubmittingAnswer = true;
-    
+
     let answer;
     var mrkForLtr = $("#markedForLater").prop('checked') ? 1 : 0;
     if (currentQuestion["type"] == "Choices") {
@@ -1131,10 +1130,9 @@ function submitAnswer(loadNext) {
         // or when marked for later, but not for auto-save
         if (!loadNext && !mrkForLtr) {
             // Don't auto-save subjective answers unless marked for later
-            isSubmittingAnswer = false;
             return;
         }
-        
+
         // When navigating (loadNext = true), handle empty subjective answers
         if (loadNext && !mrkForLtr && (!answer || answer.trim() === "")) {
             // Don't submit empty subjective answers when navigating, just load next question
@@ -1145,15 +1143,14 @@ function submitAnswer(loadNext) {
             } else {
                 showSubmitConfirmPage();
             }
-            isSubmittingAnswer = false;
             return;
         }
     }
 
+    isSubmittingAnswer = true;
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.submit_question_response",
         type: "POST",
-        async: loadNext ? false : true, // Only use sync for navigation, async for auto-save
         args: {
             'exam_submission': exam["exam_submission"],
             'qs_name': currentQuestion["name"],
@@ -1162,13 +1159,19 @@ function submitAnswer(loadNext) {
             'markdflater': mrkForLtr,
         },
         callback: (data) => {
-            console.log("submitted answer.");
             isSubmittingAnswer = false;
-            
-            // check if this is the last question
-            if (loadNext) {
+
+            const shouldNavigate = loadNext || pendingNavigation;
+            pendingNavigation = false;
+
+            // If the user has manually moved to a different question while this save
+            // was in flight (e.g. clicked a question button), don't override their
+            // choice with a forced "next".
+            const userStillOnSavedQs = currentQuestion && currentQuestion["no"] === data.message.qs_no;
+
+            if (shouldNavigate && userStillOnSavedQs) {
                 if (data.message.qs_no < examOverview["total_questions"]) {
-                    let nextQs = data.message.qs_no + 1
+                    let nextQs = data.message.qs_no + 1;
                     getQuestion(nextQs);
                     updateOverviewMap();
                 } else {
@@ -1179,6 +1182,10 @@ function submitAnswer(loadNext) {
         error: (error) => {
             console.error("Error submitting answer:", error);
             isSubmittingAnswer = false;
+            if (loadNext || pendingNavigation) {
+                pendingNavigation = false;
+                showNotification("Could not save your answer. Please try again.", "error");
+            }
         }
     });
 };
