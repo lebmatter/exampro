@@ -96,7 +96,7 @@ def get_live_exam(member=None):
 			# if time is over, submit if applicable
 			if submission["status"] != "Submitted":
 				doc = frappe.get_doc("Exam Submission", submission["name"])
-				doc.status == "Submitted"
+				doc.status = "Submitted"
 				doc.save(ignore_permissions=True)
 
 			return exam_details

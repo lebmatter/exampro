@@ -749,6 +749,14 @@ def exam_overview(exam_submission=None):
 	return list of questions and its status
 	"""
 	assert exam_submission
+
+	# Restrict to the candidate (or assigned proctor for live monitoring)
+	candidate, assigned_proctor = frappe.db.get_value(
+		"Exam Submission", exam_submission, ["candidate", "assigned_proctor"]
+	) or (None, None)
+	if frappe.session.user not in [candidate, assigned_proctor]:
+		raise PermissionError("You don't have access to view this exam overview.")
+
 	all_submitted = get_submitted_questions(
 		exam_submission, fields=["marked_for_later", "exam_question", "answer", "seq_no"]
 	)
@@ -1049,11 +1057,14 @@ def post_tracking_info(info=None):
 	assert info, "Tracking info is required"
 
 	info = frappe.parse_json(info)
-	print("*"*100)
-	print("Tracking Info:", info)
 	exam_submission = info.get("exam_submission")
 	if not exam_submission:
 		return
+
+	# Only the candidate may post tracking data for their own submission
+	candidate = frappe.db.get_value("Exam Submission", exam_submission, "candidate")
+	if not candidate or frappe.session.user != candidate:
+		raise PermissionError("You don't have access to post tracking data for this exam.")
 
 	# Extract only the required tracking values
 	face_count_changes = info.get("faceCountChanges", 0)
