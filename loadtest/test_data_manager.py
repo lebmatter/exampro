@@ -108,6 +108,9 @@ class TestDataManager:
                             # Check if document exists before attempting to delete
                             doc = self.client.get_doc(doctype, record_name)
                             if doc:
+                                if doc.get("docstatus") == 1:
+                                    print(f"    🔄 Cancelling {doctype}: {record_name} before deletion...")
+                                    self.client.call_method("frappe.client.cancel", doctype=doctype, name=record_name)
                                 if self.client.delete(doctype, record_name):
                                     deleted_count += 1
                                     print(f"    🗑️  Deleted {doctype}: {record_name} ({search_field}: {search_value})")
@@ -173,7 +176,24 @@ class TestDataManager:
             
             # 6. Register users for exams
             self._register_users_for_exams()
-    
+            # 7. Save generated data IDs back to data.json for reference in load tests
+            print("💾 Saving generated data IDs to data.json...")
+            self.config["Exam Schedule"]["data"] = self.created_records["schedules"]
+            
+            # Fetch the generated submission IDs WITH candidate and schedule mapping
+            submissions = self.client.get_list(
+                "Exam Submission", 
+                fields=["name", "candidate", "exam_schedule"], 
+                filters={"candidate": ["like", f"%{self.test_session_id}%"]},
+                limit_page_length=1000
+            )
+            if submissions:
+                # Save the full mapping objects instead of just a list of strings
+                self.config["Exam Submission"]["data"] = submissions
+                
+            # Write back to the file
+            with open(self.config_file, 'w') as f:
+                json.dump(self.config, f, indent=2)
             
             print(f"✅ Test data setup completed successfully!")
             print(f"📊 Created: {len(self.created_records['users'])} users, "

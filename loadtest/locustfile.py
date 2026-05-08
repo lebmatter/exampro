@@ -95,12 +95,37 @@ class CandidateUser(HttpUser):
         except Exception as e:
             logger.error(f"Login error: {str(e)}")
             return False
-
+    def assign_my_exam_data(self):
+        """Find the EXACT submission and schedule assigned to this logged-in user from data.json"""
+        try:
+            email = self.user_credentials[0].lower()
+            with open('data.json', 'r') as f:
+                data = json.load(f)
+            
+            exam_submissions = data.get("Exam Submission", {}).get("data", [])
+            
+            # Find the submission that matches this specific user's email
+            my_submission = next((sub for sub in exam_submissions if sub.get("candidate").lower() == email), None)
+            
+            if my_submission:
+                self.current_submission = my_submission["name"]
+                self.current_schedule = my_submission["exam_schedule"]
+                return True
+            else:
+                logger.error(f"Could not find submission mapping for {email} in data.json")
+                return False
+        except Exception as e:
+            logger.error(f"Error reading submission from data.json: {e}")
+            return False
+   
     def exam_workflow(self):
         """Execute the complete exam workflow for a candidate"""
         try:
             # Step 1: Access /my-exams
             self.access_my_exams()
+
+            if not self.assign_my_exam_data():
+                return
             
             # Step 2: Go to /exam (single page app)
             self.access_exam_page()
@@ -130,53 +155,34 @@ class CandidateUser(HttpUser):
 
     def access_exam_page(self):
         """Access the exam single page application"""
-        # Get available exam schedules from data.json
-        try:
-            with open('data.json', 'r') as f:
-                data = json.load(f)
-            
-            exam_schedules = data.get("Exam Schedule", {}).get("data", [])
-            if exam_schedules:
-                # Pick a random schedule
-                schedule = random.choice(exam_schedules)
-                with self.client.get(f"/exam?schedule={schedule}", 
-                                   catch_response=True, name="Access Exam Page") as response:
-                    if response.status_code == 200:
-                        response.success()
-                        logger.debug(f"Successfully accessed exam page for schedule: {schedule}")
-                    else:
-                        response.failure(f"Failed to load exam page: {response.status_code}")
-            else:
-                logger.warning("No exam schedules available in data.json")
-        except Exception as e:
-            logger.error(f"Error accessing exam page: {str(e)}")
+        if hasattr(self, 'current_schedule') and self.current_schedule:
+            with self.client.get(f"/exam?schedule={self.current_schedule}", 
+                               catch_response=True, name="Access Exam Page") as response:
+                if response.status_code == 200:
+                    response.success()
+                else:
+                    response.failure(f"Failed to load exam page: {response.status_code}")
 
     def start_exam(self):
-        """Start an exam (API call - once per candidate)"""
-        try:
-            with open('data.json', 'r') as f:
-                data = json.load(f)
+        """Start an exam using the user's assigned submission ID"""
+        if not self.current_submission:
+            return
             
-            exam_submissions = data.get("Exam Submission", {}).get("data", [])
-            if exam_submissions:
-                # Pick a random submission
-                submission = random.choice(exam_submissions)
-                
-                response = self.client.post(
-                    "/api/method/exampro.exam_pro.doctype.exam_submission.exam_submission.start_exam",
-                    json={"exam_submission": submission},
-                    name="Start Exam API"
-                )
-                
+        try:
+            with self.client.post(
+                "/api/method/exampro.exam_pro.doctype.exam_submission.exam_submission.start_exam",
+                json={"exam_submission": self.current_submission},
+                name="Start Exam API",
+                catch_response=True
+            ) as response:
                 if response.status_code == 200:
-                    self.current_submission = submission
                     self.exam_started = True
-                    logger.info(f"Successfully started exam for submission: {submission}")
+                    response.success()
+                    logger.info(f"Successfully started exam: {self.current_submission}")
                 else:
-                    logger.warning(f"Failed to start exam: {response.status_code}")
-            else:
-                logger.warning("No exam submissions available in data.json")
-                
+                    # Capture exact Frappe error text for debugging
+                    response.failure(f"Failed to start exam 417: {response.text}")
+                    
         except Exception as e:
             logger.error(f"Error starting exam: {str(e)}")
 

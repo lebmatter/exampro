@@ -1,27 +1,27 @@
 {
   "frappe_config": {
-    "site_url": "http://localhost:8000",
+    "site_url": "http://exampro.local:8000",
     "admin_username": "Administrator",
-    "admin_password": "admin"
+    "admin_password": "hello"
   },
   "test_config": {
-    "num_candidates": 10,
+    "num_candidates": 100,
     "num_exams": 1,
-    "exam_duration_minutes": 30,
+    "exam_duration_minutes": 3,
     "concurrent_users": 10,
     "spawn_rate": 2,
-    "test_duration_minutes": 10,
-    "session_id": "GHXHXJ123"
+    "test_duration_minutes": 2,
+    "session_id": "TEST101"
   },
   "User": {
     "search_field": "email",
     "data": []
   },
   "Exam Question Category": {
-    "search_field": "name", 
+    "search_field": "name",
     "data": [
       "LoadTest_General_GHXHXJ123",
-      "LoadTest_Technical_GHXHXJ123", 
+      "LoadTest_Technical_GHXHXJ123",
       "LoadTest_Mixed_GHXHXJ123"
     ]
   },
@@ -35,11 +35,514 @@
   },
   "Exam Schedule": {
     "search_field": "name",
-    "data": []
+    "data": [
+      "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+    ]
   },
   "Exam Submission": {
     "search_field": "candidate",
-    "data": []
+    "data": [
+      {
+        "name": "gsrfk40f09",
+        "candidate": "teststudent0_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gsutuemu7h",
+        "candidate": "teststudent1_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt024ke9si",
+        "candidate": "teststudent2_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt2086dhqq",
+        "candidate": "teststudent3_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt2e8uhu83",
+        "candidate": "teststudent4_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt3jgg4ku5",
+        "candidate": "teststudent5_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt3r7dda3s",
+        "candidate": "teststudent6_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt48ub0idl",
+        "candidate": "teststudent7_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt54gv3s1e",
+        "candidate": "teststudent9_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt5i7neejq",
+        "candidate": "teststudent8_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt6q0e4g4h",
+        "candidate": "teststudent10_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gt8k52fp66",
+        "candidate": "teststudent11_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gta875r2v8",
+        "candidate": "teststudent12_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gtdodtdgds",
+        "candidate": "teststudent13_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gtfa3kob69",
+        "candidate": "teststudent14_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gthr6i898q",
+        "candidate": "teststudent15_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gtjmn38io4",
+        "candidate": "teststudent16_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gtlvjaksk7",
+        "candidate": "teststudent17_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gtne09hmqb",
+        "candidate": "teststudent18_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gtrm7rjn9f",
+        "candidate": "teststudent19_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gttobu6t4u",
+        "candidate": "teststudent20_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gtvfabo2tj",
+        "candidate": "teststudent21_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gu2kle0gm9",
+        "candidate": "teststudent22_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gu4mvcfj80",
+        "candidate": "teststudent23_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gu7bpc12pg",
+        "candidate": "teststudent24_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gu9m9mnlq6",
+        "candidate": "teststudent25_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gua7u7rb3d",
+        "candidate": "teststudent26_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gucv8bkplo",
+        "candidate": "teststudent27_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guda09o7v8",
+        "candidate": "teststudent28_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guenlvle2u",
+        "candidate": "teststudent30_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gueorn67a7",
+        "candidate": "teststudent29_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guf0r2a44u",
+        "candidate": "teststudent31_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gugupg004g",
+        "candidate": "teststudent32_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guhbijgqk0",
+        "candidate": "teststudent33_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gui29iqki7",
+        "candidate": "teststudent34_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guihm6232r",
+        "candidate": "teststudent35_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guj9ov3ao9",
+        "candidate": "teststudent36_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gukb69slq9",
+        "candidate": "teststudent37_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guljvvtqsm",
+        "candidate": "teststudent39_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gulnu8te15",
+        "candidate": "teststudent38_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gum9g72lvr",
+        "candidate": "teststudent40_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gumc49lnaq",
+        "candidate": "teststudent41_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gunom7c2jm",
+        "candidate": "teststudent42_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guo7lgm8tn",
+        "candidate": "teststudent43_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gupl2q2qam",
+        "candidate": "teststudent44_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gups5ftbtr",
+        "candidate": "teststudent45_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guqsdopiu1",
+        "candidate": "teststudent46_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gurrvlmhi9",
+        "candidate": "teststudent48_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gurtnhjq1l",
+        "candidate": "teststudent47_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gusb1jk3mu",
+        "candidate": "teststudent49_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gutfk8tvnk",
+        "candidate": "teststudent50_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guu5956rfi",
+        "candidate": "teststudent52_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guusmu5sie",
+        "candidate": "teststudent51_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guvj5valvu",
+        "candidate": "teststudent54_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "guvk3bigqm",
+        "candidate": "teststudent53_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv05u47ep4",
+        "candidate": "teststudent55_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv1f10m8ea",
+        "candidate": "teststudent57_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv1vtqsm6q",
+        "candidate": "teststudent56_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv2ahphnj9",
+        "candidate": "teststudent58_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv3lm2s529",
+        "candidate": "teststudent59_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv4633sp5m",
+        "candidate": "teststudent60_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv4ljkqt09",
+        "candidate": "teststudent61_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv56vp4es7",
+        "candidate": "teststudent62_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv6she2vpi",
+        "candidate": "teststudent63_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv7u4smgmv",
+        "candidate": "teststudent64_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv823irlkm",
+        "candidate": "teststudent66_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv8hhmkopi",
+        "candidate": "teststudent65_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gv9m0mvuvn",
+        "candidate": "teststudent67_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvab0re8d5",
+        "candidate": "teststudent68_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvbtu6tc10",
+        "candidate": "teststudent69_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvcnoikov8",
+        "candidate": "teststudent70_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvd0lbo11v",
+        "candidate": "teststudent71_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvdj0vj5qr",
+        "candidate": "teststudent72_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvebp5805a",
+        "candidate": "teststudent73_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvfgu59s4n",
+        "candidate": "teststudent74_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvg7f00flc",
+        "candidate": "teststudent75_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvhcod3f1b",
+        "candidate": "teststudent76_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvi21s28kq",
+        "candidate": "teststudent77_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvjs2lleg5",
+        "candidate": "teststudent78_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvkcpl0rfg",
+        "candidate": "teststudent79_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvkkq5gc93",
+        "candidate": "teststudent80_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvlk97trmg",
+        "candidate": "teststudent81_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvmd1mg0hb",
+        "candidate": "teststudent82_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvnahi8eo8",
+        "candidate": "teststudent83_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvnfhmbses",
+        "candidate": "teststudent84_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvoi6ko55c",
+        "candidate": "teststudent85_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvp8rg0n60",
+        "candidate": "teststudent86_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvqb3u36h4",
+        "candidate": "teststudent87_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvqtoog5em",
+        "candidate": "teststudent88_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvrj9u8bs3",
+        "candidate": "teststudent89_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvsjgp3olt",
+        "candidate": "teststudent90_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvtvhohovg",
+        "candidate": "teststudent91_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvu4g87148",
+        "candidate": "teststudent93_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvu6reaujj",
+        "candidate": "teststudent92_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "gvv9vsr7k3",
+        "candidate": "teststudent94_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "h00gg7iit6",
+        "candidate": "teststudent95_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "h015tiqpfg",
+        "candidate": "teststudent96_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "h01jg6mesl",
+        "candidate": "teststudent97_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "h02ufdvfe4",
+        "candidate": "teststudent98_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      },
+      {
+        "name": "h03c10o0vg",
+        "candidate": "teststudent99_test101@loadtest.example.com",
+        "exam_schedule": "load-test-mcq-exam-1-test101_Schedule_20260508_045713"
+      }
+    ]
   },
   "questions": [
     {
@@ -197,26 +700,26 @@
     {
       "title": "Load Test MCQ Exam",
       "description": "Automated load testing exam with multiple choice questions",
-      "duration": 30,
+      "duration": 5,
       "pass_percentage": 60.0,
       "question_type": "Choices",
       "randomize_questions": 1,
       "show_result": "After Exam Submission",
-      "max_warning_count": 3,
-      "enable_video_proctoring": 0,
+      "max_warning_count": 2,
+      "enable_video_proctoring": 1,
       "enable_calculator": 1,
-      "enable_chat": 0,
+      "enable_chat": 1,
       "start_time_type": "Fixed"
     },
     {
       "title": "Load Test Mixed Exam",
       "description": "Mixed question types for comprehensive load testing",
-      "duration": 45,
+      "duration": 5,
       "pass_percentage": 70.0,
       "question_type": "Mixed",
       "randomize_questions": 1,
       "show_result": "After Exam Submission",
-      "max_warning_count": 5,
+      "max_warning_count": 2,
       "enable_video_proctoring": 1,
       "enable_calculator": 0,
       "enable_chat": 1,

@@ -27,8 +27,8 @@ def get_proctor_upcoming_events(proctor=None):
 			"name",
 			"exam",
 			"start_date_time", 
-			"duration",
-			"status"
+			"duration"
+		
 		],
 		order_by="start_date_time"
 	)

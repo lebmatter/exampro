@@ -12,7 +12,17 @@ from contextlib import redirect_stdout, redirect_stderr
 class ExamproClient:
     def __init__(self, url: str, username: str, password: str):
         self.conn = FrappeClient(url)
-        self.conn.login(username, password)
+
+        # BYPASS
+        import requests
+        self.conn.session = requests.Session()
+        login_response = self.conn.session.post(
+            f"{url}/api/method/login",
+            data={"usr": username, "pwd": password}
+        )
+
+        if login_response.status_code != 200:
+            print(f"Login API Failed: {login_response.text}")
 
     def call_method(self, method: str, **params) -> Optional[Any]:
         """Call a server method"""
