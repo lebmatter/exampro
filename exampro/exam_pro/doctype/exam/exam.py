@@ -66,7 +66,7 @@ class Exam(Document):
 		self.image = validate_image(self.image)
 
 		if self.duration <= 0:
-			frappe.thow("Duration should be greater than 0.")
+			frappe.throw("Duration should be greater than 0.")
 		
 		self.validate_weightage_table()
 
