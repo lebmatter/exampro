@@ -58,7 +58,9 @@ function showMediaPermissionError() {
 
 function checkMediaPermissionsBeforeStart() {
   // Only check permissions if video proctoring is enabled
-  if (exam.enable_video_proctoring && !mediaPermissionsGranted) {
+  if (!exam.enable_video_proctoring) return true;
+
+  if (!mediaPermissionsGranted) {
     frappe.show_alert({
       message:
         "Please grant camera and microphone permissions before starting the exam.",
@@ -66,6 +68,18 @@ function checkMediaPermissionsBeforeStart() {
     });
     return false;
   }
+
+  // Camera is open but lid/shutter may still be closed — require a visible face.
+  // faceCurrentlyVisible is set by the gazer's onFaceDetected callback in examform.js.
+  if (typeof faceCurrentlyVisible !== "undefined" && !faceCurrentlyVisible) {
+    frappe.show_alert({
+      message:
+        "Face not detected. Open your camera shutter and ensure your face is clearly visible before starting.",
+      indicator: "red",
+    });
+    return false;
+  }
+
   return true;
 }
 

@@ -558,7 +558,7 @@ def get_question(exam_submission=None, qsno=1):
 
 
 @frappe.whitelist()
-def submit_question_response(exam_submission=None, qs_name=None, answer="", markdflater=0):
+def submit_question_response(exam_submission=None, qs_name=None, answer="", markdflater=0, qs_no=None):
 	"""
 	Submit response and add marks if applicable
 	"""
@@ -572,7 +572,12 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	can_process_question(submission)
 	save_tracking_info(exam_submission)
 
-	answer_docname = frappe.db.get_value("Exam Answer", {"parent": exam_submission, "exam_question": qs_name}, "name")
+	# A question can be added to an exam at multiple positions, so the same
+	# exam_question may map to multiple Exam Answer rows. Disambiguate by seq_no.
+	answer_filters = {"parent": exam_submission, "exam_question": qs_name}
+	if qs_no:
+		answer_filters["seq_no"] = int(qs_no)
+	answer_docname = frappe.db.get_value("Exam Answer", answer_filters, "name")
 	if not answer_docname:
 		frappe.throw("Invalid question requested.")
 
@@ -667,6 +672,26 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 		})
 		terminate_msg.insert(ignore_permissions=True)
 
+	# Terminate when no face has been visible for the full grace period (camera covered/shutter closed)
+	elif warning_type == "nofacetimeout":
+		doc.reload()
+		if doc.status not in ("Terminated", "Submitted"):
+			doc.status = "Terminated"
+			doc.save(ignore_permissions=True)
+			frappe.db.commit()
+
+			terminate_msg = frappe.get_doc({
+				"doctype": "Exam Messages",
+				"exam_submission": exam_submission,
+				"timestamp": frappe.utils.now(),
+				"from": "System",
+				"from_user": "Administrator",
+				"message": "Exam terminated because no face was visible to the camera for 60 seconds.",
+				"type_of_message": "Critical",
+				"warning_type": "nofacetimeout"
+			})
+			terminate_msg.insert(ignore_permissions=True)
+
 	return {"status": 1}
 
 @frappe.whitelist()
@@ -724,6 +749,14 @@ def exam_overview(exam_submission=None):
 	return list of questions and its status
 	"""
 	assert exam_submission
+
+	# Restrict to the candidate (or assigned proctor for live monitoring)
+	candidate, assigned_proctor = frappe.db.get_value(
+		"Exam Submission", exam_submission, ["candidate", "assigned_proctor"]
+	) or (None, None)
+	if frappe.session.user not in [candidate, assigned_proctor]:
+		raise PermissionError("You don't have access to view this exam overview.")
+
 	all_submitted = get_submitted_questions(
 		exam_submission, fields=["marked_for_later", "exam_question", "answer", "seq_no"]
 	)
@@ -1024,11 +1057,14 @@ def post_tracking_info(info=None):
 	assert info, "Tracking info is required"
 
 	info = frappe.parse_json(info)
-	print("*"*100)
-	print("Tracking Info:", info)
 	exam_submission = info.get("exam_submission")
 	if not exam_submission:
 		return
+
+	# Only the candidate may post tracking data for their own submission
+	candidate = frappe.db.get_value("Exam Submission", exam_submission, "candidate")
+	if not candidate or frappe.session.user != candidate:
+		raise PermissionError("You don't have access to post tracking data for this exam.")
 
 	# Extract only the required tracking values
 	face_count_changes = info.get("faceCountChanges", 0)
