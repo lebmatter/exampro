@@ -23,12 +23,20 @@ head_include %}
         <p>{{ alert.text }}</p>
       </div>
       <div class="alert-actions">
+        {% if alert.actions %}
+          {% for action in alert.actions %}
+          <a href="{{ action.href }}" class="alert-button {% if action.primary %}alert-button-primary{% else %}alert-button-secondary{% endif %}">
+            <i class="bi {{ action.icon }}"></i>{{ action.label }}
+          </a>
+          {% endfor %}
+        {% else %}
         <a href="javascript:window.history.back()" class="alert-button alert-button-secondary">
             <i class="bi bi-arrow-left"></i>Go Back
         </a>
         <a href="javascript:location.reload()" class="alert-button alert-button-primary">
             <i class="bi bi-arrow-repeat"></i>Refresh
         </a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -255,6 +263,12 @@ head_include %}
     </div>
   </div>
   {% endif %}
+  <!-- No-face termination countdown banner -->
+  <div id="noFaceBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    Face not detected. Your exam will be terminated in <span id="noFaceCountdown">60</span> seconds. Please ensure your face is clearly visible to the camera.
+  </div>
+
   <!-- Bootstrap Modal with updated styling -->
   <div class="modal" id="examAlert">
     <div class="modal-dialog">
