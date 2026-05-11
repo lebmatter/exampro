@@ -43,7 +43,7 @@ class CandidateUser(HttpUser):
             if self.login():
                 logger.info(f"Candidate {self.user_credentials[0]} logged in successfully")
                 # Start the exam workflow
-                self.exam_workflow()
+                # self.exam_workflow()
             else:
                 logger.error(f"Failed to login candidate {self.user_credentials[0]}")
                 raise StopUser()
@@ -118,8 +118,11 @@ class CandidateUser(HttpUser):
             logger.error(f"Error reading submission from data.json: {e}")
             return False
    
+    @task
     def exam_workflow(self):
         """Execute the complete exam workflow for a candidate"""
+        if getattr(self, 'exam_completed', False):
+            raise StopUser()
         try:
             # Step 1: Access /my-exams
             self.access_my_exams()
@@ -140,7 +143,13 @@ class CandidateUser(HttpUser):
             # Step 5: End exam (once per candidate)
             if self.exam_started and not self.exam_completed:
                 self.end_exam()
+                self.exam_completed = True
+                logger.info(f"Candidate {self.user_credentials[0]} finished. Stopping user.")
+                raise StopUser()
                 
+        except StopUser:
+            # Locust uses exceptions to stop users, so we must let it pass through
+            raise
         except Exception as e:
             logger.error(f"Error in exam workflow: {str(e)}")
 
@@ -216,7 +225,7 @@ class CandidateUser(HttpUser):
             # Add some variation in timing between questions
             time.sleep(random.uniform(0.5, 3))
 
-    @task(20)  # High frequency task - this is where most traffic goes
+    # @task(20)  # High frequency task - this is where most traffic goes
     def get_question(self, qsno=None):
         """Get a specific question (API call - high frequency)"""
         if not self.exam_started or not self.current_submission:
@@ -226,29 +235,43 @@ class CandidateUser(HttpUser):
             qsno = random.randint(1, self.question_count)
         
         try:
-            response = self.client.get(
+            with self.client.get(
                 "/api/method/exampro.exam_pro.doctype.exam_submission.exam_submission.get_question",
                 params={
                     "exam_submission": self.current_submission,
                     "qsno": qsno
                 },
-                name="Get Question API"
-            )
+                name="Get Question API",
+                catch_response=True
+            ) as response:
             
-            if response.status_code == 200:
-                logger.debug(f"Retrieved question {qsno}")
-            else:
-                logger.warning(f"Failed to get question {qsno}: {response.status_code}")
+                if response.status_code == 200:
+                    try:
+                        data = response.json().get("message", {})
+                        self.current_qs_name = data.get("name")
+                        response.success()
+                        logger.debug(f"Retrieved question {qsno}")
+                    except:
+                        pass
+                elif response.status_code == 417 and ("has ended" in response.text or "submitted" in response.text):
+                    self.exam_completed = True
+                    response.success()
+                else:
+                    response.failure(f"Failed to get question {qsno}: {response.text}")
                 
         except Exception as e:
             logger.error(f"Error getting question {qsno}: {str(e)}")
 
-    @task(15)  # High frequency task - this is where most traffic goes  
+    # @task(15)  # High frequency task - this is where most traffic goes  
     def submit_question_response(self, qsno=None):
         """Submit response to a question (API call - high frequency)"""
         if not self.exam_started or not self.current_submission:
             return
-        
+
+        qs_name = getattr(self, 'current_qs_name', None)
+        if not qs_name:
+            return
+
         if qsno is None:
             qsno = random.randint(1, self.question_count)
         
@@ -256,21 +279,28 @@ class CandidateUser(HttpUser):
             # Generate a realistic answer
             answer = self.generate_realistic_answer()
             
-            response = self.client.post(
+            with self.client.post(
                 "/api/method/exampro.exam_pro.doctype.exam_submission.exam_submission.submit_question_response",
                 json={
                     "exam_submission": self.current_submission,
-                    "qs_name": f"question_{qsno}",  # This might need to be actual question name
+                    "qs_name": qs_name,  
+                    # This needs to be actual question name
                     "answer": answer,
-                    "markdflater": 0
+                    "markdflater": 0,
+                    "qs_no": qsno
                 },
-                name="Submit Question Response API"
-            )
+                name="Submit Question Response API",
+                catch_response=True
+            ) as response:
             
-            if response.status_code == 200:
-                logger.debug(f"Submitted answer for question {qsno}")
-            else:
-                logger.warning(f"Failed to submit answer for question {qsno}: {response.status_code}")
+                if response.status_code == 200:
+                    response.success()
+                    logger.debug(f"Submitted answer for question {qsno}")
+                elif response.status_code == 417 and ("has ended" in response.text or "submitted" in response.text):
+                    self.exam_completed = True
+                    response.success()
+                else:
+                    response.failure(f"Failed to submit answer for question {qsno}: {response.text}")
                 
         except Exception as e:
             logger.error(f"Error submitting answer for question {qsno}: {str(e)}")
