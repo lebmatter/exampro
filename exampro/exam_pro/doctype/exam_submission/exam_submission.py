@@ -607,7 +607,7 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 	type_of_user = "System"
 	if frappe.session.user == doc.assigned_proctor:
 		type_of_user = "Proctor"
-	elif frappe.session.user == doc.candidate:
+	elif frappe.session.user == doc.candidate and type_of_message == "General":
 		type_of_user = "Candidate"
 
 	tnow = frappe.utils.now()
@@ -1145,3 +1145,126 @@ def save_tracking_info(exam_submission):
 	calculate_attention_score(exam_submission)
 
 	return True
+
+
+def _upload_base64_snapshot(s3_client, bucket_name, exam_submission, base64_data, object_suffix):
+	import io
+
+	if not base64_data:
+		return None
+
+	try:
+		if "," in base64_data:
+			base64_data = base64_data.split(",", 1)[1]
+
+		image_bytes = base64.b64decode(base64_data)
+		file_obj = io.BytesIO(image_bytes)
+		object_key = f"{exam_submission}/{object_suffix}"
+
+		s3_client.upload_fileobj(
+			file_obj,
+			bucket_name,
+			object_key,
+			ExtraArgs={"ContentType": "image/jpeg"},
+		)
+
+		return s3_client.generate_presigned_url(
+			"get_object",
+			Params={"Bucket": bucket_name, "Key": object_key},
+			ExpiresIn=604800,
+		)
+	except Exception as e:
+		frappe.log_error(
+			f"Snapshot upload failed - submission: {exam_submission}, object: {object_suffix}, error: {str(e)}",
+			"Violation Snapshot Upload Error",
+		)
+		return None
+
+
+def _get_exam_message_warning_types():
+	meta = frappe.get_meta("Exam Messages")
+	field = meta.get_field("warning_type")
+	options = (field.options or "").splitlines() if field else []
+	return {option.strip().lower() for option in options if option.strip()}
+
+
+@frappe.whitelist()
+def save_violation_snapshot(
+	exam_submission,
+	violation_type,
+	description="",
+	webcam_snapshot="",
+	screen_snapshot="",
+):
+	candidate = frappe.db.get_value("Exam Submission", exam_submission, "candidate")
+	if not candidate:
+		frappe.throw(_("Exam submission not found."))
+
+	if frappe.session.user != candidate:
+		raise PermissionError("You do not have permission to submit snapshots for this exam.")
+
+	status = frappe.db.get_value("Exam Submission", exam_submission, "status")
+	if status != "Started":
+		return {"status": "skipped", "reason": f"Exam status is '{status}', not 'Started'."}
+
+	violation_type = (violation_type or "other").strip().lower()
+	settings = frappe.get_single("Exam Settings")
+	s3_client = get_s3_client()
+	ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+	snapshot_urls = {}
+
+	if webcam_snapshot:
+		url = _upload_base64_snapshot(
+			s3_client,
+			settings.s3_bucket,
+			exam_submission,
+			webcam_snapshot,
+			f"violations/{violation_type}_{ts}_webcam.jpg",
+		)
+		if url:
+			snapshot_urls["webcam"] = url
+
+	if screen_snapshot:
+		url = _upload_base64_snapshot(
+			s3_client,
+			settings.s3_bucket,
+			exam_submission,
+			screen_snapshot,
+			f"violations/{violation_type}_{ts}_screen.jpg",
+		)
+		if url:
+			snapshot_urls["screen"] = url
+
+	readable_label = {
+		"tabchange": "Tab / window switched",
+		"appswitch": "Another application opened",
+		"multiplefaces": "Multiple faces detected",
+		"noface": "No face detected",
+		"gazeaway": "Candidate looking away",
+		"monitorchange": "Monitor configuration changed",
+		"nowebcam": "Webcam unavailable",
+		"nofacetimeout": "No face timeout",
+	}.get(violation_type, violation_type)
+
+	valid_warning_types = _get_exam_message_warning_types()
+	warning_type = violation_type if violation_type in valid_warning_types else "other"
+
+	# Build a short, human-readable message for the chat/log — NO URLs.
+	msg_parts = [f"{readable_label}: {description}" if description else readable_label]
+	if warning_type != violation_type:
+		msg_parts.append(f"(violation: {violation_type})")
+
+	frappe.get_doc({
+		"doctype": "Exam Messages",
+		"exam_submission": exam_submission,
+		"timestamp": frappe.utils.now(),
+		"from": "System",
+		"from_user": candidate,
+		"message": " | ".join(msg_parts),
+		"type_of_message": "Warning",
+		"warning_type": warning_type,
+	}).insert(ignore_permissions=True)
+
+	frappe.db.commit()
+
+	return {"status": "success", "snapshot_urls": snapshot_urls}

@@ -39,7 +39,7 @@
   },
   {
    "fieldname": "message",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": " Message",
    "reqd": 1
@@ -55,7 +55,7 @@
    "fieldname": "warning_type",
    "fieldtype": "Select",
    "label": "Warning Type",
-   "options": "tabchange\nmonitorchange\nnowebcam\nnoface\nother"
+   "options": "tabchange\nmonitorchange\nnowebcam\nnoface\nmultiplefaces\ngazeaway\nnofacetimeout\nappswitch\nother"
   },
   {
    "fieldname": "timestamp",

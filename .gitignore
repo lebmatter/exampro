@@ -6,3 +6,6 @@ tags
 node_modules
 __pycache__
 CLAUDE.md
+exampro/exam_pro/api/test.pdf
+exampro/exam_pro/api/debug_snapshots.py
+exampro/exam_pro/api/test.html

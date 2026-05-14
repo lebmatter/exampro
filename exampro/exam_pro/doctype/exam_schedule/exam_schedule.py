@@ -11,6 +11,7 @@ from frappe.utils import now
 from frappe.model.document import Document
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams
 from exampro.exam_pro.api.examops import evaluation_values
+from frappe.utils import now_datetime
 
 
 class ExamSchedule(Document):
@@ -265,7 +266,7 @@ class ExamSchedule(Document):
 		- "Ongoing" if the current time is between the start date time and end date time.
 		- "Completed" if the current time is after the end date time.
 		"""
-		current_time = datetime.fromisoformat(now().split(".")[0])
+		current_time = now_datetime()
 		
 		# Ensure start_date_time is a datetime object
 		start_time = self.start_date_time
@@ -333,7 +334,7 @@ class ExamSchedule(Document):
 				frappe.db.set_value("Examiner", examiner.name, "notification_sent", 1)
 	
 	def can_end_schedule(self):
-		current_time = datetime.fromisoformat(now().split(".")[0])
+		current_time = now_datetime()
 		
 		# Ensure start_date_time is a datetime object
 		start_time = self.start_date_time
@@ -634,7 +635,7 @@ def get_schedule_status(exam_schedule, additional_time=0):
 		"Exam Schedule", exam_schedule, 
 		["start_date_time", "schedule_type", "duration", "schedule_expire_in_days"]
 	)
-	current_time = datetime.now()
+	current_time = now_datetime()
 	
 	# Calculate end time based on schedule type
 	if schedule_type == "Fixed":

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            margin: 20mm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 10px;
+                color: #666;
+            }
+        }
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .header-left {
+            float: left;
+        }
+        .header-right {
+            float: right;
+            text-align: right;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .card-grid {
+            display: table;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px;
+            margin-left: -10px;
+        }
+        .card {
+            display: table-cell;
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            vertical-align: top;
+            width: 25%;
+        }
+        .card-label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .card-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary-table td {
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .label {
+            color: #666;
+            width: 150px;
+        }
+        .value {
+            font-weight: bold;
+        }
+        .attention-score-container {
+            text-align: center;
+            padding: 20px;
+            background: #fff;
+            border: 2px solid #eee;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            line-height: 80px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            margin: 0 auto;
+        }
+        .score-high { background-color: #28a745; }
+        .score-medium { background-color: #ffc107; color: #333 !important; }
+        .score-low { background-color: #dc3545; }
+
+        .violation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .violation-table th {
+            background: #f8f9fa;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .violation-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        
+        .evidence-item {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        .evidence-header {
+            background: #343a40;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .evidence-images {
+            display: table;
+            width: 100%;
+            border-spacing: 15px;
+            margin-left: -15px;
+        }
+        .evidence-image-container {
+            display: table-cell;
+            width: 50%;
+            vertical-align: top;
+        }
+        .evidence-image {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .image-label {
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 50px;
+            font-size: 10px;
+            color: #999;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .candidate-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 1px solid #eee;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="title">Proctoring Report</div>
+            <div class="subtitle">{{ exam_title }}</div>
+        </div>
+        <div class="header-right">
+            <div style="font-size: 10px; color: #888;">Submission ID</div>
+            <div style="font-weight: bold;">{{ submission_name }}</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="card-grid">
+            <div class="card" style="width: 40%;">
+                <div class="section-title" style="border:none; margin-bottom: 10px;">Candidate</div>
+                <div style="display: table; width: 100%;">
+                    <div style="display: table-cell; width: 90px; vertical-align: top;">
+                        {% if candidate_image %}
+                            <img src="{{ candidate_image }}" class="candidate-photo" />
+                        {% else %}
+                            <div class="candidate-photo" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 30px;">👤</div>
+                        {% endif %}
+                    </div>
+                    <div style="display: table-cell; vertical-align: top; padding-left: 10px;">
+                        <div style="font-size: 16px; font-weight: bold;">{{ candidate_name }}</div>
+                        <div style="color: #666;">{{ candidate_email }}</div>
+                        <div style="margin-top: 5px;">
+                            <span class="badge {% if status == 'Submitted' %}badge-warning{% else %}badge-danger{% endif %}" style="background: #e9ecef; color: #495057;">
+                                {{ status }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="width: 20%; text-align: center;">
+                <div class="card-label">Attention Score</div>
+                <div style="margin: 5px auto;">
+                    <div class="score-circle {% if attention_score >= 80 %}score-high{% elif attention_score >= 50 %}score-medium{% else %}score-low{% endif %}">
+                        {{ attention_score }}%
+                    </div>
+                </div>
+                <div style="font-size: 10px; margin-top: 5px; color: #666;">
+                    {% if attention_score >= 80 %}High Integrity{% elif attention_score >= 50 %}Needs Review{% else %}Critical Violations{% endif %}
+                </div>
+            </div>
+            <div class="card" style="width: 40%;">
+                <div class="section-title" style="border:none; margin-bottom: 10px;">Exam Summary</div>
+                <table class="summary-table">
+                    <tr>
+                        <td class="label">Start Time</td>
+                        <td class="value">{{ exam_started_time }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Submit Time</td>
+                        <td class="value">{{ exam_submitted_time }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Actual Duration</td>
+                        <td class="value">{{ exam_duration_minutes }} mins</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Invigilation Metrics</div>
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-label">Total Warnings</div>
+                <div class="card-value">{{ warning_count }} / {{ max_warning_count }}</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Away Time</div>
+                <div class="card-value">{{ total_away_time_seconds }}s</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Distracted Time</div>
+                <div class="card-value">{{ total_distracted_time_seconds }}s</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Face Count Changes</div>
+                <div class="card-value">{{ face_count_changes }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Violation Summary</div>
+        {% if violation_summary %}
+        <div class="card-grid">
+            {% for type, count in violation_summary.items() %}
+            <div class="card" style="width: auto; padding: 10px;">
+                <div class="card-label">{{ type }}</div>
+                <div class="card-value">{{ count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: #666; font-style: italic;">No automated proctoring warnings recorded during this session.</p>
+        {% endif %}
+    </div>
+
+    {% if has_violations %}
+    <div class="section">
+        <div class="section-title">Violation Details & Evidence</div>
+        <table class="violation-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Time</th>
+                    <th style="width: 18%;">Violation</th>
+                    <th style="width: 70%;">Evidence (Webcam & Screen)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in violations %}
+                <tr>
+                    <td>
+                        <div style="font-weight: bold;">T+ {{ v.timestamp }}</div>
+                        <div style="font-size: 9px; color: #888;">{{ v.absolute_time }}</div>
+                    </td>
+                    <td><span class="badge badge-danger">{{ v.type }}</span></td>
+                    <td>
+                        <div class="evidence-images" style="margin-left: 0; border-spacing: 5px; margin-bottom: 5px;">
+                            <div class="evidence-image-container">
+                                {% if v.webcam %}
+                                    <img src="{{ v.webcam }}" class="evidence-image" style="max-height: 100px; width: auto;" />
+                                    <div style="font-size: 8px; color: #999; text-align: center;">Webcam</div>
+                                {% else %}
+                                    <div style="height: 60px; background: #f8f9fa; border: 1px dashed #ccc; text-align: center; line-height: 60px; color: #ccc; font-size: 8px;">No Webcam</div>
+                                {% endif %}
+                            </div>
+                            <div class="evidence-image-container">
+                                {% if v.screen %}
+                                    <img src="{{ v.screen }}" class="evidence-image" style="max-height: 100px; width: auto;" />
+                                    <div style="font-size: 8px; color: #999; text-align: center;">Screen</div>
+                                {% else %}
+                                    <div style="height: 60px; background: #f8f9fa; border: 1px dashed #ccc; text-align: center; line-height: 60px; color: #ccc; font-size: 8px;">No Screen</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div style="font-size: 10px; color: #444; font-style: italic;">
+                            {{ v.message }}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# Removed separate evidence log as it is now integrated into the table #}
+
+    <div class="footer">
+        Generated by Exam Pro on {{ generated_at }} for user {{ generated_by }}
+    </div>
+</body>
+</html>
