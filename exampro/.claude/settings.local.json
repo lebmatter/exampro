@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git log *)",
+      "Bash(find / -type d -name \"exampro\" 2>/dev/null | head -5)",
+      "Bash(wsl -- bash -c \"cd /home/vinayak/frappe-dev/exampro-bench/apps/exampro && git log --oneline -20\")",
+      "PowerShell(wsl -e bash -c \"cd /home/vinayak/frappe-dev/exampro-bench/apps/exampro && git log --oneline -20\")",
+      "Bash(cat \"\\\\\\\\wsl.localhost\\\\ubuntu\\\\home\\\\vinayak\\\\frappe-dev\\\\exampro-bench\\\\apps\\\\frappe\\\\requirements.txt\")"
+    ]
+  }
+}

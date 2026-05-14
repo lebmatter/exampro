@@ -11,14 +11,13 @@ class ExamSettings(Document):
 	
 	def get_storage_endpoint(self):
 		"""
-		Get the storage endpoint URL based on the selected provider
+		Return the S3-compatible endpoint URL.
+		AWS S3 returns None — boto3 resolves the correct regional endpoint
+		automatically when endpoint_url is omitted.
 		"""
-		if self.storage_provider == "AWS S3":
-			return f"https://{self.s3_bucket}.s3.amazonaws.com"
-		elif self.storage_provider == "Cloudflare R2":
+		if self.storage_provider == "Cloudflare R2":
 			return f'https://{self.aws_account_id}.r2.cloudflarestorage.com'
-		else:
-			return None
+		return None
 
 def validate_video_settings():
 	"""

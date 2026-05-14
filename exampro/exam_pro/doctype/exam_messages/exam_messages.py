@@ -34,16 +34,15 @@ class ExamMessages(Document):
 		# 		message=chat_message,
 		# 		user=proctor
 		# 	)
-		# update critical warning error
-		wc = frappe.db.get_value("Exam Submission", self.exam_submission, "warning_count") or 0
-		new_wc = wc + 1
-		frappe.db.set_value(
-			"Exam Submission", self.exam_submission, "warning_count", new_wc
-		)
-
 		if self.type_of_message == "Warning":
+			wc = frappe.db.get_value("Exam Submission", self.exam_submission, "warning_count") or 0
+			new_wc = wc + 1
+			frappe.db.set_value(
+				"Exam Submission", self.exam_submission, "warning_count", new_wc
+			)
+
 			exam = frappe.get_cached_value("Exam Submission", self.exam_submission, "exam")
 			max_warning = frappe.get_cached_value("Exam", exam, "max_warning_count")
-			if new_wc > max_warning:
+			if new_wc >= max_warning:
 				terminate_exam(self.exam_submission, check_permission=False)
 

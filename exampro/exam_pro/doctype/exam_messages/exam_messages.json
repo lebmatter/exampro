@@ -11,7 +11,9 @@
   "message",
   "type_of_message",
   "warning_type",
-  "timestamp"
+  "timestamp",
+  "webcam_snapshot_key",
+  "screen_snapshot_key"
  ],
  "fields": [
   {
@@ -39,7 +41,7 @@
   },
   {
    "fieldname": "message",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": " Message",
    "reqd": 1
@@ -55,7 +57,7 @@
    "fieldname": "warning_type",
    "fieldtype": "Select",
    "label": "Warning Type",
-   "options": "tabchange\nmonitorchange\nnowebcam\nnoface\nother"
+   "options": "tabchange\nmonitorchange\nnowebcam\nnoface\nmultiplefaces\ngazeaway\nnofacetimeout\nappswitch\nother"
   },
   {
    "fieldname": "timestamp",
@@ -63,6 +65,16 @@
    "in_list_view": 1,
    "label": "Timestamp",
    "reqd": 1
+  },
+  {
+   "fieldname": "webcam_snapshot_key",
+   "fieldtype": "Small Text",
+   "label": "Webcam Snapshot S3 Key"
+  },
+  {
+   "fieldname": "screen_snapshot_key",
+   "fieldtype": "Small Text",
+   "label": "Screen Snapshot S3 Key"
   }
  ],
  "index_web_pages_for_search": 1,

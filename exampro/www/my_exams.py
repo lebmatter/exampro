@@ -5,58 +5,67 @@ from exampro.exam_pro.api.utils import submit_candidate_pending_exams, can_show_
 from exampro.www.evaluate import get_evaluator_live_exams
 
 def get_proctor_upcoming_events(proctor=None):
-	"""Get upcoming proctoring events for the next 7 days"""
-	proctor = proctor or frappe.session.user
-	
-	# Check if user has proctor role
-	if "Exam Proctor" not in frappe.get_roles():
-		return []
-	
-	# Get current time and 7 days from now
-	current_time = frappe.utils.now_datetime()
-	week_later = current_time + timedelta(days=7)
-	
-	# Get upcoming exam schedules where user is assigned as proctor
-	upcoming_schedules = frappe.get_all(
-		"Exam Schedule",
-		filters={
-			"start_date_time": ["between", [current_time, week_later]],
-			"status": ["in", ["Scheduled", "Active"]]
-		},
-		fields=[
-			"name",
-			"exam",
-			"start_date_time", 
-			"duration",
-			"status"
-		],
-		order_by="start_date_time"
-	)
-	
-	upcoming_events = []
-	for schedule in upcoming_schedules:
-		# Count assigned candidates for this proctor in this schedule
-		candidate_count = frappe.db.count(
-			"Exam Submission",
-			{
-				"exam_schedule": schedule.name,
-				"assigned_proctor": proctor,
-				"status": ["not in", ["Registration Cancelled", "Aborted"]]
-			}
-		)
-		
-		if candidate_count > 0:
-			exam_title = frappe.db.get_value("Exam", schedule.exam, "title")
-			upcoming_events.append({
-				"schedule_name": schedule.name,
-				"exam_title": exam_title,
-				"start_time": schedule.start_date_time,
-				"duration": schedule.duration,
-				"candidate_count": candidate_count,
-				"status": schedule.status
-			})
-	
-	return upcoming_events
+    """Get upcoming proctoring events for the next 7 days"""
+    proctor = proctor or frappe.session.user
+
+    # Check if user has proctor role
+    if "Exam Proctor" not in frappe.get_roles():
+        return []
+
+    # Get current time and 7 days from now
+    current_time = frappe.utils.now_datetime()
+    week_later = current_time + timedelta(days=7)
+
+    # Fetch schedules in the date window only.
+    # NOTE: "status" is NOT a stored column on Exam Schedule — it is computed
+    # via get_status(). Filtering by it in get_all() causes an SQL error.
+    # We compute and filter it ourselves in the loop below.
+    upcoming_schedules = frappe.get_all(
+        "Exam Schedule",
+        filters={
+            "start_date_time": ["between", [current_time, week_later]],
+        },
+        fields=[
+            "name",
+            "exam",
+            "start_date_time",
+            "duration",
+        ],
+        order_by="start_date_time"
+    )
+
+    upcoming_events = []
+    for schedule in upcoming_schedules:
+        # Compute status dynamically — this is the only correct way
+        schedule_doc = frappe.get_doc("Exam Schedule", schedule.name)
+        computed_status = schedule_doc.get_status()
+
+        # Replicate the original intent: only show Scheduled or Active exams
+        if computed_status not in ("Scheduled", "Active", "Ongoing", "Upcoming"):
+            continue
+
+        # Count candidates assigned to this proctor for this schedule
+        candidate_count = frappe.db.count(
+            "Exam Submission",
+            {
+                "exam_schedule": schedule.name,
+                "assigned_proctor": proctor,
+                "status": ["not in", ["Registration Cancelled", "Aborted"]]
+            }
+        )
+
+        if candidate_count > 0:
+            exam_title = frappe.db.get_value("Exam", schedule.exam, "title")
+            upcoming_events.append({
+                "schedule_name": schedule.name,
+                "exam_title": exam_title,
+                "start_time": schedule.start_date_time,
+                "duration": schedule.duration,
+                "candidate_count": candidate_count,
+                "status": computed_status,   # ← was schedule.status (KeyError)
+            })
+
+    return upcoming_events
 
 
 def get_user_exams(member=None, page=1, page_size=10):

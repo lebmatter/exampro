@@ -100,6 +100,30 @@ frappe.ui.form.on("Exam Submission", {
                 drawRetinaPlot(frm.doc.retina_location_log);
             }, 100);
         }
+
+        // Proctoring Report Download Button
+        if (["Submitted", "Terminated"].includes(frm.doc.status)) {
+            frm.add_custom_button(__('Download Proctoring Report'), function() {
+                frappe.call({
+                    method: 'exampro.exam_pro.api.proctoring_report.generate_proctoring_report',
+                    args: {
+                        exam_submission: frm.doc.name
+                    },
+                    freeze: true,
+                    freeze_message: __('Generating proctoring report...'),
+                    callback: function(r) {
+                        if (r.message) {
+                            const link = document.createElement('a');
+                            link.href = 'data:application/pdf;base64,' + r.message;
+                            link.download = `proctoring_report_${frm.doc.name}.pdf`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }
+                    }
+                });
+            }, __('Actions'));
+        }
     },
 });
 
