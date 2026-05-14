@@ -11,7 +11,9 @@
   "message",
   "type_of_message",
   "warning_type",
-  "timestamp"
+  "timestamp",
+  "webcam_snapshot_key",
+  "screen_snapshot_key"
  ],
  "fields": [
   {
@@ -63,6 +65,16 @@
    "in_list_view": 1,
    "label": "Timestamp",
    "reqd": 1
+  },
+  {
+   "fieldname": "webcam_snapshot_key",
+   "fieldtype": "Small Text",
+   "label": "Webcam Snapshot S3 Key"
+  },
+  {
+   "fieldname": "screen_snapshot_key",
+   "fieldtype": "Small Text",
+   "label": "Screen Snapshot S3 Key"
   }
  ],
  "index_web_pages_for_search": 1,

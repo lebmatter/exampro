@@ -23,57 +23,49 @@ from botocore.client import Config
 
 def get_s3_client():
     """
-    Get or create an S3 client from the connection pool.
-    Stores the client in frappe.local for reuse within the same request.
-    
-    Returns:
-        boto3.client: S3 client with appropriate configuration
-        
-    Raises:
-        Exception: If S3 configuration is invalid or connection fails
+    Get or create a provider-aware S3 client, cached per Frappe request.
+
+    AWS S3  — no custom endpoint_url; boto3 auto-routes by bucket region.
+    R2      — needs the account endpoint URL and region_name='auto'.
     """
-    # Check if we already have a client in the current request
     if hasattr(frappe.local, "s3_client"):
         return frappe.local.s3_client
-        
+
     try:
-        # Get settings
         settings = frappe.get_single("Exam Settings")
-        cfdomain = settings.get_storage_endpoint()
-        if not cfdomain:
-            frappe.throw(_("Storage endpoint is not configured. Please check Exam Settings."))
-            
-        # Validate required credentials
+
         if not settings.aws_key or not settings.get_password("aws_secret"):
             frappe.throw(_("AWS credentials are not configured. Please check Exam Settings."))
-        
-        # Create a new client with more conservative timeout settings
-        s3_client = boto3.client(
-            's3',
-            endpoint_url=cfdomain,
+
+        base_config = Config(
+            signature_version='s3v4',
+            max_pool_connections=25,
+            connect_timeout=10,
+            read_timeout=120,
+            retries={'max_attempts': 3},
+        )
+
+        client_kwargs = dict(
             aws_access_key_id=settings.aws_key,
             aws_secret_access_key=settings.get_password("aws_secret"),
-            config=Config(
-                signature_version='s3v4',
-                # Connection settings optimized for reliability
-                max_pool_connections=25,     # Reduced from 50 for stability
-                connect_timeout=10,          # Increased from 5 seconds
-                read_timeout=120,            # Increased from 60 seconds
-                retries={'max_attempts': 3}, # Add retry logic
-                region_name='auto'           # Let boto3 determine region
-            )
+            config=base_config,
         )
-        
-        # Store in frappe.local for this request
+
+        if settings.storage_provider == "Cloudflare R2":
+            if not settings.aws_account_id:
+                frappe.throw(_("Cloudflare Account ID is not configured. Please check Exam Settings."))
+            client_kwargs["endpoint_url"] = f"https://{settings.aws_account_id}.r2.cloudflarestorage.com"
+            client_kwargs["region_name"] = "auto"
+        # AWS S3: omit endpoint_url entirely — boto3 resolves the correct
+        # regional endpoint automatically, avoiding the doubled-bucket-name
+        # path that causes NoSuchKey on ListObjectsV2.
+
+        s3_client = boto3.client("s3", **client_kwargs)
         frappe.local.s3_client = s3_client
-        
         return s3_client
-        
+
     except Exception as e:
-        error_msg = f"Failed to create S3 client: {str(e)}"
-        frappe.log_error(error_msg, "S3 Client Creation Error")
-        
-        # Re-raise with more context
+        frappe.log_error(f"Failed to create S3 client: {str(e)}", "S3 Client Creation Error")
         frappe.throw(_("Unable to connect to video storage. Please check your storage configuration or contact administrator."))
 
 def convert_image_to_base64(image_path):
@@ -1210,8 +1202,13 @@ def save_violation_snapshot(
 	violation_type = (violation_type or "other").strip().lower()
 	settings = frappe.get_single("Exam Settings")
 	s3_client = get_s3_client()
-	ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+	ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
 	snapshot_urls = {}
+
+	webcam_key = f"{exam_submission}/violations/{violation_type}_{ts}_webcam.jpg"
+	screen_key = f"{exam_submission}/violations/{violation_type}_{ts}_screen.jpg"
+	uploaded_webcam_key = None
+	uploaded_screen_key = None
 
 	if webcam_snapshot:
 		url = _upload_base64_snapshot(
@@ -1223,6 +1220,7 @@ def save_violation_snapshot(
 		)
 		if url:
 			snapshot_urls["webcam"] = url
+			uploaded_webcam_key = webcam_key
 
 	if screen_snapshot:
 		url = _upload_base64_snapshot(
@@ -1234,6 +1232,7 @@ def save_violation_snapshot(
 		)
 		if url:
 			snapshot_urls["screen"] = url
+			uploaded_screen_key = screen_key
 
 	readable_label = {
 		"tabchange": "Tab / window switched",
@@ -1263,6 +1262,8 @@ def save_violation_snapshot(
 		"message": " | ".join(msg_parts),
 		"type_of_message": "Warning",
 		"warning_type": warning_type,
+		"webcam_snapshot_key": uploaded_webcam_key,
+		"screen_snapshot_key": uploaded_screen_key,
 	}).insert(ignore_permissions=True)
 
 	frappe.db.commit()
