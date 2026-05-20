@@ -40,10 +40,41 @@ def validate_correct_options(question):
 			)
 		)
 
+def validate_help_section(question):
+	if question.help_show in (None, "", "Do not show"):
+		return
+
+	if not (question.help_text or "").strip():
+		frappe.throw(
+			frappe._("Help text is required when 'Show help' is enabled.")
+		)
+
+	if question.type == "User Input" and question.help_show == "After wrong answer":
+		frappe.throw(
+			frappe._(
+				"'After wrong answer' is not supported for subjective questions. "
+				"Use 'After any answer' instead."
+			)
+		)
+
+	quiz_rows = question.help_quiz or []
+	if len(quiz_rows) > 3:
+		frappe.throw(frappe._("Quick quiz allows at most 3 questions."))
+
+	for idx, row in enumerate(quiz_rows, start=1):
+		if row.correct_choice == "3" and not (row.choice_3 or "").strip():
+			frappe.throw(
+				frappe._(
+					"Quick quiz row {0}: Choice 3 is required when it is marked as the correct choice."
+				).format(idx)
+			)
+
+
 class ExamQuestion(Document):
 
 	def validate(self):
 		if self.type == "Choices":
 			validate_duplicate_options(self)
 			validate_correct_options(self)
+		validate_help_section(self)
 

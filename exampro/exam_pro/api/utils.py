@@ -41,9 +41,6 @@ def get_website_context(context):
     return context
 
 def create_sample_exams():
-    if frappe.db.exists("Exam", "World Capitals Quiz"):
-        return
-
     # Create question categories
     capitals_category = "World Capitals"
     space_category = "Earth and Space"
@@ -54,11 +51,72 @@ def create_sample_exams():
 
     # Multiple choice questions
     mcq_questions = [
-        {"question": "What is the capital of France?", "options": ["Paris", "London", "Berlin", "Madrid"], "answer": "Paris", "category": capitals_category},
-        {"question": "What is the capital of Japan?", "options": ["Tokyo", "Beijing", "Seoul", "Bangkok"], "answer": "Tokyo", "category": capitals_category},
-        {"question": "What is the capital of Australia?", "options": ["Canberra", "Sydney", "Melbourne", "Perth"], "answer": "Canberra", "category": capitals_category},
-        {"question": "What is the capital of Canada?", "options": ["Ottawa", "Toronto", "Vancouver", "Montreal"], "answer": "Ottawa", "category": capitals_category},
-        {"question": "What is the capital of Brazil?", "options": ["Brasília", "Rio de Janeiro", "São Paulo", "Salvador"], "answer": "Brasília", "category": capitals_category},
+        {"question": "What is the capital of France?", "options": ["Paris", "London", "Berlin", "Madrid"], "answer": "Paris", "category": capitals_category,
+         "help_show": "Before question",
+         "help_text": "<p>Paris has been the capital of France since 987 AD. Sitting on the Seine River, it is often called the <em>City of Light</em> and is home to the Eiffel Tower and the Louvre.</p>",
+         "help_quiz": [
+             {"quiz_question": "Which river runs through Paris?", "choice_1": "Seine", "choice_2": "Rhône", "choice_3": "Loire", "correct_choice": "1"},
+         ]},
+        {"question": "What is the capital of Japan?", "options": ["Tokyo", "Beijing", "Seoul", "Bangkok"], "answer": "Tokyo", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>Tokyo became Japan's capital in 1868 during the Meiji Restoration, replacing Kyoto. It was originally a fishing village known as <em>Edo</em>.</p>",
+         "help_quiz": [
+             {"quiz_question": "What was Tokyo previously known as?", "choice_1": "Edo", "choice_2": "Kyoto", "choice_3": "Osaka", "correct_choice": "1"},
+         ]},
+        {"question": "What is the capital of Australia?", "options": ["Canberra", "Sydney", "Melbourne", "Perth"], "answer": "Canberra", "category": capitals_category,
+         "help_show": "Before question",
+         "help_text": "<p>Canberra was purpose-built as a compromise between rival cities Sydney and Melbourne, becoming Australia's capital in 1927. Its name derives from a local Ngunnawal word meaning <em>meeting place</em>.</p>",
+         "help_quiz": [
+             {"quiz_question": "Why was Canberra chosen as capital?", "choice_1": "It was the largest city", "choice_2": "Compromise between Sydney and Melbourne", "choice_3": "It was the oldest city", "correct_choice": "2"},
+         ]},
+        {"question": "What is the capital of Canada?", "options": ["Ottawa", "Toronto", "Vancouver", "Montreal"], "answer": "Ottawa", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>Ottawa was selected as Canada's capital by Queen Victoria in 1857 due to its strategic location on the border of English-speaking Ontario and French-speaking Quebec.</p>",
+         "help_quiz": [
+             {"quiz_question": "Who chose Ottawa as Canada's capital?", "choice_1": "King George III", "choice_2": "Queen Victoria", "choice_3": "Prime Minister Macdonald", "correct_choice": "2"},
+         ]},
+        {"question": "What is the capital of Brazil?", "options": ["Brasília", "Rio de Janeiro", "São Paulo", "Salvador"], "answer": "Brasília", "category": capitals_category,
+         "help_show": "Before question",
+         "help_text": "<p>Brasília was inaugurated as Brazil's capital on 21 April 1960, replacing Rio de Janeiro. The city was planned and built from scratch in just 41 months and is a UNESCO World Heritage Site.</p>",
+         "help_quiz": [
+             {"quiz_question": "Which city did Brasília replace as capital?", "choice_1": "São Paulo", "choice_2": "Salvador", "choice_3": "Rio de Janeiro", "correct_choice": "3"},
+         ]},
+        {"question": "What is the capital of Egypt?", "options": ["Cairo", "Alexandria", "Giza", "Luxor"], "answer": "Cairo", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>Cairo, founded in 969 AD by the Fatimid dynasty, is Egypt's capital and the largest city in the Arab world. It sits on the banks of the Nile near the ancient pyramids of Giza.</p>",
+         "help_quiz": [
+             {"quiz_question": "Which river does Cairo sit on?", "choice_1": "Tigris", "choice_2": "Euphrates", "choice_3": "Nile", "correct_choice": "3"},
+         ]},
+        {"question": "What is the capital of South Korea?", "options": ["Seoul", "Busan", "Incheon", "Daegu"], "answer": "Seoul", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>Seoul has served as Korea's capital for over 600 years, since the founding of the Joseon dynasty in 1394. It sits on the Han River and is home to roughly half of South Korea's population.</p>",
+         "help_quiz": [
+             {"quiz_question": "Which dynasty established Seoul as the capital in 1394?", "choice_1": "Goryeo", "choice_2": "Joseon", "choice_3": "Silla", "correct_choice": "2"},
+         ]},
+        {"question": "What is the capital of Argentina?", "options": ["Buenos Aires", "Córdoba", "Rosario", "Mendoza"], "answer": "Buenos Aires", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>Buenos Aires, meaning <em>good airs</em> in Spanish, has been Argentina's capital since 1880. It is the most populous city in the country and a major South American cultural hub.</p>",
+         "help_quiz": [
+             {"quiz_question": "What does 'Buenos Aires' mean in Spanish?", "choice_1": "Good airs", "choice_2": "Silver river", "choice_3": "New port", "correct_choice": "1"},
+         ]},
+        {"question": "What is the capital of Turkey?", "options": ["Ankara", "Istanbul", "Izmir", "Antalya"], "answer": "Ankara", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>Ankara replaced Istanbul as Turkey's capital in 1923 when Mustafa Kemal Atatürk founded the modern Turkish Republic. Istanbul remains the country's largest city, but Ankara is the seat of government.</p>",
+         "help_quiz": [
+             {"quiz_question": "Who founded the modern Turkish Republic?", "choice_1": "Suleiman the Magnificent", "choice_2": "Mustafa Kemal Atatürk", "choice_3": "Mehmed II", "correct_choice": "2"},
+         ]},
+        {"question": "What is the capital of Russia?", "options": ["Moscow", "Saint Petersburg", "Kazan", "Novosibirsk"], "answer": "Moscow", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>Moscow has been Russia's capital since 1918, when the Bolsheviks moved the seat of government back from Saint Petersburg. The Kremlin, on the banks of the Moskva River, is the official residence of the Russian president.</p>",
+         "help_quiz": [
+             {"quiz_question": "Which city was Russia's capital before Moscow took over again in 1918?", "choice_1": "Kazan", "choice_2": "Saint Petersburg", "choice_3": "Novosibirsk", "correct_choice": "2"},
+         ]},
+        {"question": "What is the capital of South Africa (administrative)?", "options": ["Pretoria", "Cape Town", "Johannesburg", "Durban"], "answer": "Pretoria", "category": capitals_category,
+         "help_show": "After wrong answer",
+         "help_text": "<p>South Africa has three capitals. <strong>Pretoria</strong> is the administrative (executive) capital; Cape Town is legislative and Bloemfontein is judicial. This arrangement dates back to the Union of South Africa in 1910.</p>",
+         "help_quiz": [
+             {"quiz_question": "How many capital cities does South Africa have?", "choice_1": "One", "choice_2": "Two", "choice_3": "Three", "correct_choice": "3"},
+         ]},
         {"question": "Which planet is known as the Red Planet?", "options": ["Mars", "Venus", "Jupiter", "Saturn"], "answer": "Mars", "category": space_category},
         {"question": "What is the largest planet in our solar system?", "options": ["Jupiter", "Saturn", "Neptune", "Uranus"], "answer": "Jupiter", "category": space_category},
         {"question": "What is the name of the galaxy our solar system is in?", "options": ["Milky Way", "Andromeda", "Triangulum", "Whirlpool"], "answer": "Milky Way", "category": space_category},
@@ -67,14 +125,21 @@ def create_sample_exams():
     ]
 
     for q in mcq_questions:
-        # Check if the question already exists in the category
-        existing_question = frappe.db.exists("Exam Question", 
+        existing_question = frappe.db.exists("Exam Question",
             {"question": q["question"], "category": q["category"]})
-        
+
         if existing_question:
-            continue  # Skip this question if it already exists
-            
-        frappe.get_doc({
+            if q.get("help_text"):
+                existing_doc = frappe.get_doc("Exam Question", existing_question)
+                existing_doc.help_text = q["help_text"]
+                existing_doc.help_show = q.get("help_show", "Before question")
+                existing_doc.help_quiz = []
+                for row in q.get("help_quiz", []):
+                    existing_doc.append("help_quiz", row)
+                existing_doc.save(ignore_permissions=True)
+            continue
+
+        doc = {
             "doctype": "Exam Question",
             "question": q["question"],
             "category": q["category"],
@@ -88,33 +153,67 @@ def create_sample_exams():
             "is_correct_3": 1 if q["options"][2] == q["answer"] else 0,
             "option_4": q["options"][3],
             "is_correct_4": 1 if q["options"][3] == q["answer"] else 0,
-        }).insert()
+        }
+        if q.get("help_text"):
+            doc["help_text"] = q["help_text"]
+            doc["help_show"] = q.get("help_show", "Before question")
+            if q.get("help_quiz"):
+                doc["help_quiz"] = q["help_quiz"]
+        frappe.get_doc(doc).insert()
 
     # User input questions
     user_input_questions = [
-        {"question": "What is the capital of Italy?", "answer": "Rome", "category": capitals_category},
-        {"question": "What is the capital of Spain?", "answer": "Madrid", "category": capitals_category},
-        {"question": "What is the capital of Germany?", "answer": "Berlin", "category": capitals_category},
+        {"question": "What is the capital of Italy?", "answer": "Rome", "category": capitals_category,
+         "help_show": "After any answer",
+         "help_text": "<p>Rome has been the capital of unified Italy since 1871. The city was the heart of the Roman Empire and is home to Vatican City, the seat of the Catholic Church.</p>",
+         "help_quiz": [
+             {"quiz_question": "Vatican City, located inside Rome, is the seat of which religion?", "choice_1": "Orthodox Christianity", "choice_2": "Catholicism", "choice_3": "Protestantism", "correct_choice": "2"},
+         ]},
+        {"question": "What is the capital of Spain?", "answer": "Madrid", "category": capitals_category,
+         "help_show": "Before question",
+         "help_text": "<p>Madrid became Spain's capital in 1561 under King Philip II. It sits near the geographic centre of the Iberian Peninsula at an elevation of about 650 metres.</p>",
+         "help_quiz": [
+             {"quiz_question": "Which Spanish king moved the capital to Madrid in 1561?", "choice_1": "Charles V", "choice_2": "Philip II", "choice_3": "Ferdinand II", "correct_choice": "2"},
+         ]},
+        {"question": "What is the capital of Germany?", "answer": "Berlin", "category": capitals_category,
+         "help_show": "After any answer",
+         "help_text": "<p>Berlin was restored as the capital of a reunified Germany in 1990, taking over from Bonn. The Berlin Wall, which divided the city from 1961, fell in November 1989.</p>",
+         "help_quiz": [
+             {"quiz_question": "Which city served as West Germany's capital before reunification?", "choice_1": "Frankfurt", "choice_2": "Bonn", "choice_3": "Munich", "correct_choice": "2"},
+         ]},
         {"question": "What is the name of the force that holds us to the Earth?", "answer": "Gravity", "category": space_category},
         {"question": "What is the fifth planet from the sun?", "answer": "Jupiter", "category": space_category},
     ]
 
     for q in user_input_questions:
-        # Check if the question already exists in the category
-        existing_question = frappe.db.exists("Exam Question", 
+        existing_question = frappe.db.exists("Exam Question",
             {"question": q["question"], "category": q["category"]})
-        
+
         if existing_question:
-            continue  # Skip this question if it already exists
-            
-        frappe.get_doc({
+            if q.get("help_text"):
+                existing_doc = frappe.get_doc("Exam Question", existing_question)
+                existing_doc.help_text = q["help_text"]
+                existing_doc.help_show = q.get("help_show", "Before question")
+                existing_doc.help_quiz = []
+                for row in q.get("help_quiz", []):
+                    existing_doc.append("help_quiz", row)
+                existing_doc.save(ignore_permissions=True)
+            continue
+
+        doc = {
             "doctype": "Exam Question",
             "question": q["question"],
             "category": q["category"],
             "mark": 2,
             "type": "User Input",
-            "possibility_1": q["answer"]
-        }).insert()
+            "possibility_1": q["answer"],
+        }
+        if q.get("help_text"):
+            doc["help_text"] = q["help_text"]
+            doc["help_show"] = q.get("help_show", "Before question")
+            if q.get("help_quiz"):
+                doc["help_quiz"] = q["help_quiz"]
+        frappe.get_doc(doc).insert()
 
     frappe.db.commit()
     # Create the exams

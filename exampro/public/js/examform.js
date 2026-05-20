@@ -16,6 +16,8 @@ var faceCurrentlyVisible = false; // Updated by gazer onFaceDetected; gates exam
 var noFaceTerminationTimer = null; // setTimeout id for the 60s no-face termination
 var noFaceCountdownInterval = null; // setInterval id for the visible countdown
 var NO_FACE_GRACE_SECONDS = 60;
+var helpShownFor = new Set(); // qs_no values where help has already been shown this session
+var helpReadingTimer = null;
 
 // Simple notification function as fallback
 function showNotification(message, type = 'info') {
@@ -676,8 +678,35 @@ function displayQuestion(current_qs) {
         "option_3_image": current_qs.option_3_image,
         "option_4_image": current_qs.option_4_image,
         "answer": current_qs.answer || '',
-        "marked_for_later": current_qs.marked_for_later
+        "marked_for_later": current_qs.marked_for_later,
+        "help_show": current_qs.help_show || "Do not show",
+        "help_text": current_qs.help_text || "",
+        "help_minimum_reading_time": current_qs.help_minimum_reading_time || 0,
+        "help_quiz": current_qs.help_quiz || []
     }
+
+    // Reset help-shown tracking for this question on every visit so navigating
+    // away and back (or clicking the question in the navigator) replays the help.
+    helpShownFor.delete(currentQuestion.no);
+
+    // Pre-question help: show before revealing the question.
+    if (
+        currentQuestion.help_show === "Before question" &&
+        currentQuestion.help_text
+    ) {
+        showHelpFlow(currentQuestion, function () {
+            renderCurrentQuestion();
+        });
+        return;
+    }
+
+    renderCurrentQuestion();
+}
+
+function renderCurrentQuestion() {
+    // Hide help panels in case they were visible.
+    $("#help-panel").addClass("hide");
+    $("#help-quiz-panel").addClass("hide");
 
     $("#quiz-form").removeClass("hide");
     $("#current-question").text(currentQuestion["no"])
@@ -741,7 +770,7 @@ function displayQuestion(current_qs) {
         $.each(options, function (key, value) {
             if (value) {
                 let inputType = currentQuestion["multiple"] ? 'checkbox' : 'radio';
-                let explanation = current_qs[`explanation_${key}`];
+                let explanation = currentQuestion[`explanation_${key}`];
                 let explanationHtml = explanation ? `<small class="explanation ml-10">${explanation}</small>` : '';
                 let checked = '';
                 let optImg = currentQuestion[key + "_image"]
@@ -1170,12 +1199,31 @@ function submitAnswer(loadNext) {
             const userStillOnSavedQs = currentQuestion && currentQuestion["no"] === data.message.qs_no;
 
             if (shouldNavigate && userStillOnSavedQs) {
-                if (data.message.qs_no < examOverview["total_questions"]) {
-                    let nextQs = data.message.qs_no + 1;
-                    getQuestion(nextQs);
-                    updateOverviewMap();
+                const advance = () => {
+                    if (data.message.qs_no < examOverview["total_questions"]) {
+                        let nextQs = data.message.qs_no + 1;
+                        getQuestion(nextQs);
+                        updateOverviewMap();
+                    } else {
+                        showSubmitConfirmPage();
+                    }
+                };
+
+                const helpShow = currentQuestion.help_show;
+                const isMCQ = currentQuestion.type === "Choices";
+                const isWrong = isMCQ && data.message.is_correct === 0;
+                const notMarkedForLater = mrkForLtr !== 1;
+                const triggerPostHelp =
+                    notMarkedForLater &&
+                    !!currentQuestion.help_text &&
+                    !helpShownFor.has(currentQuestion.no) &&
+                    (helpShow === "After any answer" ||
+                        (helpShow === "After wrong answer" && isWrong));
+
+                if (triggerPostHelp) {
+                    showHelpFlow(currentQuestion, advance);
                 } else {
-                    showSubmitConfirmPage();
+                    advance();
                 }
             }
         },
@@ -1189,3 +1237,140 @@ function submitAnswer(loadNext) {
         }
     });
 };
+
+function escapeHtml(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function setHelpNavigationLock(locked) {
+    $("#navigation-card").toggleClass("help-locked", locked);
+    $(".exam-navigation-btn").prop("disabled", locked);
+}
+
+function showHelpFlow(qs, onDone) {
+    const qsNo = qs.no != null ? qs.no : qs.qs_no;
+    helpShownFor.add(qsNo);
+    setHelpNavigationLock(true);
+    $("#quiz-form").addClass("hide");
+    $("#help-quiz-panel").addClass("hide");
+    // help_text is editor-authored HTML stored on the question doctype (same
+    // trust level as the question body itself).
+    $("#help-text-content").html(qs.help_text || "");
+    const helpTitle = qs.help_show === "Before question"
+        ? "Read before next question"
+        : "Learn more about previous question";
+    $("#help-panel-title, #help-quiz-panel-title").text(helpTitle);
+
+    const quiz = qs.help_quiz || [];
+    const totalSteps = 1 + quiz.length;
+    $("#help-panel-step").text(`1/${totalSteps}`);
+    $("#help-panel").removeClass("hide");
+
+    const continueBtn = $("#helpContinueBtn");
+    continueBtn.off("click").prop("disabled", true);
+
+    startHelpReadingTimer(qs.help_minimum_reading_time || 0, function () {
+        continueBtn.prop("disabled", false);
+    });
+
+    continueBtn.on("click", function () {
+        if (quiz.length === 0) {
+            $("#help-panel").addClass("hide");
+            setHelpNavigationLock(false);
+            onDone();
+        } else {
+            showHelpQuiz(quiz, totalSteps, onDone);
+        }
+    });
+}
+
+function startHelpReadingTimer(seconds, onComplete) {
+    if (helpReadingTimer) {
+        clearInterval(helpReadingTimer);
+        helpReadingTimer = null;
+    }
+    const total = Math.max(0, Math.floor(seconds));
+    if (total === 0) {
+        $("#help-timer-text").text("");
+        onComplete();
+        return;
+    }
+    let remaining = total;
+    $("#help-timer-text").text(`Please read for ${remaining}s before continuing`);
+    helpReadingTimer = setInterval(function () {
+        remaining -= 1;
+        if (remaining <= 0) {
+            clearInterval(helpReadingTimer);
+            helpReadingTimer = null;
+            $("#help-timer-text").text("");
+            onComplete();
+        } else {
+            $("#help-timer-text").text(`Please read for ${remaining}s before continuing`);
+        }
+    }, 1000);
+}
+
+function showHelpQuiz(quiz, totalSteps, onDone) {
+    $("#help-panel").addClass("hide");
+    $("#help-quiz-panel").removeClass("hide");
+
+    const submitBtn = $("#helpQuizSubmitBtn");
+    const continueBtn = $("#helpQuizContinueBtn");
+
+    let idx = 0;
+
+    function renderRow() {
+        $("#help-quiz-panel-step").text(`${idx + 2}/${totalSteps}`);
+        const row = quiz[idx];
+        let html = `<div class="help-quiz-row" data-correct="${escapeHtml(row.correct_choice)}">`;
+        html += `<div class="help-quiz-question">${escapeHtml(row.quiz_question)}</div>`;
+        ["1", "2", "3"].forEach(function (n) {
+            const choice = row["choice_" + n];
+            if (!choice) return;
+            html += `<label><input type="radio" name="hq_current" value="${n}"> ${escapeHtml(choice)}</label>`;
+        });
+        html += `<div class="help-quiz-feedback"></div>`;
+        html += `</div>`;
+        $("#help-quiz-content").html(html);
+
+        submitBtn.removeClass("hide").prop("disabled", false).off("click").on("click", onSubmit);
+        continueBtn.addClass("hide").off("click").on("click", onContinue);
+    }
+
+    function onSubmit() {
+        const $row = $(".help-quiz-row");
+        const correct = String($row.data("correct"));
+        const picked = $("input[name='hq_current']:checked").val();
+        const fb = $row.find(".help-quiz-feedback");
+        fb.removeClass("correct incorrect");
+        if (!picked) {
+            fb.text("No answer selected.").addClass("incorrect");
+            return;
+        }
+        if (picked === correct) {
+            fb.text("Correct.").addClass("correct");
+        } else {
+            fb.text(`Incorrect. Correct answer: ${correct}.`).addClass("incorrect");
+        }
+        submitBtn.addClass("hide");
+        continueBtn.removeClass("hide");
+    }
+
+    function onContinue() {
+        idx += 1;
+        if (idx >= quiz.length) {
+            $("#help-quiz-panel").addClass("hide");
+            setHelpNavigationLock(false);
+            onDone();
+        } else {
+            renderRow();
+        }
+    }
+
+    renderRow();
+}

@@ -200,17 +200,18 @@ class ExamSubmission(Document):
 	def on_trash(self):
 		frappe.db.delete("Exam Messages", {"exam_submission": self.name})
 		frappe.db.delete("Exam Certificate", {"exam_submission": self.name})
-		
-		# Delete uploaded videos from S3
+
+		# Only attempt to clean up S3 videos if the exam used video proctoring.
+		if not frappe.db.get_value("Exam", self.exam, "enable_video_proctoring"):
+			return
+
 		try:
 			settings = frappe.get_single("Exam Settings")
 			s3_client = get_s3_client()
-			
-			# List all objects with the exam submission prefix
+
 			paginator = s3_client.get_paginator('list_objects_v2')
 			for page in paginator.paginate(Bucket=settings.s3_bucket, Prefix=self.name):
 				if 'Contents' in page:
-					# Delete objects in batches
 					objects_to_delete = [{'Key': obj['Key']} for obj in page['Contents']]
 					if objects_to_delete:
 						s3_client.delete_objects(
@@ -218,7 +219,10 @@ class ExamSubmission(Document):
 							Delete={'Objects': objects_to_delete}
 						)
 		except Exception as e:
-			frappe.log_error(f"Error deleting videos for exam submission {self.name}: {str(e)}", "exam_submission_video_cleanup")
+			frappe.log_error(
+				message=f"Error deleting videos for exam submission {self.name}: {str(e)}",
+				title="exam_submission_video_cleanup",
+			)
 
 	
 	def before_save(self):
@@ -534,6 +538,20 @@ def get_question(exam_submission=None, qsno=1):
 	except frappe.DoesNotExistError:
 		frappe.throw("Invalid question requested.")
 
+	help_show = question_doc.help_show or "Do not show"
+	help_quiz = []
+	if help_show != "Do not show":
+		help_quiz = [
+			{
+				"quiz_question": r.quiz_question,
+				"choice_1": r.choice_1,
+				"choice_2": r.choice_2,
+				"choice_3": r.choice_3,
+				"correct_choice": r.correct_choice,
+			}
+			for r in (question_doc.help_quiz or [])
+		]
+
 	res = {
 		"question": question_doc.question,
 		"qs_no": answer_doc["seq_no"],
@@ -551,7 +569,12 @@ def get_question(exam_submission=None, qsno=1):
 		"multiple": question_doc.multiple,
 		# submitted answer
 		"marked_for_later": answer_doc["marked_for_later"],
-		"answer": answer_doc["answer"]
+		"answer": answer_doc["answer"],
+		# optional training help text
+		"help_show": help_show,
+		"help_minimum_reading_time": question_doc.help_minimum_reading_time or 0,
+		"help_text": question_doc.help_text or "",
+		"help_quiz": help_quiz,
 	}
 
 	return res
@@ -586,8 +609,13 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	result_doc.marked_for_later = markdflater
 	result_doc.evaluation_status = "Pending"
 	result_doc.save(ignore_permissions=True)
-		
-	return {"qs_name": qs_name, "qs_no": result_doc.seq_no}
+
+	return {
+		"qs_name": qs_name,
+		"qs_no": result_doc.seq_no,
+		# 0/1 for Choices (set by ExamAnswer.before_save), None for User Input
+		"is_correct": result_doc.is_correct,
+	}
 
 
 @frappe.whitelist()
@@ -845,12 +873,16 @@ def exam_video_list(exam_submission):
 	if frappe.session.user == "Guest":
 		raise frappe.PermissionError(_("Please login to access this page."))
 
+	exam = frappe.db.get_value("Exam Submission", exam_submission, "exam")
+	if not frappe.db.get_value("Exam", exam, "enable_video_proctoring"):
+		return {"videos": {}}
+
 	try:
 		res = get_videos(exam_submission)
 	except Exception:
 		frappe.log_error("Error retrieving videos for exam submission", "exam_video_list error")
 		res = {"videos": {}}
-	
+
 	return res
 
 #########################
@@ -876,8 +908,11 @@ def proctor_video_list(exam_submission=None):
 	exam = frappe.get_cached_value(
 		"Exam Submission", exam_submission, "exam"
 	)
+	if not frappe.get_cached_value("Exam", exam, "enable_video_proctoring"):
+		return {"videos": {}}
+
 	ttl = frappe.get_cached_value("Exam", exam, "duration") * 60 + 900  # ttl is exam duration + 15 min buffer
-	
+
 	try:
 		res = get_videos(exam_submission, ttl)
 	except Exception as e:
@@ -908,7 +943,11 @@ def upload_video(exam_submission=None):
 	if frappe.session.user != \
 		frappe.get_cached_value("Exam Submission", exam_submission, "candidate"):
 		raise frappe.PermissionError(_("Exam does not belongs to the user."))
-	
+
+	exam = frappe.get_cached_value("Exam Submission", exam_submission, "exam")
+	if not frappe.get_cached_value("Exam", exam, "enable_video_proctoring"):
+		return {"status": False, "reason": "Video proctoring is not enabled for this exam."}
+
 	settings = frappe.get_single("Exam Settings")
 	s3_client = get_s3_client()
 	

@@ -1,362 +1,528 @@
 <div class="col-md-12">
-  <!-- Exam Summary Container (hidden by default, shown when user wants to submit) -->
-  <div id="exam-summary" class="common-card-style column-card hide">
-    <div class="text-center my-10" id="quiz-box">
-      <div class="bold-heading" id="quiz-title"></div>
-      <p id="quiz-message" style="display: none"></p>
-    </div>
-  </div>
-
-  <form id="quiz-form" class="common-card-style column-card hide">
-    <div class="question" id="question" data-name="" data-type="" data-multi="">
-      <div>
-        <div class="question-number" id="question-number"></div>
-        <div class="question-text" id="question-text"></div>
-        <div class="question-image" style="display: none">
-          <img src="" class="img-fluid" alt="" id="question-image" />
+    <!-- Exam Summary Container (hidden by default, shown when user wants to submit) -->
+    <div id="exam-summary" class="common-card-style column-card hide">
+        <div class="text-center my-10" id="quiz-box">
+            <div class="bold-heading" id="quiz-title"></div>
+            <p id="quiz-message" style="display: none"></p>
         </div>
-      </div>
+    </div>
 
-      <div id="choices"></div>
+    <div id="help-panel" class="common-card-style column-card help-card hide">
+        <div class="help-panel-header">
+            <i class="bi bi-info-circle help-panel-icon"></i>
+            <span id="help-panel-title" class="help-panel-title"
+                >Read before next question</span
+            >
+            <span
+                id="help-panel-step"
+                class="help-panel-step ms-auto"
+            ></span>
+        </div>
+        <div class="help-panel-body">
+            <div id="help-text-content" class="help-text-content"></div>
+        </div>
+        <div class="quiz-footer">
+            <div
+                class="d-flex justify-content-between align-items-center w-100"
+            >
+                <span id="help-timer-text" class="text-muted small"></span>
+                <button class="btn btn-primary" id="helpContinueBtn" disabled>
+                    <span class="d-flex align-items-center">
+                        Continue
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
 
-      <div
-        class="control-input-wrapper"
-        id="examTextInput"
-        style="display: none"
-      >
-        <div class="control-input">
-          <div class="form-floating">
-            <textarea
-              type="text"
-              autocomplete="off"
-              class="input-with-feedback form-control possibility"
-              style="height: 150px; font-size: 1rem"
-              spellcheck="false"
-              placeholder="Enter your answer here"
-            ></textarea>
-            <!-- <label for="floatingTextarea">Your answer</label> -->
-          </div>
-          <!-- <small class="form-text text-muted mt-2"
+    <div
+        id="help-quiz-panel"
+        class="common-card-style column-card help-card hide"
+    >
+        <div class="help-panel-header">
+            <i class="bi bi-info-circle help-panel-icon"></i>
+            <span id="help-quiz-panel-title" class="help-panel-title"
+                >Read before next question</span
+            >
+            <span
+                id="help-quiz-panel-step"
+                class="help-panel-step ms-auto"
+            ></span>
+        </div>
+        <div class="help-panel-body">
+            <div id="help-quiz-content"></div>
+        </div>
+        <div class="quiz-footer">
+            <div class="d-flex justify-content-end align-items-center w-100">
+                <button class="btn btn-primary" id="helpQuizSubmitBtn">
+                    <span class="d-flex align-items-center">Submit</span>
+                </button>
+                <button
+                    class="btn btn-success ms-2 hide"
+                    id="helpQuizContinueBtn"
+                >
+                    <span class="d-flex align-items-center">
+                        Continue
+                        <i class="bi bi-arrow-right ms-2"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <form id="quiz-form" class="common-card-style column-card hide">
+        <div
+            class="question"
+            id="question"
+            data-name=""
+            data-type=""
+            data-multi=""
+        >
+            <div>
+                <div class="question-number" id="question-number"></div>
+                <div class="question-text" id="question-text"></div>
+                <div class="question-image" style="display: none">
+                    <img src="" class="img-fluid" alt="" id="question-image" />
+                </div>
+            </div>
+
+            <div id="choices"></div>
+
+            <div
+                class="control-input-wrapper"
+                id="examTextInput"
+                style="display: none"
+            >
+                <div class="control-input">
+                    <div class="form-floating">
+                        <textarea
+                            type="text"
+                            autocomplete="off"
+                            class="input-with-feedback form-control possibility"
+                            style="height: 150px; font-size: 1rem"
+                            spellcheck="false"
+                            placeholder="Enter your answer here"
+                        ></textarea>
+                        <!-- <label for="floatingTextarea">Your answer</label> -->
+                    </div>
+                    <!-- <small class="form-text text-muted mt-2"
             >Type your answer in the text area above.</small
           > -->
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="quiz-footer"></div>
-    <div class="quiz-footer">
-      <div class="d-flex justify-content-between align-items-center w-100">
-        <div
-          class="form-check form-switch d-flex align-items-center mb-0"
-          style="gap: 0.5rem"
-        >
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="markedForLater"
-            style="margin-top: 0"
-          />
-          <label
-            class="form-check-label mb-0"
-            for="markedForLater"
-            style="margin-bottom: 0"
-          >
-            Review later
-          </label>
+        <div class="quiz-footer"></div>
+        <div class="quiz-footer">
+            <div
+                class="d-flex justify-content-between align-items-center w-100"
+            >
+                <div
+                    class="form-check form-switch d-flex align-items-center mb-0"
+                    style="gap: 0.5rem"
+                >
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="markedForLater"
+                        style="margin-top: 0"
+                    />
+                    <label
+                        class="form-check-label mb-0"
+                        for="markedForLater"
+                        style="margin-bottom: 0"
+                    >
+                        Review later
+                    </label>
+                </div>
+                <div>
+                    <button
+                        class="btn btn-primary ms-2 exam-navigation-btn"
+                        id="nextQs"
+                        style="display: none"
+                    >
+                        <span class="d-flex align-items-center">
+                            Next
+                            <i class="bi bi-arrow-right ms-2"></i>
+                        </span>
+                    </button>
+                    <button
+                        class="btn btn-success ms-2"
+                        id="finish"
+                        style="display: none"
+                    >
+                        <span class="d-flex align-items-center"> Submit</span>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div>
-          <button
-            class="btn btn-primary ms-2 exam-navigation-btn"
-            id="nextQs"
-            style="display: none"
-          >
-            <span class="d-flex align-items-center">
-              Next
-              <i class="bi bi-arrow-right ms-2"></i>
-            </span>
-          </button>
-          <button
-            class="btn btn-success ms-2"
-            id="finish"
-            style="display: none"
-          >
-            <span class="d-flex align-items-center"> Submit</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </form>
+    </form>
 </div>
 <div class="col-md-12">
-  {% if exam.submission_status == "Started" %}
-  <div
-    class="card common-card-style"
-    x-data="{ isNavGridCollapsed: false }"
-    id="navigation-card"
-  >
+    {% if exam.submission_status == "Started" %}
     <div
-      class="card-header d-flex justify-content-between align-items-center"
-      @click="isNavGridCollapsed = !isNavGridCollapsed"
-      @keydown.enter="isNavGridCollapsed = !isNavGridCollapsed"
-      @keydown.space.prevent="isNavGridCollapsed = !isNavGridCollapsed"
-      tabindex="0"
-      role="button"
-      :aria-expanded="!isNavGridCollapsed"
-      aria-controls="instruction"
+        class="card common-card-style"
+        x-data="{ isNavGridCollapsed: false }"
+        id="navigation-card"
     >
-      <h5 class="card-title mb-0 fw-semibold text-dark">Questions</h5>
-      <div class="d-flex align-items-center gap-4">
-        <!-- Answered Status -->
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-circle-fill text-info" style="font-size: 1rem"></i>
-          <span class="small ms-2">Answered</span>
-          <span
-            class="badge bg-light text-dark px-2 py-1 rounded"
-            style="font-size: 0.9rem"
-            id="answeredCount"
-            >00</span
-          >
+        <div
+            class="card-header d-flex justify-content-between align-items-center"
+            @click="isNavGridCollapsed = !isNavGridCollapsed"
+            @keydown.enter="isNavGridCollapsed = !isNavGridCollapsed"
+            @keydown.space.prevent="isNavGridCollapsed = !isNavGridCollapsed"
+            tabindex="0"
+            role="button"
+            :aria-expanded="!isNavGridCollapsed"
+            aria-controls="instruction"
+        >
+            <h5 class="card-title mb-0 fw-semibold text-dark">Questions</h5>
+            <div class="d-flex align-items-center gap-4">
+                <!-- Answered Status -->
+                <div class="d-flex align-items-center gap-2">
+                    <i
+                        class="bi bi-circle-fill text-info"
+                        style="font-size: 1rem"
+                    ></i>
+                    <span class="small ms-2">Answered</span>
+                    <span
+                        class="badge bg-light text-dark px-2 py-1 rounded"
+                        style="font-size: 0.9rem"
+                        id="answeredCount"
+                        >00</span
+                    >
+                </div>
+
+                <!-- Marked for Review Status -->
+                <div class="d-flex align-items-center gap-2">
+                    <i
+                        class="bi bi-circle-fill text-warning"
+                        style="font-size: 1rem"
+                    ></i>
+                    <span class="small ms-2">Review later</span>
+                    <span
+                        class="badge bg-light text-dark px-2 py-1 rounded"
+                        style="font-size: 0.9rem"
+                        id="markedForLaterCount"
+                        >00</span
+                    >
+                </div>
+            </div>
+            <span class="text-primary arrow-icon" style="font-size: 1.2rem">
+                <i
+                    :class="isNavGridCollapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up'"
+                ></i>
+            </span>
         </div>
-
-        <!-- Marked for Review Status -->
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-circle-fill text-warning" style="font-size: 1rem"></i>
-          <span class="small ms-2">Review later</span>
-          <span
-            class="badge bg-light text-dark px-2 py-1 rounded"
-            style="font-size: 0.9rem"
-            id="markedForLaterCount"
-            >00</span
-          >
+        <div
+            class="card-body"
+            x-show="!isNavGridCollapsed"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform -translate-y-2"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform -translate-y-2"
+        >
+            <div id="button-grid">
+                <!-- Buttons will be added here -->
+            </div>
         </div>
-      </div>
-      <span class="text-primary arrow-icon" style="font-size: 1.2rem">
-        <i
-          :class="isNavGridCollapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up'"
-        ></i>
-      </span>
     </div>
-    <div
-      class="card-body"
-      x-show="!isNavGridCollapsed"
-      x-transition:enter="transition ease-out duration-300"
-      x-transition:enter-start="opacity-0 transform -translate-y-2"
-      x-transition:enter-end="opacity-100 transform translate-y-0"
-      x-transition:leave="transition ease-in duration-300"
-      x-transition:leave-start="opacity-100 transform translate-y-0"
-      x-transition:leave-end="opacity-0 transform -translate-y-2"
-    >
-      <div id="button-grid">
-        <!-- Buttons will be added here -->
-      </div>
-    </div>
-  </div>
-  {% endif %}
+    {% endif %}
 
-  <style>
-    /* Option styles from questions.html */
-    .option-item {
-      border-radius: 4px;
-      border: 1px solid #ddd;
-      padding: 0.6rem !important;
-      margin-bottom: 0.6rem;
-      transition: all 0.2s ease;
-      font-size: 0.9rem;
-      background-color: #f8f8f8;
-    }
-    .option-item:hover {
-      border-color: #007bff;
-      background-color: rgba(0, 123, 255, 0.05);
-    }
-    .option-item.selected {
-      border-color: #28a745;
-      background-color: rgba(40, 167, 69, 0.1);
-    }
-    .option-item .option-text {
-      margin-left: 10px;
-      display: inline-block;
-    }
-    .option-item .option-image {
-      margin-top: 0.5rem;
-      max-width: 100%;
-    }
-    .option-item .option-image img {
-      max-height: 150px;
-      border-radius: 4px;
-    }
+    <style>
+        /* Option styles from questions.html */
+        .option-item {
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            padding: 0.6rem !important;
+            margin-bottom: 0.6rem;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            background-color: #f8f8f8;
+        }
+        .option-item:hover {
+            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        .option-item.selected {
+            border-color: #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+        .option-item .option-text {
+            margin-left: 10px;
+            display: inline-block;
+        }
+        .option-item .option-image {
+            margin-top: 0.5rem;
+            max-width: 100%;
+        }
+        .option-item .option-image img {
+            max-height: 150px;
+            border-radius: 4px;
+        }
 
-    /* Question styling */
-    .question-number {
-      font-weight: 500;
-      color: #495057;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
-      padding-bottom: 0.4rem;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
+        /* Question styling */
+        .question-number {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
 
-    .question-number-text {
-      font-weight: 600;
-      color: #343a40;
-    }
+        .question-number-text {
+            font-weight: 600;
+            color: #343a40;
+        }
 
-    .question-instruction {
-      font-weight: 400;
-      color: #6c757d;
-      font-style: italic;
-      margin-left: 8px;
-    }
+        .question-instruction {
+            font-weight: 400;
+            color: #6c757d;
+            font-style: italic;
+            margin-left: 8px;
+        }
 
-    .question-text {
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin-bottom: 1rem;
-      color: #212529;
-    }
+        .question-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            color: #212529;
+        }
 
-    .question-content {
-      padding: 0.4rem 0.2rem;
-    }
+        .question-content {
+            padding: 0.4rem 0.2rem;
+        }
 
-    .question-image {
-      margin: 0.75rem 0;
-      text-align: center;
-    }
+        .question-image {
+            margin: 0.75rem 0;
+            text-align: center;
+        }
 
-    .question-image img {
-      max-width: 100%;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+        .question-image img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
 
-    /* Question container styling */
-    #question {
-      background-color: #fff;
-      border-radius: 5px;
-      padding: 1.1rem;
-    }
+        /* Question container styling */
+        #question {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 1.1rem;
+        }
 
-    /* Quiz footer styling */
-    .quiz-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 1.1rem 1.1rem 1.1rem;
-      border-radius: 0 0 5px 5px;
-      font-size: 0.9rem;
-    }
+        /* Quiz footer styling */
+        .quiz-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1.1rem 1.1rem 1.1rem;
+            border-radius: 0 0 5px 5px;
+            font-size: 0.9rem;
+        }
 
-    .quiz-footer .current-question,
-    .quiz-footer #question-length {
-      font-weight: bold;
-      color: #0d6efd;
-    }
+        .quiz-footer .current-question,
+        .quiz-footer #question-length {
+            font-weight: bold;
+            color: #0d6efd;
+        }
 
-    /* Navigation buttons */
-    .btn-primary,
-    #finish {
-      background-color: #0d6efd !important;
-      border-color: #0d6efd !important;
-      transition: all 0.2s ease;
-    }
+        /* Navigation buttons */
+        .btn-primary,
+        #finish {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            transition: all 0.2s ease;
+        }
 
-    .btn-primary:hover,
-    #finish:hover {
-      background-color: #0b5ed7 !important;
-      border-color: #0a58ca !important;
-    }
+        .btn-primary:hover,
+        #finish:hover {
+            background-color: #0b5ed7 !important;
+            border-color: #0a58ca !important;
+        }
 
-    /* Question navigation grid */
-    #button-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-top: 0.75rem;
-      justify-content: flex-start;
-      align-items: center;
-    }
+        /* Question navigation grid */
+        #button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+            justify-content: flex-start;
+            align-items: center;
+        }
 
-    /* Navigation button styling */
-    #button-grid .btn {
-      min-width: 2.8rem;
-      height: 2rem;
-      transition: all 0.2s ease;
-      /* font-weight: 500; */
-      padding: 0.25rem 0.5rem;
-      /* font-size: 0.8rem; */
-      border: 1px solid #bbb;
-    }
+        /* Navigation button styling */
+        #button-grid .btn {
+            min-width: 2.8rem;
+            height: 2rem;
+            transition: all 0.2s ease;
+            /* font-weight: 500; */
+            padding: 0.25rem 0.5rem;
+            /* font-size: 0.8rem; */
+            border: 1px solid #bbb;
+        }
 
-    #button-grid .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-    }
+        #button-grid .btn:hover {
+            transform: translateY(-1px);
+        }
 
-    #button-grid .btn .bi-circle-fill {
-      font-size: 0.65rem;
-    }
+        #button-grid .btn .bi-circle-fill {
+            font-size: 0.65rem;
+        }
 
-    /* Current question button styling */
-    #button-grid .current-question-btn {
-      background-color: #f8f9fa !important;
-      border-color: #0b5ed7 !important;
-      border-width: 2px !important;
-      font-weight: 600 !important;
-    }
+        /* Current question button styling */
+        #button-grid .current-question-btn {
+            background-color: #f8f9fa !important;
+            border-color: #0b5ed7 !important;
+            border-width: 2px !important;
+            font-weight: 600 !important;
+        }
 
-    #button-grid .current-question-btn:hover {
-      border-color: #495057 !important;
-    }
-    #button-grid .text-grey {
-      color: #adb5bd !important;
-    }
+        #button-grid .current-question-btn:hover {
+            border-color: #495057 !important;
+        }
+        #button-grid .text-grey {
+            color: #adb5bd !important;
+        }
 
-    /* Form controls */
-    .form-check-input:checked {
-      background-color: #0d6efd;
-      border-color: #0d6efd;
-    }
+        /* Form controls */
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
 
-    /* Better styling for radio buttons and checkboxes */
-    input[type="radio"],
-    input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      margin-right: 6px;
-    }
+        /* Better styling for radio buttons and checkboxes */
+        input[type="radio"],
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin-right: 6px;
+        }
 
-    input[type="radio"]:checked,
-    input[type="checkbox"]:checked {
-      accent-color: #0d6efd;
-    }
+        input[type="radio"]:checked,
+        input[type="checkbox"]:checked {
+            accent-color: #0d6efd;
+        }
 
-    /* Navigation card styling */
-    .navigation-card {
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      border: none;
-      border-radius: 5px;
-    }
+        /* Navigation card styling */
+        .navigation-card {
+            border: none;
+            border-radius: 5px;
+        }
 
-    .navigation-card .card-header {
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
+        .navigation-card .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
 
-    /* Badge styling */
-    .badge {
-      font-weight: 500;
-      padding: 0.35em 0.5em;
-      font-size: 0.75rem;
-    }
+        /* Badge styling */
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.5em;
+            font-size: 0.75rem;
+        }
 
-    /* "Answer later" checkbox styling */
-    #markedForLater:checked {
-      background-color: var(--bs-info) !important;
-      border-color: var(--bs-info) !important;
-    }
+        /* "Answer later" checkbox styling */
+        #markedForLater:checked {
+            background-color: var(--bs-info) !important;
+            border-color: var(--bs-info) !important;
+        }
 
-    #markedForLater:focus {
-      border-color: var(--bs-info) !important;
-      box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25) !important;
-    }
-  </style>
+        #markedForLater:focus {
+            border-color: var(--bs-info) !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25) !important;
+        }
+
+        /* Lock the question navigator while help text or quick quiz is visible. */
+        #navigation-card.help-locked {
+            pointer-events: none;
+            opacity: 0.5;
+            filter: grayscale(0.3);
+        }
+
+        /* Help text + quick quiz panels */
+        .help-card {
+            background-color: #ffffff;
+            border: 1px solid #f5d76e;
+            border-left: 5px solid #f1c40f;
+        }
+
+        .help-panel-header {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid #f5d76e;
+            background-color: transparent;
+            border-top-left-radius: inherit;
+            border-top-right-radius: inherit;
+        }
+
+        .help-panel-icon {
+            font-size: 1.25rem;
+            color: #212529;
+        }
+
+        .help-panel-title {
+            font-weight: 600;
+            color: #212529;
+            font-size: 1rem;
+            letter-spacing: 0.01em;
+        }
+
+        .help-panel-step {
+            font-weight: 500;
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .help-panel-body {
+            padding: 1.1rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .help-text-content {
+            color: #212529;
+        }
+
+        .help-text-content img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+
+        .help-quiz-row {
+            padding: 0.6rem 0.8rem;
+            border-radius: 4px;
+            border: 1px solid #e6e6e6;
+            margin-bottom: 0.6rem;
+            background-color: #fafafa;
+        }
+
+        .help-quiz-row .help-quiz-question {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .help-quiz-row label {
+            display: block;
+            cursor: pointer;
+            padding: 0.2rem 0;
+        }
+
+        .help-quiz-feedback {
+            margin-top: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .help-quiz-feedback.correct {
+            color: #198754;
+        }
+
+        .help-quiz-feedback.incorrect {
+            color: #b02a37;
+        }
+    </style>
 </div>

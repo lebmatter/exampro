@@ -13,8 +13,7 @@
 .common-card-style {
   background-color: #fff;
   border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   margin-bottom: 1.25rem;
 }
 
