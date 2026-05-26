@@ -4,3 +4,4 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+exampro.patches.v0_0.add_exam_messages_warning_index
