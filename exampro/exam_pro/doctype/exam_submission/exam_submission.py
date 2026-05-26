@@ -325,29 +325,69 @@ class ExamSubmission(Document):
 
 		if not self.short_uuid:
 			self.short_uuid = generate_short_uuid()
-			
+
 		last_login = frappe.db.get_value("User", self.candidate, "last_login")
 		if not last_login:
 			self.new_user = 1
 			self.reset_password_key = frappe.db.get_value("User", self.candidate, "reset_password_key")
 
-		# get questions
+		# Child Exam Answer rows are bulk-inserted in after_insert (see _bulk_insert_answers).
+		# Leaving submitted_answers empty here means Frappe's standard child-row insert
+		# loop is a no-op, so we skip ~N per-row INSERTs for an N-question exam.
+		self.submitted_answers = []
+
+	def after_insert(self):
+		self._bulk_insert_answers()
+
+	def _bulk_insert_answers(self):
+		"""
+		Create one Exam Answer row per question in a single INSERT.
+
+		Replaces the per-row inserts that the framework would issue if these
+		were appended to the child table before insert(). At 500 candidates ×
+		60 questions, this collapses ~30k INSERTs into ~500.
+		"""
 		questions = frappe.get_all(
-			"Exam Added Question", filters={"parent": self.exam}, fields=["exam_question"]
+			"Exam Added Question",
+			filters={"parent": self.exam},
+			fields=["exam_question"],
+			order_by="idx asc",
 		)
-		random_questions = frappe.get_cached_value("Exam", self.exam, "randomize_questions")
-		if random_questions:
+		if not questions:
+			return
+
+		if frappe.get_cached_value("Exam", self.exam, "randomize_questions"):
 			random.shuffle(questions)
 
-		self.submitted_answers = []
+		now_ts = frappe.utils.now()
+		user = frappe.session.user or "Administrator"
+
+		fields = [
+			"name", "creation", "modified", "modified_by", "owner",
+			"docstatus", "idx",
+			"parent", "parentfield", "parenttype",
+			"seq_no", "exam_question", "evaluation_status",
+			"marked_for_later", "is_correct", "mark",
+		]
+
+		values = []
 		for idx, qs in enumerate(questions):
 			seq_no = idx + 1
-			qs_ = {
-					"seq_no": seq_no,
-					"exam_question": qs["exam_question"],
-					"evaluation_status": "Not Attempted"
-			}
-			self.append('submitted_answers', qs_)
+			values.append((
+				frappe.generate_hash(length=10),  # name
+				now_ts, now_ts, user, user,
+				0,            # docstatus
+				seq_no,       # idx
+				self.name, "submitted_answers", "Exam Submission",
+				seq_no,
+				qs["exam_question"],
+				"Not Attempted",
+				0,            # marked_for_later
+				0,            # is_correct
+				0.0,          # mark
+			))
+
+		frappe.db.bulk_insert("Exam Answer", fields=fields, values=values)
 
 @frappe.whitelist()
 def get_examiner_assignment_counts(exam_schedule):
