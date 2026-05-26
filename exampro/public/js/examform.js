@@ -112,17 +112,54 @@ let stream;
 let recordingStream;
 let recordingInterval;
 
-function sendVideoBlob(blob) {
-    let xhr = new XMLHttpRequest();
-    const unixTimestamp = Math.floor(Date.now() / 1000);
-    xhr.open('POST', '/api/method/exampro.exam_pro.doctype.exam_submission.exam_submission.upload_video', true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.setRequestHeader('X-Frappe-CSRF-Token', frappe.csrf_token);
+async function sendVideoBlob(blob) {
+    // Two-step upload: mint a short-lived, key-bound presigned POST from the
+    // server, then upload the chunk directly to S3/R2. The server never sees
+    // the bytes, which keeps gunicorn workers free during the exam.
+    let mint;
+    try {
+        mint = await frappe.call({
+            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_video_upload_url",
+            type: "POST",
+            args: { exam_submission: exam["exam_submission"] }
+        });
+    } catch (err) {
+        console.error("Failed to obtain video upload URL:", err);
+        return;
+    }
 
-    let form_data = new FormData();
-    form_data.append('file', blob, unixTimestamp + ".webm");
-    form_data.append('exam_submission', exam["exam_submission"])
-    xhr.send(form_data);
+    const data = mint && mint.message;
+    if (!data || !data.url || !data.fields) {
+        console.error("Invalid upload URL response", mint);
+        return;
+    }
+
+    if (data.max_bytes && blob.size > data.max_bytes) {
+        console.warn("Video chunk exceeds max upload size; dropping",
+            blob.size, ">", data.max_bytes);
+        return;
+    }
+
+    // Order matters for S3 POST policy: all policy fields first, then 'file'.
+    const form_data = new FormData();
+    Object.keys(data.fields).forEach((k) => form_data.append(k, data.fields[k]));
+    form_data.append("file", blob, "chunk.webm");
+
+    try {
+        const resp = await fetch(data.url, {
+            method: "POST",
+            body: form_data,
+            // Do not send cookies/credentials to the storage origin.
+            credentials: "omit",
+            mode: "cors",
+        });
+        if (!resp.ok) {
+            const body = await resp.text().catch(() => "");
+            console.error("S3 upload failed", resp.status, body);
+        }
+    } catch (err) {
+        console.error("S3 upload network error:", err);
+    }
 }
 
 // Function to start recording

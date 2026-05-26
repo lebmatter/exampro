@@ -5,6 +5,8 @@ import random
 import base64
 import os
 import requests
+import secrets
+import time
 import uuid
 from datetime import datetime, timedelta
 
@@ -21,59 +23,63 @@ from exampro.exam_pro.api.utils import calculate_attention_score
 import boto3
 from botocore.client import Config
 
+# Max size of a single video chunk uploaded by the browser. The proctor recorder
+# emits ~10s webm chunks; 10 MB is a generous safety cap.
+MAX_VIDEO_CHUNK_BYTES = 10 * 1024 * 1024
+# Presigned POST lifetime (seconds). Short — minted every chunk.
+VIDEO_UPLOAD_URL_TTL = 60
+# Minimum gap (seconds) between URL mints per submission. Recorder cadence is 10s.
+VIDEO_UPLOAD_URL_MIN_INTERVAL = 5
+
+# Process-wide boto3 client cache. boto3 clients are thread-safe; reusing them
+# across requests avoids the per-request handshake cost that previously
+# bottlenecked the upload path.
+_S3_CLIENT_CACHE = {}
+
+
 def get_s3_client():
     """
-    Get or create an S3 client from the connection pool.
-    Stores the client in frappe.local for reuse within the same request.
-    
-    Returns:
-        boto3.client: S3 client with appropriate configuration
-        
-    Raises:
-        Exception: If S3 configuration is invalid or connection fails
+    Return a process-cached boto3 S3 client.
+
+    Cached by (endpoint, access key, bucket) so credential rotation in Exam
+    Settings produces a fresh client without a restart.
     """
-    # Check if we already have a client in the current request
-    if hasattr(frappe.local, "s3_client"):
-        return frappe.local.s3_client
-        
     try:
-        # Get settings
         settings = frappe.get_single("Exam Settings")
         cfdomain = settings.get_storage_endpoint()
         if not cfdomain:
             frappe.throw(_("Storage endpoint is not configured. Please check Exam Settings."))
-            
-        # Validate required credentials
-        if not settings.aws_key or not settings.get_password("aws_secret"):
+
+        secret = settings.get_password("aws_secret")
+        if not settings.aws_key or not secret:
             frappe.throw(_("AWS credentials are not configured. Please check Exam Settings."))
-        
-        # Create a new client with more conservative timeout settings
-        s3_client = boto3.client(
+
+        cache_key = (cfdomain, settings.aws_key, settings.s3_bucket)
+        client = _S3_CLIENT_CACHE.get(cache_key)
+        if client is not None:
+            return client
+
+        client = boto3.client(
             's3',
             endpoint_url=cfdomain,
             aws_access_key_id=settings.aws_key,
-            aws_secret_access_key=settings.get_password("aws_secret"),
+            aws_secret_access_key=secret,
             config=Config(
                 signature_version='s3v4',
-                # Connection settings optimized for reliability
-                max_pool_connections=25,     # Reduced from 50 for stability
-                connect_timeout=10,          # Increased from 5 seconds
-                read_timeout=120,            # Increased from 60 seconds
-                retries={'max_attempts': 3}, # Add retry logic
-                region_name='auto'           # Let boto3 determine region
-            )
+                max_pool_connections=50,
+                connect_timeout=5,
+                read_timeout=60,
+                retries={'max_attempts': 3},
+                region_name='auto',
+            ),
         )
-        
-        # Store in frappe.local for this request
-        frappe.local.s3_client = s3_client
-        
-        return s3_client
-        
+        _S3_CLIENT_CACHE[cache_key] = client
+        return client
+
+    except frappe.ValidationError:
+        raise
     except Exception as e:
-        error_msg = f"Failed to create S3 client: {str(e)}"
-        frappe.log_error(error_msg, "S3 Client Creation Error")
-        
-        # Re-raise with more context
+        frappe.log_error(f"Failed to create S3 client: {str(e)}", "S3 Client Creation Error")
         frappe.throw(_("Unable to connect to video storage. Please check your storage configuration or contact administrator."))
 
 def convert_image_to_base64(image_path):
@@ -927,76 +933,117 @@ def proctor_video_list(exam_submission=None):
 
 	return res
 
-@frappe.whitelist()
-def upload_video(exam_submission=None):
+def _assert_can_upload_video(exam_submission):
 	"""
-	Upload video to S3 storage and notify proctor
-	Uses connection pooling for better performance with multiple uploads
+	Authorize the current session to record a proctoring chunk for this submission.
+	Returns the submission row (dict) on success; raises otherwise.
+
+	All checks are performed against the database, not client-supplied data,
+	so a tampered browser cannot bypass them by sending fake fields.
 	"""
-	assert exam_submission
+	if not exam_submission:
+		raise frappe.PermissionError(_("Submission is required."))
 	if frappe.session.user == "Guest":
 		raise frappe.PermissionError(_("Please login to access this page."))
 
-	if frappe.db.get_value("Exam Submission", exam_submission, "status") != "Started":
-		raise frappe.PermissionError(_("Exam is invalid/ended."))
-	# check if the exam is of logged in user
-	if frappe.session.user != \
-		frappe.get_cached_value("Exam Submission", exam_submission, "candidate"):
-		raise frappe.PermissionError(_("Exam does not belongs to the user."))
+	sub = frappe.db.get_value(
+		"Exam Submission",
+		exam_submission,
+		["candidate", "status", "exam"],
+		as_dict=True,
+	)
+	if not sub:
+		raise frappe.PermissionError(_("Invalid exam submission."))
+	if sub.candidate != frappe.session.user:
+		raise frappe.PermissionError(_("Exam does not belong to the user."))
+	if sub.status != "Started":
+		raise frappe.PermissionError(_("Exam is not active."))
+	if not frappe.get_cached_value("Exam", sub.exam, "enable_video_proctoring"):
+		raise frappe.PermissionError(_("Video proctoring is not enabled for this exam."))
 
-	exam = frappe.get_cached_value("Exam Submission", exam_submission, "exam")
-	if not frappe.get_cached_value("Exam", exam, "enable_video_proctoring"):
-		return {"status": False, "reason": "Video proctoring is not enabled for this exam."}
+	ended, _end_time = has_submission_ended(exam_submission)
+	if ended:
+		raise frappe.PermissionError(_("Exam has ended."))
+
+	return sub
+
+
+@frappe.whitelist()
+def get_video_upload_url(exam_submission=None):
+	"""
+	Mint a short-lived, single-key presigned POST so the browser can upload one
+	proctoring chunk directly to S3/R2, bypassing the Frappe request path.
+
+	Tamper-proofing:
+	- Auth/state checks against DB on every mint.
+	- The S3 key is server-generated (submission prefix + ms timestamp + random
+	  suffix). The candidate cannot choose it, predict future keys, or
+	  overwrite past keys.
+	- Policy pins the exact key, mime type and a content-length range, so even
+	  if the URL leaks, it can only upload one webm of bounded size to that
+	  one key.
+	- Per-submission rate limit prevents URL-mint flooding.
+	- 60s TTL.
+	"""
+	_assert_can_upload_video(exam_submission)
+
+	cache = frappe.cache()
+	rate_key = f"video_upload_url_mint:{exam_submission}"
+	last = cache.get_value(rate_key)
+	now_ts = time.time()
+	if last is not None:
+		try:
+			elapsed = now_ts - float(last)
+		except (TypeError, ValueError):
+			elapsed = VIDEO_UPLOAD_URL_MIN_INTERVAL
+		if elapsed < VIDEO_UPLOAD_URL_MIN_INTERVAL:
+			frappe.throw(
+				_("Upload URL requested too frequently."),
+				frappe.TooManyRequestsError,
+			)
+	cache.set_value(rate_key, now_ts, expires_in_sec=60)
 
 	settings = frappe.get_single("Exam Settings")
-	s3_client = get_s3_client()
-	
-	if 'file' not in frappe.request.files:
-		return {"status": False}
+	bucket = settings.s3_bucket
+	if not bucket:
+		frappe.throw(_("Storage bucket is not configured."))
 
-	file = frappe.request.files['file']
-	if file.filename == '':
-		return {"status": False}
-
-	# Secure the filename
-	filename = secure_filename(file.filename)
-
-	# Specify your S3 bucket and folder
-	bucket_name = settings.s3_bucket
-	object_name = "{}/{}".format(exam_submission, filename)
-	exam = frappe.get_cached_value(
-		"Exam Submission", exam_submission, "exam"
+	# Server-controlled key. Random suffix makes it unguessable, so previous
+	# chunks cannot be overwritten by replaying a stale URL request.
+	key = "{sub}/{ts}-{rand}.webm".format(
+		sub=exam_submission,
+		ts=int(now_ts * 1000),
+		rand=secrets.token_hex(4),
 	)
-	duration = frappe.get_cached_value("Exam", exam, "duration")
-	ttl = duration * 60 + 900  # ttl is exam duration + 15 min buffer
 
+	s3_client = get_s3_client()
 	try:
-		# Stream the file directly to S3
-		s3_client.upload_fileobj(file, bucket_name, object_name)
-	except Exception:
-		# return str(e), 500
-		return {"status": False}
-	else:
-		presigned_url = s3_client.generate_presigned_url(
-			'get_object', Params={
-				'Bucket': settings.s3_bucket,
-				'Key': object_name},
-				ExpiresIn=ttl,
-				HttpMethod='GET'
-			)
-		frappe.cache().setex(object_name, ttl, presigned_url)
+		presigned = s3_client.generate_presigned_post(
+			Bucket=bucket,
+			Key=key,
+			Fields={"Content-Type": "video/webm"},
+			Conditions=[
+				{"bucket": bucket},
+				{"key": key},
+				{"Content-Type": "video/webm"},
+				["content-length-range", 1, MAX_VIDEO_CHUNK_BYTES],
+			],
+			ExpiresIn=VIDEO_UPLOAD_URL_TTL,
+		)
+	except Exception as e:
+		frappe.log_error(
+			f"Failed to mint presigned POST for {exam_submission}: {e}",
+			"Video upload URL error",
+		)
+		frappe.throw(_("Unable to prepare video upload. Please retry."))
 
-		# trigger webocket msg to proctor
-		# frappe.publish_realtime(
-		# 	event='newproctorvideo',
-		# 	message={
-		# 		"exam_submission": exam_submission,
-		# 		"ts": filename[:-5],
-		# 		"url": presigned_url
-		# 	},
-		# 	user=frappe.cache().hget(exam_submission, "assigned_proctor")
-		# )
-		return {"status": True}
+	return {
+		"url": presigned["url"],
+		"fields": presigned["fields"],
+		"key": key,
+		"max_bytes": MAX_VIDEO_CHUNK_BYTES,
+		"expires_in": VIDEO_UPLOAD_URL_TTL,
+	}
 
 def val_secs(securities):
 	for row in securities:
