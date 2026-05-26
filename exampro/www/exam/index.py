@@ -9,6 +9,7 @@ from exampro.exam_pro.api.utils import submit_candidate_pending_exams, redirect_
 
 from exampro.exam_pro.doctype.exam_submission.exam_submission import \
 	get_current_qs
+from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_status
 
 # ACTIVE_EXAM_CODE_CACHE = "ACTIVEEXAMCODECACHE"
 
@@ -36,42 +37,63 @@ def get_live_exam(member=None):
 			"additional_time_given"
 	])
 	for submission in submissions:
-		schedule = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
-		exam = frappe.get_doc("Exam", schedule.exam)
+		# Pull only the fields we actually use. Avoids loading both the full
+		# Exam Schedule and Exam docs on every landing-page hit.
+		sched = frappe.get_cached_value(
+			"Exam Schedule",
+			submission["exam_schedule"],
+			[
+				"exam",
+				"start_date_time",
+				"duration",
+				"schedule_type",
+				"schedule_expire_in_days",
+			],
+			as_dict=True,
+		)
+		if not sched:
+			continue
+
+		exam_cfg = frappe.get_cached_value(
+			"Exam",
+			sched.exam,
+			["enable_calculator", "enable_video_proctoring", "enable_chat"],
+			as_dict=True,
+		) or {}
 
 		# end time is schedule start time + duration + additional time given
-		end_time = schedule.start_date_time + timedelta(minutes=schedule.duration) + \
+		end_time = sched.start_date_time + timedelta(minutes=sched.duration) + \
 			timedelta(minutes=submission["additional_time_given"])
-		if schedule.schedule_type == "Flexible":
-			# For flexible schedules, we consider the end time as start time + duration + 5 min buffer
-			end_time += timedelta(days=schedule.schedule_expire_in_days)
+		if sched.schedule_type == "Flexible":
+			# For flexible schedules, end time is extended by the configured window.
+			end_time += timedelta(days=sched.schedule_expire_in_days or 0)
 
 		exam_details = {
 			"exam_submission": submission["name"],
-			"exam": schedule.exam,
+			"exam": sched.exam,
 			"exam_schedule": submission["exam_schedule"],
-			"start_time": schedule.start_date_time,
+			"start_time": sched.start_date_time,
 			"end_time": "",
 			"additional_time_given": submission["additional_time_given"],
 			"submission_status": submission["status"],
-			"duration": schedule.duration,
-			"enable_calculator": exam.enable_calculator,
+			"duration": sched.duration,
+			"enable_calculator": exam_cfg.get("enable_calculator"),
 			"is_live": False,
-			"enable_video_proctoring": exam.enable_video_proctoring,
-			"enable_chat": exam.enable_chat,
-			"schedule_status": schedule.get_status(),
-			"schedule_type": schedule.schedule_type,
+			"enable_video_proctoring": exam_cfg.get("enable_video_proctoring"),
+			"enable_chat": exam_cfg.get("enable_chat"),
+			"schedule_status": get_schedule_status(submission["exam_schedule"]),
+			"schedule_type": sched.schedule_type,
 		}
-		if submission["status"] == "Started" and schedule.schedule_type == "Fixed":
+		if submission["status"] == "Started" and sched.schedule_type == "Fixed":
 			exam_details["end_time"] = end_time
-		elif submission["status"] == "Started" and schedule.schedule_type == "Flexible":
+		elif submission["status"] == "Started" and sched.schedule_type == "Flexible":
 			# for flexible exams, exam started time + duration + additional time given
 			exam_details["end_time"] = submission["exam_started_time"] + \
-				timedelta(minutes=schedule.duration) + \
+				timedelta(minutes=sched.duration) + \
 				timedelta(minutes=submission["additional_time_given"])
 
 		# make datetime in isoformat
-		for key,val in exam_details.items():
+		for key, val in exam_details.items():
 			if type(val) == datetime:
 				exam_details[key] = val.isoformat()
 
@@ -81,24 +103,27 @@ def get_live_exam(member=None):
 		if submission["status"] == "Started":
 			exam_details["is_live"] = True
 			return exam_details
-		elif schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and schedule.schedule_type == "Fixed":
+		elif sched.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and sched.schedule_type == "Fixed":
 			exam_details["is_live"] = True
 			return exam_details
-		elif schedule.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and schedule.schedule_type == "Flexible":
+		elif sched.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and sched.schedule_type == "Flexible":
 			exam_details["is_live"] = True
 			return exam_details
-		if schedule.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":
+		if sched.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":
 			exam_details["is_live"] = False
 			return exam_details
-		elif tnow <= schedule.start_date_time:
+		elif tnow <= sched.start_date_time:
 			exam_details["is_live"] = False
 			return exam_details
 		elif tnow > end_time:
-			# if time is over, submit if applicable
+			# Time is over: flip status without loading the full doc.
+			# before_save hooks (role + proctor assignment) have already run
+			# at start_exam, so skipping them here is safe.
 			if submission["status"] != "Submitted":
-				doc = frappe.get_doc("Exam Submission", submission["name"])
-				doc.status = "Submitted"
-				doc.save(ignore_permissions=True)
+				frappe.db.set_value(
+					"Exam Submission", submission["name"], "status", "Submitted"
+				)
+				frappe.db.commit()
 
 			return exam_details
 
