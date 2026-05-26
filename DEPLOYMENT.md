@@ -6,11 +6,16 @@ Single-server deployment and tuning for **100–500 concurrent candidates** with
 
 ## 1. Hardware
 
-| Load                              | vCPU | RAM    | Disk            |
-|-----------------------------------|------|--------|-----------------|
-| Up to 100 candidates              | 8    | 32 GB  | 500 GB NVMe     |
-| 100–500 candidates (recommended)  | 16   | 64 GB  | 1 TB NVMe       |
-| 500+ or large media payloads      | 32   | 128 GB | 1 TB NVMe       |
+| Load                              | vCPU | RAM    | Disk             |
+|-----------------------------------|------|--------|------------------|
+| Up to 100 candidates              | 8    | 32 GB  | 200 GB NVMe      |
+| 100–500 candidates (recommended)  | 16   | 64 GB  | 250–500 GB NVMe  |
+| 500+ / long retention             | 32   | 128 GB | 500 GB–1 TB NVMe |
+
+Disk priority is **NVMe IOPS + fsync latency**, not capacity — Postgres/MariaDB
+durability is what gates throughput. Proctoring video goes directly to S3/R2,
+so it never lands on the app-server disk. Reserve headroom for local DB dumps
+(roughly 2× live DB size) before shipping them off-box.
 
 Network: 1 Gbps. NTP/chrony synced — exam timing depends on it.
 
