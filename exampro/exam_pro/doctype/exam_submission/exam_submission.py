@@ -418,6 +418,54 @@ def can_process_question(doc, member=None):
 	if doc.candidate != (member or frappe.session.user):
 		frappe.throw("Invalid exam requested.")
 
+
+def _validate_submission_writable(exam_submission, candidate, status, member=None):
+	"""
+	Lighter version of can_process_question that operates on raw fields, so
+	the hot answer-submit path doesn't have to load the full Exam Submission
+	doc (which pulls all child Exam Answer rows).
+
+	If the exam window has elapsed, the submission is flipped to Submitted via
+	frappe.db.set_value — skipping before_save is safe here because the
+	candidate/role/examiner assignment hooks have already run on start_exam.
+	"""
+	if status == "Submitted":
+		frappe.throw("Exam submitted!")
+	elif status == "Terminated":
+		frappe.throw("Exam is terminated.")
+	elif status != "Started":
+		frappe.throw("Exam is not started yet.")
+	else:
+		exam_ended, end_time = has_submission_ended(exam_submission)
+		if exam_ended:
+			frappe.db.set_value("Exam Submission", exam_submission, "status", "Submitted")
+			frappe.db.commit()
+			frappe.throw("This exam has ended at {}".format(end_time))
+
+	if candidate != (member or frappe.session.user):
+		frappe.throw("Invalid exam requested.")
+
+
+# Minimum gap (seconds) between tracking-info flushes triggered from
+# submit_question_response. Without this, every keystroke-driven answer
+# save would run calculate_attention_score on the full retina log.
+_TRACKING_INFO_MIN_INTERVAL = 30
+
+
+def _maybe_save_tracking_info(exam_submission):
+	"""Persist tracking metrics at most once per _TRACKING_INFO_MIN_INTERVAL.
+
+	end_exam still calls save_tracking_info directly so the final state is
+	always captured regardless of this throttle.
+	"""
+	cache_key = f"tracking_flush:{exam_submission}"
+	if frappe.cache().get_value(cache_key):
+		return False
+	frappe.cache().set_value(
+		cache_key, 1, expires_in_sec=_TRACKING_INFO_MIN_INTERVAL
+	)
+	return save_tracking_info(exam_submission)
+
 def get_submitted_questions(exam_submission, fields=["exam_question"]):
 	all_submitted = frappe.db.get_all(
 		"Exam Answer",
@@ -609,13 +657,21 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	"""
 	assert exam_submission, qs_name
 
-	submission = frappe.get_doc("Exam Submission", exam_submission, ignore_permissions=True)
-	# check of the logged in user is same as exam submission candidate
-	if frappe.session.user != submission.candidate:
+	# Pull only the fields needed for validation. Avoids loading the parent
+	# Exam Submission doc with all its child Exam Answer rows on every save.
+	sub = frappe.db.get_value(
+		"Exam Submission",
+		exam_submission,
+		["candidate", "status"],
+		as_dict=True,
+	)
+	if not sub:
+		raise PermissionError("Invalid submission.")
+	if frappe.session.user != sub.candidate:
 		raise PermissionError("You don't have access to submit and answer.")
 
-	can_process_question(submission)
-	save_tracking_info(exam_submission)
+	_validate_submission_writable(exam_submission, sub.candidate, sub.status)
+	_maybe_save_tracking_info(exam_submission)
 
 	# A question can be added to an exam at multiple positions, so the same
 	# exam_question may map to multiple Exam Answer rows. Disambiguate by seq_no.
