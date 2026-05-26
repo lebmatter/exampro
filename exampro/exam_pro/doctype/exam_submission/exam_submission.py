@@ -82,80 +82,96 @@ def get_s3_client():
         frappe.log_error(f"Failed to create S3 client: {str(e)}", "S3 Client Creation Error")
         frappe.throw(_("Unable to connect to video storage. Please check your storage configuration or contact administrator."))
 
+# Cap for cached base64 payload size; oversize images bypass the cache so a
+# single huge upload can't blow out Redis memory.
+_IMAGE_B64_CACHE_MAX_BYTES = 2 * 1024 * 1024  # 2 MB encoded
+# TTL for remote (http) images we don't control — re-fetch occasionally so a
+# replaced image eventually propagates.
+_IMAGE_B64_REMOTE_TTL = 6 * 60 * 60  # 6 hours
+
+
+def _resolve_local_image_path(image_path):
+    """Return the on-disk path for a Frappe file URL, or None if not local."""
+    if image_path.startswith('/files/'):
+        return frappe.get_site_path('public', image_path[1:])
+    if image_path.startswith('/private/files/'):
+        return frappe.get_site_path('private', image_path[9:])
+    if image_path.startswith('file://') or not image_path.startswith('http'):
+        local_path = image_path.replace('file://', '')
+        if not os.path.isabs(local_path):
+            local_path = frappe.get_site_path('public', 'files', local_path)
+        return local_path
+    return None
+
+
 def convert_image_to_base64(image_path):
     """
-    Convert image file to base64 string.
-    Handles both local file paths, URLs, and Frappe file paths.
-    
-    Args:
-        image_path (str): Path to image file, URL, or Frappe file path
-        
-    Returns:
-        str: Base64 encoded image string or None if conversion fails
+    Return a base64 string for an image referenced by Frappe file URL, local
+    path, or HTTP(S) URL.
+
+    Cached in Redis. Cache key for local files includes mtime+size so the cache
+    invalidates automatically when the underlying file is replaced; remote URLs
+    cache for a fixed TTL.
     """
     if not image_path:
         return None
-        
+
+    # Already-encoded data URIs are returned as-is, no caching needed.
+    if image_path.startswith('data:'):
+        return image_path
+
     try:
-        # Check if it's already base64
-        if image_path.startswith('data:'):
-            return image_path
-            
-        # Handle Frappe file paths (/files/ and /private/files/)
-        if image_path.startswith('/files/') or image_path.startswith('/private/files/'):
-            # Remove leading slash and convert to site-relative path
-            if image_path.startswith('/files/'):
-                # Public files are in public/files/
-                local_path = frappe.get_site_path('public', image_path[1:])  # Remove leading slash
-            elif image_path.startswith('/private/files/'):
-                # Private files are in private/files/
-                local_path = frappe.get_site_path('private', image_path[9:])  # Remove '/private/' prefix
-            
-            # Check if file exists
-            if os.path.exists(local_path):
-                with open(local_path, 'rb') as image_file:
-                    image_data = image_file.read()
-                    base64_string = base64.b64encode(image_data).decode('utf-8')
-                    return base64_string
-            else:
-                frappe.log_error(f"Frappe file not found: {local_path} (original path: {image_path})", "convert_image_to_base64")
+        cache = frappe.cache()
+
+        local_path = _resolve_local_image_path(image_path)
+        if local_path is not None:
+            try:
+                st = os.stat(local_path)
+            except FileNotFoundError:
+                frappe.log_error(
+                    f"Image file not found: {local_path} (original path: {image_path})",
+                    "convert_image_to_base64",
+                )
                 return None
-        
-        # Handle file:// URLs or local paths
-        elif image_path.startswith('file://') or not image_path.startswith('http'):
-            # Remove file:// prefix if present
-            local_path = image_path.replace('file://', '')
-            
-            # If it's a relative path, make it absolute relative to frappe site public/files
-            if not os.path.isabs(local_path):
-                local_path = frappe.get_site_path('public', 'files', local_path)
-            
-            # Check if file exists
-            if os.path.exists(local_path):
-                with open(local_path, 'rb') as image_file:
-                    image_data = image_file.read()
-                    base64_string = base64.b64encode(image_data).decode('utf-8')
-                    return base64_string
-            else:
-                frappe.log_error(f"Image file not found: {local_path}", "convert_image_to_base64")
-                return None
-                
-        # Handle HTTP/HTTPS URLs
-        elif image_path.startswith('http'):
-            response = requests.get(image_path, timeout=10)
-            if response.status_code == 200:
-                image_data = response.content
-                base64_string = base64.b64encode(image_data).decode('utf-8')
-                return base64_string
-            else:
-                frappe.log_error(f"Failed to fetch image from URL: {image_path}, Status: {response.status_code}", "convert_image_to_base64")
-                return None
-                
+
+            cache_key = f"exampro:imgb64:local:{local_path}:{int(st.st_mtime)}:{st.st_size}"
+            cached = cache.get_value(cache_key)
+            if cached is not None:
+                return cached
+
+            with open(local_path, 'rb') as image_file:
+                image_data = image_file.read()
+            b64 = base64.b64encode(image_data).decode('utf-8')
+
+            if len(b64) <= _IMAGE_B64_CACHE_MAX_BYTES:
+                cache.set_value(cache_key, b64)
+            return b64
+
+        # Remote HTTP(S) URL
+        cache_key = f"exampro:imgb64:remote:{image_path}"
+        cached = cache.get_value(cache_key)
+        if cached is not None:
+            return cached
+
+        response = requests.get(image_path, timeout=10)
+        if response.status_code != 200:
+            frappe.log_error(
+                f"Failed to fetch image from URL: {image_path}, Status: {response.status_code}",
+                "convert_image_to_base64",
+            )
+            return None
+
+        b64 = base64.b64encode(response.content).decode('utf-8')
+        if len(b64) <= _IMAGE_B64_CACHE_MAX_BYTES:
+            cache.set_value(cache_key, b64, expires_in_sec=_IMAGE_B64_REMOTE_TTL)
+        return b64
+
     except Exception as e:
-        frappe.log_error(f"Error converting image to base64: {image_path}, Error: {str(e)}", "convert_image_to_base64")
+        frappe.log_error(
+            f"Error converting image to base64: {image_path}, Error: {str(e)}",
+            "convert_image_to_base64",
+        )
         return None
-        
-    return None
 
 def create_website_user(full_name, email):
     # Check if the user already exists
