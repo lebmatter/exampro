@@ -113,15 +113,23 @@ let recordingStream;
 let recordingInterval;
 
 async function sendVideoBlob(blob) {
-    // Two-step upload: mint a short-lived, key-bound presigned POST from the
+    // Two-step upload: mint a short-lived, key-bound presigned PUT from the
     // server, then upload the chunk directly to S3/R2. The server never sees
     // the bytes, which keeps gunicorn workers free during the exam.
+    //
+    // We declare blob.size to the mint endpoint so the server signs an exact
+    // Content-Length into the URL. The browser auto-sets Content-Length from
+    // the body, so a tampered client cannot smuggle a larger payload without
+    // breaking the signature.
     let mint;
     try {
         mint = await frappe.call({
             method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_video_upload_url",
             type: "POST",
-            args: { exam_submission: exam["exam_submission"] }
+            args: {
+                exam_submission: exam["exam_submission"],
+                chunk_size: blob.size,
+            },
         });
     } catch (err) {
         console.error("Failed to obtain video upload URL:", err);
@@ -129,7 +137,7 @@ async function sendVideoBlob(blob) {
     }
 
     const data = mint && mint.message;
-    if (!data || !data.url || !data.fields) {
+    if (!data || !data.url) {
         console.error("Invalid upload URL response", mint);
         return;
     }
@@ -140,15 +148,11 @@ async function sendVideoBlob(blob) {
         return;
     }
 
-    // Order matters for S3 POST policy: all policy fields first, then 'file'.
-    const form_data = new FormData();
-    Object.keys(data.fields).forEach((k) => form_data.append(k, data.fields[k]));
-    form_data.append("file", blob, "chunk.webm");
-
     try {
         const resp = await fetch(data.url, {
-            method: "POST",
-            body: form_data,
+            method: data.method || "PUT",
+            body: blob,
+            headers: data.headers || { "Content-Type": "video/webm" },
             // Do not send cookies/credentials to the storage origin.
             credentials: "omit",
             mode: "cors",

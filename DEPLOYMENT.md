@@ -70,8 +70,8 @@ In **Desk → Exam Settings**, set:
 ```json
 [{
   "AllowedOrigins": ["https://exam.example.com"],
-  "AllowedMethods": ["POST"],
-  "AllowedHeaders": ["*"],
+  "AllowedMethods": ["PUT"],
+  "AllowedHeaders": ["Content-Type", "Content-Length"],
   "ExposeHeaders": ["ETag"],
   "MaxAgeSeconds": 3000
 }]

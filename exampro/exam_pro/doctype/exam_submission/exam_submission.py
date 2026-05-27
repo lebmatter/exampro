@@ -1081,9 +1081,9 @@ def _assert_can_upload_video(exam_submission):
 
 
 @frappe.whitelist()
-def get_video_upload_url(exam_submission=None):
+def get_video_upload_url(exam_submission=None, chunk_size=None):
 	"""
-	Mint a short-lived, single-key presigned POST so the browser can upload one
+	Mint a short-lived, single-key presigned PUT so the browser can upload one
 	proctoring chunk directly to S3/R2, bypassing the Frappe request path.
 
 	Tamper-proofing:
@@ -1091,13 +1091,28 @@ def get_video_upload_url(exam_submission=None):
 	- The S3 key is server-generated (submission prefix + ms timestamp + random
 	  suffix). The candidate cannot choose it, predict future keys, or
 	  overwrite past keys.
-	- Policy pins the exact key, mime type and a content-length range, so even
-	  if the URL leaks, it can only upload one webm of bounded size to that
-	  one key.
-	- Per-submission rate limit prevents URL-mint flooding.
-	- 60s TTL.
+	- Content-Type is signed and pinned to video/webm.
+	- chunk_size is required, server-validated against MAX_VIDEO_CHUNK_BYTES,
+	  and signed into the URL as Content-Length. The browser auto-sets
+	  Content-Length from the actual body, so a tampered client can't send
+	  more bytes than declared without breaking the signature.
+	- Per-submission rate limit (5s) prevents URL-mint flooding.
+	- 60s URL TTL.
 	"""
 	_assert_can_upload_video(exam_submission)
+
+	# Validate declared size up-front so we never sign a URL that allows an
+	# oversize upload.
+	if chunk_size is None:
+		frappe.throw(_("chunk_size is required."))
+	try:
+		chunk_size = int(chunk_size)
+	except (TypeError, ValueError):
+		frappe.throw(_("chunk_size must be an integer."))
+	if chunk_size < 1 or chunk_size > MAX_VIDEO_CHUNK_BYTES:
+		frappe.throw(
+			_("chunk_size must be between 1 and {0} bytes.").format(MAX_VIDEO_CHUNK_BYTES)
+		)
 
 	cache = frappe.cache()
 	rate_key = f"video_upload_url_mint:{exam_submission}"
@@ -1120,7 +1135,7 @@ def get_video_upload_url(exam_submission=None):
 	if not bucket:
 		frappe.throw(_("Storage bucket is not configured."))
 
-	# Server-controlled key. Random suffix makes it unguessable, so previous
+	# Server-controlled key. Random suffix makes it unguessable so previous
 	# chunks cannot be overwritten by replaying a stale URL request.
 	key = "{sub}/{ts}-{rand}.webm".format(
 		sub=exam_submission,
@@ -1128,31 +1143,33 @@ def get_video_upload_url(exam_submission=None):
 		rand=secrets.token_hex(4),
 	)
 
+	content_type = "video/webm"
 	s3_client = get_s3_client()
 	try:
-		presigned = s3_client.generate_presigned_post(
-			Bucket=bucket,
-			Key=key,
-			Fields={"Content-Type": "video/webm"},
-			Conditions=[
-				{"bucket": bucket},
-				{"key": key},
-				{"Content-Type": "video/webm"},
-				["content-length-range", 1, MAX_VIDEO_CHUNK_BYTES],
-			],
+		url = s3_client.generate_presigned_url(
+			ClientMethod="put_object",
+			Params={
+				"Bucket": bucket,
+				"Key": key,
+				"ContentType": content_type,
+				"ContentLength": chunk_size,
+			},
 			ExpiresIn=VIDEO_UPLOAD_URL_TTL,
+			HttpMethod="PUT",
 		)
 	except Exception as e:
 		frappe.log_error(
-			f"Failed to mint presigned POST for {exam_submission}: {e}",
+			f"Failed to mint presigned PUT for {exam_submission}: {e}",
 			"Video upload URL error",
 		)
 		frappe.throw(_("Unable to prepare video upload. Please retry."))
 
 	return {
-		"url": presigned["url"],
-		"fields": presigned["fields"],
+		"url": url,
+		"method": "PUT",
 		"key": key,
+		"headers": {"Content-Type": content_type},
+		"expected_size": chunk_size,
 		"max_bytes": MAX_VIDEO_CHUNK_BYTES,
 		"expires_in": VIDEO_UPLOAD_URL_TTL,
 	}
