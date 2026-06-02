@@ -112,6 +112,10 @@ frappe.ui.form.on("Exam Submission", {
                             </div>
                         </div>
                         <div id="proctorTimelineCaption" class="text-muted" style="margin-top: 6px; font-size: 11px;"></div>
+                        <div style="margin-top: 20px; display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+                            <canvas id="proctorPie" width="240" height="240" style="flex: 0 0 auto;"></canvas>
+                            <div id="proctorPieBreakdown" style="font-size: 13px; line-height: 1.8; flex: 1 1 auto; min-width: 220px;"></div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -370,4 +374,85 @@ function drawProctorTimeline(frm) {
             : new Date(t1).toLocaleString();
         caption.textContent = `Exam window: ${startStr} → ${endStr}`;
     }
+
+    drawProctorPie(points, lanes);
+}
+
+// Pie + breakdown of per-state time. Each sample's duration is the gap to the
+// next sample; the final sample carries no duration (no future to fill).
+function drawProctorPie(points, lanes) {
+    const canvas = document.getElementById('proctorPie');
+    const breakdown = document.getElementById('proctorPieBreakdown');
+    if (!canvas || !breakdown) return;
+
+    const totals = {};
+    lanes.forEach(l => { totals[l.key] = 0; });
+    for (let i = 0; i < points.length - 1; i++) {
+        const dur = points[i + 1].t - points[i].t;
+        if (dur > 0 && totals[points[i].state] !== undefined) {
+            totals[points[i].state] += dur;
+        }
+    }
+    const grandMs = lanes.reduce((s, l) => s + totals[l.key], 0);
+
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2, r = Math.min(W, H) / 2 - 6;
+
+    if (grandMs === 0) {
+        ctx.fillStyle = '#eee';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#999';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No duration data', cx, cy);
+        breakdown.innerHTML = '';
+        return;
+    }
+
+    let start = -Math.PI / 2;
+    lanes.forEach(l => {
+        const frac = totals[l.key] / grandMs;
+        if (frac <= 0) return;
+        const end = start + frac * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, end);
+        ctx.closePath();
+        ctx.fillStyle = l.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        start = end;
+    });
+
+    const fmtMins = (ms) => {
+        const totalSec = Math.round(ms / 1000);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return `${m}m ${String(s).padStart(2, '0')}s`;
+    };
+
+    const rows = lanes.map(l => {
+        const ms = totals[l.key];
+        const pct = (ms / grandMs) * 100;
+        return `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 2px; background:${l.color};"></span>
+                <span style="flex: 0 0 130px;">${l.label}</span>
+                <span style="flex: 0 0 80px; font-variant-numeric: tabular-nums;">${fmtMins(ms)}</span>
+                <span style="color:#666; font-variant-numeric: tabular-nums;">${pct.toFixed(1)}%</span>
+            </div>
+        `;
+    }).join('');
+    breakdown.innerHTML = `
+        <div style="font-weight: 600; margin-bottom: 6px;">Time by state (total ${fmtMins(grandMs)})</div>
+        ${rows}
+    `;
 }
