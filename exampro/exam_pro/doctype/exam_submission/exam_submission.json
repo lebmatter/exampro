@@ -39,6 +39,7 @@
   "face_count_changes",
   "total_away_time",
   "total_distracted_time",
+  "proctor_timeline_section",
   "retina_location_log"
  ],
  "fields": [
@@ -263,6 +264,11 @@
   {
    "fieldname": "column_break_szvf",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "proctor_timeline_section",
+   "fieldtype": "Section Break",
+   "label": "Proctoring Timeline"
   },
   {
    "fieldname": "retina_location_log",

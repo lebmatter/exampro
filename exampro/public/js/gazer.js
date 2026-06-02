@@ -309,7 +309,11 @@ class Gazer {
     this.retinaLocations = [];
     this.lastRetinaPosition = null;
     this.lastRetinaLocationRecord = Date.now();
-    
+
+    // Last discrete proctoring state recorded into the timeline
+    // (screen / away / distracted / noface).
+    this.lastRecordedState = null;
+
     // Performance tracking
     this.frameCounter = 0;
     this.lastFrameTime = Date.now();
@@ -434,16 +438,24 @@ class Gazer {
     const horizontalGaze = (faceCenter.x - 0.5) / eyeDistance;
     const verticalGaze = faceCenter.y - 0.4;
 
-    // Determine gaze direction
+    // Determine gaze direction (screen vs away) — kept unchanged for the
+    // existing distracted-time accounting and overlay colours.
     let gazeDirection = "screen";
+    // Finer state for the proctoring timeline: horizontal deviation reads as
+    // "away" (looking sideways), vertical-only deviation as "distracted"
+    // (looking up/down, e.g. at notes), otherwise "screen".
+    let gazeState = "screen";
     if (Math.abs(horizontalGaze) > this.config.horizontalThreshold) {
       gazeDirection = "away";
+      gazeState = "away";
     } else if (Math.abs(verticalGaze) > this.config.verticalThreshold) {
       gazeDirection = "away";
+      gazeState = "distracted";
     }
 
     return {
       direction: gazeDirection,
+      state: gazeState,
       horizontal: horizontalGaze,
       vertical: verticalGaze,
       confidence: Math.max(0.5, 1 - Math.abs(horizontalGaze) - Math.abs(verticalGaze)),
@@ -505,6 +517,42 @@ class Gazer {
 
       this.log(`Recorded retina position: (${retinaPosition.x.toFixed(3)}, ${retinaPosition.y.toFixed(3)}) confidence: ${retinaPosition.confidence.toFixed(2)}`, "info");
     }
+  }
+
+  // Record one proctoring-timeline sample. Keyed on the discrete state
+  // (screen / away / distracted / noface) rather than gaze x/y movement, so the
+  // desk form can plot a state-over-time graph for the whole exam. Records on
+  // every state change and at least once per retinaLocationInterval while the
+  // state is unchanged.
+  recordTimelineSample(state, gazeData) {
+    if (!this.config.trackRetinaLocations) return;
+
+    const now = Date.now();
+    const timeSinceLast = (now - this.lastRetinaLocationRecord) / 1000;
+    const stateChanged = state !== this.lastRecordedState;
+
+    let shouldRecord = false;
+    if (this.lastRecordedState === null) {
+      shouldRecord = true;
+    } else if (stateChanged) {
+      shouldRecord = true;
+    } else if (timeSinceLast >= this.config.retinaLocationInterval) {
+      shouldRecord = true;
+    }
+    if (!shouldRecord) return;
+
+    const sample = { timestamp: now, state: state };
+    if (gazeData) {
+      sample.x = Math.max(0, Math.min(1, 0.5 + gazeData.horizontal));
+      sample.y = Math.max(0, Math.min(1, 0.5 + gazeData.vertical));
+      sample.confidence = gazeData.confidence;
+      // Keep the legacy field so older readers still work.
+      sample.gazeDirection = gazeData.direction;
+    }
+
+    this.retinaLocations.push(sample);
+    this.lastRecordedState = state;
+    this.lastRetinaLocationRecord = now;
   }
 
   // Smooth gaze detection
@@ -571,6 +619,12 @@ class Gazer {
       }
     }
 
+    // Record a "noface" timeline sample whenever no face is present — done here
+    // (before the idle early-return) so sustained absence is still captured.
+    if (this.currentFaces.length === 0) {
+      this.recordTimelineSample("noface", null);
+    }
+
     if (this.isIdle && this.config.pauseOnIdle) {
       return;
     }
@@ -611,10 +665,11 @@ class Gazer {
 
       if (gazeData) {
         const smoothedGaze = this.smoothGazeDetection(gazeData);
-        
-        // Record retina position if tracking is enabled
-        this.recordRetinaPosition(gazeData);
-        
+
+        // Record the discrete gaze state (screen / away / distracted) into the
+        // proctoring timeline.
+        this.recordTimelineSample(gazeData.state, gazeData);
+
         this.updateGazeStatus(smoothedGaze, gazeData);
 
         if (this.config.showGazeVector || this.config.showEyePoints) {
@@ -1178,6 +1233,7 @@ class Gazer {
     this.retinaLocations = [];
     this.lastRetinaPosition = null;
     this.lastRetinaLocationRecord = Date.now();
+    this.lastRecordedState = null;
 
     this.log("Camera stopped", "info");
   }
