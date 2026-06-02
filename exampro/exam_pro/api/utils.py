@@ -493,14 +493,37 @@ def calculate_attention_score(exam_submission):
     # if config:
     #     cfg.update(config)
 
+    values = frappe.db.get_value(
+        "Exam Submission", exam_submission,
+        "exam_started_time, total_away_time, total_distracted_time, face_count_changes"
+    )
     exam_started_time, total_away_time, total_distracted_time, face_changes = \
-        frappe.db.get_value("Exam Submission", exam_submission, "exam_started_time, total_away_time, total_distracted_time, face_count_changes")
-    # Calculate exam duration in seconds
+        values or (None, 0, 0, 0)
+
+    # Without a start time there is nothing meaningful to score. Return quietly
+    # instead of throwing — this runs inside the answer-save path and must never
+    # surface as an internal error to the candidate.
     if not exam_started_time:
-        frappe.throw(f"Exam Submission {exam_submission} does not have a start time.")
+        frappe.logger().warning(
+            f"calculate_attention_score: {exam_submission} has no start time; skipping."
+        )
+        return None
+
+    # Coerce possibly-null metrics to numbers.
+    total_away_time = total_away_time or 0
+    total_distracted_time = total_distracted_time or 0
+    face_changes = face_changes or 0
+
+    # Calculate exam duration in seconds
     duration_seconds = (datetime.now() - exam_started_time).total_seconds()
+    if duration_seconds <= 0:
+        # Exam just started (or clock skew): no measurable window yet to score.
+        frappe.logger().warning(
+            f"calculate_attention_score: {exam_submission} duration<=0; skipping."
+        )
+        return None
     duration_hours = duration_seconds / 3600
-    
+
     # Calculate percentages and rates
     away_percent = (total_away_time / duration_seconds) * 100
     distracted_percent = (total_distracted_time / duration_seconds) * 100

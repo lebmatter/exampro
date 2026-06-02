@@ -530,7 +530,17 @@ def _maybe_save_tracking_info(exam_submission):
 	frappe.cache().set_value(
 		cache_key, 1, expires_in_sec=_TRACKING_INFO_MIN_INTERVAL
 	)
-	return save_tracking_info(exam_submission)
+	# Proctoring metrics must never break answer submission. Swallow and log any
+	# failure so a bad tracking flush can't surface as an internal error to the
+	# candidate mid-exam.
+	try:
+		return save_tracking_info(exam_submission)
+	except Exception:
+		frappe.log_error(
+			f"save_tracking_info failed for {exam_submission}",
+			"exam tracking flush",
+		)
+		return False
 
 def get_submitted_questions(exam_submission, fields=["exam_question"]):
 	all_submitted = frappe.db.get_all(
@@ -609,7 +619,15 @@ def end_exam(exam_submission=None):
 		raise PermissionError("You don't have access to this exam.")
 	
 	if doc.status == "Started":
-		save_tracking_info(doc.name)
+		# Capture final tracking state, but never let a metrics failure block the
+		# candidate's submission from completing.
+		try:
+			save_tracking_info(doc.name)
+		except Exception:
+			frappe.log_error(
+				f"save_tracking_info failed during end_exam for {doc.name}",
+				"exam tracking flush",
+			)
 		doc.reload()
 
 		doc.status = "Submitted"
@@ -1418,8 +1436,6 @@ def save_tracking_info(exam_submission):
 	
 	# Get cached tracking data
 	cached_data = frappe.cache().get_value(cache_key)
-	print("#"*100)
-	print("Cached Data:", cached_data)
 	if not cached_data:
 		return False
 
@@ -1449,12 +1465,8 @@ def save_tracking_info(exam_submission):
 		"retina_location_log": frappe.as_json(retina_locations)
 	}
 	
-	print("#"*100)
-	print("Update Data:", update_data)
-	print("Retina Locations Count:", len(retina_locations))
-	
 	frappe.db.set_value("Exam Submission", exam_submission, update_data)
-	
+
 	frappe.db.commit()
 	calculate_attention_score(exam_submission)
 
