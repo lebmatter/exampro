@@ -712,6 +712,16 @@ frappe.ready(() => {
 
     });
 
+    $("#prevQs").click((e) => {
+        e.preventDefault();
+        // Save the current answer (navigateToQuestion handles both question
+        // types) then move to the previous question. Post-answer help is not
+        // triggered when navigating backwards.
+        if (currentQuestion && currentQuestion["no"] > 1) {
+            navigateToQuestion(currentQuestion["no"] - 1);
+        }
+    });
+
     $("#finish").click((e) => {
         e.preventDefault();
         // submit the current answer
@@ -774,6 +784,13 @@ function updateOverviewMap() {
                 } else {
                     $('#nextQs').show();
                     $('#finish').hide();
+                }
+
+                // Show Previous on every question except the first.
+                if (currentQuestion["no"] > 1) {
+                    $('#prevQs').show();
+                } else {
+                    $('#prevQs').hide();
                 }
             }
 
@@ -842,7 +859,9 @@ function navigateToQuestion(qsno) {
             frappe.call({
                 method: "exampro.exam_pro.doctype.exam_submission.exam_submission.submit_question_response",
                 type: "POST",
-                async: false, // Use synchronous call to ensure submission completes before navigation
+                // Async: navigation happens in the callback below, which already
+                // guarantees the save completes first — without freezing the UI
+                // thread the way a synchronous request did.
                 args: {
                     'exam_submission': exam["exam_submission"],
                     'qs_name': currentQuestion["name"],
@@ -1347,7 +1366,8 @@ function showSubmitConfirmPage() {
             args: {
                 "exam_submission": exam.exam_submission,
             },
-            async: false, // Use synchronous call to ensure we have updated data before displaying
+            // Async: the summary is rendered in the success handler below, which
+            // already runs after the data arrives — no need to freeze the UI.
             success: (data) => {
                 examOverview = data.message;
                 
@@ -1426,8 +1446,8 @@ function submitAnswer(loadNext) {
             // Don't submit empty subjective answers when navigating, just load next question
             if (currentQuestion["no"] < examOverview["total_questions"]) {
                 let nextQs = currentQuestion["no"] + 1;
+                // getQuestion's callback refreshes the overview map.
                 getQuestion(nextQs);
-                updateOverviewMap();
             } else {
                 showSubmitConfirmPage();
             }
@@ -1461,8 +1481,9 @@ function submitAnswer(loadNext) {
                 const advance = () => {
                     if (data.message.qs_no < examOverview["total_questions"]) {
                         let nextQs = data.message.qs_no + 1;
+                        // getQuestion's callback refreshes the overview map, so
+                        // we don't issue a second (redundant) updateOverviewMap.
                         getQuestion(nextQs);
-                        updateOverviewMap();
                     } else {
                         showSubmitConfirmPage();
                     }

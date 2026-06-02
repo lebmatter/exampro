@@ -173,6 +173,32 @@ def convert_image_to_base64(image_path):
         )
         return None
 
+def resolve_question_image(image_path):
+	"""
+	Return a browser-loadable reference for a question image.
+
+	"Attach Image" fields store a file URL. Handing that URL back lets the
+	browser fetch and cache the image once, instead of re-downloading a base64
+	blob inlined into every get_question response (which inflates the payload by
+	~33% and slows question transitions).
+
+	Public files and remote URLs are returned as-is. Private files — which the
+	candidate's session may not be able to fetch directly — fall back to base64
+	so they keep rendering. Data URIs pass through unchanged.
+	"""
+	if not image_path:
+		return None
+	# Already-inlined data URI: pass through.
+	if image_path.startswith("data:"):
+		return image_path
+	# Private files may not be directly fetchable by the candidate; inline them.
+	if image_path.startswith("/private/"):
+		return convert_image_to_base64(image_path)
+	# Public file URL or remote http(s) URL: hand back the reference so the
+	# browser can fetch and cache it across question navigations.
+	return image_path
+
+
 def create_website_user(full_name, email):
     # Check if the user already exists
     if frappe.db.exists("User", email):
@@ -667,15 +693,15 @@ def get_question(exam_submission=None, qsno=1):
 		"qs_no": answer_doc["seq_no"],
 		"name": question_doc.name,
 		"type": question_doc.type,
-		"description_image": convert_image_to_base64(question_doc.description_image),
+		"description_image": resolve_question_image(question_doc.description_image),
 		"option_1": question_doc.option_1,
 		"option_2": question_doc.option_2,
 		"option_3": question_doc.option_3,
 		"option_4": question_doc.option_4,
-		"option_1_image": convert_image_to_base64(question_doc.option_1_image),
-		"option_2_image": convert_image_to_base64(question_doc.option_2_image),
-		"option_3_image": convert_image_to_base64(question_doc.option_3_image),
-		"option_4_image": convert_image_to_base64(question_doc.option_4_image),
+		"option_1_image": resolve_question_image(question_doc.option_1_image),
+		"option_2_image": resolve_question_image(question_doc.option_2_image),
+		"option_3_image": resolve_question_image(question_doc.option_3_image),
+		"option_4_image": resolve_question_image(question_doc.option_4_image),
 		"multiple": question_doc.multiple,
 		# submitted answer
 		"marked_for_later": answer_doc["marked_for_later"],
