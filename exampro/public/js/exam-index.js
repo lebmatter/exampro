@@ -11,18 +11,26 @@ window.addEventListener("load", function () {
 
 async function requestMediaAccess() {
   try {
-    // Request both video and audio permissions
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+    // Reuse the single shared camera acquisition (defined in examform.js) so
+    // the permission pre-check, the recorder, and the face tracker all share
+    // one MediaStream. Opening the camera here independently would steal the
+    // device from the recorder and fire spurious track-ended terminations.
+    if (typeof acquireCameraStream === "function") {
+      mediaStream = await acquireCameraStream();
+    } else {
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+    }
 
     console.log("Media permissions granted");
     mediaPermissionsGranted = true;
 
-    // Set up the video stream (this function is only called when video proctoring is enabled)
+    // Set up the video stream (this function is only called when video proctoring is enabled).
+    // Only attach if nothing is attached yet — startRecording() also binds this element.
     const videoElement = document.getElementById("webcam-stream");
-    if (videoElement) {
+    if (videoElement && !videoElement.srcObject) {
       videoElement.srcObject = mediaStream;
     }
   } catch (error) {

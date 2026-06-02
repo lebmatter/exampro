@@ -281,6 +281,10 @@ class Gazer {
     
     // Event listeners
     this.resizeListener = null;
+
+    // requestAnimationFrame id for the self-driven frame loop used by
+    // startWithStream() (when running on an externally-owned stream).
+    this.frameLoopRAF = null;
     
     // Tracking data
     this.currentFaces = [];
@@ -1006,9 +1010,122 @@ class Gazer {
   }
 
 
+  // Start gaze tracking on an externally-provided MediaStream (or the stream
+  // already attached to the video element). Unlike start(), this does NOT
+  // instantiate MediaPipe's Camera helper, so it never opens the webcam a
+  // second time — essential when the proctoring recorder already holds the
+  // device.
+  async startWithStream(providedStream) {
+    if (!this.isModelLoaded) {
+      // Models instantiate synchronously today, but guard anyway: defer the
+      // start until they are ready instead of throwing.
+      const prevOnLoaded = this.config.onModelLoaded;
+      this.config.onModelLoaded = () => {
+        if (prevOnLoaded) {
+          try { prevOnLoaded(); } catch (e) {}
+        }
+        this.startWithStream(providedStream);
+      };
+      return;
+    }
+
+    if (this.isRunning) {
+      this.log("Gaze tracking already running", "warning");
+      return;
+    }
+
+    try {
+      this.log("Starting gaze tracking on existing stream...", "info");
+
+      // Attach the stream to the video element if it isn't already, and ensure
+      // it is playing so frames are available to MediaPipe.
+      if (providedStream && this.video.srcObject !== providedStream) {
+        this.video.srcObject = providedStream;
+      }
+      this.video.muted = true;
+      this.video.playsInline = true;
+      try {
+        await this.video.play();
+      } catch (e) {
+        this.log("Video play on existing stream deferred: " + e.message, "warning");
+      }
+
+      this.isRunning = true;
+
+      // Drive the detection loop ourselves at the configured frame rate, using
+      // requestVideoFrameCallback when available (fires once per decoded frame)
+      // and falling back to requestAnimationFrame.
+      const frameInterval = 1000 / this.config.targetFps;
+      let lastProcessTime = 0;
+      const useRVFC = typeof this.video.requestVideoFrameCallback === "function";
+
+      const tick = async () => {
+        if (!this.isRunning) return;
+        const now = Date.now();
+        if (now - lastProcessTime >= frameInterval && this.video.readyState >= 2) {
+          try {
+            await this.faceDetection.send({ image: this.video });
+            await this.faceMesh.send({ image: this.video });
+          } catch (e) {
+            // Per-frame send errors are non-fatal; keep the loop alive.
+          }
+          lastProcessTime = now;
+        }
+        if (!this.isRunning) return;
+        if (useRVFC) {
+          this.video.requestVideoFrameCallback(tick);
+        } else {
+          this.frameLoopRAF = requestAnimationFrame(tick);
+        }
+      };
+
+      if (useRVFC) {
+        this.video.requestVideoFrameCallback(tick);
+      } else {
+        this.frameLoopRAF = requestAnimationFrame(tick);
+      }
+
+      // Set initial canvas size and wire up the same resize handling start() uses.
+      this.updateCanvasSize();
+
+      this.resizeListener = () => this.handleVideoResize();
+      window.addEventListener("resize", this.resizeListener);
+      this.video.addEventListener("loadedmetadata", this.resizeListener);
+      this.video.addEventListener("loadeddata", this.resizeListener);
+      this.video.addEventListener("canplay", this.resizeListener);
+
+      if (window.ResizeObserver) {
+        this.videoResizeObserver = new ResizeObserver(() => {
+          this.handleVideoResize();
+        });
+        this.videoResizeObserver.observe(this.video);
+      }
+
+      // Start tracking data timer if configured
+      this.startTrackingDataTimer();
+
+      this.log("Gaze tracking started on existing stream", "success");
+    } catch (error) {
+      this.isRunning = false;
+      this.log("startWithStream error: " + error.message, "error");
+      if (this.config.onError) {
+        this.config.onError(error);
+      }
+      throw error;
+    }
+  }
+
+
   // Updated stop method to clean up all listeners
   async stop() {
     this.isRunning = false;
+
+    // Cancel the self-driven frame loop (startWithStream). The rVFC variant
+    // stops itself via the isRunning check; the RAF fallback needs cancelling.
+    if (this.frameLoopRAF) {
+      cancelAnimationFrame(this.frameLoopRAF);
+      this.frameLoopRAF = null;
+    }
 
     // Stop tracking data timer
     this.stopTrackingDataTimer();

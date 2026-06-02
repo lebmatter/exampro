@@ -291,6 +291,48 @@ async function sendVideoBlob(blob) {
     }
 }
 
+// Single, shared webcam acquisition.
+//
+// The camera must be opened exactly once and the resulting MediaStream shared
+// across every consumer (permission pre-check, the proctoring recorder, and the
+// Gazer face tracker). Opening it more than once made later getUserMedia/Camera
+// calls steal the device from earlier ones, firing spurious `track.ended`
+// events that instantly terminated exams and leaving the face tracker with no
+// frames. This memoises one acquisition: concurrent callers share the in-flight
+// promise, and later callers get the already-live stream.
+var sharedCameraStream = null;
+var sharedCameraPromise = null;
+
+function acquireCameraStream() {
+    // Reuse a live stream if we already have one.
+    if (sharedCameraStream &&
+        sharedCameraStream.getVideoTracks().some(function (t) { return t.readyState === 'live'; })) {
+        return Promise.resolve(sharedCameraStream);
+    }
+    // Join the in-flight acquisition if one is already running.
+    if (sharedCameraPromise) {
+        return sharedCameraPromise;
+    }
+    sharedCameraPromise = navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then(function (s) {
+            sharedCameraStream = s;
+            sharedCameraPromise = null;
+            return s;
+        })
+        .catch(function (err) {
+            sharedCameraPromise = null;
+            throw err;
+        });
+    return sharedCameraPromise;
+}
+
+// Expose for exam-index.js (loaded after this file) so the permission pre-check
+// reuses the same acquisition rather than opening a second camera.
+if (typeof window !== 'undefined') {
+    window.acquireCameraStream = acquireCameraStream;
+}
+
 // Function to start recording
 function startRecording() {
     // Prevent multiple initializations
@@ -300,16 +342,13 @@ function startRecording() {
     }
     
     recordingInitialized = true;
-    // Get the webcam stream
-    const constraints = {
-        audio: false,
-        video: true
-    };
 
     // Fire-and-forget; ok if it lands a beat after recording starts.
     refreshServerTimeOffset();
 
-    navigator.mediaDevices.getUserMedia(constraints)
+    // Reuse the single shared camera stream rather than opening the device
+    // again — a second open would end the first stream's tracks.
+    acquireCameraStream()
         .then(function (mediaStream) {
             stream = mediaStream;
 
@@ -318,15 +357,17 @@ function startRecording() {
             watermarkHandle = buildWatermarkedStream(stream);
             recordingStream = watermarkHandle.stream;
             
-            // Add track event listeners
-            stream.getTracks().forEach(track => {
+            // Watch only the VIDEO track for disconnection. The shared stream
+            // also carries an (unused) audio track from the permission check;
+            // a mic ending must not be treated as a webcam disconnect.
+            stream.getVideoTracks().forEach(track => {
                 track.addEventListener('ended', function () {
                     const currentTime = Date.now();
                     if (currentTime - lastWebcamErrorTime > webcamErrorCooldown) {
                         console.error('Webcam was disabled or stopped');
                         sendMessage('Webcam was disabled or stopped', 'Warning', 'nowebcam');
                         lastWebcamErrorTime = currentTime;
-                        
+
                         // Show a less intrusive notification
                         showNotification('Webcam was disabled or stopped. Please fix the issue.', 'error');
                     }
@@ -438,8 +479,10 @@ function startRecording() {
 
                     // Start gazer for the candidate's session — Registered (so we can verify
                     // a face is visible before allowing Start) or Started (during the exam).
+                    // Feed it the shared stream so it does NOT open the camera a second
+                    // time via MediaPipe's Camera helper.
                     if (exam.submission_status === "Started" || exam.submission_status === "Registered") {
-                        gazer.start();
+                        gazer.startWithStream(stream);
                     }
                 } catch (error) {
                     console.error("Failed to initialize gazer:", error);
