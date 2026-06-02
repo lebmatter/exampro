@@ -21,14 +21,27 @@ var helpReadingTimer = null;
 
 // Simple notification function as fallback
 function showNotification(message, type = 'info') {
+    // Audible cue for anything that needs the candidate's attention.
+    if ((type === 'warning' || type === 'error') && typeof playAlarm === 'function') {
+        playAlarm(type === 'error');
+    }
     // Try to use toastr first
     if (typeof toastr !== 'undefined') {
+        // Keep warnings/errors on screen long enough to be read (with a close
+        // button) instead of the default ~5s auto-dismiss.
+        const stickyOpts = {
+            timeOut: 20000,
+            extendedTimeOut: 10000,
+            closeButton: true,
+            tapToDismiss: false,
+            preventDuplicates: true
+        };
         switch(type) {
             case 'warning':
-                toastr.warning(message);
+                toastr.warning(message, '', stickyOpts);
                 break;
             case 'error':
-                toastr.error(message);
+                toastr.error(message, '', stickyOpts);
                 break;
             case 'success':
                 toastr.success(message);
@@ -57,13 +70,13 @@ function showNotification(message, type = 'info') {
         `;
         notification.textContent = message;
         document.body.appendChild(notification);
-        
-        // Remove after 5 seconds
+
+        // Remove after 20 seconds (was 5s — too short to notice).
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification);
             }
-        }, 5000);
+        }, 20000);
     }
 }
 
@@ -578,6 +591,7 @@ function activateDetector(){
                 tabChangeStr = `Tab changed detected for ${secondsInactive} seconds.`;
                 console.log(tabChangeStr);
                 sendMessage(tabChangeStr, "Warning", "tabchange");
+                if (typeof playAlarm === 'function') playAlarm(true);
                 examAlert(tabChangeStr, "Return to the window immediately!");
             },
             onActive: () => {
@@ -586,6 +600,7 @@ function activateDetector(){
             onMonitorChange: (lastScreens, currentScreens) => {
                 monitorChangeStr = `Monitor changed from ${lastScreens} to ${currentScreens}`;
                 sendMessage(monitorChangeStr, "Warning", "monitorchange");
+                if (typeof playAlarm === 'function') playAlarm(true);
                 examAlert(monitorChangeStr);
             }
         });
@@ -596,6 +611,17 @@ function activateDetector(){
 frappe.ready(() => {
     $('#submitTopBtn').hide();
     updateOverviewMap();
+
+    // Unlock the WebAudio alarm on the first user interaction. Browsers keep
+    // the AudioContext suspended until a gesture, so without this the proctoring
+    // alarm could be silently blocked the first time it tries to play.
+    const _unlockAudioOnce = () => {
+        if (typeof unlockExamAudio === 'function') unlockExamAudio();
+        document.removeEventListener('click', _unlockAudioOnce);
+        document.removeEventListener('keydown', _unlockAudioOnce);
+    };
+    document.addEventListener('click', _unlockAudioOnce);
+    document.addEventListener('keydown', _unlockAudioOnce);
 
     // Disable right-click context menu
     document.addEventListener('contextmenu', function(e) {
@@ -1148,10 +1174,17 @@ function startNoFaceCountdown() {
     if (noFaceTerminationTimer) return; // already counting down
     let secondsLeft = NO_FACE_GRACE_SECONDS;
     showNoFaceCountdownBanner(secondsLeft);
+    // Audible cue the moment the face is lost, then escalate near the end.
+    if (typeof playAlarm === 'function') playAlarm(false);
     noFaceCountdownInterval = setInterval(() => {
         secondsLeft -= 1;
         if (secondsLeft >= 0) {
             showNoFaceCountdownBanner(secondsLeft);
+            // Beep every second in the final stretch so an inattentive
+            // candidate is pulled back before termination.
+            if (secondsLeft <= 10 && typeof playAlarm === 'function') {
+                playAlarm(true);
+            }
         }
     }, 1000);
     noFaceTerminationTimer = setTimeout(() => {

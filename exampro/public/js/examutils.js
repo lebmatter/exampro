@@ -6,6 +6,109 @@ const examAlert = (alertTitle, alertText) => {
     $('#examAlert').modal('show');
 }
 
+// --- Audible alarm (WebAudio) -----------------------------------------------
+// Proctoring warnings and terminations need an audio cue, not just a toast.
+// A short beep is synthesized with WebAudio so no binary asset has to ship.
+// Browsers keep the AudioContext suspended until a user gesture, so we resume
+// it on the first interaction (see unlockExamAudio, wired up in examform.js).
+let _examAudioCtx = null;
+
+function _getExamAudioCtx() {
+    if (_examAudioCtx) return _examAudioCtx;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    try {
+        _examAudioCtx = new Ctx();
+    } catch (e) {
+        return null;
+    }
+    return _examAudioCtx;
+}
+
+// Resume a suspended AudioContext. Call from a user-gesture handler so later
+// programmatic alarms are allowed to play.
+function unlockExamAudio() {
+    const ctx = _getExamAudioCtx();
+    if (ctx && ctx.state === "suspended") {
+        ctx.resume().catch(function () {});
+    }
+}
+
+// Play a short alarm. `urgent` uses a higher pitch and an extra beep — used for
+// terminations and the final no-face countdown stretch.
+function playAlarm(urgent) {
+    const ctx = _getExamAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") {
+        // Best effort; blocked until a gesture has unlocked the context.
+        ctx.resume().catch(function () {});
+    }
+    const beeps = urgent ? 3 : 2;
+    const beepDur = 0.18;
+    const gap = 0.12;
+    const now = ctx.currentTime;
+    for (let i = 0; i < beeps; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.value = urgent ? 880 : 660;
+        const start = now + i * (beepDur + gap);
+        const end = start + beepDur;
+        // Short attack/decay envelope to avoid audible clicks.
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, end);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(end + 0.02);
+    }
+}
+
+// Blocking termination/critical alert. Reuses the #examAlert modal but makes it
+// non-dismissible and turns the footer button into an acknowledge action that
+// navigates away — replacing the old silent 5-second auto-reload that wiped the
+// notice before the candidate could read it.
+const criticalExamAlert = (message, onAcknowledge) => {
+    $('#alertTitle').text('Exam Ended');
+    $('#alertText').text(message);
+
+    // Make the modal blocking: hide the header close (X); the footer button
+    // becomes the only way out and performs the navigation.
+    $('#examAlert .modal-header .btn[data-bs-dismiss]').hide();
+
+    const $btn = $('#alertCloseButton');
+    $btn.text('OK').removeAttr('data-bs-dismiss');
+    $btn.off('click').on('click', function () {
+        if (typeof onAcknowledge === 'function') {
+            onAcknowledge();
+        } else {
+            window.location.reload();
+        }
+    });
+
+    const modalEl = document.getElementById('examAlert');
+    if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const inst = bootstrap.Modal.getOrCreateInstance(modalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        inst.show();
+    } else {
+        // jQuery fallback
+        $('#examAlert').modal({ backdrop: 'static', keyboard: false });
+        $('#examAlert').modal('show');
+    }
+
+    playAlarm(true);
+};
+
+if (typeof window !== "undefined") {
+    window.playAlarm = playAlarm;
+    window.unlockExamAudio = unlockExamAudio;
+    window.criticalExamAlert = criticalExamAlert;
+}
+
 function timeAgo(timestamp) {
     const currentTime = new Date();
     const providedTime = new Date(timestamp);
@@ -87,18 +190,12 @@ const updateMessages = (exam_submission) => {
                 }
 
                 if (chatmsg.type_of_message === "Critical") {
-                    frappe.msgprint({
-                        title: 'Critial',
-                        message: chatmsg.message ,
-                        primary_action:{
-                            action(values) {
-                                window.location.reload();
-                            }
-                        }
+                    // Blocking, acknowledged alert with an audible alarm. The
+                    // page navigates only when the candidate clicks OK — no
+                    // silent auto-reload that wipes the notice before it's read.
+                    criticalExamAlert(chatmsg.message, function () {
+                        window.location.reload();
                     });
-                    setTimeout(function() {
-                        window.location.reload()
-                    }, 5000); // 5 seconds delay
                 } else {
                     addChatBubble(chatmsg.creation, chatmsg.message, chatmsg.type_of_message, chatmsg.from);
                 }
