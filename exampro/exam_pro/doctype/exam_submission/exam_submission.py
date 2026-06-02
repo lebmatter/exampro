@@ -1045,6 +1045,71 @@ def proctor_video_list(exam_submission=None):
 
 	return res
 
+def _human_size(num_bytes):
+	"""Render a byte count as a short human-readable string (e.g. 1.2 MB)."""
+	try:
+		size = float(num_bytes)
+	except (TypeError, ValueError):
+		return "-"
+	for unit in ("B", "KB", "MB", "GB", "TB"):
+		if size < 1024 or unit == "TB":
+			return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+		size /= 1024
+
+@frappe.whitelist()
+def inspect_video_files(exam_submission=None):
+	"""
+	List the raw proctoring video objects stored under this submission's prefix
+	in S3/R2, with metadata (key, size, last-modified) and a short-lived
+	presigned download URL. Powers the desk "Inspect video files" action.
+
+	Desk-only: gated on read permission for the Exam Submission record.
+	"""
+	assert exam_submission
+	if frappe.session.user == "Guest":
+		raise frappe.PermissionError(_("Please login to access this page."))
+	if not frappe.has_permission("Exam Submission", "read", doc=exam_submission):
+		raise frappe.PermissionError(_("No permission to access this exam submission."))
+
+	settings = frappe.get_single("Exam Settings")
+	files = []
+	try:
+		s3_client = get_s3_client()
+		paginator = s3_client.get_paginator('list_objects_v2')
+		for page in paginator.paginate(Bucket=settings.s3_bucket, Prefix=exam_submission):
+			for obj in page.get('Contents', []):
+				key = obj['Key']
+				last_modified = obj.get('LastModified')
+				url = s3_client.generate_presigned_url(
+					'get_object',
+					Params={'Bucket': settings.s3_bucket, 'Key': key},
+					ExpiresIn=900,  # 15 min — enough to open/download for inspection
+				)
+				files.append({
+					"key": key,
+					"filename": key.split("/")[-1],
+					"size": obj.get('Size', 0),
+					"size_human": _human_size(obj.get('Size', 0)),
+					"last_modified": last_modified.isoformat() if last_modified else None,
+					"url": url,
+				})
+	except Exception as e:
+		frappe.log_error(
+			f"Error inspecting video files for {exam_submission}: {str(e)}",
+			"inspect_video_files error",
+		)
+		frappe.throw(_("Unable to list video files. Please check storage configuration."))
+
+	# Oldest first — keys are `{submission}/{ms_timestamp}-{rand}.webm`, so a
+	# lexical sort on the key is also chronological.
+	files.sort(key=lambda f: f["key"])
+	return {
+		"bucket": settings.s3_bucket,
+		"prefix": exam_submission,
+		"count": len(files),
+		"files": files,
+	}
+
 def _assert_can_upload_video(exam_submission):
 	"""
 	Authorize the current session to record a proctoring chunk for this submission.

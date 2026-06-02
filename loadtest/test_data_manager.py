@@ -63,11 +63,14 @@ class TestDataManager:
         """
         print(f"🧹 Deleting existing data for session: {self.test_session_id}")
         
-        # Define deletion order: exam submission -> exam schedule -> exam -> exam question -> exam question category -> users
+        # Define deletion order: child docs first, then parents. Exam Question
+        # sits between Exam and Exam Question Category so categories can be
+        # removed without dangling references.
         deletion_order = [
             "Exam Submission",
-            "Exam Schedule", 
+            "Exam Schedule",
             "Exam",
+            "Exam Question",
             "Exam Question Category",
             "User"
         ]

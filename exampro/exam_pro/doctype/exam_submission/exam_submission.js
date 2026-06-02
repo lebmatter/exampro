@@ -9,56 +9,63 @@
 
 frappe.ui.form.on("Exam Submission", {
     refresh(frm) {
-        // Handle video display
-        frappe.call({
-            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.exam_video_list",
-            args: {
-                "exam_submission": frm.doc.name,
-            },
-            callback: function (r) {
+        // "Inspect video files" — lists the raw proctoring objects stored under
+        // this submission's prefix in S3/R2 in a popup, with size, timestamp,
+        // and a short-lived link to open/download each file.
+        if (!frm.is_new()) {
+            frm.add_custom_button(
+                __("Inspect video files"),
+                () => show_video_files_dialog(frm),
+                __("Actions")
+            );
+        }
 
-                // Convert the object into an array of key-value pairs
-                const videoArray = Object.entries(r.message.videos);
-                if (videoArray != 0) {
-                    $('#videoDiv').removeClass("hidden");
-                    // Sort the array based on Unix timestamps in ascending order
-                    videoArray.sort((a, b) => a[0] - b[0]);
-                    var videoElement = document.getElementById("candidateVideo");
-                    var playPauseBtn = document.getElementById('play-pause-btn');
-                    var previousBtn = document.getElementById('previous-btn');
-                    var nextBtn = document.getElementById('next-btn');
-                    var indexField = document.getElementById('index-field');
+        // Load the Bootstrap Icons font best-effort so the control glyphs
+        // render. This is intentionally NOT gated together with the player
+        // logic: if the CDN is slow/blocked the player must still load (the
+        // buttons just fall back to bare labels).
+        if (!document.getElementById("exampro-bi-css")) {
+            const link = document.createElement("link");
+            link.id = "exampro-bi-css";
+            link.rel = "stylesheet";
+            link.href = "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css";
+            document.head.appendChild(link);
+        }
 
-                    var currentIndex = 0;
+        // Handle video display — reuses the framework-agnostic VideoPlayer
+        // module so the desk-form player and the proctor page stay aligned.
+        frappe.require("/assets/exampro/js/video_player.js", function () {
+            frappe.call({
+                method: "exampro.exam_pro.doctype.exam_submission.exam_submission.exam_video_list",
+                args: { exam_submission: frm.doc.name },
+                callback: function (r) {
+                    const videosMap = (r.message && r.message.videos) || {};
+                    const chunks = Object.entries(videosMap)
+                        .sort((a, b) => Number(a[0]) - Number(b[0]))
+                        .map(([, url]) => url);
 
-                    function playVideo() {
-                        videoElement.src = videoArray[currentIndex][1];
-                        videoElement.play();
-                        indexField.value = (currentIndex + 1) + '/' + videoArray.length;
+                    if (chunks.length === 0) return;
+
+                    const wrap = document.getElementById("esub-player-wrap");
+                    if (!wrap) return;
+                    wrap.classList.remove("hidden");
+
+                    if (frm._candidateVideoPlayer) {
+                        frm._candidateVideoPlayer.destroy();
                     }
-
-                    playPauseBtn.addEventListener('click', function () {
-                        if (videoElement.paused) {
-                            videoElement.play();
-                        } else {
-                            videoElement.pause();
-                        }
+                    frm._candidateVideoPlayer = new VideoPlayer({
+                        videoEl: "#esub-player-video",
+                        prevBtn: "#esub-player-prev",
+                        nextBtn: "#esub-player-next",
+                        playPauseBtn: "#esub-player-play",
+                        skipBackBtn: "#esub-player-skip-back",
+                        skipForwardBtn: "#esub-player-skip-fwd",
+                        goLiveBtn: "#esub-player-live",
+                        indexField: "#esub-player-index",
                     });
-
-                    previousBtn.addEventListener('click', function () {
-                        currentIndex--;
-                        playVideo();
-                    });
-
-                    nextBtn.addEventListener('click', function () {
-                        currentIndex++;
-                        playVideo();
-                    });
-
-                    // Initial video playback
-                    playVideo();
-                }
-            },
+                    frm._candidateVideoPlayer.loadChunks(chunks);
+                },
+            });
         });
 
         // Replace retina_location_log field with canvas plot
@@ -102,6 +109,77 @@ frappe.ui.form.on("Exam Submission", {
         }
     },
 });
+
+function show_video_files_dialog(frm) {
+    const dialog = new frappe.ui.Dialog({
+        title: __("Video Files"),
+        size: "large",
+        fields: [{ fieldtype: "HTML", fieldname: "files_html" }],
+    });
+
+    const $body = $(dialog.fields_dict.files_html.$wrapper);
+    $body.html(`<div class="text-muted text-center py-4">${__("Loading…")}</div>`);
+    dialog.show();
+
+    frappe.call({
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.inspect_video_files",
+        args: { exam_submission: frm.doc.name },
+        callback: function (r) {
+            const data = r.message || {};
+            const files = data.files || [];
+
+            if (files.length === 0) {
+                $body.html(
+                    `<div class="text-muted text-center py-4">${__("No video files found for this submission.")}</div>`
+                );
+                return;
+            }
+
+            const rows = files.map((f, i) => {
+                const modified = f.last_modified
+                    ? frappe.datetime.str_to_user(f.last_modified.replace("T", " ").split(".")[0])
+                    : "-";
+                return `
+                    <tr>
+                        <td class="text-muted">${i + 1}</td>
+                        <td style="word-break:break-all">${frappe.utils.escape_html(f.filename)}</td>
+                        <td class="text-right">${frappe.utils.escape_html(f.size_human || "-")}</td>
+                        <td>${frappe.utils.escape_html(modified)}</td>
+                        <td class="text-right">
+                            <a href="${f.url}" target="_blank" rel="noopener" class="btn btn-xs btn-default">
+                                ${__("Open")}
+                            </a>
+                        </td>
+                    </tr>`;
+            }).join("");
+
+            $body.html(`
+                <div class="mb-2 text-muted small">
+                    ${__("Bucket")}: <code>${frappe.utils.escape_html(data.bucket || "")}</code>
+                    &nbsp;·&nbsp; ${__("Prefix")}: <code>${frappe.utils.escape_html(data.prefix || "")}</code>
+                    &nbsp;·&nbsp; ${data.count} ${__("file(s)")}
+                </div>
+                <div style="max-height:60vh;overflow:auto">
+                    <table class="table table-bordered table-sm" style="margin-bottom:0">
+                        <thead>
+                            <tr>
+                                <th style="width:40px">#</th>
+                                <th>${__("File")}</th>
+                                <th class="text-right" style="width:90px">${__("Size")}</th>
+                                <th style="width:160px">${__("Last Modified")}</th>
+                                <th class="text-right" style="width:80px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="mt-2 text-muted small">
+                    ${__("Links expire in 15 minutes.")}
+                </div>
+            `);
+        },
+    });
+}
 
 function drawRetinaPlot(retinaData) {
     const canvas = document.getElementById('plotCanvas');

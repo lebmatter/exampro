@@ -22,7 +22,7 @@ function proctorApp() {
     
     // Video properties
     videoStore: {},
-    currentVideoIndex: {},
+    videoPlayers: {}, // VideoPlayer instance per submission
     videoBlobStore: {},
     existingMessages: {},
     offlineStatus: {}, // Track offline status for each submission
@@ -118,7 +118,14 @@ function proctorApp() {
         // Sort them by timestamp
         videoList.sort((a, b) => a.unixtimestamp - b.unixtimestamp);
         this.videoStore[examSubmission] = videoList.map((video) => video.videourl);
-        
+
+        // Push the chunk list into the per-submission VideoPlayer (does not
+        // disturb current playback; just keeps the array in sync).
+        const player = this.getPlayer(examSubmission);
+        if (player) {
+          player.setChunks(this.videoStore[examSubmission]);
+        }
+
         console.log(`Processed ${videoList.length} videos for ${examSubmission}`);
         
         // Check if candidate is offline based on latest video timestamp
@@ -204,141 +211,72 @@ function proctorApp() {
       this.pendingCandidatesCount = this.pendingCandidates.length;
     },
     
+    // Lazily create a VideoPlayer for the given submission, bound to its
+    // per-card DOM elements. Returns null if video proctoring is disabled or
+    // the video element isn't in the DOM yet.
+    getPlayer(examSubmission) {
+      const submission = this.submissions.find(s => s.name === examSubmission);
+      if (submission && !submission.enable_video_proctoring) {
+        return null;
+      }
+      if (this.videoPlayers[examSubmission]) {
+        return this.videoPlayers[examSubmission];
+      }
+      const videoEl = document.getElementById(examSubmission);
+      if (!videoEl || typeof VideoPlayer === 'undefined') {
+        return null;
+      }
+      const player = new VideoPlayer({
+        videoEl,
+        skipBackBtn: document.getElementById(`skipBack-${examSubmission}`),
+        skipForwardBtn: document.getElementById(`skipFwd-${examSubmission}`),
+        playPauseBtn: null, // togglePlay is wired through Alpine for proctoring-disabled check
+        goLiveBtn: null,    // playLastVideo is wired through Alpine for same reason
+      });
+      this.videoPlayers[examSubmission] = player;
+      return player;
+    },
+
+    notifyProctoringDisabled() {
+      if (typeof frappe !== 'undefined' && frappe.show_alert) {
+        frappe.show_alert({
+          message: 'Video proctoring is disabled for this exam',
+          indicator: 'orange'
+        });
+      } else {
+        alert('Video proctoring is disabled for this exam');
+      }
+    },
+
     // Video control methods
     togglePlay(examSubmission) {
-      // Check if video proctoring is enabled for this submission
       const submission = this.submissions.find(s => s.name === examSubmission);
       if (submission && !submission.enable_video_proctoring) {
-        console.log('Video proctoring is disabled for this submission');
-        if (typeof frappe !== 'undefined' && frappe.show_alert) {
-          frappe.show_alert({
-            message: 'Video proctoring is disabled for this exam',
-            indicator: 'orange'
-          });
-        } else {
-          alert('Video proctoring is disabled for this exam');
-        }
+        this.notifyProctoringDisabled();
         return;
       }
-      
-      const video = document.getElementById(examSubmission);
-      if (video) {
-        if (video.paused || video.ended) {
-          video.play().catch(error => {
-            if (error.name === 'AbortError') {
-              console.log('Video play was aborted, which is normal when switching videos quickly');
-            } else if (error.name === 'NotAllowedError') {
-              console.log('Video autoplay not allowed, user interaction required');
-            } else {
-              console.error('Error playing video:', error);
-            }
-          });
-        } else {
-          video.pause();
-        }
-      }
+      const player = this.getPlayer(examSubmission);
+      if (player) player.togglePlay();
     },
-    
+
     playVideoAtIndex(examSubmission, index) {
-      this.currentVideoIndex[examSubmission] = index;
-      const vid = document.getElementById(examSubmission);
-      
-      if (vid && this.videoStore[examSubmission] && this.videoStore[examSubmission][index]) {
-        // Pause and abort any current loading
-        vid.pause();
-        
-        // Check if the source is different to avoid unnecessary reloads
-        const newSrc = this.videoStore[examSubmission][index];
-        if (vid.src !== newSrc) {
-          vid.src = newSrc;
-          
-          // Handle loading with proper error handling
-          const loadVideo = async () => {
-            try {
-              vid.load();
-              await vid.play();
-            } catch (error) {
-              if (error.name === 'AbortError') {
-                console.log('Video loading was aborted, which is normal when switching videos quickly');
-              } else if (error.name === 'NotAllowedError') {
-                console.log('Video autoplay not allowed, user interaction required');
-              } else {
-                console.error('Error playing video:', error);
-              }
-            }
-          };
-          
-          loadVideo();
-        } else {
-          // Same source, just play
-          vid.play().catch(error => {
-            if (error.name !== 'AbortError') {
-              console.error('Error playing video:', error);
-            }
-          });
-        }
-      }
+      const player = this.getPlayer(examSubmission);
+      if (player) player.playAt(index);
     },
-    
+
     playNextVideo(examSubmission) {
-      // Check if video proctoring is enabled for this submission
-      const submission = this.submissions.find(s => s.name === examSubmission);
-      if (submission && !submission.enable_video_proctoring) {
-        console.log('Video proctoring is disabled for this submission');
-        return;
-      }
-      
-      if (!this.videoStore[examSubmission] || this.videoStore[examSubmission].length === 0) {
-        console.log('No videos available for', examSubmission);
-        return;
-      }
-      
-      const currentIndex = this.currentVideoIndex[examSubmission] || 0;
-      const nextIndex = currentIndex + 1;
-      
-      if (nextIndex < this.videoStore[examSubmission].length) {
-        this.playVideoAtIndex(examSubmission, nextIndex);
-      } else {
-        console.log('Already at the last video for', examSubmission);
-      }
+      const player = this.getPlayer(examSubmission);
+      if (player) player.next();
     },
-    
+
     playPreviousVideo(examSubmission) {
-      // Check if video proctoring is enabled for this submission
-      const submission = this.submissions.find(s => s.name === examSubmission);
-      if (submission && !submission.enable_video_proctoring) {
-        console.log('Video proctoring is disabled for this submission');
-        return;
-      }
-      
-      if (!this.videoStore[examSubmission] || this.videoStore[examSubmission].length === 0) {
-        console.log('No videos available for', examSubmission);
-        return;
-      }
-      
-      const currentIndex = this.currentVideoIndex[examSubmission] || 0;
-      const prevIndex = Math.max(0, currentIndex - 1);
-      
-      if (prevIndex !== currentIndex) {
-        this.playVideoAtIndex(examSubmission, prevIndex);
-      } else {
-        console.log('Already at the first video for', examSubmission);
-      }
+      const player = this.getPlayer(examSubmission);
+      if (player) player.prev();
     },
-    
+
     playLastVideo(examSubmission) {
-      // Check if video proctoring is enabled for this submission
-      const submission = this.submissions.find(s => s.name === examSubmission);
-      if (submission && !submission.enable_video_proctoring) {
-        console.log('Video proctoring is disabled for this submission');
-        return;
-      }
-      
-      if (this.videoStore[examSubmission] && this.videoStore[examSubmission].length > 0) {
-        this.playVideoAtIndex(examSubmission, this.videoStore[examSubmission].length - 1);
-      } else {
-        console.log('No videos available for', examSubmission);
-      }
+      const player = this.getPlayer(examSubmission);
+      if (player) player.goLive();
     },
     
     toggleOfflineStatus(examSubmission) {

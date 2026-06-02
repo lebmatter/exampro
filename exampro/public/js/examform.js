@@ -112,6 +112,130 @@ let stream;
 let recordingStream;
 let recordingInterval;
 
+// Offset between server wall-clock and client wall-clock (server - client, ms).
+// Captured from the `Date` header on the first chunk-upload mint response so the
+// watermark cannot be skewed by a candidate manipulating their system clock.
+let serverTimeOffsetMs = 0;
+
+function formatWatermarkTimestamp(date) {
+    // Render as YYYY-MM-DD HH:MM:SS IST to keep the watermark legible and
+    // unambiguous across viewer locales.
+    try {
+        const parts = new Intl.DateTimeFormat("en-GB", {
+            timeZone: "Asia/Kolkata",
+            year: "numeric", month: "2-digit", day: "2-digit",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            hour12: false,
+        }).formatToParts(date);
+        const map = {};
+        parts.forEach(p => { map[p.type] = p.value; });
+        return `${map.year}-${map.month}-${map.day} ${map.hour}:${map.minute}:${map.second} IST`;
+    } catch (e) {
+        return date.toISOString();
+    }
+}
+
+// Build a MediaStream that mirrors the webcam through a canvas with a
+// server-time timestamp burned into each frame. Returns the canvas stream
+// plus a cleanup function used at stopRecording time.
+function buildWatermarkedStream(rawStream) {
+    const sourceVideo = document.getElementById("watermark-source");
+    const canvas = document.getElementById("watermark-canvas");
+    if (!sourceVideo || !canvas) {
+        console.warn("Watermark DOM elements missing; recording without watermark");
+        return { stream: rawStream.clone(), stop: function () {} };
+    }
+
+    const track = rawStream.getVideoTracks()[0];
+    const settings = track ? track.getSettings() : {};
+    const width = settings.width || sourceVideo.videoWidth || 640;
+    const height = settings.height || sourceVideo.videoHeight || 480;
+    canvas.width = width;
+    canvas.height = height;
+
+    sourceVideo.srcObject = rawStream;
+    // play() can reject if the page hasn't seen user interaction; the
+    // watermark <video> is muted+playsinline so autoplay is permitted.
+    sourceVideo.play().catch(err => console.warn("watermark source play:", err));
+
+    const ctx = canvas.getContext("2d");
+    const fontSize = Math.max(14, Math.round(height / 28));
+    ctx.font = `${fontSize}px monospace`;
+    ctx.textBaseline = "bottom";
+
+    let cancelled = false;
+    let rafId = null;
+    const useRVFC = typeof sourceVideo.requestVideoFrameCallback === "function";
+
+    function drawFrame() {
+        if (cancelled) return;
+        if (sourceVideo.readyState >= 2) {
+            ctx.drawImage(sourceVideo, 0, 0, canvas.width, canvas.height);
+            const text = formatWatermarkTimestamp(new Date(Date.now() + serverTimeOffsetMs));
+            const padding = Math.round(fontSize * 0.4);
+            const textMetrics = ctx.measureText(text);
+            const stripWidth = textMetrics.width + padding * 2;
+            const stripHeight = fontSize + padding * 2;
+            const x = canvas.width - stripWidth - padding;
+            const y = canvas.height - padding;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+            ctx.fillRect(x, y - stripHeight + padding, stripWidth, stripHeight);
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(text, x + padding, y);
+        }
+        if (useRVFC) {
+            sourceVideo.requestVideoFrameCallback(drawFrame);
+        } else {
+            rafId = requestAnimationFrame(drawFrame);
+        }
+    }
+
+    if (useRVFC) {
+        sourceVideo.requestVideoFrameCallback(drawFrame);
+    } else {
+        rafId = requestAnimationFrame(drawFrame);
+    }
+
+    const watermarkedStream = canvas.captureStream(15);
+
+    return {
+        stream: watermarkedStream,
+        stop: function () {
+            cancelled = true;
+            if (rafId) cancelAnimationFrame(rafId);
+            try { sourceVideo.pause(); } catch (e) {}
+            sourceVideo.srcObject = null;
+            watermarkedStream.getTracks().forEach(t => t.stop());
+        },
+    };
+}
+let watermarkHandle = null;
+
+// Read the server's wall-clock via the HTTP Date header on any same-origin
+// response. Updates `serverTimeOffsetMs` so the watermark text reflects server
+// time even when the candidate's system clock is wrong.
+async function refreshServerTimeOffset() {
+    try {
+        const sentAt = Date.now();
+        const resp = await fetch("/api/method/ping", {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store",
+        });
+        const headerDate = resp.headers.get("Date");
+        if (!headerDate) return;
+        const parsed = Date.parse(headerDate);
+        if (isNaN(parsed)) return;
+        // Subtract half the RTT so the offset is measured at the midpoint
+        // between request and response — closer to what the server thought
+        // "now" was at the moment we asked.
+        const rtt = Date.now() - sentAt;
+        serverTimeOffsetMs = parsed + Math.round(rtt / 2) - Date.now();
+    } catch (err) {
+        console.warn("Failed to refresh server time offset:", err);
+    }
+}
+
 async function sendVideoBlob(blob) {
     // Two-step upload: mint a short-lived, key-bound presigned PUT from the
     // server, then upload the chunk directly to S3/R2. The server never sees
@@ -135,6 +259,7 @@ async function sendVideoBlob(blob) {
         console.error("Failed to obtain video upload URL:", err);
         return;
     }
+
 
     const data = mint && mint.message;
     if (!data || !data.url) {
@@ -181,12 +306,17 @@ function startRecording() {
         video: true
     };
 
+    // Fire-and-forget; ok if it lands a beat after recording starts.
+    refreshServerTimeOffset();
+
     navigator.mediaDevices.getUserMedia(constraints)
         .then(function (mediaStream) {
             stream = mediaStream;
-            
-            // Clone the stream for RecordRTC to avoid conflicts
-            recordingStream = stream.clone();
+
+            // Feed RecordRTC a canvas-derived stream so every frame carries a
+            // server-time watermark burned into the pixels (survives download).
+            watermarkHandle = buildWatermarkedStream(stream);
+            recordingStream = watermarkHandle.stream;
             
             // Add track event listeners
             stream.getTracks().forEach(track => {
@@ -319,14 +449,17 @@ function startRecording() {
             }
 
             if (exam["submission_status"] === "Started") { 
-            // Create a recorder instance using the cloned stream
-            recorder = RecordRTC(recordingStream, {
+            // 150 kbps gives the watermark text enough pixels to remain
+            // legible after VP8 encoding; the previous 8 kbps smeared text to
+            // unreadable noise.
+            const recorderOptions = {
                 type: 'video',
                 mimeType: 'video/webm',
-                videoBitsPerSecond: 8000,
-                disableLogs: true
+                videoBitsPerSecond: 150000,
+                disableLogs: true,
+            };
 
-            });
+            recorder = RecordRTC(recordingStream, recorderOptions);
 
             // Start recording
             recorder.startRecording();
@@ -338,8 +471,8 @@ function startRecording() {
                     let blob = recorder.getBlob();
 
                     sendVideoBlob(blob);
-                    // Reset the recorder with the cloned stream
-                    recorder = RecordRTC(recordingStream, { type: 'video', disableLogs: true });
+                    // Reset the recorder with the same options.
+                    recorder = RecordRTC(recordingStream, recorderOptions);
 
                     recorder.startRecording();
                 });
@@ -366,35 +499,26 @@ function startRecording() {
 function stopRecording() {
     // Stop recording and clear the recording interval
     clearInterval(recordingInterval);
-    if (recorder) {
-        recorder.stopRecording(function () {
-            // Release the original stream
-            if (stream) {
-                stream.getTracks().forEach(function (track) {
-                    track.stop();
-                });
-            }
-            // Release the cloned recording stream
-            if (recordingStream) {
-                recordingStream.getTracks().forEach(function (track) {
-                    track.stop();
-                });
-            }
-        });
-    } else {
-        // If recorder is not defined but streams exist, stop the tracks
+
+    const releaseStreams = function () {
+        if (watermarkHandle) {
+            try { watermarkHandle.stop(); } catch (e) {}
+            watermarkHandle = null;
+        }
         if (stream) {
-            stream.getTracks().forEach(function (track) {
-                track.stop();
-            });
+            stream.getTracks().forEach(function (track) { track.stop(); });
         }
         if (recordingStream) {
-            recordingStream.getTracks().forEach(function (track) {
-                track.stop();
-            });
+            recordingStream.getTracks().forEach(function (track) { track.stop(); });
         }
+    };
+
+    if (recorder) {
+        recorder.stopRecording(releaseStreams);
+    } else {
+        releaseStreams();
     }
-    
+
     // Reset recording flag so it can be reinitialized if needed
     recordingInitialized = false;
 }

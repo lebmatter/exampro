@@ -58,17 +58,36 @@ This creates:
 ### 4. Run Load Test
 
 ```bash
-# Basic load test
-locust -f locustfile.py --host=http://localhost:8000
+mkdir -p results
 
-# Automated test (no web UI)
-locust -f locustfile.py --host=http://localhost:8000 \
-       --users=20 --spawn-rate=2 --run-time=10m --headless
+# Smoke (50 users, 10 min)
+locust -f locustfile.py --host=https://exam.example.com \
+       --users=50  --spawn-rate=10 --run-time=10m --headless \
+       --csv=results/50u --html=results/50u.html
 
-# Advanced test with custom scenarios
-locust -f locustfile.py --host=http://localhost:8000 \
-       --users=50 --spawn-rate=5 --run-time=30m
+# Mid load (100 users, 15 min)
+locust -f locustfile.py --host=https://exam.example.com \
+       --users=100 --spawn-rate=10 --run-time=15m --headless \
+       --csv=results/100u --html=results/100u.html
+
+# Target load (500 users, 25 min)
+locust -f locustfile.py --host=https://exam.example.com \
+       --users=500 --spawn-rate=20 --run-time=25m --headless \
+       --csv=results/500u --html=results/500u.html
 ```
+
+Each Locust user is mapped deterministically to one seeded candidate
+(`loaduser{0..N-1}_{session_id}`), so `--users` must be ≤ `num_candidates`
+in `data.json`. The default seed is **500** candidates.
+
+The harness drives three independent per-user loops at production cadence:
+- Answer: `get_question` → "thinking" sleep → `submit_question_response`, every 25–60 s
+- Tracking: `post_tracking_info`, every 15 s (proctored exams only)
+- Video: `get_video_upload_url` → direct `POST` to S3/R2 with ~80 KB random bytes, every 10 s (proctored exams only)
+
+Video bytes are fake `os.urandom(80*1024)` — the S3 policy only enforces
+`Content-Type: video/webm` and a 1 B–10 MB size range, so random bytes are
+indistinguishable from a real webm for load-test purposes.
 
 ### 5. Cleanup Test Data
 

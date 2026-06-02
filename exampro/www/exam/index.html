@@ -127,6 +127,19 @@ head_include %}
             autoplay
             style="max-width: 100%; border-radius: 4px"
           ></video>
+          <!-- Hidden surfaces used to burn a timestamp watermark into the
+               recorded stream. The source <video> mirrors the raw webcam
+               feed; the <canvas> draws each frame with the timestamp
+               overlaid, and its captureStream() output is what RecordRTC
+               actually encodes and uploads. -->
+          <video
+            id="watermark-source"
+            autoplay
+            muted
+            playsinline
+            style="display: none"
+          ></video>
+          <canvas id="watermark-canvas" style="display: none"></canvas>
           {% else %}
           <p class="card-text">Video proctoring disabled.</p>
           {% endif %}

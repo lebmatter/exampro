@@ -5,12 +5,12 @@
     "admin_password": "admin"
   },
   "test_config": {
-    "num_candidates": 10,
+    "num_candidates": 500,
     "num_exams": 1,
-    "exam_duration_minutes": 30,
-    "concurrent_users": 10,
-    "spawn_rate": 2,
-    "test_duration_minutes": 10,
+    "exam_duration_minutes": 20,
+    "concurrent_users": 500,
+    "spawn_rate": 20,
+    "test_duration_minutes": 25,
     "session_id": "GHXHXJ123"
   },
   "User": {
