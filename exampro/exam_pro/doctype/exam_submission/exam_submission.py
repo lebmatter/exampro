@@ -781,6 +781,34 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 		# If warning count exceeds max_warning_count, terminate the exam
 		if warning_count >= max_warning_count:
 			doc.reload()
+			# Never override a finished/terminated exam. A late tab-change
+			# warning (e.g. the unload that fires on the post-submit redirect)
+			# must not flip a Submitted exam to Terminated.
+			if doc.status not in ("Terminated", "Submitted"):
+				doc.status = "Terminated"
+				doc.save(ignore_permissions=True)
+				frappe.db.commit()
+
+				# Add a message for exam termination
+				terminate_msg = frappe.get_doc({
+					"doctype": "Exam Messages",
+					"exam_submission": exam_submission,
+					"timestamp": frappe.utils.now(),
+					"from": "System",
+					"from_user": "Administrator",
+					"message": "Exam terminated due to excessive tab changes.",
+					"type_of_message": "Critical",
+					"warning_type": "other"
+				})
+				terminate_msg.insert(ignore_permissions=True)
+	
+	# Terminate exam immediately if warning_type is nowebcam
+	elif warning_type == "nowebcam":
+		doc.reload()
+		# Never override a finished/terminated exam. The camera teardown that
+		# happens on every normal submission ends the video track and would
+		# otherwise post a nowebcam warning after the exam is already Submitted.
+		if doc.status not in ("Terminated", "Submitted"):
 			doc.status = "Terminated"
 			doc.save(ignore_permissions=True)
 			frappe.db.commit()
@@ -792,31 +820,11 @@ def post_exam_message(exam_submission=None, message=None, type_of_message="Gener
 				"timestamp": frappe.utils.now(),
 				"from": "System",
 				"from_user": "Administrator",
-				"message": "Exam terminated due to excessive tab changes.",
+				"message": "Exam terminated due to webcam disconnection.",
 				"type_of_message": "Critical",
-				"warning_type": "other"
+				"warning_type": "nowebcam"
 			})
 			terminate_msg.insert(ignore_permissions=True)
-	
-	# Terminate exam immediately if warning_type is nowebcam
-	elif warning_type == "nowebcam":
-		doc.reload()
-		doc.status = "Terminated"
-		doc.save(ignore_permissions=True)
-		frappe.db.commit()
-
-		# Add a message for exam termination
-		terminate_msg = frappe.get_doc({
-			"doctype": "Exam Messages",
-			"exam_submission": exam_submission,
-			"timestamp": frappe.utils.now(),
-			"from": "System",
-			"from_user": "Administrator",
-			"message": "Exam terminated due to webcam disconnection.",
-			"type_of_message": "Critical",
-			"warning_type": "nowebcam"
-		})
-		terminate_msg.insert(ignore_permissions=True)
 
 	# Terminate when no face has been visible for the full grace period (camera covered/shutter closed)
 	elif warning_type == "nofacetimeout":

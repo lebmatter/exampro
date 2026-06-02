@@ -362,6 +362,10 @@ function startRecording() {
             // a mic ending must not be treated as a webcam disconnect.
             stream.getVideoTracks().forEach(track => {
                 track.addEventListener('ended', function () {
+                    // Ignore track-ended during a normal finish/termination:
+                    // stopRecording() stops the camera as part of teardown and
+                    // must not be reported as a webcam disconnect.
+                    if (examEnded) return;
                     const currentTime = Date.now();
                     if (currentTime - lastWebcamErrorTime > webcamErrorCooldown) {
                         console.error('Webcam was disabled or stopped');
@@ -659,6 +663,10 @@ frappe.ready(() => {
     if (exam.submission_status === "Started") {
         // Add event listener for window unload (close)
         window.addEventListener('beforeunload', function (e) {
+            // Don't emit a tab-change warning once the exam is finished — the
+            // post-submit redirect triggers unload and would otherwise count
+            // as a violation that could terminate an already-Submitted exam.
+            if (examEnded) return;
             sendMessage("Window closed", "Warning", "tabchange");
         });
         // Check if the navbar does not already have the class 'hidden'
@@ -1196,8 +1204,13 @@ function terminateForNoFace() {
             'warning_type': 'nofacetimeout',
         },
         callback: () => {
-            stopRecording();
+            // Stop emitters before recording teardown (examEnded is already
+            // true, so the track-ended handler is a no-op regardless).
             if (detector) detector.destroy();
+            if (gazer) {
+                try { gazer.stop(); } catch (e) {}
+            }
+            stopRecording();
             window.location.href = "/exam/" + exam.exam_submission;
         },
         error: (error) => {
@@ -1217,10 +1230,15 @@ function endExam(isAutoSubmit) {
             },
             callback: (data) => {
                 examEnded = true;
-                stopRecording();
+                // Stop all proctoring emitters before tearing down recording so
+                // none of them post a warning during the normal-finish teardown.
                 if (detector) {
                     detector.destroy();
                 }
+                if (gazer) {
+                    try { gazer.stop(); } catch (e) {}
+                }
+                stopRecording();
                 if (isAutoSubmit) {
                     window.location.href = "/exam?auto_submitted=1&submission=" + encodeURIComponent(exam.exam_submission);
                 } else {
