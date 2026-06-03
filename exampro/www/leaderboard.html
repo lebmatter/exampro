@@ -15,7 +15,7 @@
   {% if show_error %}
   <div class="row mb-4">
     <div class="col">
-      <h4 class="bold-heading">⚠️ {{ title }}</h4>
+      <h4 class="bold-heading"><i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>{{ title }}</h4>
       <p class="text-muted mb-0">{{ _("Access Restricted") }}</p>
     </div>
   </div>
@@ -28,7 +28,7 @@
   {% else %}
   <div class="row mb-4 align-items-end">
     <div class="col">
-      <h4 class="bold-heading">🏆 {{ _("Leaderboard") }}</h4>
+      <h4 class="bold-heading"><i class="bi bi-trophy-fill me-2 text-warning"></i>{{ _("Leaderboard") }}</h4>
       <p class="text-muted mb-0">{{ exam.title }}</p>
     </div>
   </div>

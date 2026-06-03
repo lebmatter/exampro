@@ -100,3 +100,12 @@
 .btn-group .btn + .btn {
   margin-left: 0.4rem;
 }
+
+.my-exams-table .btn {
+  display: inline-flex;
+  align-items: center;
+}
+
+.my-exams-table .btn > i {
+  margin-right: 0.45rem;
+}

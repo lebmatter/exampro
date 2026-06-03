@@ -32,18 +32,16 @@
   </div>
 
   {% else %}
-  <div class="row mb-4">
-    <div class="col">
-      <h4 class="bold-heading">
-        {% if result_type == "scorecard" %}🏅 Score Card
-        {% elif result_type == "terminated" %}⚠️ Exam Terminated
-        {% endif %}
-      </h4>
-      <p class="text-muted mb-0">{{ exam_submission.exam }}</p>
-    </div>
-  </div>
-
   <div class="result-card result-{{ result_type }}">
+    <div class="result-card-title">
+      {% if result_type == "scorecard" %}
+        <i class="bi bi-award-fill me-2 text-warning"></i>Score Card
+      {% elif result_type == "terminated" %}
+        <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Exam Terminated
+      {% endif %}
+    </div>
+    <div class="result-card-subtitle">{{ exam_submission.exam }}</div>
+
     {% if result_type == "scorecard" %}
     <div class="result-hero">
       <div class="score-ring {% if exam_submission.result_status == 'Passed' %}ring-passed{% else %}ring-failed{% endif %}">

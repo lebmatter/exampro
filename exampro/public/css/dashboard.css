@@ -8,6 +8,19 @@
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
   color: #212529;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dashboard-page .bold-heading > i,
+.bold-heading > i {
+  margin-right: 0.6rem;
+  font-size: 0.95em;
+}
+
+.bold-heading {
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Tabs */
