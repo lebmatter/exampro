@@ -38,6 +38,16 @@
   <div class="dashboard-card-footer">
     {% if item.status_label %}
     <span class="status-pill {{ item.status_class or 'status-neutral' }}">{{ item.status_label }}</span>
+    {% elif item.action_text and item.action_disabled %}
+    <span class="btn btn-sm btn-secondary dashboard-action disabled"
+          title="{{ item.action_disabled_reason or '' }}"
+          aria-disabled="true">
+      {{ item.action_text }}
+      <i class="bi bi-arrow-right ms-2"></i>
+    </span>
+    {% if item.action_disabled_reason %}
+    <small class="action-disabled-reason text-muted ms-2">{{ item.action_disabled_reason }}</small>
+    {% endif %}
     {% elif item.action_text %}
     <a href="{{ item.action_link }}" class="btn btn-sm btn-primary dashboard-action">
       {{ item.action_text }}

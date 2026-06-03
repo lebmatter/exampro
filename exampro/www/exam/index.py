@@ -36,6 +36,27 @@ def get_live_exam(member=None):
 			"exam_submitted_time",
 			"additional_time_given"
 	])
+
+	# Priority: Fixed-Started → Fixed-Registered → Flexible (by schedule start asc).
+	# Matches the dashboard's live-card ordering so /exam picks the same exam the
+	# dashboard surfaces as the active one.
+	def _sched_for_priority(sub):
+		s = frappe.get_cached_value(
+			"Exam Schedule", sub["exam_schedule"],
+			["schedule_type", "start_date_time"], as_dict=True
+		)
+		return s or {"schedule_type": "Fixed", "start_date_time": datetime.max}
+
+	def _priority(sub):
+		s = _sched_for_priority(sub)
+		if s["schedule_type"] == "Fixed":
+			tier = 0 if sub["status"] == "Started" else 1
+		else:
+			tier = 2
+		return (tier, s["start_date_time"] or datetime.max)
+
+	submissions.sort(key=_priority)
+
 	for submission in submissions:
 		# Pull only the fields we actually use. Avoids loading both the full
 		# Exam Schedule and Exam docs on every landing-page hit.

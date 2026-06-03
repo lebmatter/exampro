@@ -55,6 +55,9 @@ def _candidate_items():
 			"badge_class": "badge-exam",
 			"role_label": None,
 			"role_class": None,
+			"submission_status": sub["status"],
+			"action_disabled": False,
+			"action_disabled_reason": None,
 			"title": exam.title,
 			"description": _short_desc(exam.description),
 			"start_time": schedule.start_date_time,
@@ -210,8 +213,37 @@ def get_context(context):
 		e_live, _e_upcoming = _evaluator_items()
 		live += e_live
 
-	live.sort(key=lambda c: c["start_time"] or datetime.min)
+	def _live_priority(c):
+		"""Priority for sorting live cards. Lower = higher priority.
+		0 = candidate's Fixed exam that has been Started.
+		1 = candidate's Fixed exam Registered but not yet started.
+		2 = candidate's Flexible exam (ordered by start_time asc).
+		3 = candidate exam in a terminal/status state (Submitted/Terminated).
+		4 = proctor / evaluator cards.
+		"""
+		if c.get("kind") != "exam":
+			return (4, c["start_time"] or datetime.max)
+		if not c.get("action_text"):
+			return (3, c["start_time"] or datetime.max)
+		if c.get("schedule_type") == "Fixed":
+			return (0 if c.get("submission_status") == "Started" else 1,
+					c["start_time"] or datetime.min)
+		return (2, c["start_time"] or datetime.max)
+
+	live.sort(key=_live_priority)
 	upcoming.sort(key=lambda c: c["start_time"] or datetime.max)
+
+	# Only one exam can be active at a time. If any candidate Fixed exam is
+	# currently live (registered or started), disable Start/Continue buttons
+	# on every OTHER candidate exam card. The highest-priority Fixed card
+	# (sorted to the top) keeps its action enabled.
+	exam_live = [c for c in live if c.get("kind") == "exam" and c.get("action_text")]
+	has_fixed_live = any(c.get("schedule_type") == "Fixed" for c in exam_live)
+	if has_fixed_live and exam_live:
+		active = exam_live[0]
+		for c in exam_live[1:]:
+			c["action_disabled"] = True
+			c["action_disabled_reason"] = "Finish your active fixed exam first"
 
 	context.live_items = live
 	context.upcoming_items = upcoming

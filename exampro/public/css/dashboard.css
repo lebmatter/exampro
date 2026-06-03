@@ -182,6 +182,22 @@
   align-items: center;
 }
 
+.dashboard-action.disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  border-color: #e9ecef;
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.action-disabled-reason {
+  font-size: 0.75rem;
+  flex-basis: 100%;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
 .dashboard-card-footer .status-pill {
   display: inline-block;
   font-size: 0.72rem;
