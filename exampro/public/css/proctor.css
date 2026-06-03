@@ -339,129 +339,121 @@
   }
 }
 
-/* Alert Card Styling - Consistent with result.html */
+/* Alert card — shared aesthetic with dashboard/result. */
 .alert-card {
-  max-width: 800px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  border-top: 3px solid #17a2b8;
+  max-width: 640px;
   margin: 0 auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  border: none;
-  background-color: #fff;
 }
 
 .alert-card-header {
-  padding: 15px 20px;
-  font-weight: 600;
-  color: #495057;
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0.85rem 1.1rem;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  background-color: #e9ecef;
-  border-bottom: 3px solid #6c757d;
 }
 
 .alert-card-header h4 {
+  font-size: 0.95rem;
   font-weight: 600;
+  color: #212529;
   margin: 0;
-  color: #495057;
+  display: inline-flex;
+  align-items: center;
 }
 
 .alert-card-header i {
-  margin-right: 8px;
+  margin-right: 0.5rem;
   color: #6c757d;
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 .alert-card-body {
-  padding: 25px;
+  padding: 2rem 1.75rem;
   text-align: center;
 }
 
 .alert-icon-section {
-  text-align: center;
-  margin-bottom: 20px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e7f6f8;
+  color: #117a8b;
+  font-size: 2.25rem;
+  margin: 0 auto 1rem;
 }
 
-.alert-icon-section i {
-  font-size: 64px;
-  color: #17a2b8;
-}
+.alert-icon-section i { color: inherit; font-size: inherit; }
 
 .alert-status {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #17a2b8;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 1rem;
 }
 
 .alert-message-box {
-  background-color: #f8f9fa;
+  background: #fafbfc;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #17a2b8;
   border-radius: 6px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.5rem;
   text-align: left;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border-left: 4px solid #17a2b8;
 }
 
 .alert-message-box p {
-  margin-bottom: 0;
-  font-size: 16px;
+  margin: 0;
+  font-size: 0.95rem;
   line-height: 1.5;
+  color: #495057;
 }
 
 .alert-actions {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .alert-button {
-  padding: 8px 20px;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
+  padding: 0.5rem 1.1rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
-.alert-button:hover {
-  transform: translateY(-2px);
-  text-decoration: none;
-}
+.alert-button i { margin-right: 0.5rem; }
 
 .alert-button-primary {
-  background-color: #007bff;
-  color: white;
-  border: 1px solid #007bff;
+  background: #0d6efd;
+  color: #fff;
+  border-color: #0d6efd;
 }
 
 .alert-button-primary:hover {
-  background-color: #0056b3;
-  color: white;
-  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+  background: #0b5ed7;
+  border-color: #0a58ca;
+  color: #fff;
+  text-decoration: none;
 }
 
-.alert-button i {
-  margin-right: 8px;
-}
-
-/* Responsive adjustments for alert card */
-@media (max-width: 767px) {
-  .alert-card {
-    margin: 0 10px;
-  }
-
-  .alert-icon-section i {
-    font-size: 48px;
-  }
-
-  .alert-status {
-    font-size: 20px;
-  }
+@media (max-width: 575px) {
+  .alert-card-body { padding: 1.5rem 1.1rem; }
+  .alert-icon-section { width: 72px; height: 72px; font-size: 1.85rem; }
+  .alert-actions { flex-direction: column; }
+  .alert-button { width: 100%; justify-content: center; }
 }

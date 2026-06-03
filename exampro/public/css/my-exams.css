@@ -1,229 +1,102 @@
-.tag {
-  font-size: 1rem;
+/* My Exams — past attempts table.
+   Layout primitives shared with the dashboard live in dashboard.css. */
+
+.my-exams-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
 }
-/* Common styling from examform.html */
-.bold-heading {
+
+.my-exams-table {
+  margin: 0;
+}
+
+.my-exams-table thead th {
+  background: #fafbfc;
+  color: #6c757d;
   font-weight: 600;
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.85rem 1rem;
+}
+
+.my-exams-table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.9rem;
+}
+
+.my-exams-table tbody tr:first-child td {
+  border-top: none;
+}
+
+.exam-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.exam-title {
+  font-weight: 600;
   color: #212529;
 }
 
-.common-card-style {
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  border: none;
-  margin-bottom: 2rem;
+.status-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
 }
 
-.column-card {
-  display: flex;
-  flex-direction: column;
+.status-passed {
+  background: #e8f5e9;
+  color: #1b5e20;
 }
 
-/* Table styling */
-.table td,
-.table th {
-  padding: 1rem;
-  vertical-align: middle;
+.status-failed {
+  background: #fdecea;
+  color: #b71c1c;
 }
 
-.thead-light th {
-  background-color: #f8f9fa;
+.status-pending {
+  background: #fff3cd;
+  color: #8a6100;
+}
+
+.status-neutral {
+  background: #f1f3f5;
   color: #495057;
-  border-color: #dee2e6;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.btn-sm {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.875rem;
-}
-
-.ms-2 {
-  margin-left: 0.5rem;
-}
-
-.alert-info {
-  border-left: 4px solid #17a2b8;
-  background-color: rgba(23, 162, 184, 0.1);
-  border: none;
-  padding: 1rem;
-}
-
-.alert-warning {
-  border-left: 4px solid #ffc107;
-  background-color: rgba(255, 193, 7, 0.1);
-  border: none;
-  padding: 1rem;
-}
-
-.alert-danger {
-  border-left: 4px solid #dc3545;
-  background-color: rgba(220, 53, 69, 0.1);
-  border: none;
-  padding: 1rem;
-}
-
-.next-exam-banner,
-.proctor-alert-banner,
-.evaluator-alert-banner {
+.my-exams-pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: #fafbfc;
+  flex-wrap: wrap;
 }
 
-.next-exam-banner i,
-.proctor-alert-banner i,
-.evaluator-alert-banner i {
-  font-size: 1.2rem;
-  margin-right: 0.5rem;
+.my-exams-pagination .pagination .page-link {
+  color: #495057;
+  border-color: rgba(0, 0, 0, 0.08);
 }
 
-.btn-info {
-  background-color: #17a2b8;
-  border-color: #17a2b8;
-  color: white;
+.my-exams-pagination .pagination .page-item.active .page-link {
+  background-color: #212529;
+  border-color: #212529;
+  color: #fff;
 }
 
-.btn-info:hover {
-  background-color: #138496;
-  border-color: #117a8b;
-  color: white;
-}
-
-.btn-warning {
-  background-color: #ffc107;
-  border-color: #ffc107;
-  color: #212529;
-}
-
-.btn-warning:hover {
-  background-color: #e0a800;
-  border-color: #d39e00;
-  color: #212529;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-  border-color: #bd2130;
-  color: white;
-}
-
-.alert-secondary {
-  background-color: #f8f9fa;
-  border: none;
-  border-left: 4px solid #6c757d;
-  padding: 1rem;
-}
-
-/* Badge styling */
-.badge {
-  font-weight: 500;
-  padding: 0.35em 0.65em;
-  font-size: 0.75rem;
-}
-
-.bg-primary {
-  background-color: #0d6efd !important;
-}
-
-.bg-warning {
-  background-color: #ffc107 !important;
-}
-
-.bg-success {
-  background-color: #198754 !important;
-}
-
-.bg-info {
-  background-color: #0dcaf0 !important;
-}
-
-.bg-secondary {
-  background-color: #6c757d !important;
-}
-
-.bg-danger {
-  background-color: #dc3545 !important;
-}
-
-.text-white {
-  color: #fff !important;
-}
-
-.text-dark {
-  color: #212529 !important;
-}
-
-/* Pagination Styles */
-.pagination-container {
-  border-top: 1px solid #dee2e6;
-  background-color: #f8f9fa;
-}
-
-.pagination {
-  margin-bottom: 0;
-}
-
-/* Text alignment utilities for different screen sizes */
-.text-md-start {
-  text-align: center;
-}
-
-@media (min-width: 768px) {
-  .text-md-start {
-    text-align: left !important;
-  }
-
-  .justify-content-md-end {
-    justify-content: flex-end !important;
-  }
-}
-
-.page-item.active .page-link {
-  background-color: #17a2b8;
-  border-color: #17a2b8;
-}
-
-.page-link {
-  color: #17a2b8;
-}
-
-.page-link:hover {
-  color: #138496;
-}
-
-.page-item.disabled .page-link {
-  color: #6c757d;
-  pointer-events: none;
-  background-color: #fff;
-  border-color: #dee2e6;
-}
-
-/* Button group styling */
-.btn-group .btn {
-  margin-right: 0.25rem;
-}
-
-.btn-group .btn:last-child {
-  margin-right: 0;
+.btn-group .btn + .btn {
+  margin-left: 0.4rem;
 }

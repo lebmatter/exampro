@@ -152,6 +152,9 @@ class ExamSchedule(Document):
 		examiners_changed = self._have_examiners_changed(old_doc)
 		
 		if examiners_changed:
+			has_submissions = frappe.db.exists("Exam Submission", {"exam_schedule": self.name})
+			if not has_submissions:
+				return
 			frappe.msgprint(
 				msg="Examiner assignments have been modified. All exam submissions will be reassigned to maintain balanced distribution.",
 				title="Reassigning Exam Submissions",

@@ -1,190 +1,311 @@
-/* Exam Result Styles */
+/* Score card / result page — matches dashboard aesthetic. */
 
-.exam-result-card {
-    max-width: 800px;
-    margin: 0 auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    overflow: hidden;
-    border: none;
+.result-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.75rem;
 }
 
-.card-header {
-    padding: 15px 20px;
-    font-weight: 600;
-    color: #495057;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+.result-card.result-scorecard {
+  border-top: 3px solid #198754;
 }
 
-.card-header h4 {
-    font-weight: 600;
-    margin: 0;
+.result-card.result-pending {
+  border-top: 3px solid #ff9800;
 }
 
-.header-scorecard {
-    background-color: #e7f1ff;
-    border-bottom: 3px solid #007bff;
+.result-card.result-terminated {
+  border-top: 3px solid #dc3545;
 }
 
-.header-pending {
-    background-color: #fff3e0;
-    border-bottom: 3px solid #ff9800;
+.result-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.75rem;
 }
 
-.header-terminated {
-    background-color: #f8d7da;
-    border-bottom: 3px solid #dc3545;
+.score-ring {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  margin-bottom: 1rem;
 }
 
-.card-body {
-    padding: 25px;
+.score-ring.ring-passed {
+  border: 5px solid #198754;
+  color: #1b5e20;
 }
 
-.result-icon {
-    text-align: center;
-    margin-bottom: 20px;
+.score-ring.ring-failed {
+  border: 5px solid #dc3545;
+  color: #b71c1c;
 }
 
-.result-icon i {
-    font-size: 64px;
+.score-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.icon-scorecard { 
-    color: #007bff; 
+.score-total {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
 }
 
-.icon-pending { 
-    color: #ff9800; 
+.hero-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
 }
 
-.icon-terminated { 
-    color: #dc3545; 
+.hero-icon-pending {
+  background: #fff3cd;
+  color: #8a6100;
 }
 
-/* Card header icon styles */
-.card-header i {
-    margin-right: 8px;
-    color: inherit;
+.hero-icon-failed {
+  background: #fdecea;
+  color: #b71c1c;
 }
 
-.score-circle {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background-color: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    font-weight: bold;
-    margin: 0 auto 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
+.status-pill {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
 }
 
-.score-circle:hover {
-    transform: scale(1.05);
+.status-pill.status-passed {
+  background: #e8f5e9;
+  color: #1b5e20;
 }
 
-.circle-passed { 
-    color: #28a745;
-    border: 6px solid #28a745;
+.status-pill.status-failed {
+  background: #fdecea;
+  color: #b71c1c;
 }
 
-.circle-failed { 
-    color: #dc3545;
-    border: 6px solid #dc3545;
+.status-pill.status-pending {
+  background: #fff3cd;
+  color: #8a6100;
 }
 
-.circle-pending { 
-    color: #ff9800;
-    border: 6px solid #ff9800;
+/* Meta rows */
+.result-meta {
+  background: #fafbfc;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  padding: 0.25rem 0;
+  margin-bottom: 1.5rem;
 }
 
-.result-status {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    text-align: center;
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.9rem;
 }
 
-.status-passed { 
-    color: #28a745; 
+.meta-row:first-child {
+  border-top: none;
 }
 
-.status-failed { 
-    color: #dc3545; 
+.meta-label {
+  color: #6c757d;
+  font-weight: 500;
 }
 
-.status-pending { 
-    color: #ff9800; 
+.meta-value {
+  color: #212529;
+  font-weight: 600;
+  text-align: right;
 }
 
-.status-terminated { 
-    color: #dc3545; 
+.result-message {
+  background: #fafbfc;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #adb5bd;
+  border-radius: 6px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.5rem;
+  color: #495057;
 }
 
-.message-box {
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    text-align: left;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+.result-pending .result-message {
+  border-left-color: #ff9800;
 }
 
-.box-scorecard { 
-    border-left: 4px solid #007bff; 
+.result-terminated .result-message {
+  border-left-color: #dc3545;
 }
 
-.box-pending { 
-    border-left: 4px solid #ff9800; 
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.box-terminated { 
-    border-left: 4px solid #dc3545; 
+.result-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.1rem;
 }
 
-.exam-details {
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    text-align: left;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+@media (max-width: 575px) {
+  .result-card {
+    padding: 1.5rem 1.1rem;
+  }
+  .score-ring {
+    width: 120px;
+    height: 120px;
+  }
+  .score-value {
+    font-size: 1.85rem;
+  }
 }
 
-.exam-details p {
-    margin-bottom: 10px;
+/* Pending alert card — same look as the exam-page alert. */
+.dashboard-page:has(> .alert-card) {
+  min-height: calc(100vh - 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.back-button {
-    padding: 8px 20px;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.3s ease;
+.alert-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 720px;
+  margin: 2rem auto;
+  padding: 2rem 2.25rem;
+  display: flex;
+  flex-direction: column;
 }
 
-.back-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+.alert-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 1.25rem;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
-/* Responsive adjustments */
-@media (max-width: 767px) {
-    .exam-result-card {
-        margin: 0 10px;
-    }
-    
-    .score-circle {
-        width: 120px;
-        height: 120px;
-        font-size: 24px;
-    }
-    
-    .result-status {
-        font-size: 20px;
-    }
+.alert-card-header h4 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a6100;
+  background: #fff3cd;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.alert-card-header h4 i {
+  margin-right: 0.45rem;
+  color: inherit;
+  font-size: 0.95rem;
+}
+
+.alert-card-body { padding: 0; text-align: left; }
+
+.alert-icon-section { display: none; }
+
+.alert-status {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #212529;
+  margin: 0 0 0.75rem;
+  line-height: 1.3;
+}
+
+.alert-message-box {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0 0 1.75rem;
+}
+
+.alert-message-box p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #495057;
+}
+
+.alert-actions {
+  margin-top: auto;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.alert-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.1rem;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.alert-button i { margin-right: 0.45rem; }
+
+.alert-button-primary {
+  background: #0d6efd;
+  color: #fff;
+  border-color: #0d6efd;
+}
+
+.alert-button-primary:hover {
+  background: #0b5ed7;
+  border-color: #0a58ca;
+  color: #fff;
+  text-decoration: none;
+}
+
+.alert-button-secondary {
+  background: #fff;
+  color: #495057;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.alert-button-secondary:hover {
+  background: #f1f3f5;
+  color: #212529;
+  text-decoration: none;
 }

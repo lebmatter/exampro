@@ -1,399 +1,223 @@
-.leaderboard-container {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-    padding: 2rem;
-    margin: 1rem auto;
-    width: 100%;
+/* Leaderboard — shares the dashboard aesthetic (white cards, subtle borders,
+   status pills). Confetti decoration is preserved from the previous design. */
+
+.leaderboard-desc {
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
 }
 
-.bold-heading {
-    font-weight: 700;
-    color: #2c3e50;
-    margin-bottom: 1rem;
+.leaderboard-section {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
 }
 
-.exam-title {
-    color: #7c3aed;
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+.section-header {
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 1.1rem;
+  font-weight: 600;
+  color: #212529;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
 }
 
-.exam-info {
-    color: #6b7280;
-    font-size: 0.95rem;
-    margin-bottom: 1rem;
+/* Your-performance stat grid */
+.user-stats .stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: rgba(0, 0, 0, 0.06);
 }
 
-.badge {
-    margin-right: 5px;
-    padding: 6px 10px;
+.user-stats .stat-cell {
+  background: #fff;
+  padding: 1.1rem 0.75rem;
+  text-align: center;
 }
 
-.filter-section {
-    background: #f8fafc;
-    border-radius: 15px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    border: 1px solid #e2e8f0;
+.stat-value {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #212529;
+  line-height: 1.1;
 }
 
-.filter-section h5 {
-    color: #374151;
-    margin-bottom: 1rem;
-    font-weight: 600;
+.stat-suffix {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6c757d;
+  margin-left: 0.15rem;
 }
 
-.form-select, .btn {
-    border-radius: 10px;
-    border: 2px solid #e2e8f0;
-    transition: all 0.3s ease;
+.stat-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #6c757d;
+  margin-top: 0.35rem;
 }
 
-.form-select:focus, .btn:focus {
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.25);
+/* KPI cards */
+.kpi-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: 1rem 0.85rem;
+  text-align: center;
+  height: 100%;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
-    border: none;
-    font-weight: 600;
-    padding: 0.6rem 1.5rem;
+.kpi-icon {
+  font-size: 1.4rem;
+  display: block;
+  margin-bottom: 0.4rem;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
+.kpi-icon-primary { color: #0d6efd; }
+.kpi-icon-success { color: #198754; }
+.kpi-icon-warning { color: #f5c344ff; }
+.kpi-icon-info    { color: #17a2b8; }
+
+.kpi-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #212529;
 }
 
-.leaderboard-table {
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f1f5f9;
+.kpi-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #6c757d;
+  margin-top: 0.15rem;
 }
 
-.table thead th {
-    background: #f8f9fa;
-    color: #495057;
-    font-weight: 600;
-    border: none;
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+/* Rankings table */
+.leaderboard-table thead th {
+  background: #fafbfc;
+  color: #6c757d;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 1rem;
 }
 
-.table tbody tr {
-    transition: all 0.3s ease;
-    border: none;
+.leaderboard-table tbody td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.9rem;
 }
 
-.table tbody tr:hover {
-    background: #f8fafc;
-    transform: scale(1.01);
-}
-
-.table tbody td {
-    padding: 1rem;
-    vertical-align: middle;
-    border-color: #f1f5f9;
-    font-size: 0.95rem;
-}
-
-.rank-cell {
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.rank-1 {
-    background: #ffd700;
-    color: #92400e;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.rank-2 {
-    background: #c0c0c0;
-    color: #4b5563;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.rank-3 {
-    background: #cd7f32;
-    color: white;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.candidate-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.candidate-avatar {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 600;
-    font-size: 1.1rem;
-}
-
-.candidate-name {
-    font-weight: 600;
-    color: #374151;
-    font-size: 1rem;
-}
-
-.score-cell {
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.score-excellent {
-    color: #10b981;
-}
-
-.score-good {
-    color: #3b82f6;
-}
-
-.score-average {
-    color: #f59e0b;
-}
-
-.score-poor {
-    color: #ef4444;
-}
-
-.percentage-badge {
-    display: inline-block;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.percentage-excellent {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.percentage-good {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.percentage-average {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.percentage-poor {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.loading-spinner {
-    text-align: center;
-    padding: 3rem;
-}
-
-.spinner-border {
-    color: #7c3aed;
-}
-
-.no-data {
-    text-align: center;
-    padding: 3rem;
-    color: #6b7280;
-}
-
-.no-data i {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    color: #d1d5db;
-}
-
-.error-container {
-    background: rgba(239, 68, 68, 0.1);
-    border: 2px solid #fecaca;
-    border-radius: 15px;
-    padding: 2rem;
-    text-align: center;
-    margin: 2rem 0;
-}
-
-.error-container i {
-    font-size: 4rem;
-    color: #ef4444;
-    margin-bottom: 1rem;
-}
-
-.error-container h3 {
-    color: #dc2626;
-    margin-bottom: 1rem;
-}
-
-.error-container p {
-    color: #7f1d1d;
-    font-size: 1.1rem;
-}
-
-.user-stats-card {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-}
-
-.user-stats-card h5 {
-    margin-bottom: 1rem;
-    font-weight: 600;
+.leaderboard-table tbody tr:first-child td {
+  border-top: none;
 }
 
 .user-rank-highlight {
-    background-color: #fff8e6 !important;
-    border-left: 3px solid #f59e0b;
+  background: rgba(245, 195, 68, 0.08);
 }
 
-.stats-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+.candidate-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
-.stat-card {
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f1f5f9;
+.candidate-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.stat-card i {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+.candidate-name {
+  font-weight: 500;
+  color: #212529;
 }
 
-.stat-card .stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #374151;
+/* Rank medals */
+.rank-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
 }
 
-.stat-card .stat-label {
-    color: #6b7280;
-    font-size: 0.9rem;
+.rank-gold   { background: linear-gradient(135deg, #f5c344, #c79100); }
+.rank-silver { background: linear-gradient(135deg, #d4d4d4, #9e9e9e); }
+.rank-bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); }
+
+.rank-plain {
+  font-weight: 600;
+  color: #495057;
+  display: inline-block;
+  width: 32px;
+  text-align: center;
 }
 
+/* Status pills (shared with result/dashboard) */
+.status-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+}
+
+.status-pill.status-passed  { background: #e8f5e9; color: #1b5e20; }
+.status-pill.status-failed  { background: #fdecea; color: #b71c1c; }
+.status-pill.status-pending { background: #fff3cd; color: #8a6100; }
+
+/* Confetti decoration */
 .confetti-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-    overflow: hidden;
-}
-
-.card {
-    background-color: white !important;
-    position: relative;
-    z-index: 1;
-}
-
-.card-body {
-    background-color: white !important;
-}
-
-.card-header {
-    background-color: #f8f9fa !important;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
 }
 
 .confetti-piece {
-    position: absolute;
-    opacity: 0.7;
-    animation: float 6s ease-in-out infinite;
+  position: absolute;
+  opacity: 0.65;
+  animation: float 6s ease-in-out infinite;
 }
 
-.confetti-circle {
-    border-radius: 50%;
-}
-
-.confetti-square {
-    transform: rotate(45deg);
-}
-
-.confetti-triangle {
-    width: 0;
-    height: 0;
-}
-
-.confetti-diamond {
-    transform: rotate(45deg);
-    border-radius: 2px;
-}
-
-.confetti-star {
-    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-}
+.confetti-circle   { border-radius: 50%; }
+.confetti-square   { transform: rotate(45deg); }
+.confetti-triangle { width: 0; height: 0; }
+.confetti-diamond  { transform: rotate(45deg); border-radius: 2px; }
+.confetti-star     { clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    25% { transform: translateY(-10px) rotate(90deg); }
-    50% { transform: translateY(-5px) rotate(180deg); }
-    75% { transform: translateY(-15px) rotate(270deg); }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25%      { transform: translateY(-10px) rotate(90deg); }
+  50%      { transform: translateY(-5px) rotate(180deg); }
+  75%      { transform: translateY(-15px) rotate(270deg); }
 }
 
-@media (max-width: 768px) {
-    .leaderboard-container {
-        margin: 1rem;
-        padding: 1rem;
-    }
-    
-    .header-section h1 {
-        font-size: 2rem;
-    }
-    
-    .table tbody td {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.9rem;
-    }
-    
-    .candidate-avatar {
-        width: 35px;
-        height: 35px;
-        font-size: 0.9rem;
-    }
+@media (max-width: 767px) {
+  .user-stats .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

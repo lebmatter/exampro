@@ -1,324 +1,118 @@
 from datetime import datetime, timedelta
 import frappe
-from frappe.utils import now, format_datetime
+from frappe.utils import format_datetime
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams, can_show_exam_results_for_leaderboard
-from exampro.www.evaluate import get_evaluator_live_exams
-
-def get_proctor_upcoming_events(proctor=None):
-	"""Get upcoming proctoring events for the next 7 days"""
-	proctor = proctor or frappe.session.user
-	
-	# Check if user has proctor role
-	if "Exam Proctor" not in frappe.get_roles():
-		return []
-	
-	# Get current time and 7 days from now
-	current_time = frappe.utils.now_datetime()
-	week_later = current_time + timedelta(days=7)
-	
-	# Get upcoming exam schedules where user is assigned as proctor
-	upcoming_schedules = frappe.get_all(
-		"Exam Schedule",
-		filters={
-			"start_date_time": ["between", [current_time, week_later]]
-		},
-		fields=[
-			"name",
-			"exam",
-			"start_date_time",
-			"duration"
-		],
-		order_by="start_date_time"
-	)
-	
-	upcoming_events = []
-	for schedule in upcoming_schedules:
-		# Count assigned candidates for this proctor in this schedule
-		candidate_count = frappe.db.count(
-			"Exam Submission",
-			{
-				"exam_schedule": schedule.name,
-				"assigned_proctor": proctor,
-				"status": ["not in", ["Registration Cancelled", "Aborted"]]
-			}
-		)
-		
-		if candidate_count > 0:
-			exam_title = frappe.db.get_value("Exam", schedule.exam, "title")
-			upcoming_events.append({
-				"schedule_name": schedule.name,
-				"exam_title": exam_title,
-				"start_time": schedule.start_date_time,
-				"duration": schedule.duration,
-				"candidate_count": candidate_count
-			})
-	
-	return upcoming_events
 
 
-def get_user_exams(member=None, page=1, page_size=10):
-	"""
-	Get upcoming/ongoing exam of a candidate.
-	Supports pagination with page and page_size parameters.
+PAST_STATUSES = ("Submitted", "Terminated")
+
+
+def get_past_exams(member=None, page=1, page_size=10):
+	"""Return paginated past exams for the logged-in candidate.
+
+	An exam is considered past when the submission is finished (Submitted /
+	Terminated) or when the schedule window has closed even if the candidate
+	never started (auto-submitted entries are handled by
+	submit_candidate_pending_exams beforehand).
 	"""
 	res = []
-
 	submissions = frappe.get_all(
 		"Exam Submission",
-		{"candidate": member or frappe.session.user},[
+		{"candidate": member or frappe.session.user},
+		[
 			"name",
 			"exam_schedule",
 			"status",
 			"exam_started_time",
 			"exam_submitted_time",
 			"additional_time_given",
-			"result_status"], ignore_permissions=True)
-	for submission in submissions:
-		schedule = frappe.get_doc("Exam Schedule", submission["exam_schedule"], ignore_permissions=True)
+			"result_status",
+		],
+		ignore_permissions=True,
+	)
+
+	for sub in submissions:
+		schedule = frappe.get_doc("Exam Schedule", sub["exam_schedule"], ignore_permissions=True)
 		exam = frappe.get_doc("Exam", schedule.exam, ignore_permissions=True)
+		sched_status = schedule.get_status()
 
-		# end time is schedule start time + duration + additional time given
-		end_time = schedule.start_date_time + timedelta(minutes=schedule.duration) + \
-			timedelta(minutes=submission["additional_time_given"])
-		if schedule.schedule_type == "Flexible":
-			# For flexible schedules, we consider the end time as start time + duration + 5 min buffer
-			end_time += timedelta(days=schedule.schedule_expire_in_days)
+		is_past = sub["status"] in PAST_STATUSES or sched_status == "Completed"
+		if not is_past:
+			continue
 
-		# Check if certificate exists for this submission
-		certificate_exists = frappe.db.exists("Exam Certificate", {"exam_submission": submission["name"]})
+		certificate_exists = frappe.db.exists(
+			"Exam Certificate", {"exam_submission": sub["name"]}
+		)
 		exam.leaderboard = exam.leaderboard or "No Leaderboard"
-		
-		# Check if leaderboard can be shown based on show_result settings
-		submission_doc = frappe.get_doc("Exam Submission", submission["name"])
+		submission_doc = frappe.get_doc("Exam Submission", sub["name"])
 		leaderboard_can_show = can_show_exam_results_for_leaderboard(exam, submission_doc)
-		exam_details = {
-			"exam_submission": submission["name"],
-			"exam": schedule.exam,
-			"exam_name": exam.name,
-			"exam_title": exam.title,  # Add exam title for display
-			"exam_schedule": submission["exam_schedule"],
+
+		res.append({
+			"submission": sub["name"],
+			"exam_title": exam.title,
 			"start_time": schedule.start_date_time,
-			"schedule_time": format_datetime(schedule.start_date_time, "dd MMM YYYY, HH:mm"),  # Added for template
-			"end_time": end_time,
-			"additional_time_given": submission["additional_time_given"],
-			"submission_status": submission["status"],
-			"status": submission["status"],  # Added for template
-			"duration": f"{schedule.duration} min",  # Format duration as "X min"
-			"enable_calculator": exam.enable_calculator,
-			"schedule_status": schedule.get_status(),
+			"schedule_time": format_datetime(schedule.start_date_time, "dd MMM YYYY, HH:mm"),
+			"duration": f"{schedule.duration} min",
 			"schedule_type": schedule.schedule_type,
-			"enable_video_proctoring": exam.enable_video_proctoring,
-			"enable_chat": exam.enable_chat,
-			"submission": submission["name"],  # Added for view result link
-			"result_status": submission["result_status"],
+			"status": sub["status"],
+			"result_status": sub["result_status"],
 			"can_show_results": leaderboard_can_show,
-			# Leaderboard information
 			"leaderboard_enabled": exam.leaderboard != "No Leaderboard" and leaderboard_can_show,
-			"leaderboard_type": exam.leaderboard,
-			# Certificate information
 			"certification_enabled": exam.enable_certification,
 			"certificate_exists": certificate_exists,
 			"certificate_name": certificate_exists if certificate_exists else None,
-			"flexible_schedule_status": "",
-			}
+		})
 
-		# make datetime in isoformat
-		for key,val in exam_details.items():
-			if isinstance(val, datetime):
-				exam_details[key] = val.isoformat()
+	res.sort(key=lambda x: x["start_time"] or datetime.min, reverse=True)
 
-		# checks if current time is between schedule start and end time
-		# ongoing exams can be in Not started, started or submitted states
-		if exam_details["schedule_status"] == "Ongoing" and schedule.schedule_type == "Fixed" and submission["status"] in ["Registered", "Started"]:
-			frappe.local.flags.redirect_location = "/exam"
-			raise frappe.Redirect
-		if exam_details["schedule_status"] == "Ongoing" and schedule.schedule_type == "Flexible":
-			exam_details["flexible_schedule_status"] = "Finish before " + format_datetime(end_time, "dd MMM, HH:mm")
-		if exam_details["schedule_status"] == "Completed" and schedule.schedule_type == "Flexible":
-			exam_details["flexible_schedule_status"] = "Finished on " + format_datetime(end_time, "dd MMM, HH:mm")
-		# if time is over, submit if applicable
-		if submission["status"] != "Submitted" and exam_details["schedule_status"] == "Completed":
-			doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
-			doc.status = "Submitted"
-			doc.save(ignore_permissions=True)
-				
-		# Set status field to match template expectations
-		if submission["status"] == "Not Started":
-			exam_details["status"] = "Upcoming"
-		else:
-			exam_details["status"] = submission["status"]
-				
-		res.append(exam_details)
+	total = len(res)
+	total_pages = (total + page_size - 1) // page_size
+	start = (page - 1) * page_size
+	end = min(start + page_size, total)
 
-	# Sort exams by schedule time
-	res.sort(key=lambda x: x["start_time"], reverse=True)
-
-	# Calculate pagination
-	total_exams = len(res)
-	total_pages = (total_exams + page_size - 1) // page_size  # Ceiling division
-	start_idx = (page - 1) * page_size
-	end_idx = min(start_idx + page_size, total_exams)
-	
-	# Return paginated results and pagination metadata
 	return {
-		"exams": res[start_idx:end_idx],
+		"exams": res[start:end],
 		"pagination": {
-			"total": total_exams,
+			"total": total,
 			"page": page,
 			"page_size": page_size,
 			"total_pages": total_pages,
 			"has_prev": page > 1,
-			"has_next": page < total_pages
-		}
+			"has_next": page < total_pages,
+		},
 	}
 
-def get_next_exam(exams):
-	"""
-	Get the next upcoming or current exam for the user.
-	This now gets all exams (not just the paginated ones) to ensure we always show the correct next exam.
-	"""
-	# For the next exam banner, we need to consider ALL exams, not just the paginated ones
-	if not exams:
-		all_exams = get_user_exams(page=1, page_size=1000)["exams"]  # Get all exams
-	else:
-		all_exams = exams
-		
-	if not all_exams:
-		return None
-	
-	# Group exams by status
-	started_exams = [exam for exam in all_exams if exam["submission_status"] == "Started"]
-	ongoing_exams = [exam for exam in all_exams if "Ongoing" in exam["schedule_status"] and exam["submission_status"] == "Registered"]
-	upcoming_exams = [exam for exam in all_exams if exam["schedule_status"] == "Upcoming"]
-	
-	# Return started exam first if available
-	if started_exams:
-		return started_exams[0]
-	
-	if ongoing_exams:
-		# Sort ongoing exams by start time and return the first one
-		return sorted(ongoing_exams, key=lambda x: x["start_time"])[0]
-	
-	# Otherwise return the next upcoming exam (closest to current time)
-	if upcoming_exams:
-		# Sort by start_time
-		return sorted(upcoming_exams, key=lambda x: x["start_time"])[0]
-	
-	return None
-
-def get_time_until(target_datetime_str):
-	"""Calculate time difference between now and target datetime."""
-	target_datetime = datetime.fromisoformat(target_datetime_str)
-	now_datetime = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
-	diff = target_datetime - now_datetime
-	
-	days = diff.days
-	hours, remainder = divmod(diff.seconds, 3600)
-	minutes, seconds = divmod(remainder, 60)
-	
-	if days > 0:
-		return f"{days} days, {hours} hours"
-	elif hours > 0:
-		return f"{hours} hours, {minutes} minutes"
-	else:
-		return f"{minutes} minutes"
 
 def get_context(context):
-	"""
-	Check if there is any started exam for the user,
-	If so redirect to it. Otherwise show exam list with upcoming exam banner.
-	"""
 	if frappe.session.user == "Guest":
 		frappe.local.flags.redirect_location = "/login"
 		raise frappe.Redirect
 
 	submit_candidate_pending_exams()
 	context.no_cache = 1
-	
-	# Get page number from query parameters, default to 1
-	page = int(frappe.form_dict.get('page', 1))
+
+	page = int(frappe.form_dict.get("page", 1))
 	page_size = 10
-	
-	# Get paginated exams
-	exams_data = get_user_exams(page=page, page_size=page_size)
-	context.exams = exams = exams_data["exams"]
-	context.pagination = exams_data["pagination"]
-	
-	# Get next exam information for banner
-	context.next_exam = next_exam = get_next_exam(exams)
-	if next_exam:
-		if next_exam["submission_status"] == "Started":
-			context.next_exam_message = "You have an exam in progress. Continue where you left off."
-			context.next_exam_link = "/exam"
-			context.next_exam_link_text = "Continue Exam"
-		elif next_exam["schedule_type"] == "Fixed" and next_exam["schedule_status"] == "Upcoming":
-			time_until = get_time_until(next_exam["start_time"])
-			context.next_exam_message = "Your next exam '{}' is scheduled to start in {}.".format(next_exam["exam_title"], time_until)
-			context.next_exam_link = "/exam"
-			context.next_exam_link_text = "View Details"
-		elif next_exam["schedule_type"] == "Flexible":
-			context.next_exam_message = "Your flexible schedule exam '{}' is available. {}".format(
-				next_exam["exam_title"], 
-				next_exam["schedule_status"]
-			)
-			context.next_exam_link = "/exam"
-			context.next_exam_link_text = "Start Exam"
-	
-	# Get proctor upcoming events
-	upcoming_proctor_events = get_proctor_upcoming_events()
-	if upcoming_proctor_events:
-		# Show alert if there are upcoming events in next 24 hours
-		next_24_hours = frappe.utils.now_datetime() + timedelta(hours=24)
-		urgent_events = [e for e in upcoming_proctor_events if e['start_time'] <= next_24_hours]
-		
-		if urgent_events:
-			total_candidates = sum(e['candidate_count'] for e in urgent_events)
-			context.proctor_alert = {
-				"title": f"Upcoming Proctoring Session{'' if len(urgent_events) == 1 else 's'}",
-				"message": f"You have {len(urgent_events)} proctoring session{'' if len(urgent_events) == 1 else 's'} scheduled in the next 24 hours with {total_candidates} candidates{'' if total_candidates == 1 else 's'}.",
-				"link": "/proctor",
-				"link_text": "View Details",
-				"icon": "bi bi-eye"
-			}
-	
-	# Get evaluator alert
-	# Use completed=True to count only submissions actually ready for evaluation
-	# (status=Submitted, evaluation_status=Pending) — same filter the /evaluate
-	# page uses, so the banner count matches what the evaluator sees there.
-	if "Exam Evaluator" in frappe.get_roles():
-		pending_evaluations = get_evaluator_live_exams(evaluator=frappe.session.user, completed=True)
-		pending_count = len(pending_evaluations)
-		if pending_count > 0:
-			context.evaluator_alert = {
-				"title": f"Evaluation{'' if pending_count == 1 else 's'} Pending",
-				"message": f"You have {pending_count} exam evaluation{'' if pending_count == 1 else 's'} pending. Please complete before the deadline.",
-				"link": "/evaluate",
-				"link_text": "View Details",
-				"icon": "bi bi-clipboard-check"
-			}
-	
+	data = get_past_exams(page=page, page_size=page_size)
+	context.exams = data["exams"]
+	context.pagination = data["pagination"]
+
 	context.metatags = {
 		"title": "My Exams",
-		"description": "View your upcoming and past exams"
+		"description": "Your past exam attempts",
 	}
+
 
 @frappe.whitelist()
 def download_certificate(certificate_name):
 	"""Download certificate PDF"""
-	# Check if user has access to this certificate
 	cert_doc = frappe.get_doc("Exam Certificate", certificate_name)
-	
 	if cert_doc.candidate != frappe.session.user:
 		frappe.throw("You don't have permission to download this certificate")
-	
-	# Generate PDF using the certificate's generate_pdf method
+
 	try:
 		pdf_bytes = cert_doc.generate_pdf()
-		
-		# Return base64 encoded PDF for JavaScript download
 		import base64
-		pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
-		return pdf_base64
-		
+		return base64.b64encode(pdf_bytes).decode("utf-8")
 	except Exception as e:
 		frappe.throw(f"Error generating certificate PDF: {str(e)}")

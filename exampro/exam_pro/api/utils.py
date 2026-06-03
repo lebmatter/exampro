@@ -4,7 +4,7 @@ import frappe
 from exampro.exam_pro.api.examops import evaluation_values
 
 def redirect_to_exams_list():
-    frappe.local.flags.redirect_location = "/my-exams"
+    frappe.local.flags.redirect_location = "/dashboard"
     raise frappe.Redirect
 
 def cleanup_request():

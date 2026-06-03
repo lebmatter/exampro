@@ -1,268 +1,134 @@
-{% extends "exampro/templates/exam_base.html" %} {% block title %} {{ _('My
-Exams') }} {% endblock %} {% block head_include %} {{ super() }}
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}{{ _('My Exams') }}{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/dashboard.css" />
 <link rel="stylesheet" href="/assets/exampro/css/my-exams.css" />
-{% endblock %} {% block page_content %}
-<div class="container">
-  <div class="row mb-5">
+{% endblock %}
+
+{% block page_content %}
+<div class="container dashboard-page">
+  <div class="row mb-4">
     <div class="col">
       <h4 class="bold-heading">📝 My Exams</h4>
+      <p class="text-muted mb-0">A history of your past exam attempts.</p>
     </div>
   </div>
 
-  {% if next_exam %}
-  <div class="row mb-4">
-    <div class="col">
-      <div class="alert alert-info next-exam-banner" role="alert">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <i class="bi bi-calendar-event me-2"></i>
-            <strong>{{ _("Next Exam: ") }}</strong>
-            {{ next_exam_message }}
-          </div>
-          <a href="{{ next_exam_link }}" class="btn btn-primary btn-sm ml-2">
-            {{ next_exam_link_text }}
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %} {% if proctor_alert %}
-  <div class="row mb-4">
-    <div class="col">
-      <div class="alert alert-warning proctor-alert-banner" role="alert">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <i class="{{ proctor_alert.icon }} me-2"></i>
-            <strong>{{ proctor_alert.title }}: </strong>
-            {{ proctor_alert.message }}
-          </div>
-          <a
-            href="{{ proctor_alert.link }}"
-            class="btn btn-warning btn-sm ml-2"
-          >
-            {{ proctor_alert.link_text }}
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %} {% if evaluator_alert %}
-  <div class="row mb-4">
-    <div class="col">
-      <div class="alert alert-warning evaluator-alert-banner" role="alert">
-        <div class="d-flex align-items-center justify-content-between">
-          <div>
-            <i class="{{ evaluator_alert.icon }} me-2"></i>
-            <strong>{{ evaluator_alert.title }}: </strong>
-            {{ evaluator_alert.message }}
-          </div>
-          <a
-            href="{{ evaluator_alert.link }}"
-            class="btn btn-warning btn-sm ml-2"
-          >
-            {{ evaluator_alert.link_text }}
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %} {% if not next_exam and not proctor_alert and not evaluator_alert
-  %}
-  <div class="row mb-4">
-    <div class="col">
-      <div class="alert alert-secondary" role="alert">
-        <div class="d-flex align-items-center">
-          <i class="bi bi-info-circle me-2"></i>
-          {{ _("You don't have any upcoming exams scheduled at this time.") }}
-        </div>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-  <div class="common-card-style">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead class="thead-light">
-            <tr>
-              <th>{{ _("Exam Name") }}</th>
-              <th>{{ _("Schedule Time") }}</th>
-              <th>{{ _("Duration") }}</th>
-              <th>{{ _("Status") }}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if not exams %}
-            <tr>
-              <td colspan="7" class="text-center py-4">
-                {{ _("No exams found") }}
-              </td>
-            </tr>
-            {% endif %} {% for exam in exams %}
-            <tr>
-              <td>
-                <span class="font-weight-bold">{{ exam.exam_title }}</span>
+  <div class="my-exams-card">
+    <div class="table-responsive">
+      <table class="table my-exams-table mb-0">
+        <thead>
+          <tr>
+            <th>{{ _("Exam") }}</th>
+            <th>{{ _("Scheduled") }}</th>
+            <th>{{ _("Duration") }}</th>
+            <th>{{ _("Result") }}</th>
+            <th class="text-end"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if not exams %}
+          <tr>
+            <td colspan="5">
+              <div class="empty-state border-0 p-4">
+                <i class="bi bi-journal-text"></i>
+                <h5>No past exams yet</h5>
+                <p class="text-muted mb-0">Once you finish an exam, it will show up here.</p>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          {% for exam in exams %}
+          <tr>
+            <td>
+              <div class="exam-cell">
+                <span class="exam-title">{{ exam.exam_title }}</span>
                 {% if exam.schedule_type == "Flexible" %}
-                <span class="badge badge-warning ms-2 tag">Flexible</span>
+                <span class="schedule-pill schedule-flexible">Flexible</span>
                 {% endif %}
-              </td>
-              <td>
-                {% if exam.schedule_type == "Flexible" %}
-                {{exam.flexible_schedule_status }} {% else %} {{
-                exam.schedule_time }} {% endif %}
-              </td>
-              <td>{{ exam.duration }}</td>
-              <td>
-                {% if exam.status == "Registered" %}
-                <span class="badge bg-light text-dark">Upcoming</span>
-                {% elif exam.status == "Started" %}
-                <span class="badge bg-warning text-dark"
-                  >{{ exam.status }}</span
-                >
-                {% elif exam.status == "Submitted" %} {% if not
-                exam.can_show_results %}
-                <span class="badge bg-light text-dark">Result Pending</span>
-                {% elif exam.result_status %} {% if exam.result_status ==
-                "Passed" %}
-                <span class="badge bg-success text-white"
-                  >{{ exam.result_status }}</span
-                >
+              </div>
+            </td>
+            <td class="text-muted">{{ exam.schedule_time }}</td>
+            <td class="text-muted">{{ exam.duration }}</td>
+            <td>
+              {% if exam.status == "Submitted" %}
+                {% if not exam.can_show_results %}
+                <span class="status-pill status-pending">Result Pending</span>
+                {% elif exam.result_status == "Passed" %}
+                <span class="status-pill status-passed">Passed</span>
                 {% elif exam.result_status == "Failed" %}
-                <span class="badge bg-danger text-white"
-                  >{{ exam.result_status }}</span
-                >
+                <span class="status-pill status-failed">Failed</span>
                 {% elif exam.result_status == "Pending" %}
-                <span class="badge bg-light text-dark"
-                  >{{ exam.result_status }}</span
-                >
+                <span class="status-pill status-pending">Pending</span>
                 {% else %}
-                <span class="badge bg-light">{{ exam.result_status }}</span>
-                {% endif %} {% endif %} {% elif exam.status == "Terminated" %}
-                <span class="badge bg-danger text-white"
-                  >{{ exam.status }}</span
-                >
-                {% else %}
-                <span class="badge bg-light">{{ exam.status }}</span>
+                <span class="status-pill status-neutral">{{ exam.result_status or 'Submitted' }}</span>
                 {% endif %}
-              </td>
-              <td>
-                <div class="btn-group" role="group" aria-label="Exam Actions">
-                  {% if exam.status == "Registered" %}
-                  <a href="/exam" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-eye me-2"></i>View Details
-                  </a>
-                  {% elif exam.status == "Started" %}
-                  <button type="button" class="btn btn-sm btn-primary">
-                    <i class="bi bi-play-circle me-2"></i>Continue Exam
-                    <i class="bi bi-arrow-right ms-2"></i>
-                  </button>
-                  {% elif exam.status == "Submitted" %} {% if
-                  exam.certification_enabled and exam.certificate_exists %}
-                  <!-- Download Certificate Button -->
-                  <button
-                    type="button"
-                    onclick="downloadCertificate('{{ exam.certificate_name }}')"
-                    class="btn btn-sm btn-success"
-                  >
+              {% elif exam.status == "Terminated" %}
+              <span class="status-pill status-failed">Terminated</span>
+              {% else %}
+              <span class="status-pill status-neutral">{{ exam.status }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="btn-group" role="group">
+                {% if exam.status == "Submitted" %}
+                  {% if exam.certification_enabled and exam.certificate_exists %}
+                  <button type="button"
+                          onclick="downloadCertificate('{{ exam.certificate_name }}')"
+                          class="btn btn-sm btn-success">
                     <i class="bi bi-download me-2"></i>Certificate
                   </button>
                   {% else %}
-                  <!-- View Result Button -->
-                  <button
-                    type="button"
-                    onclick="window.location.href='/exam/{{ exam.submission }}'"
-                    class="btn btn-sm btn-outline-secondary"
-                  >
+                  <a href="/exam/{{ exam.submission }}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-file-earmark-text me-2"></i>View Result
-                  </button>
-                  {% endif %} {% if exam.leaderboard_enabled %}
-                  <!-- Leaderboard Button -->
-                  <button
-                    type="button"
-                    onclick="window.location.href='/leaderboard/{{ exam.submission }}'"
-                    class="btn btn-sm btn-outline-secondary"
-                    title="View Leaderboard"
-                  >
-                    <i class="bi bi-trophy-fill me-2 text-warning"></i
-                    >Leaderboard
-                  </button>
-                  {% endif %} {% endif %}
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      {% if pagination and pagination.total_pages > 1 %}
-      <div class="pagination-container p-3">
-        <div class="row align-items-center">
-          <div class="col-md-6 text-md-start">
-            <p class="text-muted mb-md-0">
-              Showing {{ (pagination.page - 1) * pagination.page_size + 1 }} to
-              {{ min(pagination.page * pagination.page_size, pagination.total)
-              }} of {{ pagination.total }} entries
-            </p>
-          </div>
-          <div class="col-md-6">
-            <nav aria-label="Page navigation">
-              <ul
-                class="pagination justify-content-md-end justify-content-center mb-0"
-              >
-                {% if pagination.has_prev %}
-                <li class="page-item">
-                  <a
-                    class="page-link"
-                    href="?page={{ pagination.page - 1 }}"
-                    aria-label="Previous"
-                  >
-                    <span aria-hidden="true">&laquo;</span>
                   </a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                  <a class="page-link" href="#" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
+                  {% endif %}
+                  {% if exam.leaderboard_enabled %}
+                  <a href="/leaderboard/{{ exam.submission }}"
+                     class="btn btn-sm btn-outline-secondary"
+                     title="View Leaderboard">
+                    <i class="bi bi-trophy-fill me-2 text-warning"></i>Leaderboard
                   </a>
-                </li>
-                {% endif %} {% for i in range(1, pagination.total_pages + 1) %}
-                {% if i == pagination.page %}
-                <li class="page-item active">
-                  <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                </li>
-                {% else %}
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                </li>
-                {% endif %} {% endfor %} {% if pagination.has_next %}
-                <li class="page-item">
-                  <a
-                    class="page-link"
-                    href="?page={{ pagination.page + 1 }}"
-                    aria-label="Next"
-                  >
-                    <span aria-hidden="true">&raquo;</span>
-                  </a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                  <a class="page-link" href="#" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                  </a>
-                </li>
+                  {% endif %}
                 {% endif %}
-              </ul>
-            </nav>
-          </div>
-        </div>
-      </div>
-      {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+
+    {% if pagination and pagination.total_pages > 1 %}
+    <div class="my-exams-pagination">
+      <p class="text-muted mb-0">
+        Showing {{ (pagination.page - 1) * pagination.page_size + 1 }} to
+        {{ min(pagination.page * pagination.page_size, pagination.total) }} of
+        {{ pagination.total }} entries
+      </p>
+      <nav aria-label="Page navigation">
+        <ul class="pagination mb-0">
+          <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ pagination.page - 1 }}" aria-label="Previous">&laquo;</a>
+          </li>
+          {% for i in range(1, pagination.total_pages + 1) %}
+          <li class="page-item {% if i == pagination.page %}active{% endif %}">
+            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+          </li>
+          {% endfor %}
+          <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ pagination.page + 1 }}" aria-label="Next">&raquo;</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
   </div>
 </div>
-{% block script %} {{ super() }}
+{% endblock %}
+
+{% block script %}
+{{ super() }}
 <script type="text/javascript" src="/assets/exampro/js/my-exams.js"></script>
-{% endblock %} {% endblock %}
+{% endblock %}

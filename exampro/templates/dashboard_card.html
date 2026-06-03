@@ -1,0 +1,44 @@
+<div class="dashboard-card kind-{{ item.kind }}">
+  <div class="dashboard-card-header">
+    <span class="dashboard-badge {{ item.badge_class }}">{{ item.badge_label }}</span>
+    {% if item.schedule_type == 'Flexible' %}
+    <span class="schedule-pill schedule-flexible">Flexible</span>
+    {% endif %}
+  </div>
+  <div class="dashboard-card-body">
+    <h5 class="dashboard-card-title">{{ item.title }}</h5>
+    {% if item.description %}
+    <p class="dashboard-card-desc">{{ item.description }}</p>
+    {% endif %}
+    <ul class="dashboard-meta">
+      <li>
+        <i class="bi bi-clock"></i>
+        <span>{{ item.start_time_display }}</span>
+      </li>
+      {% if item.duration %}
+      <li>
+        <i class="bi bi-stopwatch"></i>
+        <span>{{ item.duration }}</span>
+      </li>
+      {% endif %}
+      {% if item.flexible_note %}
+      <li>
+        <i class="bi bi-info-circle"></i>
+        <span>{{ item.flexible_note }}</span>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  {% if item.status_label or item.action_text %}
+  <div class="dashboard-card-footer">
+    {% if item.status_label %}
+    <span class="status-pill {{ item.status_class or 'status-neutral' }}">{{ item.status_label }}</span>
+    {% elif item.action_text %}
+    <a href="{{ item.action_link }}" class="btn btn-sm btn-primary dashboard-action">
+      {{ item.action_text }}
+      <i class="bi bi-arrow-right ms-2"></i>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

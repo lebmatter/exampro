@@ -1353,12 +1353,19 @@ function getQuestion(qsno) {
 function showSubmitConfirmPage() {
         // Clear any pending textarea submission timeout
         clearTimeout(submitAnswerTimeout);
-        
+
         // Submit the current answer before showing the summary only for multiple choice questions
         if (currentQuestion && currentQuestion["type"] == "Choices") {
             submitAnswer(false);
         }
-        
+
+        // Remember which auxiliary panels were visible so "Go back" can restore them.
+        const helpPanelVisible = !$("#help-panel").hasClass("hide");
+        const helpQuizPanelVisible = !$("#help-quiz-panel").hasClass("hide");
+        $("#help-panel").addClass("hide");
+        $("#help-quiz-panel").addClass("hide");
+        $("#navigation-card").addClass("hide");
+
         // user wants to end the exam
         // Need to fetch the latest overview data to reflect changes from the last question
         frappe.call({
@@ -1370,7 +1377,7 @@ function showSubmitConfirmPage() {
             // already runs after the data arrives — no need to freeze the UI.
             success: (data) => {
                 examOverview = data.message;
-                
+
                 $("#exam-summary").removeClass("hide");
                 $("#quiz-form").addClass("hide");
 
@@ -1400,12 +1407,23 @@ function showSubmitConfirmPage() {
                         </ul>
                         </div>
                         <div class="card-footer">
-                        <button class="btn btn-primary w-100" id="quizSubmit" onClick=endExam();>Submit Exam</button>
+                        <button class="btn btn-primary w-100" id="quizSubmit" onclick="endExam();">Submit Exam</button>
+                        <button type="button" class="btn btn-link w-100 mt-2" id="quizGoBack">
+                            <i class="bi bi-arrow-left me-2"></i>Go back
+                        </button>
                         </div>
                     </div>
                     </div>
                     `
                 $("#quiz-box").html(messageHtml);
+
+                $("#quizGoBack").off("click").on("click", function () {
+                    $("#exam-summary").addClass("hide");
+                    $("#quiz-form").removeClass("hide");
+                    $("#navigation-card").removeClass("hide");
+                    if (helpPanelVisible) $("#help-panel").removeClass("hide");
+                    if (helpQuizPanelVisible) $("#help-quiz-panel").removeClass("hide");
+                });
             }
         });
 }

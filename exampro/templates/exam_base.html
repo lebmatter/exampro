@@ -77,17 +77,12 @@
             {% if frappe.session.user != "Guest" %}
             <!-- Dashboard link for all users -->
             <li class="nav-item">
-              <a class="nav-link" href="/my-exams">Dashboard</a>
+              <a class="nav-link" href="/dashboard">Dashboard</a>
             </li>
-            {% if is_proctor %}
             <li class="nav-item">
-              <a class="nav-link" href="/proctor">Proctor Exams</a>
+              <a class="nav-link" href="/my-exams">My Exams</a>
             </li>
-            {% endif %} {% if is_evaluator %}
-            <li class="nav-item">
-              <a class="nav-link" href="/evaluate">Evaluate Exams</a>
-            </li>
-            {% endif %} {% if is_manager %}
+            {% if is_manager %}
             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
@@ -195,7 +190,9 @@ get_telemetry_boot_info() %}
     $(".navbar-nav .nav-item").removeClass("active");
 
     // Map URLs to navigation items
-    if (currentPath === "/my-exams" || currentPath === "/") {
+    if (currentPath === "/dashboard" || currentPath === "/") {
+      $('a[href="/dashboard"]').closest(".nav-item").addClass("active");
+    } else if (currentPath === "/my-exams") {
       $('a[href="/my-exams"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/proctor") {
       $('a[href="/proctor"]').closest(".nav-item").addClass("active");
