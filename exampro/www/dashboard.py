@@ -51,8 +51,10 @@ def _candidate_items():
 
 		card = {
 			"kind": "exam",
-			"badge_label": "Exam",
+			"badge_label": (schedule.get("badge") or "Exam"),
 			"badge_class": "badge-exam",
+			"role_label": None,
+			"role_class": None,
 			"title": exam.title,
 			"description": _short_desc(exam.description),
 			"start_time": schedule.start_date_time,
@@ -114,8 +116,10 @@ def _proctor_items():
 		count = len(subs)
 		live.append({
 			"kind": "proctor",
-			"badge_label": "Proctoring",
-			"badge_class": "badge-proctor",
+			"badge_label": (schedule.get("badge") or "Exam"),
+			"badge_class": "badge-exam",
+			"role_label": "Proctoring",
+			"role_class": "badge-proctor",
 			"title": exam_title,
 			"description": f"{count} candidate{'' if count == 1 else 's'} to proctor.",
 			"start_time": schedule.start_date_time,
@@ -128,10 +132,13 @@ def _proctor_items():
 		})
 
 	for ev in get_proctor_upcoming_events():
+		sched_badge = frappe.db.get_value("Exam Schedule", ev["schedule_name"], "badge")
 		upcoming.append({
 			"kind": "proctor",
-			"badge_label": "Proctoring",
-			"badge_class": "badge-proctor",
+			"badge_label": sched_badge or "Exam",
+			"badge_class": "badge-exam",
+			"role_label": "Proctoring",
+			"role_class": "badge-proctor",
 			"title": ev["exam_title"],
 			"description": f"{ev['candidate_count']} candidate{'' if ev['candidate_count'] == 1 else 's'} assigned.",
 			"start_time": ev["start_time"],
@@ -147,26 +154,25 @@ def _proctor_items():
 
 
 def _evaluator_items():
-	"""Return live evaluator cards — one per exam. No 'upcoming' state."""
+	"""Return live evaluator cards — one per exam schedule. No 'upcoming' state."""
 	live = []
 	pending = get_evaluator_live_exams(evaluator=frappe.session.user, completed=True)
 
-	by_exam = {}
+	by_schedule = {}
 	for sub in pending:
-		# evaluate.get_evaluator_live_exams sets sub.name = exam.name
-		exam_key = sub.name
-		entry = by_exam.setdefault(exam_key, {"title": sub.title, "count": 0, "last_submitted": None})
+		key = sub.exam_schedule or sub.name
+		entry = by_schedule.setdefault(key, {"title": sub.title, "count": 0})
 		entry["count"] += 1
-		ts = sub.exam_submitted_time
-		if ts and (entry["last_submitted"] is None or str(ts) > str(entry["last_submitted"])):
-			entry["last_submitted"] = ts
 
-	for exam_name, info in by_exam.items():
+	for schedule_name, info in by_schedule.items():
 		count = info["count"]
+		sched_badge = frappe.db.get_value("Exam Schedule", schedule_name, "badge") if schedule_name else None
 		live.append({
 			"kind": "evaluate",
-			"badge_label": "Evaluation",
-			"badge_class": "badge-evaluate",
+			"badge_label": sched_badge or "Exam",
+			"badge_class": "badge-exam",
+			"role_label": "Evaluation",
+			"role_class": "badge-evaluate",
 			"title": info["title"],
 			"description": f"{count} submission{'' if count == 1 else 's'} pending evaluation.",
 			"start_time": None,

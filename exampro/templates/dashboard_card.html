@@ -1,6 +1,11 @@
 <div class="dashboard-card kind-{{ item.kind }}">
   <div class="dashboard-card-header">
-    <span class="dashboard-badge {{ item.badge_class }}">{{ item.badge_label }}</span>
+    <div class="dashboard-badges">
+      <span class="dashboard-badge {{ item.badge_class }}">{{ item.badge_label }}</span>
+      {% if item.role_label %}
+      <span class="dashboard-badge {{ item.role_class }}">{{ item.role_label }}</span>
+      {% endif %}
+    </div>
     {% if item.schedule_type == 'Flexible' %}
     <span class="schedule-pill schedule-flexible">Flexible</span>
     {% endif %}

@@ -9,6 +9,7 @@
   "schedule_settings_section",
   "exam",
   "short_uuid",
+  "badge",
   "start_date_time",
   "schedule_type",
   "schedule_expire_in_days",
@@ -48,6 +49,14 @@
    "read_only": 1,
    "set_only_once": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "badge",
+   "fieldtype": "Data",
+   "label": "Badge",
+   "default": "Exam",
+   "length": 20,
+   "description": "Short label shown on the dashboard card (max 20 chars). Rendered uppercase."
   },
   {
    "fieldname": "examiners",
