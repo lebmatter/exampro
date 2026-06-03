@@ -355,6 +355,24 @@ def import_exam(json_text):
 		raise
 
 
+# ---------- duplicate ------------------------------------------------------
+
+@frappe.whitelist()
+def duplicate_exam(exam):
+	"""Duplicate an exam. The copy reuses the existing question categories and
+	questions &mdash; only the Exam doc itself is cloned.
+	"""
+	_require_permission("Exam", "create")
+
+	src = frappe.get_doc("Exam", exam)
+	new_exam = frappe.copy_doc(src)
+	new_exam.title = f"{src.title} (Copy)"
+	new_exam.short_uuid = None  # regenerated in before_insert
+	new_exam.added_questions = []  # repopulated by before_save sampling
+	new_exam.insert(ignore_permissions=False)
+	return {"name": new_exam.name, "title": new_exam.title}
+
+
 def _create_question(q):
 	q_type = q.get("type")
 	if q_type not in ("Choices", "User Input"):

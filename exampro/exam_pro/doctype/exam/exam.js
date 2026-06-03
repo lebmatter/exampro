@@ -17,6 +17,10 @@ frappe.ui.form.on("Exam", {
 			frm.add_custom_button(__('Export Exam (JSON)'), function() {
 				exportExamJson(frm);
 			}, __('Actions'));
+
+			frm.add_custom_button(__('Duplicate Exam with Questions'), function() {
+				duplicateExam(frm);
+			}, __('Actions'));
 		}
 
 		frm.add_custom_button(__('Import Exam (JSON)'), function() {
@@ -47,6 +51,26 @@ function exportExamJson(frm) {
 			URL.revokeObjectURL(url);
 		}
 	});
+}
+
+function duplicateExam(frm) {
+	frappe.confirm(
+		__('Create a copy of this exam? The new exam will reuse the same question categories and questions.'),
+		function() {
+			frappe.call({
+				method: "exampro.exam_pro.doctype.exam.import_export.duplicate_exam",
+				args: { exam: frm.doc.name },
+				freeze: true,
+				freeze_message: __('Duplicating exam...'),
+				callback: function(r) {
+					if (r && r.message && r.message.name) {
+						frappe.show_alert({ message: __('Duplicated: {0}', [r.message.title]), indicator: 'green' }, 7);
+						frappe.set_route('Form', 'Exam', r.message.name);
+					}
+				}
+			});
+		}
+	);
 }
 
 function importExamDialog() {
