@@ -18,15 +18,13 @@ def get_proctor_upcoming_events(proctor=None):
 	upcoming_schedules = frappe.get_all(
 		"Exam Schedule",
 		filters={
-			"start_date_time": ["between", [current_time, week_later]],
-			"status": ["in", ["Scheduled", "Active"]]
+			"start_date_time": ["between", [current_time, week_later]]
 		},
 		fields=[
 			"name",
 			"exam",
-			"start_date_time", 
-			"duration",
-			"status"
+			"start_date_time",
+			"duration"
 		],
 		order_by="start_date_time"
 	)
@@ -50,8 +48,7 @@ def get_proctor_upcoming_events(proctor=None):
 				"exam_title": exam_title,
 				"start_time": schedule.start_date_time,
 				"duration": schedule.duration,
-				"candidate_count": candidate_count,
-				"status": schedule.status
+				"candidate_count": candidate_count
 			})
 	
 	return upcoming_events
