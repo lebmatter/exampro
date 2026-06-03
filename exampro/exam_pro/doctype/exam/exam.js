@@ -12,8 +12,98 @@ frappe.ui.form.on("Exam", {
 		frm.fields_dict.view_questions.input.onclick = function() {
 			showQuestionCategoriesModal(frm);
 		};
+
+		if (!frm.is_new()) {
+			frm.add_custom_button(__('Export Exam (JSON)'), function() {
+				exportExamJson(frm);
+			}, __('Actions'));
+		}
+
+		frm.add_custom_button(__('Import Exam (JSON)'), function() {
+			importExamDialog();
+		}, __('Actions'));
 	},
 });
+
+function exportExamJson(frm) {
+	const indicator = frappe.show_alert(__('Preparing export...'), 30);
+	frappe.call({
+		method: "exampro.exam_pro.doctype.exam.import_export.export_exam",
+		args: { exam: frm.doc.name },
+		callback: function(r) {
+			indicator.hide();
+			if (!r.message) {
+				frappe.msgprint({ title: __('Error'), indicator: 'red', message: __('Export failed') });
+				return;
+			}
+			const blob = new Blob([JSON.stringify(r.message, null, 2)], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `exam-${frm.doc.name}-${frappe.datetime.now_date()}.json`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		}
+	});
+}
+
+function importExamDialog() {
+	const d = new frappe.ui.Dialog({
+		title: __('Import Exam from JSON'),
+		fields: [
+			{
+				fieldtype: 'HTML',
+				fieldname: 'help',
+				options: `<p class="text-muted small">${__("Upload a JSON file produced by Export Exam. Images are restored from embedded base64 data. The imported exam is created with title suffix \" (Imported)\".")}</p>`
+			},
+			{
+				fieldtype: 'Attach',
+				fieldname: 'json_file',
+				label: __('JSON File'),
+				reqd: 1,
+				options: { restrictions: { allowed_file_types: ['.json', 'application/json'] } }
+			}
+		],
+		primary_action_label: __('Import'),
+		primary_action: function(values) {
+			if (!values.json_file) return;
+			d.disable_primary_action();
+			d.set_message(__('Reading file...'));
+			fetch(values.json_file, { credentials: 'same-origin' })
+				.then(resp => {
+					if (!resp.ok) throw new Error(`Could not read uploaded file (${resp.status})`);
+					return resp.text();
+				})
+				.then(text => {
+					if (text.length > 50 * 1024 * 1024) {
+						throw new Error(__('File too large (max 50 MB)'));
+					}
+					d.set_message(__('Importing...'));
+					return frappe.call({
+						method: "exampro.exam_pro.doctype.exam.import_export.import_exam",
+						args: { json_text: text },
+						freeze: true,
+						freeze_message: __('Importing exam...')
+					});
+				})
+				.then(r => {
+					d.hide();
+					if (r && r.message && r.message.name) {
+						frappe.show_alert({ message: __('Exam imported: {0}', [r.message.title]), indicator: 'green' }, 7);
+						frappe.set_route('Form', 'Exam', r.message.name);
+					}
+				})
+				.catch(err => {
+					d.enable_primary_action();
+					d.clear_message();
+					frappe.msgprint({ title: __('Import Failed'), indicator: 'red', message: err.message || String(err) });
+				});
+		}
+	});
+	d.show();
+}
 
 // Function to show the questions modal
 function showQuestionCategoriesModal(frm) {
