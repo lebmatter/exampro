@@ -196,6 +196,10 @@
   padding: 0.5rem 1.1rem;
 }
 
+.result-actions .btn > i {
+  margin-right: 0.5rem;
+}
+
 @media (max-width: 575px) {
   .result-card {
     padding: 1.5rem 1.1rem;

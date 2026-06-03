@@ -1,23 +1,11 @@
-.header-invite {
-  background-color: #e7f1ff;
-  border-bottom: 3px solid #007bff;
+/* Invite page — reuses .result-card / .result-meta / .result-actions
+   from exam-result.css, with a blue top accent and a slimmer max-width. */
+
+.invite-card {
+  border-top-color: #0d6efd;
+  max-width: 640px;
 }
-.invite-icon i {
-  font-size: 64px;
-  color: #007bff;
-}
-.invite-details {
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-  text-align: left;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.invite-action {
-  margin-top: 2rem;
-}
-.login-message {
-  margin-top: 1rem;
-  font-style: italic;
+
+.invite-card .result-actions .btn {
+  padding: 0.55rem 1.25rem;
 }

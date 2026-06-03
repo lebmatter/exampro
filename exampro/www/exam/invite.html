@@ -1,118 +1,114 @@
-{% extends "exampro/templates/exam_base.html" %} {% block title %}Exam
-Invitation{% endblock %} {% block head_include %} {{ super() }}
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Exam Invitation{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/dashboard.css" />
 <link rel="stylesheet" href="/assets/exampro/css/exam-result.css" />
 <link rel="stylesheet" href="/assets/exampro/css/exam-invite.css" />
-{% endblock %} {% block page_content %}
-<div class="container mt-4 mb-4">
-  <div class="card exam-result-card">
-    <div class="card-header header-invite">
-      <h4 class="mb-0"><i class="bi bi-envelope"></i> Exam Invitation</h4>
+{% endblock %}
+
+{% block page_content %}
+<div class="container dashboard-page">
+
+  {% if invite_valid %}
+  <div class="result-card result-scorecard invite-card">
+    <div class="result-card-title">
+      <i class="bi bi-envelope-paper-fill me-2 text-primary"></i>Exam Invitation
     </div>
+    <div class="result-card-subtitle">You are invited to take an exam.</div>
 
-    <div class="card-body text-center">
-      {% if invite_valid %}
-      <div class="result-icon invite-icon">
-        <i class="bi bi-file-earmark-text"></i>
+    <div class="result-meta">
+      <div class="meta-row">
+        <span class="meta-label">Exam</span>
+        <span class="meta-value">{{ exam.title or exam.name }}</span>
       </div>
-
-      <div class="result-status">You are invited to take an exam</div>
-
-      <div class="invite-details">
-        <div class="row">
-          <div class="col-md-6 text-md-right">
-            <p><strong>Exam:</strong></p>
-          </div>
-          <div class="col-md-6 text-md-left">
-            <p>{{ exam.name }}</p>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 text-md-right">
-            <p><strong>Duration:</strong></p>
-          </div>
-          <div class="col-md-6 text-md-left">
-            <p>{{ exam_schedule.duration }} minutes</p>
-          </div>
-        </div>
-        {% if exam_schedule.schedule_type == 'Fixed' %}
-        <div class="row">
-          <div class="col-md-6 text-md-right">
-            <p><strong>Start Date:</strong></p>
-          </div>
-          <div class="col-md-6 text-md-left">
-            <p>
-              {{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
-            </p>
-          </div>
-        </div>
-        {% else %}
-        <div class="row">
-          <div class="col-md-6 text-md-right">
-            <p><strong>Available From:</strong></p>
-          </div>
-          <div class="col-md-6 text-md-left">
-            <p>
-              {{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}
-            </p>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6 text-md-right">
-            <p><strong>Available For:</strong></p>
-          </div>
-          <div class="col-md-6 text-md-left">
-            <p>{{ exam_schedule.schedule_expire_in_days }} days</p>
-          </div>
-        </div>
-        {% endif %}
-        <div class="row">
-          <div class="col-md-6 text-md-right">
-            <p><strong>Status:</strong></p>
-          </div>
-          <div class="col-md-6 text-md-left">
-            <p>{{ status }}</p>
-          </div>
-        </div>
+      <div class="meta-row">
+        <span class="meta-label">Duration</span>
+        <span class="meta-value">{{ exam_schedule.duration }} min</span>
       </div>
-
-      <div class="text-center mt-4">
-        {% if has_submission %}
-        <div class="message-box box-pending mb-4">
-          <p>You have already accepted this invitation.</p>
-        </div>
-        <a href="/my-exams" class="btn btn-primary back-button">
-          <i class="bi bi-list-check mr-2"></i>Go to My Exams
-        </a>
-        {% elif status == "Completed" %}
-        <div class="message-box box-terminated mb-4">
-          <p>This exam schedule has expired.</p>
-        </div>
-        <a href="/my-exams" class="btn btn-secondary back-button">
-          <i class="bi bi-house-door mr-2"></i>Back to Home
-        </a>
-        {% else %}
-        <button id="accept-invite" class="btn btn-success back-button" onclick="acceptInvitation('{{ schedule_name }}')">
-          <i class="bi bi-check-circle mr-2"></i>Accept Invitation
-        </button>
-        {% endif %}
+      {% if exam_schedule.schedule_type == 'Fixed' %}
+      <div class="meta-row">
+        <span class="meta-label">Start Time</span>
+        <span class="meta-value">{{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}</span>
       </div>
       {% else %}
-      <div class="result-icon">
-        <i class="bi bi-exclamation-circle icon-terminated"></i>
+      <div class="meta-row">
+        <span class="meta-label">Available From</span>
+        <span class="meta-value">{{ exam_schedule.start_date_time.strftime('%d %b %Y, %I:%M %p') }}</span>
       </div>
-      <div class="result-status status-terminated">Invalid Invitation</div>
-      <div class="message-box box-terminated">
-        <p>{{ message }}</p>
-      </div>
-      <div class="text-center mt-4">
-        <a href="/" class="btn btn-primary back-button">
-          <i class="bi bi-house-door mr-2"></i>Back to Home
-        </a>
+      <div class="meta-row">
+        <span class="meta-label">Available For</span>
+        <span class="meta-value">{{ exam_schedule.schedule_expire_in_days }} days</span>
       </div>
       {% endif %}
+      <div class="meta-row">
+        <span class="meta-label">Schedule Status</span>
+        <span class="meta-value">
+          <span class="status-pill
+            {% if status == 'Completed' %}status-failed
+            {% elif status == 'Ongoing' %}status-passed
+            {% else %}status-pending{% endif %}">{{ status }}</span>
+        </span>
+      </div>
+    </div>
+
+    {% if has_submission %}
+    <div class="result-message">
+      <p class="mb-0">You have already accepted this invitation.</p>
+    </div>
+    <div class="result-actions">
+      <a href="/dashboard" class="btn btn-primary">
+        <i class="bi bi-arrow-left me-2"></i>Dashboard
+      </a>
+      <a href="/my-exams" class="btn btn-outline-secondary">
+        <i class="bi bi-card-checklist me-2"></i>My Exams
+      </a>
+    </div>
+    {% elif status == "Completed" %}
+    <div class="result-message">
+      <p class="mb-0">This exam schedule has expired.</p>
+    </div>
+    <div class="result-actions">
+      <a href="/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Dashboard
+      </a>
+    </div>
+    {% else %}
+    <div class="result-actions">
+      <button id="accept-invite"
+              class="btn btn-primary"
+              onclick="acceptInvitation('{{ schedule_name }}')">
+        <i class="bi bi-check-circle me-2"></i>Accept Invitation
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="result-card result-terminated">
+    <div class="result-card-title">
+      <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Invalid Invitation
+    </div>
+    <div class="result-hero">
+      <div class="hero-icon hero-icon-failed">
+        <i class="bi bi-exclamation-triangle"></i>
+      </div>
+      <span class="status-pill status-failed">Invalid</span>
+    </div>
+    <div class="result-message">
+      <p class="mb-0">{{ message }}</p>
+    </div>
+    <div class="result-actions">
+      <a href="/dashboard" class="btn btn-primary">
+        <i class="bi bi-arrow-left me-2"></i>Dashboard
+      </a>
     </div>
   </div>
+  {% endif %}
 </div>
-{% endblock %} {% block script %} {{ super() }}
+{% endblock %}
+
+{% block script %}
+{{ super() }}
 <script type="text/javascript" src="/assets/exampro/js/exam-invite.js"></script>
 {% endblock %}
