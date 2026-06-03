@@ -40,9 +40,16 @@ frappe.ui.form.on("Exam Submission", {
                 args: { exam_submission: frm.doc.name },
                 callback: function (r) {
                     const videosMap = (r.message && r.message.videos) || {};
-                    const chunks = Object.entries(videosMap)
-                        .sort((a, b) => Number(a[0]) - Number(b[0]))
-                        .map(([, url]) => url);
+                    // Chunk keys are `{ms-epoch}-{rand}` (random suffix prevents
+                    // replay-overwrite), so parse only the leading digits.
+                    const parseTs = (k) => {
+                        const m = String(k).match(/^(\d+)/);
+                        return m ? Number(m[1]) : NaN;
+                    };
+                    const entries = Object.entries(videosMap)
+                        .sort((a, b) => parseTs(a[0]) - parseTs(b[0]));
+                    const chunks = entries.map(([, url]) => url);
+                    const chunkStarts = entries.map(([ts]) => parseTs(ts));
 
                     if (chunks.length === 0) return;
 
@@ -64,6 +71,8 @@ frappe.ui.form.on("Exam Submission", {
                         indexField: "#esub-player-index",
                     });
                     frm._candidateVideoPlayer.loadChunks(chunks);
+
+                    buildProctorSeekBar(frm, chunkStarts);
                 },
             });
         });
@@ -455,4 +464,138 @@ function drawProctorPie(points, lanes) {
         <div style="font-weight: 600; margin-bottom: 6px;">Time by state (total ${fmtMins(grandMs)})</div>
         ${rows}
     `;
+}
+
+// Coloured seek bar drawn below the player controls. Each segment shows the
+// proctoring state during that slice of wall-clock time. Clicking a position
+// loads the chunk that covers that timestamp and seeks within it.
+function buildProctorSeekBar(frm, chunkStarts) {
+    const wrap = document.getElementById("esub-player-wrap");
+    if (!wrap || !chunkStarts || chunkStarts.length === 0) return;
+
+    // Parse proctoring timeline samples.
+    let raw = [];
+    try { raw = JSON.parse(frm.doc.retina_location_log || "[]") || []; } catch (e) { raw = []; }
+    const points = [];
+    raw.forEach(p => {
+        if (!p || !p.timestamp) return;
+        let state = p.state;
+        if (!state) {
+            if (p.gazeDirection === "screen") state = "screen";
+            else if (p.gazeDirection === "away") state = "away";
+            else state = "screen";
+        }
+        points.push({ t: Number(p.timestamp), state: state });
+    });
+    points.sort((a, b) => a.t - b.t);
+
+    // Window the bar spans: from the earliest known point of activity
+    // (first chunk start, or first sample) to the latest (last sample +
+    // a small tail so the last segment is visible).
+    const t0 = Math.min(chunkStarts[0], points.length ? points[0].t : chunkStarts[0]);
+    const t1Sample = points.length ? points[points.length - 1].t : 0;
+    const t1Chunk = chunkStarts[chunkStarts.length - 1] + 60_000; // assume ~1m tail
+    const t1 = Math.max(t1Sample, t1Chunk, t0 + 1);
+    const span = t1 - t0;
+
+    const stateColor = {
+        screen:     "#27ae60",
+        distracted: "#f1c40f",
+        away:       "#e74c3c",
+        noface:     "#000000",
+    };
+
+    // (Re)build the seek wrapper. Idempotent so refresh() doesn't stack.
+    let bar = wrap.querySelector(".esub-seek-bar");
+    if (!bar) {
+        const seekWrap = document.createElement("div");
+        seekWrap.className = "esub-seek-wrap";
+        seekWrap.style.marginTop = "8px";
+        seekWrap.innerHTML = `
+            <canvas class="esub-seek-bar"
+                style="display:block;width:100%;height:14px;border-radius:3px;cursor:pointer;background:#eee"
+                height="14"></canvas>
+            <div class="esub-seek-caption text-muted"
+                style="font-size:10px;margin-top:4px;display:flex;justify-content:space-between"></div>
+        `;
+        wrap.appendChild(seekWrap);
+        bar = seekWrap.querySelector(".esub-seek-bar");
+    }
+    const caption = wrap.querySelector(".esub-seek-caption");
+
+    function draw() {
+        const w = bar.clientWidth || bar.parentElement.clientWidth || 480;
+        bar.width = w;
+        const ctx = bar.getContext("2d");
+        const h = bar.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "#eee";
+        ctx.fillRect(0, 0, w, h);
+
+        if (points.length === 0) return;
+
+        // Fill segments between consecutive samples.
+        for (let i = 0; i < points.length; i++) {
+            const ts = points[i].t;
+            const tn = (i + 1 < points.length) ? points[i + 1].t : t1;
+            const x = ((ts - t0) / span) * w;
+            const x2 = ((tn - t0) / span) * w;
+            ctx.fillStyle = stateColor[points[i].state] || "#888";
+            ctx.fillRect(x, 0, Math.max(1, x2 - x), h);
+        }
+
+        // Faint chunk boundary ticks so the reviewer sees where each blob starts.
+        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        chunkStarts.forEach(ts => {
+            const x = ((ts - t0) / span) * w;
+            ctx.fillRect(Math.round(x), 0, 1, h);
+        });
+    }
+
+    if (caption) {
+        const fmt = (ts) => {
+            const d = new Date(ts);
+            return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        };
+        caption.innerHTML = `<span>${fmt(t0)}</span><span>${fmt(t1)}</span>`;
+    }
+
+    // Click → find chunk for that ts, load it, seek within it.
+    bar.onclick = function (ev) {
+        const rect = bar.getBoundingClientRect();
+        const frac = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+        const clickTs = t0 + frac * span;
+
+        // Find the chunk window covering clickTs (chunkStarts is ascending).
+        let idx = chunkStarts.findIndex((s, i) => {
+            const next = chunkStarts[i + 1] || Infinity;
+            return clickTs >= s && clickTs < next;
+        });
+        if (idx < 0) idx = (clickTs < chunkStarts[0]) ? 0 : (chunkStarts.length - 1);
+
+        const player = frm._candidateVideoPlayer;
+        if (!player) return;
+        player.playAt(idx);
+
+        const offsetSec = Math.max(0, (clickTs - chunkStarts[idx]) / 1000);
+        const video = document.getElementById("esub-player-video");
+        if (!video) return;
+        const seek = () => {
+            try {
+                const d = isFinite(video.duration) ? video.duration : 0;
+                video.currentTime = d ? Math.min(offsetSec, d - 0.1) : offsetSec;
+            } catch (e) { /* not seekable yet */ }
+        };
+        if (video.readyState >= 1 && isFinite(video.duration)) {
+            seek();
+        } else {
+            video.addEventListener("loadedmetadata", seek, { once: true });
+        }
+    };
+
+    draw();
+    if (!frm._proctorSeekResize) {
+        frm._proctorSeekResize = () => draw();
+        window.addEventListener("resize", frm._proctorSeekResize);
+    }
 }

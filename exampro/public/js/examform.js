@@ -176,6 +176,20 @@ function buildWatermarkedStream(rawStream) {
     ctx.font = `${fontSize}px monospace`;
     ctx.textBaseline = "bottom";
 
+    // Static reference legend burned into the top-left of every frame. Colours
+    // match the gaze pie chart in exam_submission.js so reviewers can cross-
+    // reference the recording against the submission's gaze telemetry.
+    const legendItems = [
+        { key: "screen",     color: "#27ae60", label: "Screen" },
+        { key: "distracted", color: "#f1c40f", label: "Distracted" },
+        { key: "away",       color: "#e74c3c", label: "Away" },
+        { key: "noface",     color: "#000000", label: "No Face" },
+    ];
+    const stateColor = Object.fromEntries(legendItems.map(it => [it.key, it.color]));
+    const legendFontSize = Math.max(11, Math.round(height / 36));
+    const legendSwatch = Math.round(legendFontSize * 0.9);
+    const legendRowGap = Math.round(legendFontSize * 0.45);
+
     let cancelled = false;
     let rafId = null;
     const useRVFC = typeof sourceVideo.requestVideoFrameCallback === "function";
@@ -195,6 +209,54 @@ function buildWatermarkedStream(rawStream) {
             ctx.fillRect(x, y - stripHeight + padding, stripWidth, stripHeight);
             ctx.fillStyle = "#ffffff";
             ctx.fillText(text, x + padding, y);
+
+            // Gaze legend (static reference) — top-left.
+            ctx.font = `${legendFontSize}px monospace`;
+            let widest = 0;
+            for (const it of legendItems) {
+                const w = ctx.measureText(it.label).width;
+                if (w > widest) widest = w;
+            }
+            const legendPad = Math.round(legendFontSize * 0.5);
+            const rowH = legendSwatch + legendRowGap;
+            const legendW = legendSwatch + legendPad + widest + legendPad * 2;
+            const legendH = rowH * legendItems.length - legendRowGap + legendPad * 2;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+            ctx.fillRect(legendPad, legendPad, legendW, legendH);
+            let rowY = legendPad + legendPad;
+            const currentState = (typeof gazer !== "undefined" && gazer && gazer.lastRecordedState) || null;
+            for (const it of legendItems) {
+                ctx.fillStyle = it.color;
+                ctx.fillRect(legendPad + legendPad, rowY, legendSwatch, legendSwatch);
+                ctx.strokeStyle = "rgba(255,255,255,0.85)";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(legendPad + legendPad + 0.5, rowY + 0.5, legendSwatch - 1, legendSwatch - 1);
+                ctx.fillStyle = "#ffffff";
+                ctx.textBaseline = "top";
+                ctx.fillText(it.label, legendPad + legendPad + legendSwatch + legendPad, rowY);
+                rowY += rowH;
+            }
+            // Live current-gaze dot — sits just below the legend block, with a
+            // small "now" tag. Falls back to grey when the gazer hasn't yet
+            // emitted a state (or video proctoring is disabled).
+            const dotR = Math.round(legendFontSize * 0.55);
+            const dotCx = legendPad + legendPad + Math.round(legendSwatch / 2);
+            const dotCy = legendPad + legendH + legendPad + dotR;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+            ctx.fillRect(legendPad, legendPad + legendH + 2, legendW, dotR * 2 + legendPad * 2);
+            ctx.beginPath();
+            ctx.arc(dotCx, dotCy, dotR, 0, Math.PI * 2);
+            ctx.fillStyle = currentState ? (stateColor[currentState] || "#888888") : "#888888";
+            ctx.fill();
+            ctx.strokeStyle = "rgba(255,255,255,0.85)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = "#ffffff";
+            ctx.textBaseline = "middle";
+            ctx.fillText("now", dotCx + dotR + legendPad, dotCy);
+            // Restore for the timestamp draw on the next iteration.
+            ctx.font = `${fontSize}px monospace`;
+            ctx.textBaseline = "bottom";
         }
         if (useRVFC) {
             sourceVideo.requestVideoFrameCallback(drawFrame);
