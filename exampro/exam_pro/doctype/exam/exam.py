@@ -108,15 +108,21 @@ class Exam(Document):
 		self.validate_weightage_table()
 
 		self.added_questions = []
-		
+
 		total_qs = 0
 		total_marks = 0
+		seen_questions = set()
 		for cat in self.select_questions:
 			picked_questions = get_random_questions(
 				cat.question_category, cat.mark_per_question,
-				cat.no_of_questions, self.question_type
+				cat.no_of_questions, self.question_type,
+				exclude=seen_questions
 			)
 			for qs in picked_questions:
+				if qs["name"] in seen_questions:
+					# defensive: should never happen because get_random_questions excludes
+					continue
+				seen_questions.add(qs["name"])
 				qs_data = frappe.db.get_value(
 					"Exam Question", qs["name"],
 					["question", "mark", "type"], as_dict=True
@@ -129,17 +135,43 @@ class Exam(Document):
 				})
 				total_marks += qs_data["mark"]
 				total_qs += 1
-		
+
 		# update count fields
 		self.total_questions = total_qs
 		self.total_marks = total_marks
 
+		self.validate_added_questions_unique()
+
+	def validate_added_questions_unique(self):
+		"""Ensure no Exam Question appears twice in added_questions, regardless
+		of how it got there (random sampling overlap, manual addition, import).
+		"""
+		seen = set()
+		for row in self.added_questions or []:
+			if not row.exam_question:
+				continue
+			if row.exam_question in seen:
+				frappe.throw(
+					"Duplicate question '{}' in this exam. Each question may appear only once.".format(
+						row.exam_question
+					)
+				)
+			seen.add(row.exam_question)
+
 	def validate_weightage_table(self):
+		seen = set()
 		for cat in self.select_questions:
 			if not cat.mark_per_question or not cat.no_of_questions:
 				frappe.throw("No. of Qs & Marks per Qs columns for {} category should be more than 0.".format(
 					cat.question_category
 				))
+
+			key = (cat.question_category, cat.mark_per_question)
+			if key in seen:
+				frappe.throw("Duplicate row: category '{}' with {} mark per question is listed more than once.".format(
+					cat.question_category, cat.mark_per_question
+				))
+			seen.add(key)
 
 			# check if selected no. of questions are available in question bank
 			get_random_questions(
@@ -167,7 +199,8 @@ def search_exam(text):
 	)
 	return exams
 
-def get_random_questions(category, mark_per_qs, no_of_qs, question_type):
+def get_random_questions(category, mark_per_qs, no_of_qs, question_type, exclude=None):
+	exclude = exclude or set()
 	if question_type == "Mixed":
 		cat_qs = frappe.get_all(
 				"Exam Question",
@@ -178,11 +211,13 @@ def get_random_questions(category, mark_per_qs, no_of_qs, question_type):
 				"Exam Question",
 				{"category": category, "mark": mark_per_qs, "type": question_type},
 		)
+	if exclude:
+		cat_qs = [q for q in cat_qs if q["name"] not in exclude]
 	try:
 		return random.sample(cat_qs, no_of_qs)
 	except ValueError:
 			frappe.throw(
-				"Insufficient no. of {} mark '{}' questions in {} category. Available: {}".format(
+				"Insufficient no. of {} mark '{}' questions in {} category. Available (after de-duplication): {}".format(
 				mark_per_qs, question_type, category, len(cat_qs)
 			))
 

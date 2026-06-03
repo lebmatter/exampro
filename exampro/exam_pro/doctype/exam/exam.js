@@ -1,6 +1,39 @@
 // Copyright (c) 2024, Labeeb Mattra and contributors
 // For license information, please see license.txt
 
+frappe.ui.form.on("Exam Category Settings", {
+	question_category: function(frm, cdt, cdn) {
+		checkDuplicateSelectRow(frm, cdt, cdn);
+	},
+	mark_per_question: function(frm, cdt, cdn) {
+		checkDuplicateSelectRow(frm, cdt, cdn);
+	},
+});
+
+function checkDuplicateSelectRow(frm, cdt, cdn) {
+	const row = locals[cdt][cdn];
+	if (!row || !row.question_category || !row.mark_per_question) return;
+	const dup = (frm.doc.select_questions || []).find(r =>
+		r.name !== row.name &&
+		r.question_category === row.question_category &&
+		cint(r.mark_per_question) === cint(row.mark_per_question)
+	);
+	if (!dup) return;
+
+	frappe.msgprint({
+		title: __('Duplicate Row'),
+		indicator: 'orange',
+		message: __('A row for category <b>{0}</b> with <b>{1}</b> mark per question already exists. Edit the existing row to change the count instead of adding a duplicate.', [row.question_category, row.mark_per_question])
+	});
+
+	const grid = frm.get_field('select_questions').grid;
+	const grid_row = grid.grid_rows_by_docname[cdn];
+	if (grid_row) {
+		grid_row.remove();
+		frm.refresh_field('select_questions');
+	}
+}
+
 frappe.ui.form.on("Exam", {
 	refresh(frm) {
 		// Add handler for view_questions button
