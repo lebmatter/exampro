@@ -15,7 +15,9 @@ var pendingNavigation = false; // Set when a Next/Finish click arrives during an
 var faceCurrentlyVisible = false; // Updated by gazer onFaceDetected; gates exam start
 var noFaceTerminationTimer = null; // setTimeout id for the 60s no-face termination
 var noFaceCountdownInterval = null; // setInterval id for the visible countdown
+var webcamTerminationTimer = null; // setTimeout id for the 60s no-webcam termination
 var NO_FACE_GRACE_SECONDS = 60;
+var WEBCAM_GRACE_SECONDS = 60;
 var helpShownFor = new Set(); // qs_no values where help has already been shown this session
 var helpReadingTimer = null;
 
@@ -210,50 +212,27 @@ function buildWatermarkedStream(rawStream) {
             ctx.fillStyle = "#ffffff";
             ctx.fillText(text, x + padding, y);
 
-            // Gaze legend (static reference) — top-left.
+            // Current-gaze pill — top-left. Shows only the active state (color
+            // swatch + label) instead of a full static legend.
             ctx.font = `${legendFontSize}px monospace`;
-            let widest = 0;
-            for (const it of legendItems) {
-                const w = ctx.measureText(it.label).width;
-                if (w > widest) widest = w;
-            }
-            const legendPad = Math.round(legendFontSize * 0.5);
-            const rowH = legendSwatch + legendRowGap;
-            const legendW = legendSwatch + legendPad + widest + legendPad * 2;
-            const legendH = rowH * legendItems.length - legendRowGap + legendPad * 2;
-            ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-            ctx.fillRect(legendPad, legendPad, legendW, legendH);
-            let rowY = legendPad + legendPad;
             const currentState = (typeof gazer !== "undefined" && gazer && gazer.lastRecordedState) || null;
-            for (const it of legendItems) {
-                ctx.fillStyle = it.color;
-                ctx.fillRect(legendPad + legendPad, rowY, legendSwatch, legendSwatch);
-                ctx.strokeStyle = "rgba(255,255,255,0.85)";
-                ctx.lineWidth = 1;
-                ctx.strokeRect(legendPad + legendPad + 0.5, rowY + 0.5, legendSwatch - 1, legendSwatch - 1);
-                ctx.fillStyle = "#ffffff";
-                ctx.textBaseline = "top";
-                ctx.fillText(it.label, legendPad + legendPad + legendSwatch + legendPad, rowY);
-                rowY += rowH;
-            }
-            // Live current-gaze dot — sits just below the legend block, with a
-            // small "now" tag. Falls back to grey when the gazer hasn't yet
-            // emitted a state (or video proctoring is disabled).
-            const dotR = Math.round(legendFontSize * 0.55);
-            const dotCx = legendPad + legendPad + Math.round(legendSwatch / 2);
-            const dotCy = legendPad + legendH + legendPad + dotR;
+            const currentItem = legendItems.find(it => it.key === currentState);
+            const pillColor = currentItem ? currentItem.color : "#888888";
+            const pillLabel = currentItem ? currentItem.label : "—";
+            const legendPad = Math.round(legendFontSize * 0.5);
+            ctx.textBaseline = "top";
+            const labelW = ctx.measureText(pillLabel).width;
+            const pillW = legendSwatch + legendPad + labelW + legendPad * 2;
+            const pillH = legendSwatch + legendPad * 2;
             ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-            ctx.fillRect(legendPad, legendPad + legendH + 2, legendW, dotR * 2 + legendPad * 2);
-            ctx.beginPath();
-            ctx.arc(dotCx, dotCy, dotR, 0, Math.PI * 2);
-            ctx.fillStyle = currentState ? (stateColor[currentState] || "#888888") : "#888888";
-            ctx.fill();
+            ctx.fillRect(legendPad, legendPad, pillW, pillH);
+            ctx.fillStyle = pillColor;
+            ctx.fillRect(legendPad + legendPad, legendPad + legendPad, legendSwatch, legendSwatch);
             ctx.strokeStyle = "rgba(255,255,255,0.85)";
             ctx.lineWidth = 1;
-            ctx.stroke();
+            ctx.strokeRect(legendPad + legendPad + 0.5, legendPad + legendPad + 0.5, legendSwatch - 1, legendSwatch - 1);
             ctx.fillStyle = "#ffffff";
-            ctx.textBaseline = "middle";
-            ctx.fillText("now", dotCx + dotR + legendPad, dotCy);
+            ctx.fillText(pillLabel, legendPad + legendPad + legendSwatch + legendPad, legendPad + legendPad);
             // Restore for the timestamp draw on the next iteration.
             ctx.font = `${fontSize}px monospace`;
             ctx.textBaseline = "bottom";
@@ -437,18 +416,13 @@ function startRecording() {
             // a mic ending must not be treated as a webcam disconnect.
             stream.getVideoTracks().forEach(track => {
                 track.addEventListener('ended', function () {
-                    // Ignore track-ended during a normal finish/termination:
-                    // stopRecording() stops the camera as part of teardown and
-                    // must not be reported as a webcam disconnect.
                     if (examEnded) return;
                     const currentTime = Date.now();
                     if (currentTime - lastWebcamErrorTime > webcamErrorCooldown) {
                         console.error('Webcam was disabled or stopped');
                         sendMessage('Webcam was disabled or stopped', 'Warning', 'nowebcam');
                         lastWebcamErrorTime = currentTime;
-
-                        // Show a less intrusive notification
-                        showNotification('Webcam was disabled or stopped. Please fix the issue.', 'error');
+                        startWebcamCountdown();
                     }
                 });
             });
@@ -607,11 +581,9 @@ function startRecording() {
             if (currentTime - lastWebcamErrorTime > webcamErrorCooldown) {
                 sendMessage('Webcam was not detected', 'Warning', 'nowebcam');
                 lastWebcamErrorTime = currentTime;
-                
-                // Show a less intrusive notification
-                showNotification('No webcam detected. Please check your camera permissions.', 'error');
+                startWebcamCountdown();
             }
-            
+
             // Reset recording flag if initialization failed
             recordingInitialized = false;
         });
@@ -1252,22 +1224,12 @@ function sendChatMessage() {
 }
 
 function startNoFaceCountdown() {
-    if (noFaceTerminationTimer) return; // already counting down
-    let secondsLeft = NO_FACE_GRACE_SECONDS;
-    showNoFaceCountdownBanner(secondsLeft);
-    // Audible cue the moment the face is lost, then escalate near the end.
+    if (noFaceTerminationTimer) return;
+    showTerminationBanner('noFaceBanner');
     if (typeof playAlarm === 'function') playAlarm(false);
     noFaceCountdownInterval = setInterval(() => {
-        secondsLeft -= 1;
-        if (secondsLeft >= 0) {
-            showNoFaceCountdownBanner(secondsLeft);
-            // Beep every second in the final stretch so an inattentive
-            // candidate is pulled back before termination.
-            if (secondsLeft <= 10 && typeof playAlarm === 'function') {
-                playAlarm(true);
-            }
-        }
-    }, 1000);
+        if (typeof playAlarm === 'function') playAlarm(true);
+    }, 10000);
     noFaceTerminationTimer = setTimeout(() => {
         clearInterval(noFaceCountdownInterval);
         noFaceCountdownInterval = null;
@@ -1285,19 +1247,34 @@ function cancelNoFaceCountdown() {
         clearInterval(noFaceCountdownInterval);
         noFaceCountdownInterval = null;
     }
-    hideNoFaceCountdownBanner();
+    hideTerminationBanner('noFaceBanner');
 }
 
-function showNoFaceCountdownBanner(secondsLeft) {
-    const banner = document.getElementById('noFaceBanner');
-    if (!banner) return;
-    banner.style.display = 'block';
-    const countdownEl = document.getElementById('noFaceCountdown');
-    if (countdownEl) countdownEl.textContent = secondsLeft;
+function startWebcamCountdown() {
+    if (webcamTerminationTimer) return;
+    showTerminationBanner('webcamBanner');
+    if (typeof playAlarm === 'function') playAlarm(false);
+    webcamTerminationTimer = setTimeout(() => {
+        webcamTerminationTimer = null;
+        terminateForNoWebcam();
+    }, WEBCAM_GRACE_SECONDS * 1000);
 }
 
-function hideNoFaceCountdownBanner() {
-    const banner = document.getElementById('noFaceBanner');
+function cancelWebcamCountdown() {
+    if (webcamTerminationTimer) {
+        clearTimeout(webcamTerminationTimer);
+        webcamTerminationTimer = null;
+    }
+    hideTerminationBanner('webcamBanner');
+}
+
+function showTerminationBanner(id) {
+    const banner = document.getElementById(id);
+    if (banner) banner.style.display = 'block';
+}
+
+function hideTerminationBanner(id) {
+    const banner = document.getElementById(id);
     if (banner) banner.style.display = 'none';
 }
 
@@ -1306,8 +1283,6 @@ function terminateForNoFace() {
     examEnded = true;
     cancelNoFaceCountdown();
 
-    // Post directly: sendMessage() guards on currentQsNo > 1 which can be false
-    // immediately after start. We need this critical message to always reach the server.
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
         type: "POST",
@@ -1318,8 +1293,6 @@ function terminateForNoFace() {
             'warning_type': 'nofacetimeout',
         },
         callback: () => {
-            // Stop emitters before recording teardown (examEnded is already
-            // true, so the track-ended handler is a no-op regardless).
             if (detector) detector.destroy();
             if (gazer) {
                 try { gazer.stop(); } catch (e) {}
@@ -1329,6 +1302,35 @@ function terminateForNoFace() {
         },
         error: (error) => {
             console.error("Failed to post nofacetimeout:", error);
+            window.location.href = "/exam/" + exam.exam_submission;
+        }
+    });
+}
+
+function terminateForNoWebcam() {
+    if (examEnded) return;
+    examEnded = true;
+    cancelWebcamCountdown();
+
+    frappe.call({
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
+        type: "POST",
+        args: {
+            'exam_submission': exam["exam_submission"],
+            'message': 'Exam terminated: webcam disconnected for 60 seconds.',
+            'type_of_message': 'Critical',
+            'warning_type': 'nowebcamtimeout',
+        },
+        callback: () => {
+            if (detector) detector.destroy();
+            if (gazer) {
+                try { gazer.stop(); } catch (e) {}
+            }
+            stopRecording();
+            window.location.href = "/exam/" + exam.exam_submission;
+        },
+        error: (error) => {
+            console.error("Failed to post nowebcamtimeout:", error);
             window.location.href = "/exam/" + exam.exam_submission;
         }
     });

@@ -276,10 +276,15 @@ head_include %}
     </div>
   </div>
   {% endif %}
-  <!-- No-face termination countdown banner -->
+  <!-- No-face termination warning banner -->
   <div id="noFaceBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
     <i class="bi bi-exclamation-triangle-fill me-2"></i>
-    Face not detected. Your exam will be terminated in <span id="noFaceCountdown">60</span> seconds. Please ensure your face is clearly visible to the camera.
+    Face not detected. Your exam will be terminated soon. Please ensure your face is clearly visible to the camera.
+  </div>
+  <!-- Webcam disconnection warning banner -->
+  <div id="webcamBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    Webcam disconnected. Your exam will be terminated soon. Please reconnect your camera.
   </div>
 
   <!-- Bootstrap Modal with updated styling -->
