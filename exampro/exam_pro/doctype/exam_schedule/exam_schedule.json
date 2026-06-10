@@ -1,216 +1,218 @@
 {
- "actions": [],
- "allow_rename": 1,
- "autoname": "prompt",
- "creation": "2024-12-04 13:18:21.405169",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "schedule_settings_section",
-  "exam",
-  "short_uuid",
-  "badge",
-  "start_date_time",
-  "schedule_type",
-  "schedule_expire_in_days",
-  "column_break_3",
-  "question_type",
-  "duration",
-  "certificate_template",
-  "schedule_invite_link",
-  "exam_settings_section",
-  "column_break_5bke",
-  "examiners",
-  "show_assignment_count",
-  "assign_by_batch_section",
-  "batch_assignments",
-  "auto_assign_batch_users"
- ],
- "fields": [
-  {
-   "fieldname": "column_break_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "exam",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Exam",
-   "options": "Exam",
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "short_uuid",
-   "fieldtype": "Data",
-   "label": "Unique ID",
-   "read_only": 1,
-   "set_only_once": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "badge",
-   "fieldtype": "Data",
-   "label": "Badge",
-   "default": "Exam",
-   "length": 20,
-   "description": "Short label shown on the dashboard card (max 20 chars). Rendered uppercase."
-  },
-  {
-   "fieldname": "examiners",
-   "fieldtype": "Table",
-   "label": "Examiners",
-   "options": "Examiner"
-  },
-  {
-   "fieldname": "exam_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Manage Examiners"
-  },
-  {
-   "fieldname": "column_break_5bke",
-   "fieldtype": "Column Break"
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "description": "Set once. Cannot modify later.",
-   "fieldname": "start_date_time",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "label": "Start Date Time",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
-   "fetch_from": "exam.question_type",
-   "fieldname": "question_type",
-   "fieldtype": "Data",
-   "label": "Question Type",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "exam.duration",
-   "fieldname": "duration",
-   "fieldtype": "Int",
-   "label": "Duration",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "exam.certificate_template",
-   "fieldname": "certificate_template",
-   "fieldtype": "Link",
-   "label": "Certificate Template",
-   "options": "Exam Certificate Template",
-   "read_only": 1
-  },
-  {
-   "default": "Fixed",
-   "fieldname": "schedule_type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Schedule Type",
-   "options": "Fixed\nFlexible"
-  },
-  {
-   "depends_on": "eval: doc.schedule_type == 'Flexible';",
-   "description": "No. of days till the exam is available in portal. ",
-   "fieldname": "schedule_expire_in_days",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Schedule Expire in Days",
-   "non_negative": 1
-  },
-  {
-   "fieldname": "assign_by_batch_section",
-   "fieldtype": "Section Break",
-   "label": "Assign by Batch"
-  },
-  {
-   "fieldname": "batch_assignments",
-   "fieldtype": "Table",
-   "label": "Batch Assignments",
-   "options": "Schedule Batch Assignment"
-  },
-  {
-   "default": "0",
-   "fieldname": "auto_assign_batch_users",
-   "fieldtype": "Check",
-   "label": "Auto assign all batch users"
-  },
-  {
-   "fieldname": "schedule_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Schedule Settings"
-  },
-  {
-   "fieldname": "schedule_invite_link",
-   "fieldtype": "Data",
-   "label": "Schedule Invitation Link",
-   "read_only": 1
-  },
-  {
-   "fieldname": "show_assignment_count",
-   "fieldtype": "Button",
-   "label": "Show Assignment Count"
-  }
- ],
- "index_web_pages_for_search": 1,
- "links": [
-  {
-   "group": "Candidates",
-   "link_doctype": "Exam Submission",
-   "link_fieldname": "exam_schedule"
-  },
-  {
-   "group": "Certificates",
-   "link_doctype": "Exam Certificate",
-   "link_fieldname": "exam_schedule"
-  }
- ],
- "modified": "2025-08-26 16:00:07.924431",
- "modified_by": "labeeb@zerodha.com",
- "module": "Exam Pro",
- "name": "Exam Schedule",
- "naming_rule": "Set by user",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "read": 1,
-   "role": "Exam Manager",
-   "select": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Exam Candidate",
-   "select": 1,
-   "share": 1
-  }
- ],
- "quick_entry": 1,
- "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "prompt",
+  "creation": "2024-12-04 13:18:21.405169",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "schedule_settings_section",
+    "exam",
+    "short_uuid",
+    "badge",
+    "start_date_time",
+    "schedule_type",
+    "schedule_expire_in_days",
+    "column_break_3",
+    "question_type",
+    "duration",
+    "certificate_template",
+    "schedule_invite_link",
+    "exam_settings_section",
+    "column_break_5bke",
+    "examiners",
+    "show_assignment_count",
+    "assign_by_batch_section",
+    "batch_assignments",
+    "auto_assign_batch_users"
+  ],
+  "fields": [
+    {
+      "fieldname": "column_break_3",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "exam",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Exam",
+      "options": "Exam",
+      "reqd": 1,
+      "search_index": 1,
+      "set_only_once": 1
+    },
+    {
+      "fieldname": "short_uuid",
+      "fieldtype": "Data",
+      "label": "Unique ID",
+      "read_only": 1,
+      "set_only_once": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "badge",
+      "fieldtype": "Data",
+      "label": "Badge",
+      "default": "Exam",
+      "length": 20,
+      "description": "Short label shown on the dashboard card (max 20 chars). Rendered uppercase."
+    },
+    {
+      "fieldname": "examiners",
+      "fieldtype": "Table",
+      "label": "Examiners",
+      "options": "Examiner"
+    },
+    {
+      "fieldname": "exam_settings_section",
+      "fieldtype": "Section Break",
+      "label": "Manage Examiners"
+    },
+    {
+      "fieldname": "column_break_5bke",
+      "fieldtype": "Column Break"
+    },
+    {
+      "allow_in_quick_entry": 1,
+      "description": "Set once. Cannot modify later.",
+      "fieldname": "start_date_time",
+      "fieldtype": "Datetime",
+      "in_list_view": 1,
+      "label": "Start Date Time",
+      "reqd": 1,
+      "set_only_once": 1
+    },
+    {
+      "fetch_from": "exam.question_type",
+      "fieldname": "question_type",
+      "fieldtype": "Data",
+      "label": "Question Type",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "exam.duration",
+      "fieldname": "duration",
+      "fieldtype": "Int",
+      "label": "Duration",
+      "read_only": 1
+    },
+    {
+      "fetch_from": "exam.certificate_template",
+      "fieldname": "certificate_template",
+      "fieldtype": "Link",
+      "label": "Certificate Template",
+      "options": "Exam Certificate Template",
+      "read_only": 1
+    },
+    {
+      "allow_in_quick_entry": 1,
+      "default": "Fixed",
+      "fieldname": "schedule_type",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Schedule Type",
+      "options": "Fixed\nFlexible"
+    },
+    {
+      "default": 7,
+      "depends_on": "eval: doc.schedule_type == 'Flexible';",
+      "description": "No. of days till the exam is available in portal. ",
+      "fieldname": "schedule_expire_in_days",
+      "fieldtype": "Int",
+      "in_list_view": 1,
+      "label": "Schedule Expire in Days",
+      "non_negative": 1
+    },
+    {
+      "fieldname": "assign_by_batch_section",
+      "fieldtype": "Section Break",
+      "label": "Assign by Batch"
+    },
+    {
+      "fieldname": "batch_assignments",
+      "fieldtype": "Table",
+      "label": "Batch Assignments",
+      "options": "Schedule Batch Assignment"
+    },
+    {
+      "default": "0",
+      "fieldname": "auto_assign_batch_users",
+      "fieldtype": "Check",
+      "label": "Auto assign all batch users"
+    },
+    {
+      "fieldname": "schedule_settings_section",
+      "fieldtype": "Section Break",
+      "label": "Schedule Settings"
+    },
+    {
+      "fieldname": "schedule_invite_link",
+      "fieldtype": "Data",
+      "label": "Schedule Invitation Link",
+      "read_only": 1
+    },
+    {
+      "fieldname": "show_assignment_count",
+      "fieldtype": "Button",
+      "label": "Show Assignment Count"
+    }
+  ],
+  "index_web_pages_for_search": 1,
+  "links": [
+    {
+      "group": "Candidates",
+      "link_doctype": "Exam Submission",
+      "link_fieldname": "exam_schedule"
+    },
+    {
+      "group": "Certificates",
+      "link_doctype": "Exam Certificate",
+      "link_fieldname": "exam_schedule"
+    }
+  ],
+  "modified": "2025-08-26 16:00:07.924431",
+  "modified_by": "labeeb@zerodha.com",
+  "module": "Exam Pro",
+  "name": "Exam Schedule",
+  "naming_rule": "Set by user",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "Exam Manager",
+      "select": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Exam Candidate",
+      "select": 1,
+      "share": 1
+    }
+  ],
+  "quick_entry": 1,
+  "row_format": "Dynamic",
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
 }
