@@ -1,0 +1,30 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("Exam Overview") }}{% endblock %}
+
+{% block page_content %}
+<div class="exam-overview-container">
+</div>
+
+<style>
+    .exam-overview-container {
+        padding: 15px;
+    }
+
+    .exam-overview .table th,
+    .exam-overview .table td {
+        border: none;
+    }
+
+    .exam-overview .table thead tr {
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    @media (max-width: 767px) {
+        .exam-overview .d-flex.flex-wrap > div {
+            flex: 1 1 100% !important;
+            max-width: 100% !important;
+        }
+    }
+</style>
+{% endblock %}

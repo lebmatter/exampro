@@ -54,6 +54,10 @@ frappe.ui.form.on("Exam", {
 			frm.add_custom_button(__('Duplicate Exam with Questions'), function() {
 				duplicateExam(frm);
 			}, __('Actions'));
+
+			frm.add_custom_button(__('Exam Dashboard'), function() {
+				window.location.href = '/app/exam-overview?exam=' + encodeURIComponent(frm.doc.name);
+			}).addClass('btn-primary-light');
 		}
 
 		frm.add_custom_button(__('Import Exam (JSON)'), function() {

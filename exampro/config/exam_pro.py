@@ -22,6 +22,12 @@ def get_data():
                         "type": "page",
                         "name": "schedule-dashboard",
                         "description": "Monitor a live exam schedule"
+                    },
+                    {
+                        "label": "Exam Overview",
+                        "type": "page",
+                        "name": "exam-overview",
+                        "description": "Overview of an exam across all schedules"
                     }
                 ]
             },
