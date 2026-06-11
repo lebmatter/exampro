@@ -156,7 +156,7 @@
 }
 
 .dashboard-card-desc {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #6c757d;
   margin-bottom: 0.75rem;
   line-height: 1.45;
@@ -171,15 +171,18 @@
 .dashboard-meta li {
   display: flex;
   align-items: center;
-  font-size: 0.83rem;
+  font-size: 0.9rem;
   color: #495057;
   margin-bottom: 0.3rem;
 }
 
-.dashboard-meta li i {
-  width: 1.1rem;
+.dashboard-meta li i,
+.dashboard-meta li svg {
+  width: 0.95rem;
+  height: 0.95rem;
   margin-right: 0.5rem;
   color: #868e96;
+  flex-shrink: 0;
 }
 
 .dashboard-card-footer {

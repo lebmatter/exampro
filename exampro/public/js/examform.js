@@ -899,28 +899,28 @@ function updateOverviewMap() {
             }
             for (let i = 1; i <= data.message.total_questions; i++) {
                 let btnCls = "btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-between rounded-pill";
-                let circleColor = "text-grey"; // Default grey for unanswered
-                
-                // Determine circle color based on question status
+                let dotColor = "#adb5bd"; // Default grey for unanswered
+
+                // Determine dot color based on question status
                 if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
-                    circleColor = "text-warning"; // Yellow/orange for marked for later
+                    dotColor = "#ffc107"; // Yellow for marked for later
                 } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
-                    circleColor = "text-info"; // Blue for answered
+                    dotColor = "#0dcaf0"; // Blue for answered
                 }
-                
+
                 // If this is the current question, highlight it with custom styling
                 if (currentQuestion && i === currentQuestion["no"]) {
                     btnCls = "btn btn-sm btn-outline-dark d-flex align-items-center justify-content-between rounded-pill current-question-btn";
-                    circleColor = "text-grey";
+                    dotColor = "#adb5bd";
                 }
-                
+
                 // Create a new button
                 const button = $("<button></button>");
                 button.addClass(btnCls);
                 button.attr("id", "button-" + i);
-                
-                // Set the button content with the new structure
-                button.html(`<i data-feather="circle"></i><span class="fw-bold text-dark">${i}</span>`);
+
+                // Set the button content with colored dot indicator
+                button.html(`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};"></span><span class="fw-bold text-dark">${i}</span>`);
                 
                 // Append the button to the grid
                 $("#button-grid").append(button);

@@ -266,7 +266,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         :disabled="!submission.enable_chat"
                         :style="!submission.enable_chat ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                       >
-                        <i data-feather="message-square"></i>
+                        <i data-feather="message-square" style="width:16px;height:16px;"></i>
                       </button>
                     </div>
                   </div>
@@ -432,7 +432,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         >
                           <span class="d-flex align-items-center">
                             Send
-                            <i data-feather="send"></i>
+                            <i data-feather="send" style="width:14px;height:14px;margin-left:5px;"></i>
                           </span>
                         </button>
                       </div>

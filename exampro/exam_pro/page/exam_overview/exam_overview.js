@@ -1,3 +1,10 @@
+if (typeof feather === 'undefined' && !document.getElementById('feather-icons-script')) {
+	const s = document.createElement('script');
+	s.id = 'feather-icons-script';
+	s.src = 'https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js';
+	document.head.appendChild(s);
+}
+
 frappe.pages['exam-overview'].on_page_load = function (wrapper) {
 	var page = frappe.ui.make_app_page({
 		parent: wrapper,
@@ -23,27 +30,6 @@ frappe.pages['exam-overview'].on_page_load = function (wrapper) {
 	}
 };
 
-const FEATHER = {
-	book: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
-	users: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-	check: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-	award: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>',
-	'x-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-	percent: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
-	star: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-	grid: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
-	calendar: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-	'file-text': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
-};
-
-function ficon(name, size) {
-	let svg = FEATHER[name] || '';
-	if (size && svg) {
-		svg = svg.replace(/width="\d+"/, `width="${size}"`).replace(/height="\d+"/, `height="${size}"`);
-	}
-	return svg;
-}
-
 class ExamOverview {
 	constructor(wrapper, page) {
 		this.wrapper = wrapper;
@@ -55,7 +41,7 @@ class ExamOverview {
 		this.$container = $('<div class="exam-overview" style="max-width: 960px; margin: 0 auto; padding: 15px;">').appendTo(this.wrapper);
 		this.$empty = $(`
 			<div class="text-muted text-center" style="padding: 60px 20px;">
-				<span style="color: #adb5bd;">${ficon('book', 48)}</span>
+				<span style="color: #adb5bd;"><i data-feather="book" style="width:48px;height:48px;"></i></span>
 				<h5 class="mt-3" style="font-weight: 600;">Select an Exam</h5>
 				<p>Choose an exam from the filter above to view its overview.</p>
 			</div>
@@ -101,6 +87,8 @@ class ExamOverview {
 		if (data.evaluation_stats) {
 			this.render_evaluation(data.evaluation_stats);
 		}
+
+		if (typeof feather !== 'undefined') feather.replace();
 	}
 
 	render_header(data) {
@@ -203,7 +191,7 @@ class ExamOverview {
 			$row.append(`
 				<div style="flex: 1 1 130px; max-width: 180px; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 14px 16px;">
 					<div class="text-muted" style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 4px;">
-						${ficon(m.icon)}${m.label}
+						<i data-feather="${m.icon}" style="width:16px;height:16px;"></i>${m.label}
 					</div>
 					<div style="font-size: 1.4rem; font-weight: 600; color: #212529;">${m.value}</div>
 				</div>
@@ -356,7 +344,7 @@ class ExamOverview {
 		let $card = $(`
 			<div style="background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
 				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 6px;">
-					<span style="color: #868e96;">${ficon(icon)}</span>${title}
+					<span style="color: #868e96;"><i data-feather="${icon}" style="width:16px;height:16px;"></i></span> ${title}
 				</div>
 				<div class="card-body-area"></div>
 			</div>

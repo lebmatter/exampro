@@ -15,7 +15,7 @@
   {% if show_error %}
   <div class="row mb-4">
     <div class="col">
-      <h4 class="bold-heading"><i data-feather="alert-triangle"></i>{{ title }}</h4>
+      <h4 class="bold-heading"><i data-feather="alert-triangle" style="width:20px;height:20px;margin-right:6px;"></i> {{ title }}</h4>
       <p class="text-muted mb-0">{{ _("Access Restricted") }}</p>
     </div>
   </div>
@@ -28,7 +28,7 @@
   {% else %}
   <div class="row mb-4 align-items-end">
     <div class="col">
-      <h4 class="bold-heading"><i data-feather="award"></i>{{ _("Leaderboard") }}</h4>
+      <h4 class="bold-heading"><i data-feather="award" style="width:20px;height:20px;margin-right:6px;"></i> {{ _("Leaderboard") }}</h4>
       <p class="text-muted mb-0">{{ exam.title }}</p>
     </div>
   </div>
