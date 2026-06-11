@@ -3,7 +3,12 @@
 
 frappe.ui.form.on('Exam Schedule', {
     refresh: function(frm) {
-        // Fetch and display the status
+        $(".ongoing-stats-banner").remove();
+        if (frm._ends_in_interval) {
+            clearInterval(frm._ends_in_interval);
+        }
+        frm._refresh_id = (frm._refresh_id || 0) + 1;
+        let current_refresh = frm._refresh_id;
         frm.call('get_exam_schedule_status')
             .then(r => {
                 if (r.message) {
@@ -19,17 +24,19 @@ frappe.ui.form.on('Exam Schedule', {
                         color = "gray";
                     }
                     
-                    // Add the status indicator to the form
                     frm.page.set_indicator(status, color);
-                    
-                    // Add Actions dropdown based on status
+
+                    if (status === "Ongoing") {
+                        show_ongoing_stats_banner(frm);
+                    }
+
                     add_status_based_actions(frm, status);
 
                     // Add Schedule Dashboard button
                     if (!frm.is_new()) {
                         frm.add_custom_button(__('Schedule Dashboard'), function() {
                             window.location.href = '/app/schedule-dashboard?exam_schedule=' + encodeURIComponent(frm.doc.name);
-                        }).addClass('btn-primary-light');
+                        }).addClass('btn-info');
                     }
                 }
             })
@@ -378,6 +385,82 @@ function show_assignment_counts(frm) {
             });
         }
     });
+}
+
+function show_ongoing_stats_banner(frm) {
+    let refresh_id = frm._refresh_id;
+    frappe.call({
+        method: "exampro.exam_pro.doctype.exam_schedule.exam_schedule.get_submission_counts",
+        args: { schedule: frm.doc.name },
+        callback: function(r) {
+            if (frm._refresh_id !== refresh_id) return;
+            $(".ongoing-stats-banner").remove();
+            let c = r.message || {};
+            let total = Object.values(c).reduce((a, b) => a + b, 0);
+            let live = c["Started"] || 0;
+            let submitted = c["Submitted"] || 0;
+            let terminated = c["Terminated"] || 0;
+
+            let $banner = $(`
+                <div class="ongoing-stats-banner" style="
+                    padding: 12px 15px;
+                    margin-bottom: 15px;
+                    background: var(--alert-bg-green, #d1e7dd);
+                    border-radius: var(--border-radius-md, 6px);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                ">
+                    <span class="indicator-pill blue no-indicator-dot">${total} Registered</span>
+                    <span class="indicator-pill green no-indicator-dot">${live} Live</span>
+                    <span class="indicator-pill orange no-indicator-dot">${submitted} Submitted</span>
+                    <span class="indicator-pill red no-indicator-dot">${terminated} Terminated</span>
+                    <a class="btn btn-xs btn-info ongoing-dashboard-btn">
+                        View Dashboard
+                    </a>
+                    <span class="ends-in-label text-muted" style="margin-left:auto;font-weight:600;font-size:var(--text-sm);"></span>
+                </div>
+            `);
+
+            $banner.find(".ongoing-dashboard-btn").on("click", function(e) {
+                e.preventDefault();
+                window.location.href = "/app/schedule-dashboard?exam_schedule=" + encodeURIComponent(frm.doc.name);
+            });
+
+            frm.$wrapper.find(".form-dashboard").after($banner);
+            start_ends_in_timer(frm);
+        }
+    });
+}
+
+function start_ends_in_timer(frm) {
+    if (frm._ends_in_interval) {
+        clearInterval(frm._ends_in_interval);
+    }
+
+    let end = moment(frm.doc.start_date_time).add(frm.doc.duration || 0, "minutes");
+    if (frm.doc.schedule_type === "Flexible") {
+        end.add(frm.doc.schedule_expire_in_days || 0, "days");
+    }
+
+    function update() {
+        let diff = end.diff(moment());
+        if (diff <= 0) {
+            clearInterval(frm._ends_in_interval);
+            $(".ongoing-stats-banner .ends-in-label").text("");
+            return;
+        }
+        let dur = moment.duration(diff);
+        let h = Math.floor(dur.asHours());
+        let m = dur.minutes();
+        let s = dur.seconds();
+        let text = h > 0 ? `Ends in ${h}h ${m}m ${s}s` : `Ends in ${m}m ${s}s`;
+        $(".ongoing-stats-banner .ends-in-label").text(text);
+    }
+
+    update();
+    frm._ends_in_interval = setInterval(update, 1000);
 }
 
 function generate_assignment_table_html(table_data) {

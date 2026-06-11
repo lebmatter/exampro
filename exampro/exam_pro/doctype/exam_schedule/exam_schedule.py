@@ -687,6 +687,39 @@ def get_schedule_end_time(exam_schedule, additional_time=0):
 	return end_time
 
 @frappe.whitelist()
+def get_ongoing_schedules():
+	"""Return names of all currently ongoing exam schedules."""
+	now_dt = datetime.now()
+	schedules = frappe.get_all(
+		"Exam Schedule",
+		fields=["name", "start_date_time", "duration", "schedule_type", "schedule_expire_in_days"],
+	)
+	ongoing = []
+	for s in schedules:
+		end = s.start_date_time + timedelta(minutes=s.duration or 0)
+		if s.schedule_type == "Flexible":
+			end += timedelta(days=s.schedule_expire_in_days or 0)
+		if s.start_date_time <= now_dt <= end:
+			ongoing.append(s.name)
+	return ongoing
+
+
+@frappe.whitelist()
+def get_submission_counts(schedule):
+	"""Return submission counts grouped by status for an exam schedule."""
+	rows = frappe.get_all(
+		"Exam Submission",
+		filters={"exam_schedule": schedule},
+		fields=["status", "count(name) as cnt"],
+		group_by="status",
+	)
+	counts = {}
+	for r in rows:
+		counts[r.status] = r.cnt
+	return counts
+
+
+@frappe.whitelist()
 def recompute_results_for_schedule(schedule):
 	"""
 	Recompute results for all submissions in the given exam schedule.

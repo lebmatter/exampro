@@ -5,10 +5,10 @@ frappe.listview_settings['Exam Schedule'] = {
     add_fields: ["start_date_time", "duration", "schedule_type", "schedule_expire_in_days"],
     
     onload: function(listview) {
-        // Add a custom field for status
         listview.page.add_inner_button(__("Refresh Status"), function() {
             listview.refresh();
         });
+        show_ongoing_banner(listview);
     },
     
     get_indicator: function(doc) {
@@ -70,16 +70,43 @@ frappe.listview_settings['Exam Schedule'] = {
         }
     },
     
-    // Before render, prepare for status calculation
     before_render: function(doc) {
-        // Guard against undefined doc
-        if (!doc) {
-            console.error("before_render called with undefined doc");
-            return;
-        }
-
-        // Mark that this doc needs status calculation
+        if (!doc) return;
         doc._needs_status_calculation = true;
         doc._server_status = null;
     }
 };
+
+function show_ongoing_banner(listview) {
+    frappe.call({
+        method: "exampro.exam_pro.doctype.exam_schedule.exam_schedule.get_ongoing_schedules",
+        callback: function(r) {
+            $(".ongoing-exam-banner").remove();
+            let names = (r.message || []);
+            if (!names.length) return;
+
+            let $banner = $(`
+                <div class="ongoing-exam-banner" style="
+                    padding: 10px 15px;
+                    margin-bottom: 10px;
+                    background: var(--alert-bg-green, #d1e7dd);
+                    border-radius: var(--border-radius-md, 6px);
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                ">
+                    <span style="font-weight:600;">${names.length} ongoing exam${names.length > 1 ? "s" : ""}</span>
+                    <a class="btn btn-xs btn-success ongoing-view-btn">View</a>
+                </div>
+            `);
+
+            $banner.find(".ongoing-view-btn").on("click", function() {
+                listview.filter_area.clear();
+                listview.filter_area.add([[listview.doctype, "name", "in", names.join(", ")]]);
+                listview.refresh();
+            });
+
+            listview.$result.closest(".layout-main-section").prepend($banner);
+        }
+    });
+}
