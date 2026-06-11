@@ -55,7 +55,7 @@
    "fieldname": "warning_type",
    "fieldtype": "Select",
    "label": "Warning Type",
-   "options": "tabchange\nmonitorchange\nnowebcam\nnoface\nnofacetimeout\nother"
+   "options": "tabchange\nmonitorchange\nnowebcam\nnoface\nnofacetimeout\nnowebcamtimeout\nfullscreenexit\nother"
   },
   {
    "fieldname": "timestamp",

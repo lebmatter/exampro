@@ -20,6 +20,7 @@ var NO_FACE_GRACE_SECONDS = 60;
 var WEBCAM_GRACE_SECONDS = 60;
 var helpShownFor = new Set(); // qs_no values where help has already been shown this session
 var helpReadingTimer = null;
+var fullscreenExitedIntentionally = false; // Set true during endExam to suppress the exit warning
 
 // Simple notification function as fallback
 function showNotification(message, type = 'info') {
@@ -79,6 +80,55 @@ function showNotification(message, type = 'info') {
                 notification.parentNode.removeChild(notification);
             }
         }, 20000);
+    }
+}
+
+function enterFullscreen() {
+    var el = document.documentElement;
+    var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if (rfs) {
+        rfs.call(el).then(function () {
+            hideFullscreenOverlay();
+        }).catch(function (err) {
+            console.warn('Fullscreen request denied:', err);
+            showFullscreenOverlay();
+        });
+    }
+}
+
+function isInFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+}
+
+function showFullscreenOverlay() {
+    var overlay = document.getElementById('fullscreenOverlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hideFullscreenOverlay() {
+    var overlay = document.getElementById('fullscreenOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function handleFullscreenChange() {
+    if (!isInFullscreen() && !examEnded && !fullscreenExitedIntentionally && exam.submission_status === "Started") {
+        showTerminationBanner('fullscreenBanner');
+        sendMessage('Candidate exited fullscreen mode', 'Critical', 'fullscreenexit');
+        if (typeof playAlarm === 'function') playAlarm(true);
+        showFullscreenOverlay();
+    } else if (isInFullscreen()) {
+        hideTerminationBanner('fullscreenBanner');
+        hideFullscreenOverlay();
+    }
+}
+
+function activateFullscreenEnforcement() {
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    if (!isInFullscreen()) {
+        showFullscreenOverlay();
     }
 }
 
@@ -657,6 +707,13 @@ frappe.ready(() => {
     document.addEventListener('click', _unlockAudioOnce);
     document.addEventListener('keydown', _unlockAudioOnce);
 
+    var fullscreenBtn = document.getElementById('fullscreenEnterBtn');
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', function () {
+            enterFullscreen();
+        });
+    }
+
     // Disable right-click context menu
     document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
@@ -737,6 +794,7 @@ frappe.ready(() => {
         // Start the countdown timer
         updateTimer();
         activateDetector();
+        activateFullscreenEnforcement();
     }
 
     $("#nextQs").click((e) => {
@@ -1281,6 +1339,7 @@ function hideTerminationBanner(id) {
 function terminateForNoFace() {
     if (examEnded) return;
     examEnded = true;
+    fullscreenExitedIntentionally = true;
     cancelNoFaceCountdown();
 
     frappe.call({
@@ -1310,6 +1369,7 @@ function terminateForNoFace() {
 function terminateForNoWebcam() {
     if (examEnded) return;
     examEnded = true;
+    fullscreenExitedIntentionally = true;
     cancelWebcamCountdown();
 
     frappe.call({
@@ -1338,6 +1398,7 @@ function terminateForNoWebcam() {
 
 function endExam(isAutoSubmit) {
     if (!examEnded) {
+        fullscreenExitedIntentionally = true;
         frappe.call({
             method: "exampro.exam_pro.doctype.exam_submission.exam_submission.end_exam",
             type: "POST",
@@ -1370,7 +1431,9 @@ function startExam() {
     if (typeof checkMediaPermissionsBeforeStart === 'function' && !checkMediaPermissionsBeforeStart()) {
         return; // Don't start exam if permissions not granted
     }
-    
+
+    enterFullscreen();
+
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.start_exam",
         type: "POST",

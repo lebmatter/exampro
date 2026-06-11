@@ -273,6 +273,20 @@ head_include %}
     </div>
   </div>
   {% endif %}
+  <!-- Fullscreen exit warning banner -->
+  <div id="fullscreenBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i data-feather="alert-triangle"></i>
+    You have exited fullscreen mode. This has been reported to the proctor.
+  </div>
+  <!-- Fullscreen enforcement overlay -->
+  <div id="fullscreenOverlay" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.92); justify-content:center; align-items:center; flex-direction:column; color:#fff; text-align:center;">
+    <i data-feather="maximize" style="width:48px; height:48px; margin-bottom:16px;"></i>
+    <h3 style="margin-bottom:8px;">Fullscreen Required</h3>
+    <p style="margin-bottom:24px; max-width:400px; color:#ccc;">This exam must be taken in fullscreen mode. Exiting fullscreen is reported to the proctor.</p>
+    <button id="fullscreenEnterBtn" style="padding:12px 32px; font-size:1.1rem; font-weight:600; border:none; border-radius:8px; background:#0d6efd; color:#fff; cursor:pointer;">
+      Enter Fullscreen
+    </button>
+  </div>
   <!-- No-face termination warning banner -->
   <div id="noFaceBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
     <i data-feather="alert-triangle"></i>
