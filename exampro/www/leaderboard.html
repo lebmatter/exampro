@@ -44,7 +44,7 @@
     </div>
     <div class="stat-grid">
       <div class="stat-cell">
-        <div class="stat-value">{{ user_submission.total_marks }}<span class="stat-suffix">/{{ exam.total_marks }}</span></div>
+        <div class="stat-value">{{ '%g' % (user_submission.total_marks or 0) }}<span class="stat-suffix">/{{ exam.total_marks }}</span></div>
         <div class="stat-label">{{ _("Score") }}</div>
       </div>
       <div class="stat-cell">
@@ -141,7 +141,7 @@
                 </span>
               </div>
             </td>
-            <td class="text-muted">{{ submission.total_marks }}/{{ submission.max_marks }}</td>
+            <td class="text-muted">{{ '%g' % (submission.total_marks or 0) }}/{{ submission.max_marks }}</td>
             <td>
               <span class="status-pill
                 {% if submission.percentage >= 75 %}status-passed

@@ -45,7 +45,7 @@
     {% if result_type == "scorecard" %}
     <div class="result-hero">
       <div class="score-ring {% if exam_submission.result_status == 'Passed' %}ring-passed{% else %}ring-failed{% endif %}">
-        <span class="score-value">{{ exam_submission.total_marks }}</span>
+        <span class="score-value">{{ '%g' % (exam_submission.total_marks or 0) }}</span>
         <span class="score-total">/ {{ exam_data.total_marks }}</span>
       </div>
       <span class="status-pill {% if exam_submission.result_status == 'Passed' %}status-passed{% else %}status-failed{% endif %}">
