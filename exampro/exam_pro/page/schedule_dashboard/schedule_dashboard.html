@@ -1,0 +1,30 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("Schedule Dashboard") }}{% endblock %}
+
+{% block page_content %}
+<div class="schedule-dashboard-container">
+</div>
+
+<style>
+    .schedule-dashboard-container {
+        padding: 15px;
+    }
+
+    .schedule-dashboard .table th,
+    .schedule-dashboard .table td {
+        border: none;
+    }
+
+    .schedule-dashboard .table thead tr {
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    @media (max-width: 767px) {
+        .schedule-dashboard .d-flex.flex-wrap > div {
+            flex: 1 1 100% !important;
+            max-width: 100% !important;
+        }
+    }
+</style>
+{% endblock %}

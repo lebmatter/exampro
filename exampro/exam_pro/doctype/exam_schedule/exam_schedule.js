@@ -24,6 +24,13 @@ frappe.ui.form.on('Exam Schedule', {
                     
                     // Add Actions dropdown based on status
                     add_status_based_actions(frm, status);
+
+                    // Add Schedule Dashboard button
+                    if (!frm.is_new()) {
+                        frm.add_custom_button(__('Schedule Dashboard'), function() {
+                            window.location.href = '/app/schedule-dashboard?exam_schedule=' + encodeURIComponent(frm.doc.name);
+                        }).addClass('btn-primary-light');
+                    }
                 }
             })
             .catch(err => {

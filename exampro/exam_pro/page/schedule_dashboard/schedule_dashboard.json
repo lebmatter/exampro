@@ -1,0 +1,21 @@
+{
+    "doctype": "Page",
+    "icon": "chart-bar",
+    "idx": 0,
+    "modified": "2026-06-10 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Exam Pro",
+    "name": "schedule-dashboard",
+    "owner": "Administrator",
+    "page_name": "schedule-dashboard",
+    "roles": [
+        {
+            "role": "System Manager"
+        },
+        {
+            "role": "Exam Manager"
+        }
+    ],
+    "standard": "Yes",
+    "title": "Schedule Dashboard"
+}
