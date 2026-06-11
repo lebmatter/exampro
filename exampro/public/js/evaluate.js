@@ -77,7 +77,7 @@ function evaluationApp() {
       this.currentSubmissionId = submissionId;
       
       // Show loading state
-      this.evaluationAreaContent = '<div class="text-center p-5"><i class="bi bi-arrow-repeat"></i><br></div>';
+      this.evaluationAreaContent = '<div class="text-center p-5"><i data-feather="refresh-cw"></i><br></div>';
       
       try {
         const data = await this.apiCall({
@@ -173,7 +173,7 @@ function evaluationApp() {
               </div>
               
               <div class="alert alert-secondary mt-3">
-                <i class="bi bi-info-circle me-2"></i>
+                <i data-feather="info"></i>
                 This is a Choices type question that has been automatically evaluated.
               </div>
               
@@ -200,7 +200,7 @@ function evaluationApp() {
               <div class="evaluation-section">
                 <h6>Evaluation</h6>
                 <div class="alert alert-success">
-                  <i class="bi bi-check-circle me-2"></i>
+                  <i data-feather="check-circle"></i>
                   This answer has been evaluated.
                 </div>
                 <div class="form-group mb-3">

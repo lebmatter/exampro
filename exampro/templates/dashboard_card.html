@@ -17,18 +17,18 @@
     {% endif %}
     <ul class="dashboard-meta">
       <li>
-        <i class="bi bi-clock"></i>
+        <i data-feather="clock"></i>
         <span>{{ item.start_time_display }}</span>
       </li>
       {% if item.duration %}
       <li>
-        <i class="bi bi-stopwatch"></i>
+        <i data-feather="watch"></i>
         <span>{{ item.duration }}</span>
       </li>
       {% endif %}
       {% if item.flexible_note %}
       <li>
-        <i class="bi bi-info-circle"></i>
+        <i data-feather="info"></i>
         <span>{{ item.flexible_note }}</span>
       </li>
       {% endif %}
@@ -43,7 +43,7 @@
           title="{{ item.action_disabled_reason or '' }}"
           aria-disabled="true">
       {{ item.action_text }}
-      <i class="bi bi-arrow-right ms-2"></i>
+      <i data-feather="arrow-right"></i>
     </span>
     {% if item.action_disabled_reason %}
     <small class="action-disabled-reason text-muted ms-2">{{ item.action_disabled_reason }}</small>
@@ -51,7 +51,7 @@
     {% elif item.action_text %}
     <a href="{{ item.action_link }}" class="btn btn-sm btn-primary dashboard-action">
       {{ item.action_text }}
-      <i class="bi bi-arrow-right ms-2"></i>
+      <i data-feather="arrow-right"></i>
     </a>
     {% endif %}
   </div>

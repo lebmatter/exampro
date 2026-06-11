@@ -117,8 +117,8 @@ function updateTimer() {
 
 }
 
-const answrdCheck = `<i class="bi bi-check-circle"></i>`;
-const answrLater = `<i class="bi bi-clock-history"></i>`;
+const answrdCheck = `<i data-feather="check-circle"></i>`;
+const answrLater = `<i data-feather="clock"></i>`;
 var examEnded = false;
 var currentQsNo = 1;
 // Initialize variables
@@ -862,7 +862,7 @@ function updateOverviewMap() {
                 button.attr("id", "button-" + i);
                 
                 // Set the button content with the new structure
-                button.html(`<i class="bi bi-circle-fill ${circleColor}"></i><span class="fw-bold text-dark">${i}</span>`);
+                button.html(`<i data-feather="circle"></i><span class="fw-bold text-dark">${i}</span>`);
                 
                 // Append the button to the grid
                 $("#button-grid").append(button);
@@ -1452,7 +1452,7 @@ function showSubmitConfirmPage() {
                     <div class="card" style="max-width: 30rem;">
                         <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                            <i class="bi bi-clock me-2"></i>
+                            <i data-feather="clock"></i>
                             <h6 class="mb-0">Time Remaining: <span class="ml-10 timer">--:--</span></h6>
                         </div>
                         <ul class="list-group list-group-flush">
@@ -1473,7 +1473,7 @@ function showSubmitConfirmPage() {
                         <div class="card-footer">
                         <button class="btn btn-primary w-100" id="quizSubmit" onclick="endExam();">Submit Exam</button>
                         <button type="button" class="btn btn-link w-100 mt-2" id="quizGoBack">
-                            <i class="bi bi-arrow-left me-2"></i>Go back
+                            <i data-feather="arrow-left"></i>Go back
                         </button>
                         </div>
                     </div>

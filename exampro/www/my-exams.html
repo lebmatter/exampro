@@ -10,7 +10,7 @@
 <div class="container dashboard-page">
   <div class="row mb-4">
     <div class="col">
-      <h4 class="bold-heading"><i class="bi bi-card-checklist me-2 text-muted"></i>My Exams</h4>
+      <h4 class="bold-heading"><i data-feather="clipboard"></i>My Exams</h4>
       <p class="text-muted mb-0">A history of your past exam attempts.</p>
     </div>
   </div>
@@ -32,7 +32,7 @@
           <tr>
             <td colspan="5">
               <div class="empty-state border-0 p-4">
-                <i class="bi bi-journal-text"></i>
+                <i data-feather="book-open"></i>
                 <h5>No past exams yet</h5>
                 <p class="text-muted mb-0">Once you finish an exam, it will show up here.</p>
               </div>
@@ -77,18 +77,18 @@
                   <button type="button"
                           onclick="downloadCertificate('{{ exam.certificate_name }}')"
                           class="btn btn-sm btn-success">
-                    <i class="bi bi-download me-2"></i>Certificate
+                    <i data-feather="download"></i>Certificate
                   </button>
                   {% else %}
                   <a href="/exam/{{ exam.submission }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-file-earmark-text me-2"></i>View Result
+                    <i data-feather="file-text"></i>View Result
                   </a>
                   {% endif %}
                   {% if exam.leaderboard_enabled %}
                   <a href="/leaderboard/{{ exam.submission }}"
                      class="btn btn-sm btn-outline-secondary"
                      title="View Leaderboard">
-                    <i class="bi bi-trophy-fill me-2 text-warning"></i>Leaderboard
+                    <i data-feather="award"></i>Leaderboard
                   </a>
                   {% endif %}
                 {% endif %}

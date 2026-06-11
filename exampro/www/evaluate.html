@@ -12,12 +12,12 @@ page_extensions %} {{ ext.render_header() }} {% endfor %}
     <div class="alert-card">
       <div class="alert-card-header">
         <h4 class="mb-0">
-          <i class="bi bi-exclamation-triangle-fill"></i>Upcoming Evaluation
+          <i data-feather="alert-triangle"></i>Upcoming Evaluation
         </h4>
       </div>
       <div class="alert-card-body">
         <div class="alert-icon-section">
-          <i class="bi bi-clock-fill"></i>
+          <i data-feather="clock"></i>
         </div>
         <div class="alert-status">{{ alert.title }}</div>
         <div class="alert-message-box">
@@ -25,7 +25,7 @@ page_extensions %} {{ ext.render_header() }} {% endfor %}
         </div>
         <div class="alert-actions">
           <a href="/my-exams" class="alert-button alert-button-primary">
-            <i class="bi bi-arrow-left"></i>My Exams
+            <i data-feather="arrow-left"></i>My Exams
           </a>
         </div>
       </div>
@@ -35,7 +35,7 @@ page_extensions %} {{ ext.render_header() }} {% endfor %}
   <div class="container dashboard-page">
     <div class="row mb-4">
       <div class="col">
-        <h4 class="bold-heading"><i class="bi bi-check2-square me-2 text-muted"></i>Evaluate Exams</h4>
+        <h4 class="bold-heading"><i data-feather="check-square"></i>Evaluate Exams</h4>
       </div>
     </div>
     <div class="row">

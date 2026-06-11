@@ -11,12 +11,12 @@ head_include %}
   <div class="alert-card">
     <div class="alert-card-header">
       <h4 class="mb-0">
-        <i class="bi bi-exclamation-triangle-fill"></i> Alert
+        <i data-feather="alert-triangle"></i> Alert
       </h4>
     </div>
     <div class="alert-card-body">
       <div class="alert-icon-section">
-        <i class="bi bi-exclamation-triangle-fill"></i>
+        <i data-feather="alert-triangle"></i>
       </div>
       <div class="alert-status">{{ alert.title }}</div>
       <div class="alert-message-box">
@@ -31,10 +31,10 @@ head_include %}
           {% endfor %}
         {% else %}
         <a href="javascript:window.history.back()" class="alert-button alert-button-secondary">
-            <i class="bi bi-arrow-left"></i>Go Back
+            <i data-feather="arrow-left"></i>Go Back
         </a>
         <a href="javascript:location.reload()" class="alert-button alert-button-primary">
-            <i class="bi bi-arrow-repeat"></i>Refresh
+            <i data-feather="refresh-cw"></i>Refresh
         </a>
         {% endif %}
       </div>
@@ -50,7 +50,7 @@ head_include %}
         <li class="nav-item">
           <a class="nav-link active" data-toggle="tab" href="#messages">
             <span class="d-flex align-items-center">
-              <i class="bi bi-chat-text me-2"></i>
+              <i data-feather="message-circle"></i>
               Chat {% if exam.enable_chat %}
               <span
                 class="badge badge-pill badge-warning ms-2"
@@ -63,7 +63,7 @@ head_include %}
         <li class="nav-item">
           <a class="nav-link" data-toggle="tab" href="#calculator">
             <span class="d-flex align-items-center">
-              <i class="bi bi-calculator me-2"></i>
+              <i data-feather="hash"></i>
               Calculator
             </span>
           </a>
@@ -102,12 +102,11 @@ head_include %}
           aria-controls="video-content"
         >
           <span class="d-flex align-items-center text-dark fw-semibold" style="font-size: 1.1rem;">
-            <i class="bi bi-camera-video me-2"></i>
+            <i data-feather="video"></i>
           </span>
           <span class="text-primary arrow-icon" style="font-size: 1.2rem">
-            <i
-              :class="videoVisible ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
-            ></i>
+            <i x-show="videoVisible" data-feather="chevron-up" style="width:18px;height:18px;"></i>
+            <i x-show="!videoVisible" data-feather="chevron-down" style="width:18px;height:18px;"></i>
           </span>
         </div>
         <div
@@ -175,11 +174,10 @@ head_include %}
                 >
                   <span x-show="timerVisible" class="timer" id="exam-timer">--:--</span>
                   <span x-show="!timerVisible">Show Timer</span>
-                  <i
-                    class="ms-2"
-                    :class="timerVisible ? 'bi bi-eye-slash' : 'bi bi-eye'"
-                    aria-label="Toggle timer visibility"
-                  ></i>
+                  <span class="ms-2">
+                    <i x-show="timerVisible" data-feather="eye-off" style="width:16px;height:16px;" aria-label="Hide timer"></i>
+                    <i x-show="!timerVisible" data-feather="eye" style="width:16px;height:16px;" aria-label="Show timer"></i>
+                  </span>
                 </button>
             </div>
         </div>
@@ -204,9 +202,8 @@ head_include %}
                 Instructions
             </h5>
             <span class="text-primary arrow-icon" style="font-size: 1.2rem">
-                <i
-                :class="isCollapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up'"
-                ></i>
+                <i x-show="isCollapsed" data-feather="chevron-down" style="width:18px;height:18px;"></i>
+                <i x-show="!isCollapsed" data-feather="chevron-up" style="width:18px;height:18px;"></i>
             </span>
             </div>
             <div
@@ -278,12 +275,12 @@ head_include %}
   {% endif %}
   <!-- No-face termination warning banner -->
   <div id="noFaceBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <i data-feather="alert-triangle"></i>
     Face not detected. Your exam will be terminated soon. Please ensure your face is clearly visible to the camera.
   </div>
   <!-- Webcam disconnection warning banner -->
   <div id="webcamBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <i data-feather="alert-triangle"></i>
     Webcam disconnected. Your exam will be terminated soon. Please reconnect your camera.
   </div>
 
@@ -294,7 +291,7 @@ head_include %}
         <div class="modal-header">
           <h5 class="modal-title" id="alertTitle"></h5>
           <button type="button" class="btn" data-bs-dismiss="modal" aria-label="Close">
-            <i class="bi bi-x-lg"></i>
+            <i data-feather="x"></i>
           </button>
         </div>
         <div class="modal-body" id="alertText"></div>

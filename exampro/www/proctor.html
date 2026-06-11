@@ -9,12 +9,12 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
     <div class="alert-card">
       <div class="alert-card-header">
         <h4 class="mb-0">
-          <i class="bi bi-clock"></i> Upcoming Proctoring Sessions
+          <i data-feather="clock"></i> Upcoming Proctoring Sessions
         </h4>
       </div>
       <div class="alert-card-body">
         <div class="alert-icon-section">
-          <i class="bi bi-eye"></i>
+          <i data-feather="eye"></i>
         </div>
         <div class="alert-status">{{ alert.title }}</div>
         <div class="alert-message-box">
@@ -22,7 +22,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
         </div>
         <div class="alert-actions">
           <a href="/my-exams" class="alert-button alert-button-primary">
-            <i class="bi bi-arrow-left"></i>My Exams
+            <i data-feather="arrow-left"></i>My Exams
           </a>
         </div>
       </div>
@@ -35,7 +35,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
       {% endif %}
       <div class="row mb-5">
         <div class="col">
-          <h4 class="d-inline-flex align-items-center"><i class="bi bi-eye-fill text-muted" style="margin-right:0.6rem;font-size:0.95em"></i>Proctor Dashboard</h4>
+          <h4 class="d-inline-flex align-items-center"><i data-feather="eye" style="margin-right:0.6rem;font-size:0.95em"></i>Proctor Dashboard</h4>
         </div>
       </div>
       <div class="row mb-5">
@@ -172,7 +172,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                     >
                       <div>
                         <i
-                          class="bi bi-camera-video-off"
+                          data-feather="video-off"
                           style="font-size: 2rem; margin-bottom: 10px"
                         ></i>
                         <div>Video proctoring disabled</div>
@@ -202,7 +202,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         class="offline-button"
                         @click="toggleOfflineStatus(submission.name)"
                       >
-                        <i class="bi bi-wifi-off"></i>
+                        <i data-feather="wifi-off"></i>
                         <span>Offline</span>
                       </div>
                     </div>
@@ -221,7 +221,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         :disabled="!submission.enable_video_proctoring"
                         :style="!submission.enable_video_proctoring ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                       >
-                        <i class="bi bi-play-fill"></i>
+                        <i data-feather="play"></i>
                       </button>
                       <button
                         class="controls__button skipBack"
@@ -232,7 +232,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         :disabled="!submission.enable_video_proctoring"
                         :style="!submission.enable_video_proctoring ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                       >
-                        <i class="bi bi-rewind-fill"></i>
+                        <i data-feather="rewind"></i>
                       </button>
                       <button
                         class="controls__button skipFwd"
@@ -243,7 +243,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         :disabled="!submission.enable_video_proctoring"
                         :style="!submission.enable_video_proctoring ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                       >
-                        <i class="bi bi-fast-forward-fill"></i>
+                        <i data-feather="fast-forward"></i>
                       </button>
                       <button
                         class="controls__button goLive"
@@ -254,7 +254,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         :disabled="!submission.enable_video_proctoring"
                         :style="!submission.enable_video_proctoring ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                       >
-                        <i class="bi bi-broadcast-pin"></i>
+                        <i data-feather="radio"></i>
                       </button>
                       <button
                         type="button"
@@ -266,7 +266,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         :disabled="!submission.enable_chat"
                         :style="!submission.enable_chat ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                       >
-                        <i class="bi bi-chat-square-text-fill"></i>
+                        <i data-feather="message-square"></i>
                       </button>
                     </div>
                   </div>
@@ -307,7 +307,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                   >
                     <div>
                       <i
-                        class="bi bi-camera-video-off"
+                        data-feather="video-off"
                         style="font-size: 2rem; margin-bottom: 10px"
                       ></i>
                       <div>Video proctoring disabled</div>
@@ -380,7 +380,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
               @click="closeChatModal()"
               aria-label="Close"
             >
-              <i class="bi bi-x-lg"></i>
+              <i data-feather="x"></i>
             </button>
           </div>
           <div class="modal-body">
@@ -432,7 +432,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                         >
                           <span class="d-flex align-items-center">
                             Send
-                            <i class="bi bi-send ms-2"></i>
+                            <i data-feather="send"></i>
                           </span>
                         </button>
                       </div>

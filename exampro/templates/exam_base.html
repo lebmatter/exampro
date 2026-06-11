@@ -1,8 +1,5 @@
 {% extends "templates/web.html" %} {% block head_include %} {{ super() }}
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-/>
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 <script
   src="https://code.jquery.com/jquery-3.6.0.min.js"
   integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
@@ -129,7 +126,7 @@
               role="button"
               data-bs-toggle="dropdown"
             >
-              <i class="bi bi-person-circle"></i>
+              <i data-feather="user" style="width:16px;height:16px;"></i>
               {{ frappe.session.user }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -158,15 +155,15 @@ get_telemetry_boot_info() %}
 {% endif %} {{ include_script("telemetry.bundle.js") }}
 
 <script>
-  // Replace avatar with email display
   $(document).ready(function () {
+    if (typeof feather !== 'undefined') feather.replace();
     // Find avatar elements and replace with email
     $(".avatar-image, .avatar-frame").each(function () {
       const userEmail = frappe.session.user;
       if (userEmail && userEmail !== "Guest") {
         $(this).replaceWith(`
                 <span class="user-email-display">
-                    <i class="bi bi-person-circle"></i>
+                    <i data-feather="user" style="width:16px;height:16px;"></i>
                     ${userEmail}
                 </span>
             `);
@@ -178,7 +175,7 @@ get_telemetry_boot_info() %}
       const $this = $(this);
       if ($this.find(".avatar-image").length > 0) {
         $this.html(`
-                <i class="bi bi-person-circle"></i>
+                <i data-feather="user" style="width:16px;height:16px;"></i>
                 ${frappe.session.user}
                 <span class="caret"></span>
             `);

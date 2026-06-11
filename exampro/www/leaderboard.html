@@ -15,12 +15,12 @@
   {% if show_error %}
   <div class="row mb-4">
     <div class="col">
-      <h4 class="bold-heading"><i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>{{ title }}</h4>
+      <h4 class="bold-heading"><i data-feather="alert-triangle"></i>{{ title }}</h4>
       <p class="text-muted mb-0">{{ _("Access Restricted") }}</p>
     </div>
   </div>
   <div class="empty-state">
-    <i class="bi bi-lock-fill"></i>
+    <i data-feather="lock"></i>
     <h5>{{ _("Access Restricted") }}</h5>
     <p class="text-muted mb-0">{{ error_message }}</p>
   </div>
@@ -28,7 +28,7 @@
   {% else %}
   <div class="row mb-4 align-items-end">
     <div class="col">
-      <h4 class="bold-heading"><i class="bi bi-trophy-fill me-2 text-warning"></i>{{ _("Leaderboard") }}</h4>
+      <h4 class="bold-heading"><i data-feather="award"></i>{{ _("Leaderboard") }}</h4>
       <p class="text-muted mb-0">{{ exam.title }}</p>
     </div>
   </div>
@@ -40,7 +40,7 @@
   {% if user_submission %}
   <div class="leaderboard-section user-stats">
     <div class="section-header">
-      <i class="bi bi-person-fill me-2"></i>{{ _("Your Performance") }}
+      <i data-feather="user"></i>{{ _("Your Performance") }}
     </div>
     <div class="stat-grid">
       <div class="stat-cell">
@@ -69,28 +69,28 @@
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
       <div class="kpi-card">
-        <i class="bi bi-people-fill kpi-icon kpi-icon-primary"></i>
+        <i data-feather="users"></i>
         <div class="kpi-value">{{ stats.total_participants }}</div>
         <div class="kpi-label">{{ _("Participants") }}</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="kpi-card">
-        <i class="bi bi-graph-up kpi-icon kpi-icon-success"></i>
+        <i data-feather="trending-up"></i>
         <div class="kpi-value">{{ "%.1f"|format(stats.average_score) }}%</div>
         <div class="kpi-label">{{ _("Average") }}</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="kpi-card">
-        <i class="bi bi-award-fill kpi-icon kpi-icon-warning"></i>
+        <i data-feather="award"></i>
         <div class="kpi-value">{{ "%.1f"|format(stats.highest_score) }}%</div>
         <div class="kpi-label">{{ _("Highest") }}</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="kpi-card">
-        <i class="bi bi-check-circle-fill kpi-icon kpi-icon-info"></i>
+        <i data-feather="check-circle"></i>
         <div class="kpi-value">{{ "%.1f"|format(stats.pass_rate) }}%</div>
         <div class="kpi-label">{{ _("Pass Rate") }}</div>
       </div>
@@ -100,7 +100,7 @@
 
   <div class="leaderboard-section">
     <div class="section-header">
-      <i class="bi bi-trophy-fill me-2"></i>{{ _("Rankings") }}
+      <i data-feather="award"></i>{{ _("Rankings") }}
     </div>
     {% if leaderboard_data and leaderboard_data|length > 0 %}
     <div class="table-responsive">
@@ -136,7 +136,7 @@
                 <span class="candidate-name">
                   {{ submission.candidate_name }}
                   {% if submission.candidate == frappe.session.user %}
-                  <i class="bi bi-star-fill text-warning ms-1" title="You"></i>
+                  <i data-feather="star" title="You"></i>
                   {% endif %}
                 </span>
               </div>
@@ -158,7 +158,7 @@
     </div>
     {% else %}
     <div class="empty-state border-0">
-      <i class="bi bi-bar-chart-fill"></i>
+      <i data-feather="bar-chart-2"></i>
       <h5>{{ _("No Leaderboard Data") }}</h5>
       <p class="text-muted mb-0">{{ _("No valid submissions found for this exam leaderboard.") }}</p>
     </div>

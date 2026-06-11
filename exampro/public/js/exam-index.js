@@ -104,9 +104,9 @@ $(document).ready(function () {
       $("#instruction").toggle();
       $(this).html(function (i, html) {
         if (html.includes("Hide instructions")) {
-          return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Show instructions</span>';
+          return '<span class="d-flex align-items-center"><i data-feather="info"></i>Show instructions</span>';
         } else {
-          return '<span class="d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>Hide instructions</span>';
+          return '<span class="d-flex align-items-center"><i data-feather="info"></i>Hide instructions</span>';
         }
       });
     });

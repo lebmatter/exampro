@@ -1,3 +1,11 @@
+// Load Feather Icons for desk page
+if (typeof feather === 'undefined' && !document.getElementById('feather-icons-script')) {
+    const s = document.createElement('script');
+    s.id = 'feather-icons-script';
+    s.src = 'https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js';
+    document.head.appendChild(s);
+}
+
 frappe.pages['exam-dashboard'].on_page_load = function(wrapper) {
     var page = frappe.ui.make_app_page({
         parent: wrapper,
@@ -105,7 +113,7 @@ class ExamDashboard {
             {
                 label: 'Pass Rate',
                 value: data.pass_rate + '%',
-                icon: 'percentage',
+                icon: 'trending-up',
                 color: 'red'
             },
             {
@@ -127,7 +135,7 @@ class ExamDashboard {
                     <div class="d-flex align-items-center">
                         <div class="mr-3">
                             <div class="icon-circle bg-${metric.color}-light text-${metric.color}" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <i class="fa fa-${metric.icon}"></i>
+                                <i data-feather="${metric.icon}"></i>
                             </div>
                         </div>
                         <div>
@@ -140,6 +148,7 @@ class ExamDashboard {
             
             $metrics_container.append($metric_card);
         });
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     render_charts(data) {

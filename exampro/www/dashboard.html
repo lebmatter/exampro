@@ -8,7 +8,7 @@
 {% block page_content %}
 {% if auto_redirect_to_exam %}
 <div id="liveExamBanner" style="position:fixed; top:0; left:0; right:0; z-index:9999; background:#198754; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-  <i class="bi bi-broadcast me-2"></i>
+  <i data-feather="radio"></i>
   A live exam is in progress. Redirecting in <span id="liveExamCountdown">10</span> seconds…
   <button type="button" id="liveExamCancel" style="margin-left:1rem; background:transparent; border:1px solid #fff; color:#fff; padding:2px 10px; border-radius:4px; font-size:0.85rem; cursor:pointer;">Stay here</button>
 </div>
@@ -37,7 +37,7 @@
 <div class="container dashboard-page"{% if auto_redirect_to_exam %} style="padding-top: 4.5rem;"{% endif %}>
   <div class="row mb-4">
     <div class="col">
-      <h4 class="bold-heading"><i class="bi bi-journal-text me-2 text-muted"></i>Dashboard</h4>
+      <h4 class="bold-heading"><i data-feather="book-open"></i>Dashboard</h4>
       <p class="text-muted mb-0">{{ subheading }}</p>
     </div>
   </div>
@@ -45,13 +45,13 @@
   <ul class="nav nav-tabs dashboard-tabs" id="dashboardTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="live-tab" data-bs-toggle="tab" data-bs-target="#live" type="button" role="tab">
-        <i class="bi bi-broadcast me-2"></i>Live
+        <i data-feather="radio"></i>Live
         <span class="tab-count">{{ live_count }}</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
-        <i class="bi bi-calendar-event me-2"></i>Upcoming
+        <i data-feather="calendar"></i>Upcoming
         <span class="tab-count">{{ upcoming_count }}</span>
       </button>
     </li>
@@ -69,7 +69,7 @@
       </div>
       {% else %}
       <div class="empty-state">
-        <i class="bi bi-cup-hot"></i>
+        <i data-feather="coffee"></i>
         <h5>Nothing live right now</h5>
         <p class="text-muted mb-0">No active exams, proctoring sessions or pending evaluations.</p>
       </div>
@@ -87,7 +87,7 @@
       </div>
       {% else %}
       <div class="empty-state">
-        <i class="bi bi-calendar-x"></i>
+        <i data-feather="calendar"></i>
         <h5>No upcoming sessions</h5>
         <p class="text-muted mb-0">You're all clear for the days ahead.</p>
       </div>

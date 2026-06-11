@@ -13,7 +13,7 @@
   {% if invite_valid %}
   <div class="result-card result-scorecard invite-card">
     <div class="result-card-title">
-      <i class="bi bi-envelope-paper-fill me-2 text-primary"></i>Exam Invitation
+      <i data-feather="mail"></i>Exam Invitation
     </div>
     <div class="result-card-subtitle">You are invited to take an exam.</div>
 
@@ -58,10 +58,10 @@
     </div>
     <div class="result-actions">
       <a href="/dashboard" class="btn btn-primary">
-        <i class="bi bi-arrow-left me-2"></i>Dashboard
+        <i data-feather="arrow-left"></i>Dashboard
       </a>
       <a href="/my-exams" class="btn btn-outline-secondary">
-        <i class="bi bi-card-checklist me-2"></i>My Exams
+        <i data-feather="clipboard"></i>My Exams
       </a>
     </div>
     {% elif status == "Completed" %}
@@ -70,7 +70,7 @@
     </div>
     <div class="result-actions">
       <a href="/dashboard" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Dashboard
+        <i data-feather="arrow-left"></i>Dashboard
       </a>
     </div>
     {% else %}
@@ -78,7 +78,7 @@
       <button id="accept-invite"
               class="btn btn-primary"
               onclick="acceptInvitation('{{ schedule_name }}')">
-        <i class="bi bi-check-circle me-2"></i>Accept Invitation
+        <i data-feather="check-circle"></i>Accept Invitation
       </button>
     </div>
     {% endif %}
@@ -87,11 +87,11 @@
   {% else %}
   <div class="result-card result-terminated">
     <div class="result-card-title">
-      <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Invalid Invitation
+      <i data-feather="alert-triangle"></i>Invalid Invitation
     </div>
     <div class="result-hero">
       <div class="hero-icon hero-icon-failed">
-        <i class="bi bi-exclamation-triangle"></i>
+        <i data-feather="alert-triangle"></i>
       </div>
       <span class="status-pill status-failed">Invalid</span>
     </div>
@@ -100,7 +100,7 @@
     </div>
     <div class="result-actions">
       <a href="/dashboard" class="btn btn-primary">
-        <i class="bi bi-arrow-left me-2"></i>Dashboard
+        <i data-feather="arrow-left"></i>Dashboard
       </a>
     </div>
   </div>

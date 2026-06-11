@@ -20,16 +20,15 @@ frappe.ui.form.on("Exam Submission", {
             );
         }
 
-        // Load the Bootstrap Icons font best-effort so the control glyphs
-        // render. This is intentionally NOT gated together with the player
-        // logic: if the CDN is slow/blocked the player must still load (the
-        // buttons just fall back to bare labels).
-        if (!document.getElementById("exampro-bi-css")) {
-            const link = document.createElement("link");
-            link.id = "exampro-bi-css";
-            link.rel = "stylesheet";
-            link.href = "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css";
-            document.head.appendChild(link);
+        // Load Feather Icons for control glyphs
+        if (typeof feather === 'undefined' && !document.getElementById("exampro-feather-js")) {
+            const script = document.createElement("script");
+            script.id = "exampro-feather-js";
+            script.src = "https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js";
+            script.onload = () => feather.replace();
+            document.head.appendChild(script);
+        } else if (typeof feather !== 'undefined') {
+            feather.replace();
         }
 
         // Handle video display — reuses the framework-agnostic VideoPlayer

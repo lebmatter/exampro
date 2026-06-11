@@ -23,6 +23,28 @@ frappe.pages['schedule-dashboard'].on_page_load = function (wrapper) {
 	}
 };
 
+const FEATHER = {
+	calendar: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+	users: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+	clock: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+	star: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+	zap: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+	check: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+	'x-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+	'minus-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+	list: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+	award: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>',
+	eye: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+};
+
+function ficon(name, size) {
+	let svg = FEATHER[name] || '';
+	if (size && svg) {
+		svg = svg.replace(/width="\d+"/, `width="${size}"`).replace(/height="\d+"/, `height="${size}"`);
+	}
+	return svg;
+}
+
 class ScheduleDashboard {
 	constructor(wrapper, page) {
 		this.wrapper = wrapper;
@@ -36,7 +58,7 @@ class ScheduleDashboard {
 		this.$container = $('<div class="schedule-dashboard" style="max-width: 960px; margin: 0 auto; padding: 15px;">').appendTo(this.wrapper);
 		this.$empty = $(`
 			<div class="text-muted text-center" style="padding: 60px 20px;">
-				<i class="fa fa-calendar" style="font-size: 48px; color: #adb5bd;"></i>
+				<span style="color: #adb5bd;">${ficon('calendar', 48)}</span>
 				<h5 class="mt-3" style="font-weight: 600;">Select an Exam Schedule</h5>
 				<p>Choose a schedule from the filter above to view its dashboard.</p>
 			</div>
@@ -196,28 +218,28 @@ class ScheduleDashboard {
 
 		if (status === 'Upcoming') {
 			metrics = [
-				{ label: 'Registered', value: counts['Registered'] || 0, icon: 'users', color: 'blue' },
-				{ label: 'Schedule Type', value: data.schedule_type, icon: 'calendar', color: 'green' },
-				{ label: 'Duration', value: data.duration + ' min', icon: 'clock-o', color: 'orange' },
-				{ label: 'Total Marks', value: data.total_marks, icon: 'star', color: 'purple' },
+				{ label: 'Registered', value: counts['Registered'] || 0, icon: 'users' },
+				{ label: 'Schedule Type', value: data.schedule_type, icon: 'calendar' },
+				{ label: 'Duration', value: data.duration + ' min', icon: 'clock' },
+				{ label: 'Total Marks', value: data.total_marks, icon: 'star' },
 			];
 		} else if (status === 'Ongoing') {
 			metrics = [
-				{ label: 'Registered', value: counts['Registered'] || 0, icon: 'users', color: 'blue' },
-				{ label: 'Live Now', value: data.candidates_live || 0, icon: 'bolt', color: 'green' },
-				{ label: 'Submitted', value: counts['Submitted'] || 0, icon: 'check', color: 'purple' },
-				{ label: 'Terminated', value: counts['Terminated'] || 0, icon: 'ban', color: 'red' },
-				{ label: 'Not Attempted', value: counts['Not Attempted'] || 0, icon: 'minus-circle', color: 'grey' },
-				{ label: 'Total', value: data.total_candidates || 0, icon: 'list', color: 'orange' },
+				{ label: 'Registered', value: counts['Registered'] || 0, icon: 'users' },
+				{ label: 'Live Now', value: data.candidates_live || 0, icon: 'zap' },
+				{ label: 'Submitted', value: counts['Submitted'] || 0, icon: 'check' },
+				{ label: 'Terminated', value: counts['Terminated'] || 0, icon: 'x-circle' },
+				{ label: 'Not Attempted', value: counts['Not Attempted'] || 0, icon: 'minus-circle' },
+				{ label: 'Total', value: data.total_candidates || 0, icon: 'list' },
 			];
 		} else {
 			metrics = [
-				{ label: 'Total Candidates', value: data.total_candidates || 0, icon: 'users', color: 'blue' },
-				{ label: 'Submitted', value: counts['Submitted'] || 0, icon: 'check', color: 'green' },
-				{ label: 'Terminated', value: counts['Terminated'] || 0, icon: 'ban', color: 'red' },
-				{ label: 'Not Attempted', value: counts['Not Attempted'] || 0, icon: 'minus-circle', color: 'grey' },
-				{ label: 'Pass Rate', value: (data.pass_rate || 0) + '%', icon: 'trophy', color: 'orange' },
-				{ label: 'Avg Score', value: data.avg_score != null ? data.avg_score : 'N/A', icon: 'star', color: 'purple' },
+				{ label: 'Total Candidates', value: data.total_candidates || 0, icon: 'users' },
+				{ label: 'Submitted', value: counts['Submitted'] || 0, icon: 'check' },
+				{ label: 'Terminated', value: counts['Terminated'] || 0, icon: 'x-circle' },
+				{ label: 'Not Attempted', value: counts['Not Attempted'] || 0, icon: 'minus-circle' },
+				{ label: 'Pass Rate', value: (data.pass_rate || 0) + '%', icon: 'award' },
+				{ label: 'Avg Score', value: data.avg_score != null ? data.avg_score : 'N/A', icon: 'star' },
 			];
 		}
 
@@ -227,8 +249,8 @@ class ScheduleDashboard {
 		metrics.forEach(m => {
 			$row.append(`
 				<div style="flex: 1 1 150px; max-width: 220px; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 14px 16px;">
-					<div class="text-muted" style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 6px;">
-						<i class="fa fa-${m.icon}" style="margin-right: 4px;"></i>${m.label}
+					<div class="text-muted" style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 4px;">
+						${ficon(m.icon)}${m.label}
 					</div>
 					<div style="font-size: 1.4rem; font-weight: 600; color: #212529;">${m.value}</div>
 				</div>
@@ -246,8 +268,8 @@ class ScheduleDashboard {
 
 		this.$live_section.html(`
 			<div style="background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; overflow: hidden;">
-				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem;">
-					<i class="fa fa-eye" style="margin-right: 6px; color: #868e96;"></i>Live Monitoring
+				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 6px;">
+					<span style="color: #868e96;">${ficon('eye')}</span>Live Monitoring
 				</div>
 				<div style="padding: 16px;">
 					<div class="d-flex flex-wrap" style="gap: 12px;" id="sd-live-metrics"></div>
@@ -361,8 +383,8 @@ class ScheduleDashboard {
 
 		this.$table_section.html(`
 			<div style="background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; overflow: hidden;">
-				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem;">
-					<i class="fa fa-users" style="margin-right: 6px; color: #868e96;"></i>Live Candidates (${candidates.length})
+				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 6px;">
+					<span style="color: #868e96;">${ficon('users')}</span>Live Candidates (${candidates.length})
 				</div>
 				<div style="padding: 0;" id="sd-live-table-body"></div>
 			</div>
@@ -409,8 +431,8 @@ class ScheduleDashboard {
 
 		this.$table_section.html(`
 			<div style="background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; overflow: hidden;">
-				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem;">
-					<i class="fa fa-list" style="margin-right: 6px; color: #868e96;"></i>Recent Submissions
+				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 6px;">
+					<span style="color: #868e96;">${ficon('list')}</span>Recent Submissions
 				</div>
 				<div style="padding: 0;" id="sd-submissions-body"></div>
 			</div>

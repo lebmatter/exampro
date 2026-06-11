@@ -104,7 +104,7 @@ function generate_invite_link(frm) {
                                 `<button class="btn btn-xs btn-default copy-link" 
                                 style="margin-left: 10px;" 
                                 data-link="${frm.doc.schedule_invite_link}">
-                                <i class="fa fa-copy"></i> Copy</button>`
+                                <i data-feather="copy"></i> Copy</button>`
                             );
                         
                         $('.copy-link').click(function() {

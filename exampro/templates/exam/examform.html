@@ -9,7 +9,7 @@
 
     <div id="help-panel" class="common-card-style column-card help-card hide">
         <div class="help-panel-header">
-            <i class="bi bi-info-circle help-panel-icon"></i>
+            <i data-feather="info"></i>
             <span id="help-panel-title" class="help-panel-title"
                 >Read before next question</span
             >
@@ -29,7 +29,7 @@
                 <button class="btn btn-primary" id="helpContinueBtn" disabled>
                     <span class="d-flex align-items-center">
                         Continue
-                        <i class="bi bi-arrow-right ms-2"></i>
+                        <i data-feather="arrow-right"></i>
                     </span>
                 </button>
             </div>
@@ -41,7 +41,7 @@
         class="common-card-style column-card help-card hide"
     >
         <div class="help-panel-header">
-            <i class="bi bi-info-circle help-panel-icon"></i>
+            <i data-feather="info"></i>
             <span id="help-quiz-panel-title" class="help-panel-title"
                 >Read before next question</span
             >
@@ -64,7 +64,7 @@
                 >
                     <span class="d-flex align-items-center">
                         Continue
-                        <i class="bi bi-arrow-right ms-2"></i>
+                        <i data-feather="arrow-right"></i>
                     </span>
                 </button>
             </div>
@@ -142,7 +142,7 @@
                         style="display: none"
                     >
                         <span class="d-flex align-items-center">
-                            <i class="bi bi-arrow-left me-2"></i>
+                            <i data-feather="arrow-left"></i>
                             Previous
                         </span>
                     </button>
@@ -153,7 +153,7 @@
                     >
                         <span class="d-flex align-items-center">
                             Next
-                            <i class="bi bi-arrow-right ms-2"></i>
+                            <i data-feather="arrow-right"></i>
                         </span>
                     </button>
                     <button
@@ -190,7 +190,7 @@
                 <!-- Answered Status -->
                 <div class="d-flex align-items-center gap-2">
                     <i
-                        class="bi bi-circle-fill text-info"
+                        data-feather="circle"
                         style="font-size: 1rem"
                     ></i>
                     <span class="small ms-2">Answered</span>
@@ -205,7 +205,7 @@
                 <!-- Marked for Review Status -->
                 <div class="d-flex align-items-center gap-2">
                     <i
-                        class="bi bi-circle-fill text-warning"
+                        data-feather="circle"
                         style="font-size: 1rem"
                     ></i>
                     <span class="small ms-2">Review later</span>
@@ -218,9 +218,8 @@
                 </div>
             </div>
             <span class="text-primary arrow-icon" style="font-size: 1.2rem">
-                <i
-                    :class="isNavGridCollapsed ? 'bi bi-chevron-down' : 'bi bi-chevron-up'"
-                ></i>
+                <i x-show="isNavGridCollapsed" data-feather="chevron-down" style="width:18px;height:18px;"></i>
+                <i x-show="!isNavGridCollapsed" data-feather="chevron-up" style="width:18px;height:18px;"></i>
             </span>
         </div>
         <div
@@ -377,8 +376,9 @@
             transform: translateY(-1px);
         }
 
-        #button-grid .btn .bi-circle-fill {
-            font-size: 0.65rem;
+        #button-grid .btn svg.feather {
+            width: 0.65rem;
+            height: 0.65rem;
         }
 
         /* Current question button styling */

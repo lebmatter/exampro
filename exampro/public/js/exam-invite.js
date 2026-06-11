@@ -2,7 +2,7 @@ function acceptInvitation(scheduleName) {
   var $btn = $("#accept-invite");
   $btn
     .prop("disabled", true)
-    .html('<i class="bi bi-arrow-repeat mr-2"></i>Processing...');
+    .html('<i data-feather="refresh-cw"></i>Processing...');
 
   frappe.call({
     method: "exampro.www.exam.invite.accept_invitation",
@@ -21,7 +21,7 @@ function acceptInvitation(scheduleName) {
       } else {
         $btn
           .prop("disabled", false)
-          .html('<i class="bi bi-check-circle mr-2"></i>Accept Invitation');
+          .html('<i data-feather="check-circle"></i>Accept Invitation');
         frappe.show_alert({
           message: r.message
             ? r.message.message
