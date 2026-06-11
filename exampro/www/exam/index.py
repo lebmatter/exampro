@@ -22,6 +22,7 @@ def get_live_exam(member=None):
 	even if multiple entries are there.
 	"""
 	exam_details = {}
+	fallback = None
 
 	submissions = frappe.get_all(
 		"Exam Submission",
@@ -119,36 +120,30 @@ def get_live_exam(member=None):
 				exam_details[key] = val.isoformat()
 
 		# checks if current time is between schedule start and end time
-		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
 		if submission["status"] == "Started":
 			exam_details["is_live"] = True
 			return exam_details
-		elif sched.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and sched.schedule_type == "Fixed":
-			exam_details["is_live"] = True
-			return exam_details
-		elif sched.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"] and sched.schedule_type == "Flexible":
+		elif sched.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"]:
 			exam_details["is_live"] = True
 			return exam_details
 		if sched.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":
-			exam_details["is_live"] = False
-			return exam_details
+			if not fallback:
+				fallback = exam_details
+			continue
 		elif tnow <= sched.start_date_time:
-			exam_details["is_live"] = False
-			return exam_details
+			if not fallback:
+				fallback = exam_details
+			continue
 		elif tnow > end_time:
-			# Time is over: flip status without loading the full doc.
-			# before_save hooks (role + proctor assignment) have already run
-			# at start_exam, so skipping them here is safe.
 			if submission["status"] != "Submitted":
 				frappe.db.set_value(
 					"Exam Submission", submission["name"], "status", "Submitted"
 				)
 				frappe.db.commit()
+			continue
 
-			return exam_details
-
-	return exam_details
+	return fallback or exam_details
 
 
 def get_context(context):
