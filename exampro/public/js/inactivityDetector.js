@@ -25,6 +25,7 @@ class InactivityDetector {
       onActive: () => {},
       onMonitorChange: () => {},
       onWindowClose: () => {},
+      onScreenshot: () => {},
       ...options
     };
 
@@ -114,6 +115,7 @@ class InactivityDetector {
       if (!localStorage.getItem(this.storageKey)) {
         localStorage.setItem(this.storageKey, new Date().toISOString());
         this.options.onInactivityStart();
+        this.options.onScreenshot("Tab change detected");
       }
     } else {
       // Page is visible or window gained focus
@@ -128,6 +130,7 @@ class InactivityDetector {
           this.options.onActive(Math.floor(hiddenDuration));
         }
         localStorage.removeItem(this.storageKey);
+        this.options.onScreenshot("Tab returned to focus");
       }
     }
   }
@@ -138,6 +141,7 @@ class InactivityDetector {
   checkMonitorChange() {
     const currentScreens = `${window.screen.width}x${window.screen.height}`;
     if (currentScreens !== this.lastScreens) {
+      this.options.onScreenshot(`Monitor changed from ${this.lastScreens} to ${currentScreens}`);
       this.options.onMonitorChange(this.lastScreens, currentScreens);
       this.lastScreens = currentScreens;
     }

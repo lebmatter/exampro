@@ -2,8 +2,26 @@
 let mediaPermissionsGranted = false;
 let mediaStream = null;
 
-// Request camera and audio access on window load (only if video proctoring is enabled)
+// Show pre-exam permissions modal for Registered candidates, then request
+// media access after the user clicks Continue. If no features need permissions
+// (no video proctoring, no screen recording), skip the modal entirely.
 window.addEventListener("load", function () {
+  var modalEl = document.getElementById("preExamModal");
+  if (modalEl && exam.submission_status === "Registered") {
+    var needsPermissions = exam.enable_video_proctoring || exam.enable_screen_recording;
+    if (needsPermissions) {
+      var modal = new bootstrap.Modal(modalEl);
+      modal.show();
+      document.getElementById("preExamContinueBtn").addEventListener("click", function () {
+        modal.hide();
+        if (exam.enable_video_proctoring) {
+          requestMediaAccess();
+        }
+      });
+      return;
+    }
+  }
+  // No modal needed — request media access directly
   if (exam.enable_video_proctoring) {
     requestMediaAccess();
   }

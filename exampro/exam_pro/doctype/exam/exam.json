@@ -16,6 +16,7 @@
   "flexible_time_ends_in",
   "column_break_10",
   "enable_video_proctoring",
+  "enable_screen_recording",
   "enable_calculator",
   "enable_chat",
   "max_warning_count",
@@ -239,6 +240,13 @@
    "fieldname": "enable_video_proctoring",
    "fieldtype": "Check",
    "label": "Enable Video Proctoring"
+  },
+  {
+   "default": "0",
+   "description": "Beta — requires Chrome or Edge. Firefox is not supported.",
+   "fieldname": "enable_screen_recording",
+   "fieldtype": "Check",
+   "label": "Enable Screen Recording"
   },
   {
    "default": "3",

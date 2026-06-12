@@ -79,7 +79,7 @@ def get_live_exam(member=None):
 		exam_cfg = frappe.get_cached_value(
 			"Exam",
 			sched.exam,
-			["enable_calculator", "enable_video_proctoring", "enable_chat"],
+			["enable_calculator", "enable_video_proctoring", "enable_screen_recording", "enable_chat"],
 			as_dict=True,
 		) or {}
 
@@ -102,6 +102,7 @@ def get_live_exam(member=None):
 			"enable_calculator": exam_cfg.get("enable_calculator"),
 			"is_live": False,
 			"enable_video_proctoring": exam_cfg.get("enable_video_proctoring"),
+			"enable_screen_recording": exam_cfg.get("enable_screen_recording"),
 			"enable_chat": exam_cfg.get("enable_chat"),
 			"schedule_status": get_schedule_status(submission["exam_schedule"]),
 			"schedule_type": sched.schedule_type,
@@ -185,11 +186,27 @@ def get_context(context):
 	exam_details = get_live_exam(frappe.session.user)
 	context.page_context = {}
 
+	_dashboard_actions = [
+		{
+			"label": "Go to Dashboard",
+			"icon": "bi-house",
+			"href": "/dashboard",
+			"primary": True,
+		},
+		{
+			"label": "My Exams",
+			"icon": "bi-list-ul",
+			"href": "/my-exams",
+			"primary": False,
+		},
+	]
+
 	if not exam_details:
 		context.exam = {}
 		context.alert = {
 			"title": "No exams scheduled.",
-			"text": "You do not have any live or upcoming exams."
+			"text": "You do not have any live or upcoming exams.",
+			"actions": _dashboard_actions,
 		}
 
 	elif exam_details["schedule_status"] == "Upcoming":
@@ -199,7 +216,9 @@ def get_context(context):
 			"text": "{} exam starts at {}".format(
 				exam_details["exam"],
 				exam_details["start_time"]
-		)}
+			),
+			"actions": _dashboard_actions,
+		}
 	
 	elif exam_details["is_live"]:
 		context.alert = {}
@@ -233,6 +252,7 @@ def get_context(context):
 		context.exam = {}
 		context.alert = {
 			"title": "No exams scheduled.",
-			"text": "You do not have any live or upcoming exams."
+			"text": "You do not have any live or upcoming exams.",
+			"actions": _dashboard_actions,
 		}
 

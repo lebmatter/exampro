@@ -76,6 +76,67 @@ frappe.ui.form.on("Exam Submission", {
             });
         });
 
+        // Load screenshot gallery
+        frappe.call({
+            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_screenshot_list",
+            args: { exam_submission: frm.doc.name },
+            callback: function (r) {
+                const screenshots = (r.message && r.message.screenshots) || [];
+                if (screenshots.length === 0) return;
+
+                const wrap = document.getElementById("esub-screenshot-wrap");
+                if (!wrap) return;
+                wrap.classList.remove("hidden");
+
+                const gallery = document.getElementById("esub-screenshot-gallery");
+                gallery.innerHTML = "";
+
+                screenshots.forEach(function (ss, idx) {
+                    const thumb = document.createElement("img");
+                    thumb.src = ss.url;
+                    thumb.style.cssText = "height:80px;border-radius:4px;cursor:pointer;border:2px solid transparent;flex-shrink:0;";
+                    thumb.dataset.index = idx;
+                    thumb.onclick = function () { showScreenshot(screenshots, idx); };
+                    gallery.appendChild(thumb);
+                });
+
+                showScreenshot(screenshots, 0);
+
+                function showScreenshot(list, idx) {
+                    const img = document.getElementById("esub-screenshot-full");
+                    const viewer = document.getElementById("esub-screenshot-viewer");
+                    const indexEl = document.getElementById("esub-ss-index");
+                    const captionEl = document.getElementById("esub-ss-caption");
+
+                    if (!img || !viewer) return;
+                    viewer.classList.remove("hidden");
+                    img.src = list[idx].url;
+                    if (indexEl) indexEl.textContent = (idx + 1) + "/" + list.length;
+
+                    if (captionEl) {
+                        const m = String(list[idx].filename).match(/^(\d+)/);
+                        if (m) {
+                            const d = new Date(Number(m[1]));
+                            captionEl.textContent = d.toLocaleString();
+                        } else {
+                            captionEl.textContent = list[idx].filename;
+                        }
+                    }
+
+                    // Highlight active thumb
+                    gallery.querySelectorAll("img").forEach(function (t, i) {
+                        t.style.borderColor = i === idx ? "#0d6efd" : "transparent";
+                    });
+
+                    // Bind prev/next
+                    const prevBtn = document.getElementById("esub-ss-prev");
+                    const nextBtn = document.getElementById("esub-ss-next");
+                    if (prevBtn) prevBtn.onclick = function () { if (idx > 0) showScreenshot(list, idx - 1); };
+                    if (nextBtn) nextBtn.onclick = function () { if (idx < list.length - 1) showScreenshot(list, idx + 1); };
+                }
+            },
+        });
+
         // Replace retina_location_log field with a proctoring state timeline:
         // x = exam start → end, y = discrete state (screen / distracted / away /
         // noface) plotted as a coloured step line.

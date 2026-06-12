@@ -21,6 +21,13 @@ var WEBCAM_GRACE_SECONDS = 60;
 var helpShownFor = new Set(); // qs_no values where help has already been shown this session
 var helpReadingTimer = null;
 var fullscreenExitedIntentionally = false; // Set true during endExam to suppress the exit warning
+var screenCapture = null;
+var screenCaptureActive = false;
+var screenCaptureTerminationTimer = null;
+var screenCaptureCountdownInterval = null;
+var SCREEN_CAPTURE_GRACE_SECONDS = 60;
+var TAB_CHANGE_GRACE_MS = 3 * 60 * 1000; // 3 minutes grace for tab change detection at exam start
+var detectorActivatedAt = 0;
 
 // Simple notification function as fallback
 function showNotification(message, type = 'info') {
@@ -112,12 +119,9 @@ function hideFullscreenOverlay() {
 
 function handleFullscreenChange() {
     if (!isInFullscreen() && !examEnded && !fullscreenExitedIntentionally && exam.submission_status === "Started") {
-        showTerminationBanner('fullscreenBanner');
-        sendMessage('Candidate exited fullscreen mode', 'Critical', 'fullscreenexit');
-        if (typeof playAlarm === 'function') playAlarm(true);
         showFullscreenOverlay();
+        sendMessage('Candidate exited fullscreen mode', 'Warning', 'fullscreenexit');
     } else if (isInFullscreen()) {
-        hideTerminationBanner('fullscreenBanner');
         hideFullscreenOverlay();
     }
 }
@@ -667,11 +671,159 @@ function stopRecording() {
     recordingInitialized = false;
 }
 
+// Screen capture functions
+function showScreenCaptureOverlay() {
+    var overlay = document.getElementById('screenCaptureOverlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hideScreenCaptureOverlay() {
+    var overlay = document.getElementById('screenCaptureOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function startScreenCapture() {
+    if (screenCaptureActive || !exam.enable_screen_recording) return;
+
+    screenCapture = new ScreenCapture({
+        examSubmission: exam.exam_submission,
+        getServerTimeOffsetMs: function () { return serverTimeOffsetMs; },
+        onScreenLost: function () {
+            if (examEnded) return;
+            screenCaptureActive = false;
+            showTerminationBanner('screenCaptureBanner');
+            sendMessage('Screen recording stopped by candidate', 'Critical', 'screencapturelost');
+            if (typeof playAlarm === 'function') playAlarm(true);
+            startScreenCaptureCountdown();
+        },
+    });
+
+    showScreenCaptureOverlay();
+
+    var startBtn = document.getElementById('screenCaptureStartBtn');
+    if (startBtn) {
+        startBtn.onclick = function () {
+            attemptScreenCapture();
+        };
+    }
+}
+
+function attemptScreenCapture() {
+    var errorEl = document.getElementById('screenCaptureError');
+    if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+
+    var onScreenLostFn = screenCapture.onScreenLost;
+    screenCapture.requestDisplayMedia().then(function () {
+        var result = screenCapture.validateSelection();
+        if (!result.valid) {
+            screenCapture.destroy();
+            screenCapture = new ScreenCapture({
+                examSubmission: exam.exam_submission,
+                getServerTimeOffsetMs: function () { return serverTimeOffsetMs; },
+                onScreenLost: onScreenLostFn,
+            });
+            if (errorEl) {
+                errorEl.textContent = result.reason;
+                errorEl.style.display = 'block';
+            }
+            return;
+        }
+        screenCaptureActive = true;
+        hideScreenCaptureOverlay();
+        hideTerminationBanner('screenCaptureBanner');
+        cancelScreenCaptureCountdown();
+        setTimeout(function () { screenCapture.captureScreenshot("Exam started"); }, 1500);
+        screenCapture.startRandomCaptures();
+    }).catch(function (err) {
+        console.warn('getDisplayMedia failed:', err);
+        if (errorEl) {
+            errorEl.textContent = err.name === 'NotAllowedError'
+                ? 'Screen sharing was denied. Please click "Share Screen" and select your entire monitor.'
+                : 'Failed to start screen recording: ' + err.message;
+            errorEl.style.display = 'block';
+        }
+    });
+}
+
+function stopScreenCapture() {
+    cancelScreenCaptureCountdown();
+    if (screenCapture) {
+        screenCapture.destroy();
+        screenCapture = null;
+    }
+    screenCaptureActive = false;
+}
+
+function startScreenCaptureCountdown() {
+    var remaining = SCREEN_CAPTURE_GRACE_SECONDS;
+    var banner = document.getElementById('screenCaptureBanner');
+    if (banner) {
+        banner.querySelector('.countdown') && (banner.querySelector('.countdown').textContent = remaining);
+    }
+
+    screenCaptureCountdownInterval = setInterval(function () {
+        remaining--;
+        if (banner && banner.querySelector('.countdown')) {
+            banner.querySelector('.countdown').textContent = remaining;
+        }
+        if (remaining <= 0) {
+            terminateForNoScreenCapture();
+        }
+    }, 1000);
+
+    showScreenCaptureOverlay();
+}
+
+function cancelScreenCaptureCountdown() {
+    if (screenCaptureCountdownInterval) {
+        clearInterval(screenCaptureCountdownInterval);
+        screenCaptureCountdownInterval = null;
+    }
+    if (screenCaptureTerminationTimer) {
+        clearTimeout(screenCaptureTerminationTimer);
+        screenCaptureTerminationTimer = null;
+    }
+}
+
+function terminateForNoScreenCapture() {
+    if (examEnded) return;
+    examEnded = true;
+    fullscreenExitedIntentionally = true;
+    cancelScreenCaptureCountdown();
+
+    frappe.call({
+        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
+        type: "POST",
+        args: {
+            'exam_submission': exam["exam_submission"],
+            'message': 'Exam terminated: screen recording not restored within 60 seconds.',
+            'type_of_message': 'Critical',
+            'warning_type': 'noscreencapturetimeout',
+        },
+        callback: () => {
+            if (detector) detector.destroy();
+            if (gazer) {
+                try { gazer.stop(); } catch (e) {}
+            }
+            stopRecording();
+            stopScreenCapture();
+            window.location.href = "/exam/" + exam.exam_submission;
+        },
+        error: (error) => {
+            console.error("Failed to post noscreencapturetimeout:", error);
+            window.location.href = "/exam/" + exam.exam_submission;
+        }
+    });
+}
+
 function activateDetector(){
     if (!detector) {
+        detectorActivatedAt = Date.now();
         detector = new InactivityDetector({
             warningThreshold: 1,
             onInactive: (inactiveStr, secondsInactive) => {
+                if (Date.now() - detectorActivatedAt < TAB_CHANGE_GRACE_MS) return;
+                if (!isInFullscreen()) return;
                 tabChangeStr = `Tab changed detected for ${secondsInactive} seconds.`;
                 console.log(tabChangeStr);
                 sendMessage(tabChangeStr, "Warning", "tabchange");
@@ -686,6 +838,12 @@ function activateDetector(){
                 sendMessage(monitorChangeStr, "Warning", "monitorchange");
                 if (typeof playAlarm === 'function') playAlarm(true);
                 examAlert(monitorChangeStr);
+            },
+            onScreenshot: (eventText) => {
+                if (Date.now() - detectorActivatedAt < TAB_CHANGE_GRACE_MS) return;
+                if (screenCapture && screenCaptureActive) {
+                    screenCapture.captureEventScreenshot(eventText);
+                }
             }
         });
         detector.init();
@@ -780,10 +938,8 @@ frappe.ready(() => {
     if (exam.submission_status === "Started") {
         // Add event listener for window unload (close)
         window.addEventListener('beforeunload', function (e) {
-            // Don't emit a tab-change warning once the exam is finished — the
-            // post-submit redirect triggers unload and would otherwise count
-            // as a violation that could terminate an already-Submitted exam.
             if (examEnded) return;
+            if (!isInFullscreen()) return;
             sendMessage("Window closed", "Warning", "tabchange");
         });
         // Check if the navbar does not already have the class 'hidden'
@@ -795,6 +951,9 @@ frappe.ready(() => {
         updateTimer();
         activateDetector();
         activateFullscreenEnforcement();
+        if (exam.enable_screen_recording && !screenCaptureActive) {
+            startScreenCapture();
+        }
     }
 
     $("#nextQs").click((e) => {
@@ -1357,6 +1516,7 @@ function terminateForNoFace() {
                 try { gazer.stop(); } catch (e) {}
             }
             stopRecording();
+            stopScreenCapture();
             window.location.href = "/exam/" + exam.exam_submission;
         },
         error: (error) => {
@@ -1387,6 +1547,7 @@ function terminateForNoWebcam() {
                 try { gazer.stop(); } catch (e) {}
             }
             stopRecording();
+            stopScreenCapture();
             window.location.href = "/exam/" + exam.exam_submission;
         },
         error: (error) => {
@@ -1416,6 +1577,7 @@ function endExam(isAutoSubmit) {
                     try { gazer.stop(); } catch (e) {}
                 }
                 stopRecording();
+                stopScreenCapture();
                 if (isAutoSubmit) {
                     window.location.href = "/exam?auto_submitted=1&submission=" + encodeURIComponent(exam.exam_submission);
                 } else {
@@ -1433,6 +1595,9 @@ function startExam() {
     }
 
     enterFullscreen();
+    if (exam.enable_screen_recording) {
+        startScreenCapture();
+    }
 
     frappe.call({
         method: "exampro.exam_pro.doctype.exam_submission.exam_submission.start_exam",

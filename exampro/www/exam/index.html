@@ -298,6 +298,87 @@ head_include %}
     Webcam disconnected. Your exam will be terminated soon. Please reconnect your camera.
   </div>
 
+  <div id="screenCaptureBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i data-feather="alert-triangle"></i>
+    Screen recording stopped. Your exam will be terminated in <span class="countdown">60</span> seconds. Please re-share your screen.
+  </div>
+
+  <div id="screenCaptureOverlay" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.92); justify-content:center; align-items:center; flex-direction:column; color:#fff; text-align:center;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    <h3 style="margin-bottom:8px;">Screen Recording Required</h3>
+    <p style="margin-bottom:24px; max-width:460px; color:#ccc;">
+      This exam requires screen recording. Please share your <strong>entire screen</strong> (not a window or tab).
+      If you have multiple monitors, please disconnect extra displays before proceeding.
+    </p>
+    <button id="screenCaptureStartBtn" style="padding:12px 32px; font-size:1.1rem; font-weight:600; border:none; border-radius:8px; background:#0d6efd; color:#fff; cursor:pointer;">
+      Share Screen
+    </button>
+    <p id="screenCaptureError" style="margin-top:16px; color:#ff6b6b; display:none;"></p>
+  </div>
+
+  <!-- Pre-exam permissions info modal -->
+  {% if exam.submission_status == "Registered" %}
+  <div class="modal" id="preExamModal" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="border:1px solid rgba(0,0,0,0.08);border-radius:8px;overflow:hidden;">
+        <div class="modal-header" style="background:#fafbfc;border-bottom:1px solid rgba(0,0,0,0.06);padding:0.85rem 1.1rem;">
+          <h5 class="modal-title" style="font-weight:600;font-size:0.95rem;">
+            <i data-feather="shield" style="width:16px;height:16px;margin-right:6px;vertical-align:-2px;"></i>
+            Before you begin
+          </h5>
+        </div>
+        <div class="modal-body" style="padding:1.25rem 1.5rem;">
+          <p style="color:#495057;margin-bottom:1rem;">
+            This exam requires the following permissions. You will be prompted to grant them on the next screen.
+          </p>
+          <ul id="preExamPermissionList" style="list-style:none;padding:0;margin:0 0 0.75rem 0;">
+            <li style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.05);">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#e7f1ff;flex-shrink:0;">
+                <i data-feather="maximize" style="width:16px;height:16px;color:#0d6efd;"></i>
+              </span>
+              <span>
+                <strong style="font-size:0.9rem;">Fullscreen Mode</strong>
+                <span style="display:block;font-size:0.8rem;color:#6c757d;">The exam must be taken in fullscreen. You cannot exit fullscreen during the exam.</span>
+              </span>
+            </li>
+            {% if exam.enable_video_proctoring %}
+            <li style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.05);">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#e8f5e9;flex-shrink:0;">
+                <i data-feather="camera" style="width:16px;height:16px;color:#1b5e20;"></i>
+              </span>
+              <span>
+                <strong style="font-size:0.9rem;">Camera &amp; Microphone</strong>
+                <span style="display:block;font-size:0.8rem;color:#6c757d;">Your webcam and audio will be recorded throughout the exam for proctoring.</span>
+              </span>
+            </li>
+            {% endif %}
+            {% if exam.enable_screen_recording %}
+            <li style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.05);">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#fff3cd;flex-shrink:0;">
+                <i data-feather="monitor" style="width:16px;height:16px;color:#8a6100;"></i>
+              </span>
+              <span>
+                <strong style="font-size:0.9rem;">Screen Sharing</strong>
+                <span style="display:block;font-size:0.8rem;color:#6c757d;">You must share your entire screen (not a window or tab). Multiple monitors are not allowed.</span>
+              </span>
+            </li>
+            {% endif %}
+          </ul>
+          <div style="background:#fafbfc;border:1px solid rgba(0,0,0,0.06);border-radius:6px;padding:0.75rem 1rem;font-size:0.82rem;color:#6c757d;">
+            <i data-feather="info" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;"></i>
+            Make sure you have a stable internet connection, are in a quiet, well-lit environment, and your face is clearly visible on camera.
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid rgba(0,0,0,0.06);padding:0.85rem 1.1rem;justify-content:flex-end;">
+          <button type="button" class="btn btn-primary" id="preExamContinueBtn" style="font-weight:600;">
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Bootstrap Modal with updated styling -->
   <div class="modal" id="examAlert">
     <div class="modal-dialog">
@@ -343,6 +424,9 @@ head_include %}
   type="text/javascript"
   src="/assets/exampro/js/inactivityDetector.js"
 ></script>
+{% if exam.enable_screen_recording %}
+<script type="text/javascript" src="/assets/exampro/js/screenCapture.js"></script>
+{% endif %}
 <script type="text/javascript" src="/assets/exampro/js/examform.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/exam-index.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/chatbox.js"></script>

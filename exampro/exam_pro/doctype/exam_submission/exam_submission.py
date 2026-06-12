@@ -31,6 +31,10 @@ VIDEO_UPLOAD_URL_TTL = 60
 # Minimum gap (seconds) between URL mints per submission. Recorder cadence is 10s.
 VIDEO_UPLOAD_URL_MIN_INTERVAL = 5
 
+MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024
+SCREENSHOT_UPLOAD_URL_TTL = 60
+SCREENSHOT_UPLOAD_URL_MIN_INTERVAL = 2
+
 # Process-wide boto3 client cache. boto3 clients are thread-safe; reusing them
 # across requests avoids the per-request handshake cost that previously
 # bottlenecked the upload path.
@@ -249,8 +253,9 @@ class ExamSubmission(Document):
 		frappe.db.delete("Exam Messages", {"exam_submission": self.name})
 		frappe.db.delete("Exam Certificate", {"exam_submission": self.name})
 
-		# Only attempt to clean up S3 videos if the exam used video proctoring.
-		if not frappe.db.get_value("Exam", self.exam, "enable_video_proctoring"):
+		# Only attempt to clean up S3 files if the exam used video proctoring or screen recording.
+		exam_doc = frappe.db.get_value("Exam", self.exam, ["enable_video_proctoring", "enable_screen_recording"], as_dict=True)
+		if not exam_doc or (not exam_doc.enable_video_proctoring and not exam_doc.enable_screen_recording):
 			return
 
 		try:
@@ -1158,9 +1163,9 @@ def inspect_video_files(exam_submission=None):
 		"files": files,
 	}
 
-def _assert_can_upload_video(exam_submission):
+def _assert_can_upload_media(exam_submission, feature_field="enable_video_proctoring"):
 	"""
-	Authorize the current session to record a proctoring chunk for this submission.
+	Authorize the current session to upload a proctoring artifact for this submission.
 	Returns the submission row (dict) on success; raises otherwise.
 
 	All checks are performed against the database, not client-supplied data,
@@ -1183,8 +1188,8 @@ def _assert_can_upload_video(exam_submission):
 		raise frappe.PermissionError(_("Exam does not belong to the user."))
 	if sub.status != "Started":
 		raise frappe.PermissionError(_("Exam is not active."))
-	if not frappe.get_cached_value("Exam", sub.exam, "enable_video_proctoring"):
-		raise frappe.PermissionError(_("Video proctoring is not enabled for this exam."))
+	if not frappe.get_cached_value("Exam", sub.exam, feature_field):
+		raise frappe.PermissionError(_("{0} is not enabled for this exam.").format(feature_field))
 
 	ended, _end_time = has_submission_ended(exam_submission)
 	if ended:
@@ -1212,7 +1217,7 @@ def get_video_upload_url(exam_submission=None, chunk_size=None):
 	- Per-submission rate limit (5s) prevents URL-mint flooding.
 	- 60s URL TTL.
 	"""
-	_assert_can_upload_video(exam_submission)
+	_assert_can_upload_media(exam_submission, "enable_video_proctoring")
 
 	# Validate declared size up-front so we never sign a URL that allows an
 	# oversize upload.
@@ -1286,6 +1291,125 @@ def get_video_upload_url(exam_submission=None, chunk_size=None):
 		"max_bytes": MAX_VIDEO_CHUNK_BYTES,
 		"expires_in": VIDEO_UPLOAD_URL_TTL,
 	}
+
+@frappe.whitelist()
+def get_screenshot_upload_url(exam_submission=None, file_size=None):
+	"""
+	Mint a presigned PUT URL for uploading a screenshot to S3/R2.
+	Same security model as get_video_upload_url but for JPEG screenshots.
+	"""
+	_assert_can_upload_media(exam_submission, "enable_screen_recording")
+
+	if file_size is None:
+		frappe.throw(_("file_size is required."))
+	try:
+		file_size = int(file_size)
+	except (TypeError, ValueError):
+		frappe.throw(_("file_size must be an integer."))
+	if file_size < 1 or file_size > MAX_SCREENSHOT_BYTES:
+		frappe.throw(
+			_("file_size must be between 1 and {0} bytes.").format(MAX_SCREENSHOT_BYTES)
+		)
+
+	cache = frappe.cache()
+	rate_key = f"screenshot_upload_url_mint:{exam_submission}"
+	last = cache.get_value(rate_key)
+	now_ts = time.time()
+	if last is not None:
+		try:
+			elapsed = now_ts - float(last)
+		except (TypeError, ValueError):
+			elapsed = SCREENSHOT_UPLOAD_URL_MIN_INTERVAL
+		if elapsed < SCREENSHOT_UPLOAD_URL_MIN_INTERVAL:
+			frappe.throw(
+				_("Upload URL requested too frequently."),
+				frappe.TooManyRequestsError,
+			)
+	cache.set_value(rate_key, now_ts, expires_in_sec=60)
+
+	settings = frappe.get_single("Exam Settings")
+	bucket = settings.s3_bucket
+	if not bucket:
+		frappe.throw(_("Storage bucket is not configured."))
+
+	key = "{sub}/screenshots/{ts}-{rand}.jpg".format(
+		sub=exam_submission,
+		ts=int(now_ts * 1000),
+		rand=secrets.token_hex(4),
+	)
+
+	content_type = "image/jpeg"
+	s3_client = get_s3_client()
+	try:
+		url = s3_client.generate_presigned_url(
+			ClientMethod="put_object",
+			Params={
+				"Bucket": bucket,
+				"Key": key,
+				"ContentType": content_type,
+				"ContentLength": file_size,
+			},
+			ExpiresIn=SCREENSHOT_UPLOAD_URL_TTL,
+			HttpMethod="PUT",
+		)
+	except Exception as e:
+		frappe.log_error(
+			f"Failed to mint presigned PUT for screenshot {exam_submission}: {e}",
+			"Screenshot upload URL error",
+		)
+		frappe.throw(_("Unable to prepare screenshot upload. Please retry."))
+
+	return {
+		"url": url,
+		"method": "PUT",
+		"key": key,
+		"headers": {"Content-Type": content_type},
+	}
+
+
+@frappe.whitelist()
+def get_screenshot_list(exam_submission=None):
+	"""
+	List screenshot files stored under {submission}/screenshots/ in S3/R2,
+	returning presigned GET URLs for the desk-form gallery viewer.
+	"""
+	assert exam_submission
+	if frappe.session.user == "Guest":
+		raise frappe.PermissionError(_("Please login to access this page."))
+	if not frappe.has_permission("Exam Submission", "read", doc=exam_submission):
+		raise frappe.PermissionError(_("No permission to access this exam submission."))
+
+	settings = frappe.get_single("Exam Settings")
+	screenshots = []
+	prefix = f"{exam_submission}/screenshots/"
+	try:
+		s3_client = get_s3_client()
+		paginator = s3_client.get_paginator("list_objects_v2")
+		for page in paginator.paginate(Bucket=settings.s3_bucket, Prefix=prefix):
+			for obj in page.get("Contents", []):
+				key = obj["Key"]
+				filename = key.split("/")[-1]
+				url = s3_client.generate_presigned_url(
+					"get_object",
+					Params={"Bucket": settings.s3_bucket, "Key": key},
+					ExpiresIn=900,
+				)
+				screenshots.append({
+					"key": key,
+					"filename": filename,
+					"size": obj.get("Size", 0),
+					"url": url,
+				})
+	except Exception as e:
+		frappe.log_error(
+			f"Error listing screenshots for {exam_submission}: {e}",
+			"get_screenshot_list error",
+		)
+		return {"screenshots": []}
+
+	screenshots.sort(key=lambda s: s["key"])
+	return {"screenshots": screenshots}
+
 
 def val_secs(securities):
 	for row in securities:

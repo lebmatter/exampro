@@ -22,6 +22,7 @@
   "exam_submitted_time",
   "video_section",
   "candidate_video",
+  "screenshot_gallery",
   "result_tab",
   "total_marks",
   "result_status",
@@ -176,6 +177,12 @@
    "fieldtype": "HTML",
    "label": "Candidate Video",
    "options": "<div id=\"esub-player-wrap\" class=\"hidden\" style=\"max-width:480px\">\n  <video id=\"esub-player-video\" style=\"width:100%;border-radius:4px;background:#000\" preload=\"metadata\"></video>\n  <div class=\"d-flex align-items-center justify-content-center gap-2 mt-2\" style=\"gap:8px\">\n    <button class=\"btn btn-sm btn-light\" id=\"esub-player-skip-back\" title=\"Skip back 10s\"><i class=\"bi bi-skip-backward-fill\"></i></button>\n    <button class=\"btn btn-sm btn-light\" id=\"esub-player-prev\" title=\"Previous chunk\"><i class=\"bi bi-rewind-fill\"></i></button>\n    <button class=\"btn btn-sm btn-light\" id=\"esub-player-play\" title=\"Play / Pause\"><i class=\"bi bi-play-fill\"></i></button>\n    <button class=\"btn btn-sm btn-light\" id=\"esub-player-next\" title=\"Next chunk\"><i class=\"bi bi-fast-forward-fill\"></i></button>\n    <button class=\"btn btn-sm btn-light\" id=\"esub-player-skip-fwd\" title=\"Skip forward 10s\"><i class=\"bi bi-skip-forward-fill\"></i></button>\n    <button class=\"btn btn-sm btn-light\" id=\"esub-player-live\" title=\"Jump to latest\"><i class=\"bi bi-broadcast-pin\"></i></button>\n    <span id=\"esub-player-index\" class=\"text-muted\" style=\"min-width:48px;text-align:center;font-variant-numeric:tabular-nums\">0/0</span>\n  </div>\n</div>"
+  },
+  {
+   "fieldname": "screenshot_gallery",
+   "fieldtype": "HTML",
+   "label": "Screenshots",
+   "options": "<div id=\"esub-screenshot-wrap\" class=\"hidden\" style=\"max-width:720px\">\n  <h6 class=\"text-muted\" style=\"margin-bottom:8px\">Screenshots</h6>\n  <div id=\"esub-screenshot-gallery\" style=\"display:flex;gap:8px;overflow-x:auto;padding:8px 0\"></div>\n  <div id=\"esub-screenshot-viewer\" class=\"hidden\" style=\"margin-top:8px;text-align:center\">\n    <img id=\"esub-screenshot-full\" style=\"max-width:100%;border-radius:4px;border:1px solid #ddd\" />\n    <div class=\"d-flex align-items-center justify-content-center mt-2\" style=\"gap:8px\">\n      <button class=\"btn btn-sm btn-light\" id=\"esub-ss-prev\">Prev</button>\n      <span id=\"esub-ss-index\" class=\"text-muted\" style=\"min-width:48px;text-align:center;font-variant-numeric:tabular-nums\">0/0</span>\n      <button class=\"btn btn-sm btn-light\" id=\"esub-ss-next\">Next</button>\n    </div>\n    <div id=\"esub-ss-caption\" class=\"text-muted\" style=\"font-size:11px;margin-top:4px\"></div>\n  </div>\n</div>"
   },
   {
    "fetch_from": "candidate.full_name",
