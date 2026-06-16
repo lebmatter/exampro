@@ -10,8 +10,11 @@ function proctorApp() {
     submissions: window.proctorData?.submissions || [],
     latestMessages: window.proctorData?.latestMessages || [],
     pendingCandidates: window.proctorData?.pendingCandidates || [],
+    terminatedCandidates: window.proctorData?.terminatedCandidates || [],
     liveCandidatesCount: window.proctorData?.submissions?.length || 0,
     pendingCandidatesCount: window.proctorData?.pendingCandidates?.length || 0,
+    terminatedCandidatesCount: window.proctorData?.terminatedCandidates?.length || 0,
+    fullWidth: false,
     
     // Chat modal properties
     showChatModal: false,
@@ -59,7 +62,6 @@ function proctorApp() {
       // Initial data load
       await this.updateVideoList();
       await this.updateSidebarMessages();
-      this.updateCandidateCounts();
     },
     
     // API call wrapper using authApiCall
@@ -124,6 +126,10 @@ function proctorApp() {
         const player = this.getPlayer(examSubmission);
         if (player) {
           player.setChunks(this.videoStore[examSubmission]);
+        }
+
+        if (this._modalVideoPlayer && this.currentChatSubmission === examSubmission) {
+          this._modalVideoPlayer.setChunks(this.videoStore[examSubmission]);
         }
 
         console.log(`Processed ${videoList.length} videos for ${examSubmission}`);
@@ -205,10 +211,52 @@ function proctorApp() {
       }
     },
     
-    // Update candidate counts
-    updateCandidateCounts() {
-      this.liveCandidatesCount = this.submissions.length;
-      this.pendingCandidatesCount = this.pendingCandidates.length;
+    async updateCandidateLists() {
+      try {
+        const data = await this.apiCall({
+          method: "exampro.www.proctor.get_proctor_candidates",
+        });
+        if (!data.message) return;
+
+        const live = data.message.live_submissions || [];
+        const pending = data.message.pending_candidates || [];
+        const terminated = data.message.terminated_candidates || [];
+
+        // Detect newly live candidates (were pending, now started)
+        const currentNames = new Set(this.submissions.map(s => s.name));
+        const newLive = live.filter(s => !currentNames.has(s.name));
+
+        this.submissions = live;
+        this.pendingCandidates = pending;
+        this.terminatedCandidates = terminated;
+
+        this.liveCandidatesCount = live.length;
+        this.pendingCandidatesCount = pending.length;
+        this.terminatedCandidatesCount = terminated.length;
+
+        // Kick off video loading for any newly appeared submissions
+        for (const s of newLive) {
+          if (!s.enable_video_proctoring) continue;
+          try {
+            const vdata = await this.apiCall({
+              method: "exampro.exam_pro.doctype.exam_submission.exam_submission.proctor_video_list",
+              args: { exam_submission: s.name }
+            });
+            if (vdata.message && vdata.message.videos) {
+              this.processVideoData(s.name, vdata.message.videos);
+            }
+          } catch (e) {
+            console.error(`Failed to load videos for new submission ${s.name}:`, e);
+          }
+        }
+
+        // Re-render feather icons for any new DOM elements
+        this.$nextTick(() => {
+          if (typeof feather !== 'undefined') feather.replace();
+        });
+      } catch (error) {
+        console.error('Failed to update candidate lists:', error);
+      }
     },
     
     // Lazily create a VideoPlayer for the given submission, bound to its
@@ -361,13 +409,22 @@ function proctorApp() {
         }
       }, 1000);
       
-      // Set up video source in modal
-      const video = document.getElementById(submission.name);
-      const modalVideo = document.getElementById('modalVideoElement');
-      if (video && modalVideo && video.src) {
-        modalVideo.src = video.src;
-      }
-      
+      // Reset to Video tab
+      const videoTab = document.querySelector('#chatModal .modal-media-tabs .nav-link[href="#modal-tab-video"]');
+      const ssTab = document.querySelector('#chatModal .modal-media-tabs .nav-link[href="#modal-tab-screenshots"]');
+      const videoPane = document.getElementById('modal-tab-video');
+      const ssPane = document.getElementById('modal-tab-screenshots');
+      if (videoTab) videoTab.classList.add('active');
+      if (ssTab) ssTab.classList.remove('active');
+      if (videoPane) { videoPane.classList.add('show', 'active'); }
+      if (ssPane) { ssPane.classList.remove('show', 'active'); }
+
+      // Initialize modal VideoPlayer with current chunks
+      this.initModalVideoPlayer(submission.name);
+
+      // Load screenshots into the modal
+      this.loadModalScreenshots(submission.name);
+
       // Show modal using Bootstrap's modal API
       const modalElement = document.getElementById('chatModal');
       if (modalElement) {
@@ -382,7 +439,9 @@ function proctorApp() {
         }
         this.showChatModal = true;
       }
-      
+
+      if (typeof feather !== 'undefined') feather.replace();
+
       // Load initial messages
       this.updateChatMessages(submission.name);
     },
@@ -405,14 +464,116 @@ function proctorApp() {
       this.showChatModal = false;
       this.currentChatSubmission = '';
       this.currentChatCandidate = '';
-      
+
       // Clear the chat update interval
       if (this.chatUpdateInterval) {
         clearInterval(this.chatUpdateInterval);
         this.chatUpdateInterval = null;
       }
+
+      // Destroy modal video player
+      if (this._modalVideoPlayer) {
+        this._modalVideoPlayer.destroy();
+        this._modalVideoPlayer = null;
+      }
     },
-    
+
+    initModalVideoPlayer(examSubmission) {
+      if (this._modalVideoPlayer) {
+        this._modalVideoPlayer.destroy();
+        this._modalVideoPlayer = null;
+      }
+      if (typeof VideoPlayer === 'undefined') return;
+
+      this._modalVideoPlayer = new VideoPlayer({
+        videoEl: '#modal-player-video',
+        prevBtn: '#modal-player-prev',
+        nextBtn: '#modal-player-next',
+        playPauseBtn: '#modal-player-play',
+        skipBackBtn: '#modal-player-skip-back',
+        skipForwardBtn: '#modal-player-skip-fwd',
+        goLiveBtn: '#modal-player-live',
+        indexField: '#modal-player-index',
+      });
+
+      const chunks = this.videoStore[examSubmission] || [];
+      if (chunks.length > 0) {
+        this._modalVideoPlayer.loadChunks(chunks);
+        this._modalVideoPlayer.goLive();
+      }
+    },
+
+    async loadModalScreenshots(examSubmission) {
+      const gallery = document.getElementById('modal-screenshot-gallery');
+      const viewer = document.getElementById('modal-screenshot-viewer');
+      const emptyMsg = document.getElementById('modal-screenshot-empty');
+      if (!gallery) return;
+
+      gallery.innerHTML = '';
+      if (viewer) viewer.classList.add('hidden');
+      if (emptyMsg) emptyMsg.classList.remove('hidden');
+
+      try {
+        const data = await this.apiCall({
+          method: 'exampro.exam_pro.doctype.exam_submission.exam_submission.get_screenshot_list',
+          args: { exam_submission: examSubmission },
+        });
+        const screenshots = (data.message && data.message.screenshots) || [];
+        if (screenshots.length === 0) return;
+
+        if (emptyMsg) emptyMsg.classList.add('hidden');
+
+        const self = this;
+        screenshots.forEach(function (ss, idx) {
+          const thumb = document.createElement('img');
+          thumb.src = ss.url;
+          thumb.style.cssText = 'height:80px;border-radius:4px;cursor:pointer;border:2px solid transparent;flex-shrink:0;';
+          thumb.dataset.index = idx;
+          thumb.onclick = function () { self._showModalScreenshot(screenshots, idx); };
+          gallery.appendChild(thumb);
+        });
+
+        this._showModalScreenshot(screenshots, 0);
+      } catch (error) {
+        console.error('Failed to load screenshots for modal:', error);
+      }
+    },
+
+    _showModalScreenshot(list, idx) {
+      const img = document.getElementById('modal-screenshot-full');
+      const viewer = document.getElementById('modal-screenshot-viewer');
+      const indexEl = document.getElementById('modal-ss-index');
+      const captionEl = document.getElementById('modal-ss-caption');
+      const gallery = document.getElementById('modal-screenshot-gallery');
+
+      if (!img || !viewer) return;
+      viewer.classList.remove('hidden');
+      img.src = list[idx].url;
+      if (indexEl) indexEl.textContent = (idx + 1) + '/' + list.length;
+
+      if (captionEl) {
+        const m = String(list[idx].filename).match(/^(\d+)/);
+        if (m) {
+          const d = new Date(Number(m[1]));
+          captionEl.textContent = d.toLocaleString();
+        } else {
+          captionEl.textContent = list[idx].filename;
+        }
+      }
+
+      if (gallery) {
+        gallery.querySelectorAll('img').forEach(function (t, i) {
+          t.style.borderColor = i === idx ? '#0d6efd' : 'transparent';
+        });
+      }
+
+      const self = this;
+      const prevBtn = document.getElementById('modal-ss-prev');
+      const nextBtn = document.getElementById('modal-ss-next');
+      if (prevBtn) prevBtn.onclick = function () { if (idx > 0) self._showModalScreenshot(list, idx - 1); };
+      if (nextBtn) nextBtn.onclick = function () { if (idx < list.length - 1) self._showModalScreenshot(list, idx + 1); };
+    },
+
     async updateChatMessages(examSubmission) {
       try {
         const data = await this.apiCall({
@@ -447,11 +608,6 @@ function proctorApp() {
       this.chatMessage = '';
       
       try {
-        // Add message immediately to UI
-        const currentTime = new Date().toISOString();
-        this.appendMessage(this.timeAgo(currentTime), message, "Proctor");
-        
-        // Send to server
         await this.apiCall({
           method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
           type: "POST",
@@ -462,11 +618,9 @@ function proctorApp() {
             from: "Proctor"
           }
         });
-        
-        // Auto-scroll to bottom
-        if (typeof autoScrollToBottom === 'function') {
-          autoScrollToBottom();
-        }
+
+        // Fetch immediately so the message appears without waiting for the next poll
+        await this.updateChatMessages(this.currentChatSubmission);
       } catch (error) {
         console.error('Failed to send message:', error);
       }
@@ -556,12 +710,14 @@ function proctorApp() {
     },
     
     startUpdateIntervals() {
-      // Set up periodic updates
       setInterval(async () => {
         await this.updateVideoList();
         await this.updateSidebarMessages();
-        this.updateCandidateCounts();
-      }, 5000); // Update every 5 seconds
+      }, 5000);
+
+      setInterval(async () => {
+        await this.updateCandidateLists();
+      }, 30000);
     }
   };
 }

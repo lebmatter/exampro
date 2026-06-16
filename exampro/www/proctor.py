@@ -61,7 +61,7 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 	Function returns only one live/upcoming exam details
 	even if multiple entries are there.
 	"""
-	res = {"live_submissions":[], "pending_candidates": []}
+	res = {"live_submissions":[], "pending_candidates": [], "terminated_candidates": []}
 
 	submissions = frappe.get_all(
 		"Exam Submission",
@@ -106,12 +106,17 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 				"enable_chat": enable_chat
 			}
 			if submission["status"] == "Started":
-				# if tracker exists, candidate started the exam
 				res["live_submissions"].append(userdata)
-			else:
+			elif submission["status"] == "Terminated":
+				res["terminated_candidates"].append(userdata)
+			elif submission["status"] == "Registered":
 				res["pending_candidates"].append(userdata)
 
 	return res
+
+@frappe.whitelist()
+def get_proctor_candidates(proctor=None):
+	return get_proctor_live_exams(proctor=proctor, skip_submitted=True)
 
 @frappe.whitelist()
 def get_latest_messages(proctor=None):
@@ -172,6 +177,7 @@ def get_context(context):
 
 	context.submissions = proctor_list["live_submissions"]
 	context.pending_candidates = proctor_list["pending_candidates"]
+	context.terminated_candidates = proctor_list["terminated_candidates"]
 	context.latest_messages = get_latest_messages()
 	
 	# Get upcoming events for alert
