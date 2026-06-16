@@ -1,4 +1,400 @@
-/* Alert card — shared aesthetic with dashboard/result. */
+/* ── Evaluate Page ─────────────────────────────────────────────── */
+
+/* ── Sidebar: Assigned Exams ──────────────────────────────────── */
+.eval-sidebar {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.eval-sidebar-header {
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 1rem;
+}
+
+.eval-sidebar-header h6 {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #212529;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.eval-sidebar-header h6 svg {
+  color: #868e96;
+}
+
+.eval-sidebar-list {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* ── Exam Item (sidebar card) ─────────────────────────────────── */
+.eval-exam-item {
+  display: block;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.eval-exam-item:last-child {
+  border-bottom: none;
+}
+
+.eval-exam-item:hover {
+  background: rgba(245, 195, 68, 0.06);
+  text-decoration: none;
+  color: inherit;
+}
+
+.eval-exam-item.active {
+  background: rgba(245, 195, 68, 0.1);
+  border-left: 3px solid #f5c344;
+}
+
+.eval-exam-item .exam-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #212529;
+  margin-bottom: 0.15rem;
+}
+
+.eval-exam-item .exam-candidate {
+  font-size: 0.78rem;
+  color: #6c757d;
+}
+
+/* ── Status Pills ─────────────────────────────────────────────── */
+.eval-status-pill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.eval-status-submitted {
+  background: #fff3cd;
+  color: #8a6100;
+}
+
+.eval-status-finished {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+/* ── Question Navigation ──────────────────────────────────────── */
+.eval-question-nav {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.eval-question-nav-header {
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0.65rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.eval-question-nav-header h6 {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #212529;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.eval-question-nav-header h6 svg {
+  color: #868e96;
+}
+
+.eval-question-nav-body {
+  padding: 0.75rem 1rem;
+}
+
+.question-nav-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.question-nav-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.question-nav-btn.q-done {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border-color: rgba(27, 94, 32, 0.15);
+}
+
+.question-nav-btn.q-auto {
+  background: #e7f1ff;
+  color: #0d6efd;
+  border-color: rgba(13, 110, 253, 0.15);
+}
+
+.question-nav-btn.q-pending {
+  background: #fff3cd;
+  color: #8a6100;
+  border-color: rgba(138, 97, 0, 0.15);
+}
+
+.question-nav-btn.q-choices {
+  background: #f1f3f5;
+  color: #6c757d;
+  border-color: rgba(0, 0, 0, 0.06);
+  cursor: default;
+}
+
+.question-nav-btn.active {
+  box-shadow: 0 0 0 2px #f5c344;
+}
+
+.question-nav-btn:not(.q-choices):hover {
+  opacity: 0.85;
+}
+
+/* ── Nav Legend ────────────────────────────────────────────────── */
+.nav-legend {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.nav-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.68rem;
+  color: #6c757d;
+}
+
+.nav-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* ── Evaluation Card ──────────────────────────────────────────── */
+.eval-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.eval-card-header {
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 1.1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.eval-card-header h6 {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #212529;
+  margin: 0;
+}
+
+.eval-card-body {
+  padding: 1.1rem;
+}
+
+/* Question text */
+.eval-question-text {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #212529;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Answer block */
+.eval-answer-block {
+  background: #fafbfc;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #495057;
+}
+
+.eval-answer-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6c757d;
+  margin-bottom: 0.4rem;
+}
+
+/* Info banner (auto-evaluated, already evaluated) */
+.eval-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.eval-info-banner svg {
+  flex-shrink: 0;
+}
+
+.eval-info-banner.info-auto {
+  background: #f1f3f5;
+  color: #495057;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.eval-info-banner.info-done {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid rgba(27, 94, 32, 0.1);
+}
+
+/* Score display */
+.eval-score-display {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #212529;
+}
+
+.eval-score-display .score-total {
+  font-weight: 400;
+  font-size: 0.82rem;
+  color: #6c757d;
+}
+
+/* Form controls */
+.eval-form-group {
+  margin-bottom: 0.85rem;
+}
+
+.eval-form-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+.eval-form-group .form-control,
+.eval-form-group .form-select {
+  font-size: 0.85rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.eval-form-group .form-control:focus,
+.eval-form-group .form-select:focus {
+  border-color: #f5c344;
+  box-shadow: 0 0 0 2px rgba(245, 195, 68, 0.15);
+}
+
+/* Save / action buttons */
+.eval-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border-radius: 5px;
+}
+
+.eval-finish-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.45rem 1rem;
+  border-radius: 5px;
+}
+
+/* ── Empty / Placeholder State ────────────────────────────────── */
+.eval-empty-state {
+  border: 1px dashed rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.eval-empty-state svg {
+  color: #adb5bd;
+  margin-bottom: 0.75rem;
+}
+
+.eval-empty-state h5 {
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.eval-empty-state p {
+  color: #6c757d;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── Select Question Placeholder ──────────────────────────────── */
+.eval-select-placeholder {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6c757d;
+}
+
+.eval-select-placeholder svg {
+  color: #adb5bd;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Alert Card (no exams alert) ──────────────────────────────── */
 .alert-card {
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -26,10 +422,10 @@
   align-items: center;
 }
 
-.alert-card-header i {
+.alert-card-header h4 svg,
+.alert-card-header h4 i {
   margin-right: 0.5rem;
   color: #6c757d;
-  font-size: 1rem;
 }
 
 .alert-card-body {
@@ -50,7 +446,7 @@
   margin: 0 auto 1rem;
 }
 
-.alert-icon-section i { color: inherit; font-size: inherit; }
+.alert-icon-section svg { color: inherit; }
 
 .alert-status {
   font-size: 1.25rem;
@@ -95,7 +491,7 @@
   transition: all 0.2s ease;
 }
 
-.alert-button i { margin-right: 0.5rem; }
+.alert-button svg { margin-right: 0.5rem; }
 
 .alert-button-primary {
   background: #0d6efd;
@@ -117,31 +513,7 @@
   .alert-button { width: 100%; justify-content: center; }
 }
 
-.question-nav-grid {
-  display: grid;
-  grid-template-columns: repeat(20, 1fr);
-  gap: 5px;
-  padding: 10px;
-}
-
-/* Added styles for question buttons */
-.question-nav-btn.btn-success {
-  border-color: #28a745;
-}
-
-.question-nav-btn.active {
-  position: relative;
-  z-index: 1;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-/* Alert styles for unsaved changes */
-.unsaved-alert {
-  background-color: #fff3cd;
-  color: #856404;
-  border-color: #ffeeba;
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-  border: 1px solid transparent;
-  border-radius: 0.25rem;
+@media (max-width: 767px) {
+  .question-nav-grid { gap: 3px; }
+  .question-nav-btn { width: 28px; height: 28px; font-size: 0.7rem; }
 }
