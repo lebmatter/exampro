@@ -135,7 +135,6 @@ function examStudioApp() {
     ensureHelpFields(q) {
       if (!q) return;
       if (q.help_show === undefined) q.help_show = "Do not show";
-      if (q.help_minimum_reading_time === undefined) q.help_minimum_reading_time = 15;
       if (q.help_text === undefined) q.help_text = "";
       if (q.help_quiz === undefined) q.help_quiz = [];
     },

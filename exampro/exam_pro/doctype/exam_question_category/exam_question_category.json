@@ -6,7 +6,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "title"
+  "title",
+  "help_minimum_reading_time"
  ],
  "fields": [
   {
@@ -14,6 +15,14 @@
    "fieldtype": "Data",
    "label": "Title",
    "unique": 1
+  },
+  {
+   "default": "15",
+   "description": "Minimum seconds a candidate must spend reading help text before continuing",
+   "fieldname": "help_minimum_reading_time",
+   "fieldtype": "Int",
+   "label": "Help Minimum Reading Time (seconds)",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,

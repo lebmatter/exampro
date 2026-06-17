@@ -7,6 +7,7 @@
  "field_order": [
   "title",
   "short_uuid",
+  "exam_mode",
   "section_break_wkvo",
   "duration",
   "pass_percentage",
@@ -63,6 +64,15 @@
    "read_only": 1,
    "set_only_once": 1,
    "unique": 1
+  },
+  {
+   "default": "Exam",
+   "fieldname": "exam_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Exam\nTraining",
+   "reqd": 1
   },
   {
    "fieldname": "image",
@@ -215,6 +225,7 @@
   },
   {
    "default": "1",
+   "depends_on": "eval: doc.exam_mode !== 'Training'",
    "fieldname": "enable_calculator",
    "fieldtype": "Check",
    "label": "Enable Calculator"
@@ -237,12 +248,14 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.exam_mode !== 'Training'",
    "fieldname": "enable_video_proctoring",
    "fieldtype": "Check",
    "label": "Enable Video Proctoring"
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.exam_mode !== 'Training'",
    "description": "Beta — requires Chrome or Edge. Firefox is not supported.",
    "fieldname": "enable_screen_recording",
    "fieldtype": "Check",
@@ -250,6 +263,7 @@
   },
   {
    "default": "3",
+   "depends_on": "eval: doc.exam_mode !== 'Training'",
    "description": "Exam will terminate after max number",
    "fieldname": "max_warning_count",
    "fieldtype": "Int",
@@ -265,6 +279,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.exam_mode !== 'Training'",
    "fieldname": "enable_chat",
    "fieldtype": "Check",
    "label": "Enable Chat"

@@ -42,6 +42,7 @@ head_include %}
   </div>
   {% else %}
   <div class="row">
+    {% if exam.exam_mode != "Training" %}
     <div class="col-md-3">
       <!-- Sidebar content -->
       <div class="bold-heading mb-3">{{ exam.title }}</div>
@@ -145,12 +146,19 @@ head_include %}
         </div>
       </div>
     </div>
-    <div class="col-md-9">
+    {% endif %}
+    <div class="{{ 'col-md-9' if exam.exam_mode != 'Training' else 'col-md-12' }}">
       <!-- Main content -->
       {% if exam.submission_status == "Started" %}
       <div class="row mb-3">
         <div class="col-md-6">
+          {% if exam.exam_mode == "Training" %}
+          <div class="d-flex justify-content-start align-items-center h-100">
+            <div class="bold-heading">{{ exam.title }}</div>
+          </div>
+          {% else %}
           <div class="d-flex justify-content-start"></div>
+          {% endif %}
         </div>
         <div class="col-md-6">
             <!-- Updated Timer Section with Alpine.js -->
@@ -257,7 +265,7 @@ head_include %}
                         class="btn-lg btn-primary btn-start-quiz m-4"
                         id="quiz-btn"
                         style="display: none"
-                    >Start exam</button>
+                    >{{ "Start" if exam.exam_mode == "Training" else "Start exam" }}</button>
                 </div>
                 {% endif %}
             </div>
@@ -273,6 +281,7 @@ head_include %}
     </div>
   </div>
   {% endif %}
+  {% if exam.exam_mode != "Training" %}
   <!-- Fullscreen exit warning banner -->
   <div id="fullscreenBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
     <i data-feather="alert-triangle"></i>
@@ -287,6 +296,7 @@ head_include %}
       Enter Fullscreen
     </button>
   </div>
+  {% endif %}
   <!-- No-face termination warning banner -->
   <div id="noFaceBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
     <i data-feather="alert-triangle"></i>
@@ -332,6 +342,7 @@ head_include %}
             This exam requires the following permissions. You will be prompted to grant them on the next screen.
           </p>
           <ul id="preExamPermissionList" style="list-style:none;padding:0;margin:0 0 0.75rem 0;">
+            {% if exam.exam_mode != "Training" %}
             <li style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.05);">
               <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#e7f1ff;flex-shrink:0;">
                 <i data-feather="maximize" style="width:16px;height:16px;color:#0d6efd;"></i>
@@ -341,6 +352,7 @@ head_include %}
                 <span style="display:block;font-size:0.8rem;color:#6c757d;">The exam must be taken in fullscreen. You cannot exit fullscreen during the exam.</span>
               </span>
             </li>
+            {% endif %}
             {% if exam.enable_video_proctoring %}
             <li style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.05);">
               <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:#e8f5e9;flex-shrink:0;">

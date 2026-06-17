@@ -46,7 +46,7 @@ def get_category_questions(category):
 			"is_correct_1", "is_correct_2", "is_correct_3", "is_correct_4",
 			"explanation_1", "explanation_2", "explanation_3", "explanation_4",
 			"possibility_1", "possibility_2", "possibility_3", "possibility_4",
-			"help_show", "help_minimum_reading_time", "help_text",
+			"help_show", "help_text",
 		],
 		order_by="modified desc",
 	)
@@ -62,7 +62,6 @@ def get_category_questions(category):
 			"difficulty": q.difficulty or "",
 			"_existing": True,
 			"help_show": q.help_show or "Do not show",
-			"help_minimum_reading_time": q.help_minimum_reading_time or 15,
 			"help_text": q.help_text or "",
 			"help_quiz": [],
 		}
@@ -193,7 +192,6 @@ def save_questions(questions):
 				"mark": q.get("mark", 1),
 				"difficulty": q.get("difficulty", ""),
 				"help_show": q.get("help_show", "Do not show"),
-				"help_minimum_reading_time": q.get("help_minimum_reading_time", 15),
 				"help_text": q.get("help_text", ""),
 			})
 
@@ -255,7 +253,6 @@ def update_question(name, data):
 			doc.set(f"possibility_{i}", answers[i - 1] if i <= len(answers) else "")
 
 	doc.help_show = data.get("help_show", doc.help_show)
-	doc.help_minimum_reading_time = data.get("help_minimum_reading_time", doc.help_minimum_reading_time)
 	doc.help_text = data.get("help_text", doc.help_text)
 
 	if "help_quiz" in data:

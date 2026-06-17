@@ -18,7 +18,6 @@ JSON format (format_version 1.0):
       "possibility_1": "...", ... "possibility_4": "...",
       "multiple": 0|1,
       "help_show": "Do not show|Before question|After wrong answer|After any answer",
-      "help_minimum_reading_time": 15,
       "help_text": "...",
       "help_quiz": [ {"quiz_question": "...", "choice_1": "...", "choice_2": "...", "choice_3": "...", "correct_choice": "1|2|3"} ]
     }
@@ -57,7 +56,7 @@ QUESTION_SCALAR_FIELDS = [
 	"explanation_1", "explanation_2", "explanation_3", "explanation_4",
 	"possibility_1", "possibility_2", "possibility_3", "possibility_4",
 	"multiple",
-	"help_show", "help_minimum_reading_time", "help_text",
+	"help_show", "help_text",
 ]
 
 QUESTION_IMAGE_FIELDS = [

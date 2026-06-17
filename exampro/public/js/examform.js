@@ -936,21 +936,22 @@ frappe.ready(() => {
         }
     }
     if (exam.submission_status === "Started") {
-        // Add event listener for window unload (close)
-        window.addEventListener('beforeunload', function (e) {
-            if (examEnded) return;
-            if (!isInFullscreen()) return;
-            sendMessage("Window closed", "Warning", "tabchange");
-        });
-        // Check if the navbar does not already have the class 'hidden'
+        if (exam.exam_mode !== "Training") {
+            window.addEventListener('beforeunload', function (e) {
+                if (examEnded) return;
+                if (!isInFullscreen()) return;
+                sendMessage("Window closed", "Warning", "tabchange");
+            });
+        }
         var $navbar = $('.navbar');
         if (!$navbar.hasClass('hidden')) {
             $navbar.addClass('hidden');
         }
-        // Start the countdown timer
         updateTimer();
-        activateDetector();
-        activateFullscreenEnforcement();
+        if (exam.exam_mode !== "Training") {
+            activateDetector();
+            activateFullscreenEnforcement();
+        }
         if (exam.enable_screen_recording && !screenCaptureActive) {
             startScreenCapture();
         }
@@ -1594,7 +1595,9 @@ function startExam() {
         return; // Don't start exam if permissions not granted
     }
 
-    enterFullscreen();
+    if (exam.exam_mode !== "Training") {
+        enterFullscreen();
+    }
     if (exam.enable_screen_recording) {
         startScreenCapture();
     }

@@ -45,7 +45,6 @@
     "multiple",
     "help_tab",
     "help_show",
-    "help_minimum_reading_time",
     "help_text_section",
     "help_text",
     "help_quiz_section",
@@ -277,14 +276,6 @@
      "fieldtype": "Select",
      "label": "Show help",
      "options": "Do not show\nBefore question\nAfter wrong answer\nAfter any answer"
-    },
-    {
-     "default": "15",
-     "depends_on": "eval: doc.help_show != 'Do not show'",
-     "fieldname": "help_minimum_reading_time",
-     "fieldtype": "Int",
-     "label": "Minimum reading time (seconds)",
-     "non_negative": 1
     },
     {
      "depends_on": "eval: doc.help_show != 'Do not show'",

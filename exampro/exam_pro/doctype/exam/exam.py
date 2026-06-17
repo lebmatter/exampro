@@ -65,17 +65,23 @@ class Exam(Document):
 	def validate(self):
 		self.image = validate_image(self.image)
 
+		if self.exam_mode == "Training":
+			self.enable_video_proctoring = 0
+			self.enable_screen_recording = 0
+			self.enable_calculator = 0
+			self.enable_chat = 0
+
 		if self.duration <= 0:
 			frappe.thow("Duration should be greater than 0.")
-		
+
 		self.validate_weightage_table()
 
 		if not self.pass_percentage:
 			frappe.throw("Please enter a valid pass percentage")
-		
+
 		if self.pass_percentage > 100.0:
 			frappe.throw("Pass percentage should not be more than 100")
-		
+
 		if self.show_result == "After Specific Date":
 			if not self.show_result_after_date:
 				frappe.throw("Specify date for showing result.")

@@ -79,7 +79,7 @@ def get_live_exam(member=None):
 		exam_cfg = frappe.get_cached_value(
 			"Exam",
 			sched.exam,
-			["enable_calculator", "enable_video_proctoring", "enable_screen_recording", "enable_chat"],
+			["enable_calculator", "enable_video_proctoring", "enable_screen_recording", "enable_chat", "exam_mode"],
 			as_dict=True,
 		) or {}
 
@@ -104,6 +104,7 @@ def get_live_exam(member=None):
 			"enable_video_proctoring": exam_cfg.get("enable_video_proctoring"),
 			"enable_screen_recording": exam_cfg.get("enable_screen_recording"),
 			"enable_chat": exam_cfg.get("enable_chat"),
+			"exam_mode": exam_cfg.get("exam_mode", "Exam"),
 			"schedule_status": get_schedule_status(submission["exam_schedule"]),
 			"schedule_type": sched.schedule_type,
 		}
