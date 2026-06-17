@@ -13,10 +13,10 @@ class ExamSettings(Document):
 		api_key = self.get_password("openrouter_api_key")
 		if not api_key:
 			frappe.throw("OpenRouter API key is not configured. Go to Exam Settings > AI Settings to add it.")
-		return api_key, self.default_text_model or "anthropic/claude-sonnet-4-6"
+		return api_key, self.default_text_model
 
 	def get_image_model(self):
-		return self.default_image_model or "bytedance-seed/seedream-4.5"
+		return self.default_image_model
 
 	def get_storage_endpoint(self):
 		"""

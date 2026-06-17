@@ -67,7 +67,7 @@
   {
    "fieldname": "ai_settings_tab",
    "fieldtype": "Tab Break",
-   "label": "AI Settings"
+   "label": "AI Settings (BETA)"
   },
   {
    "fieldname": "openrouter_section",
@@ -89,7 +89,8 @@
    "fieldname": "default_text_model",
    "fieldtype": "Select",
    "label": "Text Generation Model",
-   "options": "anthropic/claude-sonnet-4-6\nanthropic/claude-sonnet-4-20250514\nopenai/gpt-4o\nopenai/gpt-4o-mini\ngoogle/gemini-2.0-flash\ngoogle/gemini-2.5-pro\ndeepseek/deepseek-chat-v3-0324\ndeepseek/deepseek-r1\nqwen/qwen3-235b-a22b\nqwen/qwen3-30b-a3b"
+   "options": "anthropic/claude-sonnet-4-6\nanthropic/claude-sonnet-4-20250514\nopenai/gpt-4o\nopenai/gpt-4o-mini\ngoogle/gemini-2.0-flash\ngoogle/gemini-2.5-pro\ndeepseek/deepseek-chat-v3-0324\ndeepseek/deepseek-r1\nqwen/qwen3-235b-a22b\nqwen/qwen3-30b-a3b",
+   "reqd": 1
   },
   {
    "fieldname": "image_model_section",
@@ -102,7 +103,8 @@
    "fieldname": "default_image_model",
    "fieldtype": "Select",
    "label": "Image Generation Model",
-   "options": "bytedance-seed/seedream-4.5\nopenai/gpt-5-image\nopenai/gpt-5-image-mini\ngoogle/gemini-2.5-flash-image"
+   "options": "bytedance-seed/seedream-4.5",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
