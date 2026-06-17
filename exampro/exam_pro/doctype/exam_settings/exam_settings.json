@@ -12,7 +12,12 @@
   "aws_secret",
   "s3_bucket",
   "user_settings_section",
-  "restrict_user_account_domains"
+  "restrict_user_account_domains",
+  "ai_settings_tab",
+  "openrouter_section",
+  "openrouter_api_key",
+  "column_break_ai",
+  "default_ai_model"
  ],
  "fields": [
   {
@@ -56,6 +61,32 @@
    "fieldname": "restrict_user_account_domains",
    "fieldtype": "Small Text",
    "label": "Restrict User Account Domains"
+  },
+  {
+   "fieldname": "ai_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "AI Settings"
+  },
+  {
+   "fieldname": "openrouter_section",
+   "fieldtype": "Section Break",
+   "label": "OpenRouter Configuration"
+  },
+  {
+   "fieldname": "openrouter_api_key",
+   "fieldtype": "Password",
+   "label": "OpenRouter API Key"
+  },
+  {
+   "fieldname": "column_break_ai",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "anthropic/claude-sonnet-4-6",
+   "fieldname": "default_ai_model",
+   "fieldtype": "Select",
+   "label": "Default AI Model",
+   "options": "anthropic/claude-sonnet-4-6\nanthropic/claude-sonnet-4-20250514\nopenai/gpt-4o\nopenai/gpt-4o-mini\ngoogle/gemini-2.0-flash\ngoogle/gemini-2.5-pro"
   }
  ],
  "index_web_pages_for_search": 1,

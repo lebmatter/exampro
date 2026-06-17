@@ -1,0 +1,585 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Exam Studio{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/exam-studio.css" />
+{% endblock %}
+
+{% block page_content %}
+<div x-data="examStudioApp()" x-init="init()">
+  <div class="container-fluid dashboard-page" style="max-width:1400px">
+
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col">
+        <h4 class="bold-heading mb-1">
+          <i data-feather="cpu" style="width:20px;height:20px;"></i>
+          Exam Studio
+        </h4>
+        <p class="text-muted mb-0" style="font-size:0.85rem;">AI-powered question generation and exam management</p>
+      </div>
+    </div>
+
+    <!-- AI not configured banner -->
+    <template x-if="!aiConfigured">
+      <div class="alert-banner mb-4">
+        <i data-feather="alert-triangle" style="width:16px;height:16px;"></i>
+        <span>OpenRouter API key not configured.</span>
+        <a href="/app/exam-settings" class="ms-1">Go to Exam Settings</a>
+      </div>
+    </template>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs studio-tabs mb-0">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-questions">
+          <i data-feather="help-circle" style="width:14px;height:14px;"></i>
+          Questions
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link disabled" disabled>
+          <i data-feather="file-text" style="width:14px;height:14px;"></i>
+          Exams
+          <span class="coming-soon-badge">Soon</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link disabled" disabled>
+          <i data-feather="calendar" style="width:14px;height:14px;"></i>
+          Schedules
+          <span class="coming-soon-badge">Soon</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content pt-4">
+      <!-- Questions Tab -->
+      <div class="tab-pane fade show active" id="tab-questions">
+        <div class="row g-3">
+
+          <!-- Column 1: Controls -->
+          <div class="col-lg-3 col-md-4">
+            <div class="studio-controls">
+              <h6 class="controls-title">
+                <i data-feather="sliders" style="width:14px;height:14px;"></i>
+                Generation Settings
+              </h6>
+
+              <!-- Category -->
+              <div class="control-group">
+                <label class="control-label">Category</label>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm" x-model="category" @change="onCategoryChange()">
+                    <option value="">Select category...</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.name }}">{{ cat.title }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-sm btn-outline-secondary flex-shrink-0" @click="showNewCategory = !showNewCategory" title="New category">
+                    <i data-feather="plus" style="width:14px;height:14px;"></i>
+                  </button>
+                </div>
+                <template x-if="showNewCategory">
+                  <div class="mt-2 d-flex gap-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="Category name" x-model="newCategoryName" @keydown.enter="createCategory()">
+                    <button class="btn btn-sm btn-primary flex-shrink-0" @click="createCategory()" :disabled="!newCategoryName.trim()">Add</button>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Number of questions -->
+              <div class="control-group">
+                <label class="control-label">Number of Questions</label>
+                <input type="number" class="form-control form-control-sm" x-model.number="count" min="1" max="20">
+              </div>
+
+              <!-- Marks per question -->
+              <div class="control-group">
+                <label class="control-label">Marks per Question</label>
+                <input type="number" class="form-control form-control-sm" x-model.number="mark" min="0">
+              </div>
+
+              <!-- Difficulty -->
+              <div class="control-group">
+                <label class="control-label">Difficulty</label>
+                <div class="pill-group">
+                  <template x-for="d in ['Simple', 'Medium', 'Hard']" :key="d">
+                    <button class="pill-btn" :class="{'pill-active': difficulty === d}" @click="difficulty = d" x-text="d"></button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Question Type -->
+              <div class="control-group">
+                <label class="control-label">Question Type</label>
+                <div class="pill-group">
+                  <template x-for="t in ['Choices', 'User Input']" :key="t">
+                    <button class="pill-btn" :class="{'pill-active': questionType === t}" @click="questionType = t" x-text="t"></button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Prompt -->
+              <div class="control-group">
+                <label class="control-label">Topic / Instructions</label>
+                <textarea class="form-control form-control-sm" rows="4" placeholder="Describe the topic and what kind of questions you need..." x-model="prompt"></textarea>
+              </div>
+
+              <!-- File Upload -->
+              <div class="control-group">
+                <label class="control-label">Upload File (optional)</label>
+                <div class="file-upload-area" @click="$refs.fileInput.click()" @dragover.prevent="fileDragOver = true" @dragleave.prevent="fileDragOver = false" @drop.prevent="handleFileDrop($event)" :class="{'file-drag-over': fileDragOver}">
+                  <template x-if="!uploadedFile">
+                    <div class="file-upload-placeholder">
+                      <i data-feather="upload" style="width:16px;height:16px;"></i>
+                      <span>Drop a .txt or .csv file, or click to browse</span>
+                    </div>
+                  </template>
+                  <template x-if="uploadedFile">
+                    <div class="file-upload-attached">
+                      <i data-feather="file-text" style="width:14px;height:14px;"></i>
+                      <span class="file-name" x-text="uploadedFile.name"></span>
+                      <span class="file-size" x-text="formatFileSize(uploadedFile.size)"></span>
+                      <button class="file-remove-btn" @click.stop="removeFile()" title="Remove file">
+                        <i data-feather="x" style="width:12px;height:12px;"></i>
+                      </button>
+                    </div>
+                  </template>
+                </div>
+                <input type="file" x-ref="fileInput" accept=".txt,.csv,text/plain,text/csv" @change="handleFileSelect($event)" style="display:none;">
+                <template x-if="fileError">
+                  <p class="file-error-text" x-text="fileError"></p>
+                </template>
+              </div>
+
+              <!-- Generate Button -->
+              <button
+                class="btn btn-generate w-100"
+                @click="generateQuestions()"
+                :disabled="generating || !category || (!prompt.trim() && !fileContent) || !aiConfigured"
+              >
+                <template x-if="generating">
+                  <span>
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Generating...
+                  </span>
+                </template>
+                <template x-if="!generating">
+                  <span>
+                    <i data-feather="zap" style="width:14px;height:14px;"></i>
+                    Generate Questions
+                  </span>
+                </template>
+              </button>
+            </div>
+          </div>
+
+          <!-- Column 2: Generated Questions -->
+          <div class="col-lg-5 col-md-4">
+            <div class="question-list-card">
+              <div class="question-list-header">
+                <h6>
+                  <i data-feather="list" style="width:14px;height:14px;"></i>
+                  Generated
+                  <span class="tab-count" x-text="generatedQuestions.length" x-show="generatedQuestions.length > 0"></span>
+                </h6>
+                <button
+                  class="btn btn-sm btn-outline-secondary"
+                  @click="insertAll()"
+                  x-show="generatedQuestions.length > 0"
+                >
+                  Insert All
+                </button>
+              </div>
+
+              <div class="question-list-body">
+                <template x-if="generatedQuestions.length === 0 && !generating">
+                  <div class="empty-state">
+                    <i data-feather="cpu" style="width:2rem;height:2rem;"></i>
+                    <h6>No questions generated yet</h6>
+                    <p class="text-muted mb-0">Configure settings and click Generate</p>
+                  </div>
+                </template>
+
+                <template x-if="generating && generatedQuestions.length === 0">
+                  <div class="empty-state">
+                    <span class="spinner-border text-muted mb-2" style="width:2rem;height:2rem;"></span>
+                    <h6>Generating questions...</h6>
+                    <p class="text-muted mb-0">This may take a moment</p>
+                  </div>
+                </template>
+
+                <template x-for="(q, index) in generatedQuestions" :key="index">
+                  <div class="question-item" @click="openModal(index, 'generated')">
+                    <div class="question-item-body">
+                      <div class="question-preview" x-text="stripHtml(q.question).substring(0, 100) + (stripHtml(q.question).length > 100 ? '...' : '')"></div>
+                      <div class="question-badges">
+                        <span class="badge-difficulty" :class="'badge-' + q.difficulty.toLowerCase()" x-text="q.difficulty"></span>
+                        <span class="badge-type" x-text="q.type"></span>
+                      </div>
+                    </div>
+                    <i data-feather="chevron-right" style="width:14px;height:14px;color:#adb5bd;flex-shrink:0;"></i>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3: Approved Questions -->
+          <div class="col-lg-4 col-md-4">
+            <div class="approved-card">
+              <div class="approved-header">
+                <h6>
+                  <i data-feather="check-circle" style="width:14px;height:14px;"></i>
+                  Approved
+                  <span class="tab-count" x-text="approvedQuestions.length" x-show="approvedQuestions.length > 0"></span>
+                </h6>
+              </div>
+
+              <div class="approved-body">
+                <template x-if="approvedQuestions.length === 0">
+                  <div class="empty-state">
+                    <i data-feather="inbox" style="width:2rem;height:2rem;"></i>
+                    <h6>No approved questions</h6>
+                    <p class="text-muted mb-0">Review generated questions and click Insert to approve</p>
+                  </div>
+                </template>
+
+                <template x-for="(q, index) in approvedQuestions" :key="'approved-' + index">
+                  <div class="approved-item" @click="openModal(index, 'approved')">
+                    <div class="approved-item-body">
+                      <div class="question-preview" x-text="stripHtml(q.question).substring(0, 80) + (stripHtml(q.question).length > 80 ? '...' : '')"></div>
+                      <div class="question-badges">
+                        <span class="badge-difficulty" :class="'badge-' + (q.difficulty || '').toLowerCase()" x-text="q.difficulty" x-show="q.difficulty"></span>
+                        <span class="badge-type" x-text="q.type"></span>
+                        <template x-if="q._existing">
+                          <span class="badge-existing">Saved</span>
+                        </template>
+                        <template x-if="!q._existing">
+                          <span class="badge-new">New</span>
+                        </template>
+                      </div>
+                    </div>
+                    <i data-feather="chevron-right" style="width:14px;height:14px;color:#adb5bd;flex-shrink:0;"></i>
+                  </div>
+                </template>
+              </div>
+
+              <div class="approved-footer" x-show="approvedQuestions.length > 0">
+                <button
+                  class="btn btn-save-all w-100"
+                  @click="saveAll()"
+                  :disabled="saving"
+                >
+                  <template x-if="saving">
+                    <span>
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                      Saving...
+                    </span>
+                  </template>
+                  <template x-if="!saving">
+                    <span>
+                      <i data-feather="save" style="width:14px;height:14px;"></i>
+                      Save All to ExamPro
+                      <span x-text="'(' + approvedQuestions.length + ')'"></span>
+                    </span>
+                  </template>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question Editor Modal -->
+  <div class="modal fade" id="questionEditorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <template x-if="currentQ()">
+          <div>
+            <div class="modal-header">
+              <span class="modal-title">Edit Question</span>
+              <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+                <i data-feather="x" style="width:18px;height:18px;"></i>
+              </button>
+            </div>
+            <div class="modal-body p-0">
+              <!-- Modal tabs -->
+              <ul class="nav nav-tabs modal-editor-tabs px-3 pt-2">
+                <li class="nav-item">
+                  <button class="nav-link" :class="{'active': modalTab === 'question'}" @click="modalTab = 'question'; $nextTick(() => syncEditorsToData())">
+                    <i data-feather="edit-3" style="width:13px;height:13px;"></i> Question
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button class="nav-link" :class="{'active': modalTab === 'help'}" @click="modalTab = 'help'; $nextTick(() => syncEditorsToData())">
+                    <i data-feather="book-open" style="width:13px;height:13px;"></i> Help Text
+                  </button>
+                </li>
+                <li class="ms-auto d-flex align-items-center">
+                  <template x-if="currentQ()._existing">
+                    <span class="badge-existing">Saved</span>
+                  </template>
+                  <template x-if="!currentQ()._existing">
+                    <span class="badge-new">New</span>
+                  </template>
+                </li>
+              </ul>
+
+              <!-- Question Tab -->
+              <div class="modal-tab-content p-3" x-show="modalTab === 'question'">
+                <div class="detail-section">
+                  <label class="control-label">Question</label>
+                  <div class="rich-editor-wrap">
+                    <div class="rich-toolbar">
+                      <button type="button" class="rich-toolbar-btn" @click="execFormat('bold')" title="Bold"><b>B</b></button>
+                      <button type="button" class="rich-toolbar-btn" @click="execFormat('italic')" title="Italic"><i>I</i></button>
+                      <button type="button" class="rich-toolbar-btn" @click="execFormat('underline')" title="Underline"><u>U</u></button>
+                      <span class="rich-toolbar-sep"></span>
+                      <button type="button" class="rich-toolbar-btn" @click="execFormat('insertUnorderedList')" title="Bullet list"><i data-feather="list" style="width:13px;height:13px;"></i></button>
+                      <button type="button" class="rich-toolbar-btn" @click="execFormat('insertOrderedList')" title="Numbered list"><i data-feather="hash" style="width:13px;height:13px;"></i></button>
+                      <span class="rich-toolbar-sep"></span>
+                      <button type="button" class="rich-toolbar-btn" @click="execFormat('removeFormat')" title="Clear formatting"><i data-feather="x-circle" style="width:13px;height:13px;"></i></button>
+                    </div>
+                    <div
+                      class="rich-editor"
+                      contenteditable="true"
+                      x-ref="questionEditor"
+                      @input="currentQ().question = $event.target.innerHTML"
+                    ></div>
+                  </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-4">
+                    <label class="control-label">Difficulty</label>
+                    <div class="pill-group">
+                      <template x-for="d in ['Simple', 'Medium', 'Hard']" :key="'modal-' + d">
+                        <button class="pill-btn pill-btn-sm" :class="{'pill-active': currentQ().difficulty === d}" @click="currentQ().difficulty = d" x-text="d"></button>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <label class="control-label">Mark</label>
+                    <input type="number" class="form-control form-control-sm" x-model.number="currentQ().mark" min="0">
+                  </div>
+                  <div class="col-4">
+                    <label class="control-label">Type</label>
+                    <input type="text" class="form-control form-control-sm" :value="currentQ().type" disabled>
+                  </div>
+                </div>
+
+                <!-- Choices options -->
+                <template x-if="currentQ().type === 'Choices' && currentQ().options">
+                  <div class="detail-section">
+                    <label class="control-label">Options</label>
+                    <template x-for="(opt, oi) in currentQ().options" :key="'modal-opt-' + oi">
+                      <div class="option-row" :class="{'option-correct': opt.is_correct}">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                          <input type="checkbox" :checked="opt.is_correct" @change="opt.is_correct = $event.target.checked" class="form-check-input">
+                          <input type="text" class="form-control form-control-sm" x-model="opt.text" placeholder="Option text">
+                        </div>
+                        <input type="text" class="form-control form-control-sm mt-1 explanation-input" x-model="opt.explanation" :placeholder="'Explanation for option ' + (oi + 1)">
+                      </div>
+                    </template>
+                  </div>
+                </template>
+
+                <!-- User Input possible answers -->
+                <template x-if="currentQ().type === 'User Input' && currentQ().possible_answers">
+                  <div class="detail-section">
+                    <label class="control-label">Possible Answers</label>
+                    <template x-for="(ans, ai) in currentQ().possible_answers" :key="'modal-ans-' + ai">
+                      <input type="text" class="form-control form-control-sm mb-2" x-model="currentQ().possible_answers[ai]" :placeholder="'Answer ' + (ai + 1)">
+                    </template>
+                    <template x-if="currentQ().explanation !== undefined">
+                      <div class="mt-2">
+                        <label class="control-label">Explanation</label>
+                        <div class="rich-editor-wrap">
+                          <div
+                            class="rich-editor"
+                            contenteditable="true"
+                            x-ref="explanationEditor"
+                            @input="currentQ().explanation = $event.target.innerHTML"
+                          ></div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Help Text Tab -->
+              <div class="modal-tab-content p-3" x-show="modalTab === 'help'">
+                <div class="detail-section">
+                  <label class="control-label">Show Help</label>
+                  <select class="form-select form-select-sm" x-model="currentQ().help_show" @change="$nextTick(() => syncEditorsToData())">
+                    <option value="Do not show">Do not show</option>
+                    <option value="Before question">Before question</option>
+                    <template x-if="currentQ().type === 'Choices'">
+                      <option value="After wrong answer">After wrong answer</option>
+                    </template>
+                    <option value="After any answer">After any answer</option>
+                  </select>
+                </div>
+
+                <template x-if="currentQ().help_show !== 'Do not show'">
+                  <div>
+                    <div class="detail-section">
+                      <label class="control-label">Minimum Reading Time (seconds)</label>
+                      <input type="number" class="form-control form-control-sm" x-model.number="currentQ().help_minimum_reading_time" min="0" style="max-width:120px;">
+                    </div>
+
+                    <div class="detail-section">
+                      <label class="control-label">Help Text</label>
+                      <div class="help-generate-bar mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="pill-group flex-shrink-0">
+                            <template x-for="s in ['compact', 'medium', 'large']" :key="'hs-' + s">
+                              <button class="pill-btn pill-btn-sm" :class="{'pill-active': helpTextSize === s}" @click="helpTextSize = s" x-text="s" style="text-transform:capitalize;"></button>
+                            </template>
+                          </div>
+                          <button
+                            class="btn btn-sm btn-generate flex-shrink-0"
+                            @click="generateHelpText()"
+                            :disabled="generatingHelpText || !currentQ().question"
+                            style="margin-top:0;padding:0.25rem 0.6rem;font-size:0.78rem;"
+                          >
+                            <template x-if="generatingHelpText">
+                              <span><span class="spinner-border spinner-border-sm me-1" style="width:0.7rem;height:0.7rem;"></span> Generating...</span>
+                            </template>
+                            <template x-if="!generatingHelpText">
+                              <span><i data-feather="zap" style="width:12px;height:12px;"></i> Generate</span>
+                            </template>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="rich-editor-wrap">
+                        <div class="rich-toolbar">
+                          <button type="button" class="rich-toolbar-btn" @click="execFormat('bold')" title="Bold"><b>B</b></button>
+                          <button type="button" class="rich-toolbar-btn" @click="execFormat('italic')" title="Italic"><i>I</i></button>
+                          <button type="button" class="rich-toolbar-btn" @click="execFormat('underline')" title="Underline"><u>U</u></button>
+                          <span class="rich-toolbar-sep"></span>
+                          <button type="button" class="rich-toolbar-btn" @click="execFormat('insertUnorderedList')" title="Bullet list"><i data-feather="list" style="width:13px;height:13px;"></i></button>
+                          <button type="button" class="rich-toolbar-btn" @click="execFormat('insertOrderedList')" title="Numbered list"><i data-feather="hash" style="width:13px;height:13px;"></i></button>
+                          <span class="rich-toolbar-sep"></span>
+                          <button type="button" class="rich-toolbar-btn" @click="execFormat('removeFormat')" title="Clear formatting"><i data-feather="x-circle" style="width:13px;height:13px;"></i></button>
+                        </div>
+                        <div
+                          class="rich-editor rich-editor-lg"
+                          contenteditable="true"
+                          x-ref="helpTextEditor"
+                          @input="currentQ().help_text = $event.target.innerHTML"
+                          data-placeholder="Enter help/learning content for this question..."
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div class="detail-section">
+                      <div class="d-flex align-items-center justify-content-between mb-2">
+                        <label class="control-label mb-0">Quick Quiz (optional, max 3)</label>
+                        <button
+                          class="btn btn-sm btn-outline-secondary"
+                          @click="addHelpQuiz()"
+                          x-show="(currentQ().help_quiz || []).length < 3"
+                        >
+                          <i data-feather="plus" style="width:12px;height:12px;"></i> Add
+                        </button>
+                      </div>
+
+                      <template x-if="!currentQ().help_quiz || currentQ().help_quiz.length === 0">
+                        <p class="text-muted" style="font-size:0.8rem;">No quiz questions added.</p>
+                      </template>
+
+                      <template x-for="(hq, hi) in (currentQ().help_quiz || [])" :key="'hq-' + hi">
+                        <div class="help-quiz-item">
+                          <div class="d-flex align-items-start justify-content-between mb-2">
+                            <label class="control-label mb-0" x-text="'Quiz Question ' + (hi + 1)"></label>
+                            <button class="btn btn-sm btn-link text-danger p-0" @click="removeHelpQuiz(hi)">
+                              <i data-feather="x" style="width:12px;height:12px;"></i>
+                            </button>
+                          </div>
+                          <input type="text" class="form-control form-control-sm mb-2" x-model="hq.quiz_question" placeholder="Quiz question">
+                          <div class="row g-2 mb-2">
+                            <div class="col-4">
+                              <input type="text" class="form-control form-control-sm" x-model="hq.choice_1" placeholder="Choice 1">
+                            </div>
+                            <div class="col-4">
+                              <input type="text" class="form-control form-control-sm" x-model="hq.choice_2" placeholder="Choice 2">
+                            </div>
+                            <div class="col-4">
+                              <input type="text" class="form-control form-control-sm" x-model="hq.choice_3" placeholder="Choice 3 (optional)">
+                            </div>
+                          </div>
+                          <div>
+                            <label class="control-label">Correct Choice</label>
+                            <select class="form-select form-select-sm" x-model="hq.correct_choice" style="max-width:100px;">
+                              <option value="1">1</option>
+                              <option value="2">2</option>
+                              <option value="3" x-show="hq.choice_3">3</option>
+                            </select>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Modal footer with context-appropriate actions -->
+            <div class="modal-footer">
+              <template x-if="editSource === 'generated'">
+                <div class="d-flex gap-2 w-100">
+                  <button class="btn btn-sm btn-insert" @click="insertFromModal()">
+                    <i data-feather="check" style="width:14px;height:14px;"></i> Insert
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" @click="regenerateFromModal()" :disabled="regenerating">
+                    <template x-if="regenerating">
+                      <span class="spinner-border spinner-border-sm"></span>
+                    </template>
+                    <template x-if="!regenerating">
+                      <i data-feather="refresh-cw" style="width:14px;height:14px;"></i>
+                    </template>
+                    Regenerate
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+                </div>
+              </template>
+              <template x-if="editSource === 'approved'">
+                <div class="d-flex gap-2 w-100">
+                  <button class="btn btn-sm btn-insert" @click="updateQuestion()" :disabled="updating">
+                    <template x-if="updating">
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    </template>
+                    <template x-if="!updating">
+                      <i data-feather="save" style="width:14px;height:14px;"></i>
+                    </template>
+                    <span x-text="currentQ()?._existing ? 'Update' : 'Save Changes'"></span>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" @click="removeFromModal()">
+                    <i data-feather="trash-2" style="width:14px;height:14px;"></i> Remove
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.examStudioData = {
+    categories: {{ categories | tojson | safe }},
+    aiConfigured: {{ ai_configured | tojson | safe }},
+  };
+</script>
+<script src="/assets/exampro/js/exam-studio.js"></script>
+{% endblock %}

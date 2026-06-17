@@ -7,6 +7,7 @@
  "field_order": [
     "question",
     "category",
+    "difficulty",
     "mark",
     "description_image",
     "type",
@@ -90,7 +91,7 @@
     {
      "depends_on": "option_1",
      "fieldname": "explanation_1",
-     "fieldtype": "Data",
+     "fieldtype": "Small Text",
      "label": "Explanation"
     },
     {
@@ -118,7 +119,7 @@
     {
      "depends_on": "option_2",
      "fieldname": "explanation_2",
-     "fieldtype": "Data",
+     "fieldtype": "Small Text",
      "label": "Explanation"
     },
     {
@@ -145,7 +146,7 @@
     {
      "depends_on": "option_3",
      "fieldname": "explanation_3",
-     "fieldtype": "Data",
+     "fieldtype": "Small Text",
      "label": "Explanation"
     },
     {
@@ -172,7 +173,7 @@
     {
      "depends_on": "option_4",
      "fieldname": "explanation_4",
-     "fieldtype": "Data",
+     "fieldtype": "Small Text",
      "label": "Explanation"
     },
     {
@@ -250,6 +251,13 @@
      "options": "Exam Question Category",
      "reqd": 1,
      "search_index": 1
+    },
+    {
+     "fieldname": "difficulty",
+     "fieldtype": "Select",
+     "in_list_view": 1,
+     "label": "Difficulty",
+     "options": "\nSimple\nMedium\nHard"
     },
     {
      "fieldname": "mark",

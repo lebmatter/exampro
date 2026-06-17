@@ -110,6 +110,10 @@
                     >Exam Question</a
                   >
                 </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item" href="/exam-studio">Exam Studio</a>
+                </li>
               </ul>
             </li>
             {% endif %} {% endif %}
@@ -195,6 +199,8 @@ get_telemetry_boot_info() %}
       $('a[href="/proctor"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/evaluate") {
       $('a[href="/evaluate"]').closest(".nav-item").addClass("active");
+    } else if (currentPath === "/exam-studio") {
+      $('a[href="/exam-studio"]').closest(".nav-item").addClass("active");
     }
 
     // Logout: hit Frappe's logout RPC, then redirect — the API returns JSON

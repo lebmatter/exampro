@@ -8,7 +8,13 @@ from frappe.model.document import Document
 
 
 class ExamSettings(Document):
-	
+
+	def get_openrouter_config(self):
+		api_key = self.get_password("openrouter_api_key")
+		if not api_key:
+			frappe.throw("OpenRouter API key is not configured. Go to Exam Settings > AI Settings to add it.")
+		return api_key, self.default_ai_model or "anthropic/claude-sonnet-4-6"
+
 	def get_storage_endpoint(self):
 		"""
 		Get the storage endpoint URL based on the selected provider
