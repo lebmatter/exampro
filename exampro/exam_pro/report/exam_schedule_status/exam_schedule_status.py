@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_status
 
 def execute(filters=None):
     columns = get_columns()
@@ -72,10 +73,8 @@ def get_data(filters):
         as_dict=1
     )
     
-    # Calculate status for each schedule
     for row in data:
-        doc = frappe.get_doc("Exam Schedule", row.name)
-        row["status"] = doc.get_status()
+        row["status"] = get_schedule_status(row.name)
     
     # Filter by status if specified
     if filters.get("status"):

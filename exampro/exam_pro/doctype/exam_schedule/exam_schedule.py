@@ -268,42 +268,39 @@ class ExamSchedule(Document):
 		- "Ongoing" if the current time is between the start date time and end date time.
 		- "Completed" if the current time is after the end date time.
 		"""
-		current_time = datetime.fromisoformat(now().split(".")[0])
-		
-		# Ensure start_date_time is a datetime object
 		start_time = self.start_date_time
 		if not isinstance(start_time, datetime):
-			start_time = parse(start_time) if start_time else current_time
-		
+			start_time = parse(start_time) if start_time else None
+
+		if not start_time:
+			return "Upcoming"
+
+		if not additional_time:
+			if self.schedule_type == "Fixed":
+				max_end = start_time + timedelta(minutes=self.duration or 0)
+			else:
+				max_end = start_time + timedelta(minutes=self.duration or 0, days=self.schedule_expire_in_days or 0)
+			if max_end.date() < date.today():
+				return "Completed"
+
+		current_time = datetime.fromisoformat(now().split(".")[0])
+
 		# Calculate end time based on schedule type
 		if self.schedule_type == "Fixed":
 			end_time = start_time + timedelta(minutes=self.duration or 0)
 		else:
-			# For flexible schedules, we consider the end time as start time + duration + days
 			days = self.schedule_expire_in_days or 0
 			end_time = start_time + timedelta(minutes=self.duration or 0, days=days)
-		
-		# If additional_time is provided, adjust the end time
+
 		if additional_time:
 			end_time += timedelta(minutes=additional_time)
-		
-		# Debug log
-		frappe.logger().debug(f"Status calculation for {self.name}:")
-		frappe.logger().debug(f"- current_time: {current_time}")
-		frappe.logger().debug(f"- start_time: {start_time}")
-		frappe.logger().debug(f"- end_time: {end_time}")
-		
-		# Determine status
-		status = None
+
 		if current_time < start_time:
-			status = "Upcoming"
+			return "Upcoming"
 		elif start_time <= current_time <= end_time:
-			status = "Ongoing"
+			return "Ongoing"
 		else:
-			status = "Completed"
-			
-		frappe.logger().debug(f"- status: {status}")
-		return status
+			return "Completed"
 
 	@frappe.whitelist()
 	def get_exam_schedule_status(self):
@@ -634,33 +631,38 @@ def get_schedule_status(exam_schedule, additional_time=0):
 	- "Completed" if the current time is after the end date time.
 	"""
 	start_date_time, schedule_type, duration, schedule_expire_in_days = frappe.get_value(
-		"Exam Schedule", exam_schedule, 
+		"Exam Schedule", exam_schedule,
 		["start_date_time", "schedule_type", "duration", "schedule_expire_in_days"]
 	)
+
+	if not start_date_time:
+		return "Upcoming"
+
+	if not additional_time:
+		if schedule_type == "Fixed":
+			max_end = start_date_time + timedelta(minutes=duration or 0)
+		else:
+			max_end = start_date_time + timedelta(minutes=duration or 0, days=schedule_expire_in_days or 0)
+		if max_end.date() < date.today():
+			return "Completed"
+
 	current_time = datetime.now()
-	
-	# Calculate end time based on schedule type
+
 	if schedule_type == "Fixed":
 		end_time = start_date_time + timedelta(minutes=duration or 0)
 	else:
-		# For flexible schedules, we consider the end time as start time + duration + days
 		days = schedule_expire_in_days or 0
 		end_time = start_date_time + timedelta(minutes=duration or 0, days=days)
-	
-	# If additional_time is provided, adjust the end time
+
 	if additional_time:
 		end_time += timedelta(minutes=additional_time)
-	
-	# Determine status
-	status = None
+
 	if current_time < start_date_time:
-		status = "Upcoming"
+		return "Upcoming"
 	elif start_date_time <= current_time <= end_time:
-		status = "Ongoing"
+		return "Ongoing"
 	else:
-		status = "Completed"
-		
-	return status
+		return "Completed"
 
 def get_schedule_end_time(exam_schedule, additional_time=0):
 	"""
