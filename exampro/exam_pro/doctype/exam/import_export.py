@@ -61,6 +61,7 @@ QUESTION_SCALAR_FIELDS = [
 
 QUESTION_IMAGE_FIELDS = [
 	"description_image", "option_1_image", "option_2_image", "option_3_image", "option_4_image",
+	"helper_text_image",
 ]
 
 HTML_FIELDS_EXAM = {"description", "instructions"}

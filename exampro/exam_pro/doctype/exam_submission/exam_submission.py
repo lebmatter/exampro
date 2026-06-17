@@ -735,6 +735,7 @@ def get_question(exam_submission=None, qsno=1):
 			frappe.db.get_value("Exam Question Category", question_doc.category, "help_minimum_reading_time") or 0
 		) if question_doc.category else 0,
 		"help_text": question_doc.help_text or "",
+		"helper_text_image": resolve_question_image(question_doc.helper_text_image),
 		"help_quiz": help_quiz,
 	}
 

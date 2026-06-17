@@ -1194,6 +1194,7 @@ function displayQuestion(current_qs) {
         "marked_for_later": current_qs.marked_for_later,
         "help_show": current_qs.help_show || "Do not show",
         "help_text": current_qs.help_text || "",
+        "helper_text_image": current_qs.helper_text_image || "",
         "help_minimum_reading_time": current_qs.help_minimum_reading_time || 0,
         "help_quiz": current_qs.help_quiz || []
     }
@@ -1854,6 +1855,19 @@ function showHelpFlow(qs, onDone) {
     // help_text is editor-authored HTML stored on the question doctype (same
     // trust level as the question body itself).
     $("#help-text-content").html(qs.help_text || "");
+    if (qs.helper_text_image) {
+        const imageSrc = getImageSrc(qs.helper_text_image);
+        if (imageSrc) {
+            $("#help-text-image").html(`
+                <img src="${imageSrc}" class="img-fluid" alt="Helper text image"
+                     style="max-width: 70%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                     onerror="this.style.display='none';">`);
+        } else {
+            $("#help-text-image").html("");
+        }
+    } else {
+        $("#help-text-image").html("");
+    }
     const helpTitle = qs.help_show === "Before question"
         ? "Read before next question"
         : "Learn more about previous question";

@@ -289,6 +289,11 @@
      "label": "Help text"
     },
     {
+     "fieldname": "helper_text_image",
+     "fieldtype": "Attach Image",
+     "label": "Helper Text Image"
+    },
+    {
      "depends_on": "eval: doc.help_show != 'Do not show'",
      "fieldname": "help_quiz_section",
      "fieldtype": "Section Break",
