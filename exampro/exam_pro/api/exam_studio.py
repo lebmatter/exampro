@@ -1,3 +1,4 @@
+import base64
 import json
 import re
 
@@ -7,6 +8,12 @@ import requests
 
 CACHE_KEY_PREFIX = "exam_studio_state:"
 CACHE_TTL = 86400  # 24 hours
+
+IMAGE_STYLE_PROMPTS = {
+	"realistic": "Photorealistic style, high detail, natural lighting, like a professional photograph. Do NOT include any text, words, letters, numbers, labels, captions, watermarks, or writing of any kind in the image.",
+	"cartoon": "Cartoon illustration style, clean lines, vibrant colors, friendly and approachable like a textbook illustration. Do NOT include any text, words, letters, numbers, labels, captions, watermarks, or writing of any kind in the image.",
+	"exampro_slider": "Flat vector illustration in the style of Humaans. Use a yellow (#F5C344) and black (#212529) color palette with subtle gray accents. Minimalist, geometric, modern, clean background. Do NOT include any text, words, letters, numbers, labels, captions, watermarks, or writing of any kind in the image.",
+}
 
 
 @frappe.whitelist()
@@ -47,6 +54,8 @@ def get_category_questions(category):
 			"explanation_1", "explanation_2", "explanation_3", "explanation_4",
 			"possibility_1", "possibility_2", "possibility_3", "possibility_4",
 			"help_show", "help_text",
+			"description_image", "option_1_image", "option_2_image",
+			"option_3_image", "option_4_image", "helper_text_image",
 		],
 		order_by="modified desc",
 	)
@@ -64,6 +73,8 @@ def get_category_questions(category):
 			"help_show": q.help_show or "Do not show",
 			"help_text": q.help_text or "",
 			"help_quiz": [],
+			"description_image": q.description_image or "",
+			"helper_text_image": q.helper_text_image or "",
 		}
 
 		if q.type == "Choices":
@@ -75,6 +86,7 @@ def get_category_questions(category):
 						"text": text,
 						"is_correct": bool(q.get(f"is_correct_{i}")),
 						"explanation": q.get(f"explanation_{i}") or "",
+						"image": q.get(f"option_{i}_image") or "",
 					})
 		elif q.type == "User Input":
 			item["possible_answers"] = [
@@ -193,6 +205,8 @@ def save_questions(questions):
 				"difficulty": q.get("difficulty", ""),
 				"help_show": q.get("help_show", "Do not show"),
 				"help_text": q.get("help_text", ""),
+				"description_image": q.get("description_image", ""),
+				"helper_text_image": q.get("helper_text_image", ""),
 			})
 
 			for hq in q.get("help_quiz", []):
@@ -211,6 +225,7 @@ def save_questions(questions):
 					doc.set(f"option_{i}", opt.get("text", ""))
 					doc.set(f"is_correct_{i}", 1 if opt.get("is_correct") else 0)
 					doc.set(f"explanation_{i}", opt.get("explanation", ""))
+					doc.set(f"option_{i}_image", opt.get("image", ""))
 			elif q.get("type") == "User Input":
 				answers = q.get("possible_answers", [])
 				for i, ans in enumerate(answers[:4], 1):
@@ -238,6 +253,8 @@ def update_question(name, data):
 	doc.question = data.get("question", doc.question)
 	doc.mark = data.get("mark", doc.mark)
 	doc.difficulty = data.get("difficulty", doc.difficulty)
+	doc.description_image = data.get("description_image", doc.description_image)
+	doc.helper_text_image = data.get("helper_text_image", doc.helper_text_image)
 
 	if doc.type == "Choices":
 		options = data.get("options", [])
@@ -247,6 +264,7 @@ def update_question(name, data):
 				doc.set(f"option_{i}", opt.get("text", ""))
 				doc.set(f"is_correct_{i}", 1 if opt.get("is_correct") else 0)
 				doc.set(f"explanation_{i}", opt.get("explanation", ""))
+				doc.set(f"option_{i}_image", opt.get("image", ""))
 	elif doc.type == "User Input":
 		answers = data.get("possible_answers", [])
 		for i in range(1, 5):
@@ -351,6 +369,112 @@ Rules:
 		frappe.throw("Unexpected response from AI. Please try again.")
 
 	return {"help_text": text}
+
+
+@frappe.whitelist()
+def generate_image(prompt, style, field_context="description_image"):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	if style not in IMAGE_STYLE_PROMPTS:
+		frappe.throw("Invalid image style")
+
+	prompt = (prompt or "").strip()
+	if not prompt:
+		frappe.throw("Please provide text content to generate an image for.")
+
+	settings = frappe.get_single("Exam Settings")
+	api_key = settings.get_password("openrouter_api_key")
+	if not api_key:
+		frappe.throw("OpenRouter API key is not configured. Go to Exam Settings > AI Settings to add it.")
+
+	image_model = settings.get_image_model()
+	style_prompt = IMAGE_STYLE_PROMPTS[style]
+	full_prompt = f"Generate a purely visual, representational image for the following exam content. The image must contain NO text, words, letters, numbers, or writing of any kind — it should be a visual representation only.\n\n{prompt}\n\nStyle: {style_prompt}"
+
+	try:
+		response = requests.post(
+			"https://openrouter.ai/api/v1/chat/completions",
+			headers={
+				"Authorization": f"Bearer {api_key}",
+				"Content-Type": "application/json",
+			},
+			data=json.dumps({
+				"model": image_model,
+				"messages": [
+					{"role": "user", "content": full_prompt},
+				],
+				"modalities": ["image"],
+			}),
+			timeout=120,
+		)
+	except requests.exceptions.Timeout:
+		frappe.throw("Image generation timed out. Please try again.")
+	except requests.exceptions.RequestException as e:
+		frappe.throw(f"Network error: {str(e)}")
+
+	if response.status_code == 401 or response.status_code == 403:
+		frappe.throw("Invalid OpenRouter API key. Check your key in Exam Settings > AI Settings.")
+	if response.status_code == 429:
+		frappe.throw("Rate limited by OpenRouter. Please wait a moment and try again.")
+	if response.status_code != 200:
+		frappe.throw(f"Image generation failed (HTTP {response.status_code}). Please try again.")
+
+	try:
+		data = response.json()
+		message = data["choices"][0]["message"]
+	except (KeyError, IndexError, json.JSONDecodeError):
+		frappe.throw("Unexpected response from image generation API. Please try again.")
+
+	image_b64_url = None
+	if message.get("images"):
+		image_b64_url = message["images"][0].get("image_url", {}).get("url")
+
+	if not image_b64_url:
+		image_b64_url = _extract_image_url(message.get("content", ""))
+
+	if not image_b64_url:
+		frappe.throw("No image was generated. Please try again with a different prompt.")
+
+	if image_b64_url.startswith("data:"):
+		header, b64_data = image_b64_url.split(",", 1)
+		image_bytes = base64.b64decode(b64_data)
+	elif image_b64_url.startswith("http"):
+		try:
+			img_response = requests.get(image_b64_url, timeout=60)
+			img_response.raise_for_status()
+			image_bytes = img_response.content
+		except requests.exceptions.RequestException:
+			frappe.throw("Failed to download generated image. Please try again.")
+	else:
+		image_bytes = base64.b64decode(image_b64_url)
+
+	file_name = f"{field_context}_{frappe.generate_hash()[:8]}.png"
+	file_doc = frappe.get_doc({
+		"doctype": "File",
+		"file_name": file_name,
+		"content": image_bytes,
+		"is_private": 0,
+	})
+	file_doc.save()
+
+	return {"file_url": file_doc.file_url}
+
+
+def _extract_image_url(content):
+	if isinstance(content, list):
+		for part in content:
+			if isinstance(part, dict):
+				if part.get("type") == "image_url":
+					url = part.get("image_url", {})
+					if isinstance(url, dict):
+						return url.get("url", "")
+					return url or ""
+	if isinstance(content, str):
+		match = re.search(r'https?://[^\s"\'<>]+\.(?:png|jpg|jpeg|webp|gif)', content)
+		if match:
+			return match.group(0)
+	return None
 
 
 def build_user_prompt(prompt, file_content, count, difficulty, question_type, category):

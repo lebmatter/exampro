@@ -847,3 +847,235 @@
     padding: 0.3rem 0.35rem;
   }
 }
+
+/* Image tab */
+.image-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.image-style-seg {
+  display: inline-flex;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.image-style-seg button {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.image-style-seg button:last-child {
+  border-right: none;
+}
+
+.image-style-seg button.seg-active {
+  background: #f5c344;
+  color: #212529;
+}
+
+.image-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.image-row:last-child {
+  border-bottom: none;
+}
+
+.image-thumb {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.image-thumb-filled {
+  width: 100%;
+  height: 100%;
+}
+
+.image-thumb-filled img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.image-thumb-clear {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.image-thumb:hover .image-thumb-clear {
+  opacity: 1;
+}
+
+.image-thumb-clear:hover {
+  background: #dc3545;
+}
+
+.image-thumb-filled:hover::after {
+  content: '';
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background-image: var(--thumb-src);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.image-thumb-empty {
+  width: 100%;
+  height: 100%;
+  border: 1.5px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ced4da;
+}
+
+.image-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.image-row-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #6c757d;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.image-row-prompt {
+  font-size: 0.78rem;
+  color: #495057;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.image-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.btn-icon-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  background: #fff;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.btn-icon-upload:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #212529;
+  background: #fafbfc;
+}
+
+.btn-generate-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  background: #f5c344;
+  color: #212529;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.btn-generate-sm:hover {
+  background: #e5b53a;
+}
+
+.btn-generate-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-generate-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background: #fff;
+  color: #212529;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.btn-generate-all:hover {
+  background: #fafbfc;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.btn-generate-all:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

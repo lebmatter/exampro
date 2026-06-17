@@ -320,6 +320,11 @@
                     <i data-feather="book-open" style="width:13px;height:13px;"></i> Help Text
                   </button>
                 </li>
+                <li class="nav-item">
+                  <button class="nav-link" :class="{'active': modalTab === 'images'}" @click="modalTab = 'images'; $nextTick(() => replaceIcons())">
+                    <i data-feather="image" style="width:13px;height:13px;"></i> Images
+                  </button>
+                </li>
                 <li class="ms-auto d-flex align-items-center">
                   <template x-if="currentQ()._existing">
                     <span class="badge-existing">Saved</span>
@@ -523,6 +528,134 @@
                     </div>
                   </div>
                 </template>
+              </div>
+
+              <!-- Images Tab -->
+              <div class="modal-tab-content p-3" x-show="modalTab === 'images'">
+                <!-- Header: style segmented control + generate all -->
+                <div class="image-tab-header">
+                  <div class="image-style-seg">
+                    <template x-for="s in imageStyles" :key="'seg-' + s.key">
+                      <button :class="{'seg-active': imageStyle === s.key}" @click="imageStyle = s.key" x-text="s.label"></button>
+                    </template>
+                  </div>
+                  <button class="btn-generate-all" @click="generateAllImages()" :disabled="generatingImage || !currentQ().question">
+                    <i data-feather="zap" style="width:11px;height:11px;"></i> Generate all
+                  </button>
+                </div>
+
+                <!-- Description Image row -->
+                <div class="image-row">
+                  <div class="image-thumb">
+                    <template x-if="currentQ().description_image">
+                      <div class="image-thumb-filled" :style="'--thumb-src: url(\'' + currentQ().description_image + '\')'">
+                        <img :src="currentQ().description_image">
+                        <button class="image-thumb-clear" @click="currentQ().description_image = ''; replaceIcons()">
+                          <i data-feather="x" style="width:10px;height:10px;"></i>
+                        </button>
+                      </div>
+                    </template>
+                    <template x-if="!currentQ().description_image">
+                      <div class="image-thumb-empty"><i data-feather="image" style="width:18px;height:18px;"></i></div>
+                    </template>
+                  </div>
+                  <div class="image-row-body">
+                    <span class="image-row-tag">Question</span>
+                    <div class="image-row-prompt" x-text="stripHtml(currentQ().question).substring(0, 80) || '(no question text)'"></div>
+                  </div>
+                  <div class="image-row-actions">
+                    <button class="btn-icon-upload" @click="$refs.descImageInput.click()" title="Upload image">
+                      <i data-feather="upload" style="width:13px;height:13px;"></i>
+                    </button>
+                    <input type="file" accept="image/*" x-ref="descImageInput" style="display:none" @change="uploadImage($event, 'description_image')">
+                    <button class="btn-generate-sm" @click="generateImage('description_image', currentQ().question)" :disabled="generatingImage === 'description_image' || !currentQ().question">
+                      <template x-if="generatingImage === 'description_image'">
+                        <span class="spinner-border spinner-border-sm" style="width:0.65rem;height:0.65rem;"></span>
+                      </template>
+                      <template x-if="generatingImage !== 'description_image'">
+                        <i data-feather="zap" style="width:11px;height:11px;"></i>
+                      </template>
+                      Generate
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Option Image rows (Choices only) -->
+                <template x-if="currentQ().type === 'Choices' && currentQ().options">
+                  <div>
+                    <template x-for="(opt, oi) in currentQ().options" :key="'imgr-opt-' + oi">
+                      <div class="image-row">
+                        <div class="image-thumb">
+                          <template x-if="opt.image">
+                            <div class="image-thumb-filled" :style="'--thumb-src: url(\'' + opt.image + '\')'">
+                              <img :src="opt.image">
+                              <button class="image-thumb-clear" @click="opt.image = ''; replaceIcons()">
+                                <i data-feather="x" style="width:10px;height:10px;"></i>
+                              </button>
+                            </div>
+                          </template>
+                          <template x-if="!opt.image">
+                            <div class="image-thumb-empty"><i data-feather="image" style="width:18px;height:18px;"></i></div>
+                          </template>
+                        </div>
+                        <div class="image-row-body">
+                          <span class="image-row-tag" x-text="'Option ' + (oi + 1)"></span>
+                          <div class="image-row-prompt" x-text="opt.text || '(empty option)'"></div>
+                        </div>
+                        <div class="image-row-actions">
+                          <button class="btn-icon-upload" @click="triggerOptionImageUpload(oi)" title="Upload image">
+                            <i data-feather="upload" style="width:13px;height:13px;"></i>
+                          </button>
+                          <button class="btn-generate-sm" @click="generateImage('option_' + (oi+1) + '_image', opt.text)" :disabled="generatingImage === 'option_' + (oi+1) + '_image' || !opt.text">
+                            <template x-if="generatingImage === 'option_' + (oi+1) + '_image'">
+                              <span class="spinner-border spinner-border-sm" style="width:0.65rem;height:0.65rem;"></span>
+                            </template>
+                            <template x-if="generatingImage !== 'option_' + (oi+1) + '_image'">
+                              <i data-feather="zap" style="width:11px;height:11px;"></i>
+                            </template>
+                            Generate
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+
+                <!-- Helper Text Image row -->
+                <div class="image-row">
+                  <div class="image-thumb">
+                    <template x-if="currentQ().helper_text_image">
+                      <div class="image-thumb-filled" :style="'--thumb-src: url(\'' + currentQ().helper_text_image + '\')'">
+                        <img :src="currentQ().helper_text_image">
+                        <button class="image-thumb-clear" @click="currentQ().helper_text_image = ''; replaceIcons()">
+                          <i data-feather="x" style="width:10px;height:10px;"></i>
+                        </button>
+                      </div>
+                    </template>
+                    <template x-if="!currentQ().helper_text_image">
+                      <div class="image-thumb-empty"><i data-feather="image" style="width:18px;height:18px;"></i></div>
+                    </template>
+                  </div>
+                  <div class="image-row-body">
+                    <span class="image-row-tag">Helper text</span>
+                    <div class="image-row-prompt">Illustration for learning content</div>
+                  </div>
+                  <div class="image-row-actions">
+                    <button class="btn-icon-upload" @click="$refs.helperImageInput.click()" title="Upload image">
+                      <i data-feather="upload" style="width:13px;height:13px;"></i>
+                    </button>
+                    <input type="file" accept="image/*" x-ref="helperImageInput" style="display:none" @change="uploadImage($event, 'helper_text_image')">
+                    <button class="btn-generate-sm" @click="generateImage('helper_text_image', currentQ().question)" :disabled="generatingImage === 'helper_text_image' || !currentQ().question">
+                      <template x-if="generatingImage === 'helper_text_image'">
+                        <span class="spinner-border spinner-border-sm" style="width:0.65rem;height:0.65rem;"></span>
+                      </template>
+                      <template x-if="generatingImage !== 'helper_text_image'">
+                        <i data-feather="zap" style="width:11px;height:11px;"></i>
+                      </template>
+                      Generate
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -17,7 +17,9 @@
   "openrouter_section",
   "openrouter_api_key",
   "column_break_ai",
-  "default_ai_model"
+  "default_text_model",
+  "image_model_section",
+  "default_image_model"
  ],
  "fields": [
   {
@@ -83,16 +85,30 @@
   },
   {
    "default": "anthropic/claude-sonnet-4-6",
-   "fieldname": "default_ai_model",
+   "description": "Used for question and helper text generation",
+   "fieldname": "default_text_model",
    "fieldtype": "Select",
-   "label": "Default AI Model",
-   "options": "anthropic/claude-sonnet-4-6\nanthropic/claude-sonnet-4-20250514\nopenai/gpt-4o\nopenai/gpt-4o-mini\ngoogle/gemini-2.0-flash\ngoogle/gemini-2.5-pro"
+   "label": "Text Generation Model",
+   "options": "anthropic/claude-sonnet-4-6\nanthropic/claude-sonnet-4-20250514\nopenai/gpt-4o\nopenai/gpt-4o-mini\ngoogle/gemini-2.0-flash\ngoogle/gemini-2.5-pro\ndeepseek/deepseek-chat-v3-0324\ndeepseek/deepseek-r1\nqwen/qwen3-235b-a22b\nqwen/qwen3-30b-a3b"
+  },
+  {
+   "fieldname": "image_model_section",
+   "fieldtype": "Section Break",
+   "label": "Image Generation"
+  },
+  {
+   "default": "bytedance-seed/seedream-4.5",
+   "description": "Used for generating images in exam questions",
+   "fieldname": "default_image_model",
+   "fieldtype": "Select",
+   "label": "Image Generation Model",
+   "options": "bytedance-seed/seedream-4.5\nopenai/gpt-5-image\nopenai/gpt-5-image-mini\ngoogle/gemini-2.5-flash-image"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-07-10 12:39:01.618103",
+ "modified": "2026-06-17 12:00:00.000000",
  "modified_by": "labeeb@zerodha.com",
  "module": "Exam Pro",
  "name": "Exam Settings",

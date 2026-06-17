@@ -23,6 +23,13 @@ function examStudioApp() {
     updating: false,
     generatingHelpText: false,
     helpTextSize: "medium",
+    generatingImage: null,
+    imageStyle: "realistic",
+    imageStyles: [
+      { key: "realistic", label: "Realistic" },
+      { key: "cartoon", label: "Cartoon" },
+      { key: "exampro_slider", label: "ExamPro Slider" },
+    ],
     generatedQuestions: [],
     selectedIndex: null,
     editSource: "generated",
@@ -139,11 +146,23 @@ function examStudioApp() {
       if (q.help_quiz === undefined) q.help_quiz = [];
     },
 
+    ensureImageFields(q) {
+      if (!q) return;
+      if (q.description_image === undefined) q.description_image = "";
+      if (q.helper_text_image === undefined) q.helper_text_image = "";
+      if (q.type === "Choices" && q.options) {
+        q.options.forEach(function(opt) {
+          if (opt.image === undefined) opt.image = "";
+        });
+      }
+    },
+
     openModal(index, source) {
       this.selectedIndex = index;
       this.editSource = source;
       this.modalTab = "question";
       this.ensureHelpFields(this.currentQ());
+      this.ensureImageFields(this.currentQ());
       this._modal.show();
       this.$nextTick(() => {
         this.syncEditorsToData();
@@ -231,6 +250,133 @@ function examStudioApp() {
       }
 
       this.generatingHelpText = false;
+      this.replaceIcons();
+    },
+
+    // --- Image generation & upload ---
+
+    async generateAllImages() {
+      var q = this.currentQ();
+      if (!q || !q.question || this.generatingImage) return;
+
+      var jobs = [];
+      if (!q.description_image) {
+        jobs.push({ fieldKey: "description_image", prompt: q.question });
+      }
+      if (q.type === "Choices" && q.options) {
+        for (var i = 0; i < q.options.length; i++) {
+          if (!q.options[i].image && q.options[i].text) {
+            jobs.push({ fieldKey: "option_" + (i + 1) + "_image", prompt: q.options[i].text });
+          }
+        }
+      }
+      if (!q.helper_text_image) {
+        jobs.push({ fieldKey: "helper_text_image", prompt: q.question });
+      }
+
+      if (jobs.length === 0) {
+        frappe.show_alert({ message: "All images already set", indicator: "blue" });
+        return;
+      }
+
+      for (var j = 0; j < jobs.length; j++) {
+        await this.generateImage(jobs[j].fieldKey, jobs[j].prompt);
+      }
+      frappe.show_alert({ message: "All images generated", indicator: "green" });
+    },
+
+    async uploadImage(event, fieldKey) {
+      var file = event.target.files[0];
+      if (!file) return;
+
+      var formData = new FormData();
+      formData.append("file", file);
+      formData.append("is_private", "0");
+      formData.append("folder", "Home");
+
+      try {
+        const r = await fetch("/api/method/upload_file", {
+          method: "POST",
+          body: formData,
+          headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+        });
+        const data = await r.json();
+        if (data.message && data.message.file_url) {
+          this.currentQ()[fieldKey] = data.message.file_url;
+          this.persistState();
+          frappe.show_alert({ message: "Image uploaded", indicator: "green" });
+        }
+      } catch (e) {
+        frappe.show_alert({ message: "Upload failed", indicator: "red" });
+      }
+      event.target.value = "";
+      this.replaceIcons();
+    },
+
+    triggerOptionImageUpload(optionIndex) {
+      var self = this;
+      var input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = function(event) {
+        var file = event.target.files[0];
+        if (!file) return;
+
+        var formData = new FormData();
+        formData.append("file", file);
+        formData.append("is_private", "0");
+        formData.append("folder", "Home");
+
+        fetch("/api/method/upload_file", {
+          method: "POST",
+          body: formData,
+          headers: { "X-Frappe-CSRF-Token": frappe.csrf_token },
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.message && data.message.file_url) {
+              self.currentQ().options[optionIndex].image = data.message.file_url;
+              self.persistState();
+              self.replaceIcons();
+              frappe.show_alert({ message: "Image uploaded", indicator: "green" });
+            }
+          })
+          .catch(function() {
+            frappe.show_alert({ message: "Upload failed", indicator: "red" });
+          });
+      };
+      input.click();
+    },
+
+    async generateImage(fieldKey, textPrompt) {
+      if (!textPrompt || this.generatingImage) return;
+      this.generatingImage = fieldKey;
+
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.generate_image",
+          args: {
+            prompt: this.stripHtml(textPrompt),
+            style: this.imageStyle,
+            field_context: fieldKey,
+          },
+        });
+
+        if (r.message && r.message.file_url) {
+          if (fieldKey.startsWith("option_") && fieldKey.endsWith("_image")) {
+            var idx = parseInt(fieldKey.split("_")[1]) - 1;
+            this.currentQ().options[idx].image = r.message.file_url;
+          } else {
+            this.currentQ()[fieldKey] = r.message.file_url;
+          }
+          this.persistState();
+          frappe.show_alert({ message: "Image generated", indicator: "green" });
+        }
+      } catch (e) {
+        // error shown by frappe
+      }
+
+      this.generatingImage = null;
       this.replaceIcons();
     },
 

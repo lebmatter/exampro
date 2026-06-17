@@ -20,4 +20,4 @@ def get_context(context):
 
 	settings = frappe.get_single("Exam Settings")
 	context.ai_configured = bool(settings.openrouter_api_key)
-	context.default_model = settings.default_ai_model or "anthropic/claude-sonnet-4-6"
+	context.default_model = settings.default_text_model or "anthropic/claude-sonnet-4-6"
