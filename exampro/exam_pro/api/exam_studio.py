@@ -614,6 +614,8 @@ def _compute_schedule_status(sch, now):
 	start = sch.get("start_date_time")
 	if not start:
 		return "Upcoming"
+	if isinstance(start, str):
+		start = frappe.utils.get_datetime(start)
 
 	duration_mins = sch.get("duration") or 0
 	expire_days = sch.get("schedule_expire_in_days") or 0
@@ -737,7 +739,11 @@ def save_schedule(data):
 	if name:
 		doc = frappe.get_doc("Exam Schedule", name)
 	else:
+		schedule_name = data.get("schedule_name")
+		if not schedule_name:
+			frappe.throw("Please set the schedule name")
 		doc = frappe.new_doc("Exam Schedule")
+		doc.__newname = schedule_name
 		doc.exam = data.get("exam")
 
 	for field in ("start_date_time", "schedule_type", "schedule_expire_in_days", "badge"):

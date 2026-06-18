@@ -72,6 +72,7 @@ function examStudioApp() {
     },
 
     scheduleForm: {
+      schedule_name: "",
       start_date_time: "",
       schedule_type: "Fixed",
       schedule_expire_in_days: 7,
@@ -948,6 +949,7 @@ function examStudioApp() {
         if (dt.length > 16) dt = dt.substring(0, 16);
         this.scheduleForm = {
           name: sch.name,
+          schedule_name: sch.name,
           start_date_time: dt,
           schedule_type: sch.schedule_type || "Fixed",
           schedule_expire_in_days: sch.schedule_expire_in_days || 7,
@@ -956,6 +958,7 @@ function examStudioApp() {
       } else {
         this.scheduleForm = {
           name: "",
+          schedule_name: "",
           start_date_time: "",
           schedule_type: "Fixed",
           schedule_expire_in_days: 7,
@@ -996,6 +999,7 @@ function examStudioApp() {
 
         var payload = {
           exam: this.selectedExam.name,
+          schedule_name: this.scheduleForm.schedule_name,
           start_date_time: startDt,
           schedule_type: this.scheduleForm.schedule_type,
           badge: this.scheduleForm.badge || "",

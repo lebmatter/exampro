@@ -131,8 +131,9 @@
           <template x-for="(sch, index) in schedules" :key="sch.name">
             <div class="question-item" :class="{'exam-item-active': selectedSchedule && selectedSchedule.name === sch.name}" @click="selectSchedule(sch)">
               <div class="question-item-body">
-                <div class="question-preview" x-text="formatDateTime(sch.start_date_time)"></div>
+                <div class="question-preview" x-text="sch.name"></div>
                 <div class="question-badges">
+                  <span class="badge-meta" x-text="formatDateTime(sch.start_date_time)"></span>
                   <span class="badge-schedule-status" :class="'badge-status-' + (sch.status || 'upcoming').toLowerCase()" x-text="sch.status || 'Upcoming'"></span>
                   <span class="badge-type" x-text="sch.schedule_type" x-show="sch.schedule_type && sch.schedule_type.toLowerCase() !== 'exam'"></span>
                   <span class="badge-type" x-text="sch.badge" x-show="sch.badge && sch.badge.toLowerCase() !== 'exam'"></span>
@@ -403,6 +404,11 @@
       </div>
       <div class="modal-body">
         <div class="control-group">
+          <label class="control-label">Schedule Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control form-control-sm" x-model="scheduleForm.schedule_name" placeholder="e.g. Batch A - June 2026">
+        </div>
+
+        <div class="control-group">
           <label class="control-label">Start Date & Time <span class="text-danger">*</span></label>
           <input type="text" id="schedule-datetime-picker" class="form-control form-control-sm" placeholder="Pick date and time">
         </div>
@@ -431,7 +437,7 @@
 
       <div class="modal-footer">
         <div class="d-flex gap-2 w-100">
-          <button class="btn btn-sm btn-insert" @click="saveSchedule()" :disabled="savingSchedule || !scheduleForm.start_date_time">
+          <button class="btn btn-sm btn-insert" @click="saveSchedule()" :disabled="savingSchedule || !scheduleForm.schedule_name || !scheduleForm.start_date_time">
             <template x-if="savingSchedule">
               <span><span class="spinner-border spinner-border-sm me-1"></span> Saving...</span>
             </template>
