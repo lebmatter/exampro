@@ -1,6 +1,7 @@
 function examStudioApp() {
   return {
     aiConfigured: window.examStudioData?.aiConfigured || false,
+    allCategories: window.examStudioData?.categories || [],
     categories: window.examStudioData?.categories || [],
 
     category: "",
@@ -39,8 +40,11 @@ function examStudioApp() {
     saving: false,
     loadingExisting: false,
 
+    categorySearchQuery: "",
+
     _cacheTimer: null,
     _modal: null,
+    _generateModal: null,
 
     // --- Exams tab state ---
     exams: window.examStudioData?.exams || [],
@@ -101,6 +105,8 @@ function examStudioApp() {
       this.$nextTick(() => {
         if (typeof feather !== "undefined") feather.replace();
         this._modal = new bootstrap.Modal(document.getElementById("questionEditorModal"));
+        var generateModalEl = document.getElementById("generateQuestionsModal");
+        if (generateModalEl) this._generateModal = new bootstrap.Modal(generateModalEl);
 
         var examModalEl = document.getElementById("examEditorModal");
         if (examModalEl) this._examModal = new bootstrap.Modal(examModalEl);
@@ -173,6 +179,47 @@ function examStudioApp() {
         // ignore cache restore errors
       }
       this.replaceIcons();
+    },
+
+    selectCategory(cat) {
+      this.category = cat.name;
+      this.onCategoryChange();
+      this.replaceIcons();
+    },
+
+    async searchCategories() {
+      var q = (this.categorySearchQuery || "").trim();
+      if (!q) {
+        this.categories = this.allCategories;
+        this.replaceIcons();
+        return;
+      }
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.search_categories",
+          args: { query: q },
+        });
+        this.categories = r.message || [];
+      } catch (e) {
+        this.categories = [];
+      }
+      this.replaceIcons();
+    },
+
+    clearCategorySearch() {
+      this.categorySearchQuery = "";
+      this.categories = this.allCategories;
+      this.replaceIcons();
+    },
+
+    openGenerateModal() {
+      if (this._generateModal) this._generateModal.show();
+      this.replaceIcons();
+    },
+
+    async generateFromModal() {
+      await this.generateQuestions();
+      if (this._generateModal) this._generateModal.hide();
     },
 
     async onCategoryChange() {
@@ -649,10 +696,13 @@ function examStudioApp() {
         });
 
         if (r.message) {
-          this.categories.push({
+          var newCat = {
             name: r.message.name,
             title: r.message.title,
-          });
+            question_count: 0,
+          };
+          this.allCategories.unshift(newCat);
+          this.categories.unshift(newCat);
           this.category = r.message.name;
           this.newCategoryName = "";
           this.showNewCategory = false;

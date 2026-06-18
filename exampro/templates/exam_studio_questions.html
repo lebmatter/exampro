@@ -2,120 +2,72 @@
 <div class="tab-pane fade" id="tab-questions">
   <div class="row g-3">
 
-    <!-- Column 1: Controls -->
+    <!-- Column 1: Categories -->
     <div class="col-lg-3 col-md-4">
-      <div class="studio-controls">
-        <h6 class="controls-title">
-          <i data-feather="sliders" style="width:14px;height:14px;"></i>
-          Generation Settings
-        </h6>
+      <div class="question-list-card">
+        <div class="question-list-header">
+          <h6>
+            <i data-feather="folder" style="width:14px;height:14px;"></i>
+            Categories
+            <span class="tab-count" x-text="categories.length" x-show="categories.length > 0"></span>
+          </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="showNewCategory = !showNewCategory">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> New
+          </button>
+        </div>
 
-        <!-- Category -->
-        <div class="control-group">
-          <label class="control-label">Category</label>
-          <div class="d-flex gap-2">
-            <select class="form-select form-select-sm" x-model="category" @change="onCategoryChange()">
-              <option value="">Select category...</option>
-              {% for cat in categories %}
-              <option value="{{ cat.name }}">{{ cat.title }}</option>
-              {% endfor %}
-            </select>
-            <button class="btn btn-sm btn-outline-secondary flex-shrink-0" @click="showNewCategory = !showNewCategory" title="New category">
-              <i data-feather="plus" style="width:14px;height:14px;"></i>
-            </button>
-          </div>
-          <template x-if="showNewCategory">
-            <div class="mt-2 d-flex gap-2">
+        <!-- New category inline -->
+        <template x-if="showNewCategory">
+          <div class="exam-search-box">
+            <div class="d-flex gap-2">
               <input type="text" class="form-control form-control-sm" placeholder="Category name" x-model="newCategoryName" @keydown.enter="createCategory()">
               <button class="btn btn-sm btn-primary flex-shrink-0" @click="createCategory()" :disabled="!newCategoryName.trim()">Add</button>
             </div>
+          </div>
+        </template>
+
+        <!-- Search box -->
+        <div class="exam-search-box">
+          <div class="exam-search-wrap">
+            <i data-feather="search" class="exam-search-icon" style="width:13px;height:13px;"></i>
+            <input type="text" class="form-control form-control-sm exam-search-input" x-model="categorySearchQuery" @input.debounce.300ms="searchCategories()" placeholder="Search categories...">
+            <button class="exam-search-clear" x-show="categorySearchQuery" @click="clearCategorySearch()">
+              <i data-feather="x" style="width:12px;height:12px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="question-list-body">
+          <template x-if="categories.length === 0 && !categorySearchQuery">
+            <div class="empty-state">
+              <i data-feather="folder" style="width:2rem;height:2rem;"></i>
+              <h6>No categories yet</h6>
+              <p class="text-muted mb-0">Create a category to get started</p>
+            </div>
           </template>
-        </div>
 
-        <!-- Number of questions -->
-        <div class="control-group">
-          <label class="control-label">Number of Questions</label>
-          <input type="number" class="form-control form-control-sm" x-model.number="count" min="1" max="20">
-        </div>
+          <template x-if="categories.length === 0 && categorySearchQuery">
+            <div class="empty-state">
+              <i data-feather="search" style="width:2rem;height:2rem;"></i>
+              <h6>No categories found</h6>
+              <p class="text-muted mb-0">Try a different search term</p>
+            </div>
+          </template>
 
-        <!-- Marks per question -->
-        <div class="control-group">
-          <label class="control-label">Marks per Question</label>
-          <input type="number" class="form-control form-control-sm" x-model.number="mark" min="0">
-        </div>
-
-        <!-- Difficulty -->
-        <div class="control-group">
-          <label class="control-label">Difficulty</label>
-          <div class="pill-group">
-            <template x-for="d in ['Simple', 'Medium', 'Hard']" :key="d">
-              <button class="pill-btn" :class="{'pill-active': difficulty === d}" @click="difficulty = d" x-text="d"></button>
-            </template>
-          </div>
-        </div>
-
-        <!-- Question Type -->
-        <div class="control-group">
-          <label class="control-label">Question Type</label>
-          <div class="pill-group">
-            <template x-for="t in ['Choices', 'User Input']" :key="t">
-              <button class="pill-btn" :class="{'pill-active': questionType === t}" @click="questionType = t" x-text="t"></button>
-            </template>
-          </div>
-        </div>
-
-        <!-- Prompt -->
-        <div class="control-group">
-          <label class="control-label">Topic / Instructions</label>
-          <textarea class="form-control form-control-sm" rows="4" placeholder="Describe the topic and what kind of questions you need..." x-model="prompt"></textarea>
-        </div>
-
-        <!-- File Upload -->
-        <div class="control-group">
-          <label class="control-label">Upload File (optional)</label>
-          <div class="file-upload-area" @click="$refs.fileInput.click()" @dragover.prevent="fileDragOver = true" @dragleave.prevent="fileDragOver = false" @drop.prevent="handleFileDrop($event)" :class="{'file-drag-over': fileDragOver}">
-            <template x-if="!uploadedFile">
-              <div class="file-upload-placeholder">
-                <i data-feather="upload" style="width:16px;height:16px;"></i>
-                <span>Drop a .txt or .csv file, or click to browse</span>
+          <template x-for="(cat, index) in categories" :key="cat.name">
+            <div class="question-item" :class="{'exam-item-active': category === cat.name}" @click="selectCategory(cat)">
+              <div class="question-item-body">
+                <div class="question-preview" x-text="cat.title"></div>
+                <div class="question-badges">
+                  <span class="badge-meta">
+                    <i data-feather="help-circle" style="width:10px;height:10px;"></i>
+                    <span x-text="(cat.question_count || 0) + ' questions'"></span>
+                  </span>
+                </div>
               </div>
-            </template>
-            <template x-if="uploadedFile">
-              <div class="file-upload-attached">
-                <i data-feather="file-text" style="width:14px;height:14px;"></i>
-                <span class="file-name" x-text="uploadedFile.name"></span>
-                <span class="file-size" x-text="formatFileSize(uploadedFile.size)"></span>
-                <button class="file-remove-btn" @click.stop="removeFile()" title="Remove file">
-                  <i data-feather="x" style="width:12px;height:12px;"></i>
-                </button>
-              </div>
-            </template>
-          </div>
-          <input type="file" x-ref="fileInput" accept=".txt,.csv,text/plain,text/csv" @change="handleFileSelect($event)" style="display:none;">
-          <template x-if="fileError">
-            <p class="file-error-text" x-text="fileError"></p>
+            </div>
           </template>
         </div>
-
-        <!-- Generate Button -->
-        <button
-          class="btn btn-generate w-100"
-          @click="generateQuestions()"
-          :disabled="generating || !category || (!prompt.trim() && !fileContent) || !aiConfigured"
-        >
-          <template x-if="generating">
-            <span>
-              <span class="spinner-border spinner-border-sm me-1"></span>
-              Generating...
-            </span>
-          </template>
-          <template x-if="!generating">
-            <span>
-              <i data-feather="zap" style="width:14px;height:14px;"></i>
-              Generate Questions
-            </span>
-          </template>
-        </button>
       </div>
     </div>
 
@@ -128,13 +80,18 @@
             Generated
             <span class="tab-count" x-text="generatedQuestions.length" x-show="generatedQuestions.length > 0"></span>
           </h6>
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            @click="insertAll()"
-            x-show="generatedQuestions.length > 0"
-          >
-            Insert All
-          </button>
+          <div class="d-flex gap-2">
+            <button
+              class="btn btn-sm btn-outline-secondary"
+              @click="insertAll()"
+              x-show="generatedQuestions.length > 0"
+            >
+              Insert All
+            </button>
+            <button class="btn btn-sm btn-generate-sm" @click="openGenerateModal()" :disabled="!aiConfigured || !category">
+              <i data-feather="plus" style="width:14px;height:14px;"></i> Add
+            </button>
+          </div>
         </div>
 
         <div class="question-list-body">
@@ -142,7 +99,7 @@
             <div class="empty-state">
               <i data-feather="cpu" style="width:2rem;height:2rem;"></i>
               <h6>No questions generated yet</h6>
-              <p class="text-muted mb-0">Configure settings and click Generate</p>
+              <p class="text-muted mb-0">Select a category and click + Add to generate</p>
             </div>
           </template>
 
@@ -225,7 +182,7 @@
             <template x-if="!saving">
               <span>
                 <i data-feather="save" style="width:14px;height:14px;"></i>
-                Save All to ExamPro
+                Save All
                 <span x-text="'(' + approvedQuestions.length + ')'"></span>
               </span>
             </template>
@@ -640,6 +597,115 @@
           </div>
         </div>
       </template>
+    </div>
+  </div>
+</div>
+
+<!-- Generate Questions Modal -->
+<div class="modal fade" id="generateQuestionsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">
+          <i data-feather="zap" style="width:16px;height:16px;color:#868e96;"></i>
+          Generate Questions
+        </span>
+        <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+          <i data-feather="x" style="width:18px;height:18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="padding:1.25rem;">
+        <!-- Category (read-only display) -->
+        <div class="control-group">
+          <label class="control-label">Category</label>
+          <input type="text" class="form-control form-control-sm" :value="categories.find(c => c.name === category)?.title || ''" disabled>
+        </div>
+
+        <!-- Number of questions -->
+        <div class="control-group">
+          <label class="control-label">Number of Questions</label>
+          <input type="number" class="form-control form-control-sm" x-model.number="count" min="1" max="20">
+        </div>
+
+        <!-- Marks per question -->
+        <div class="control-group">
+          <label class="control-label">Marks per Question</label>
+          <input type="number" class="form-control form-control-sm" x-model.number="mark" min="0">
+        </div>
+
+        <!-- Difficulty -->
+        <div class="control-group">
+          <label class="control-label">Difficulty</label>
+          <div class="pill-group">
+            <template x-for="d in ['Simple', 'Medium', 'Hard']" :key="d">
+              <button class="pill-btn" :class="{'pill-active': difficulty === d}" @click="difficulty = d" x-text="d"></button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Question Type -->
+        <div class="control-group">
+          <label class="control-label">Question Type</label>
+          <div class="pill-group">
+            <template x-for="t in ['Choices', 'User Input']" :key="t">
+              <button class="pill-btn" :class="{'pill-active': questionType === t}" @click="questionType = t" x-text="t"></button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Prompt -->
+        <div class="control-group">
+          <label class="control-label">Topic / Instructions</label>
+          <textarea class="form-control form-control-sm" rows="4" placeholder="Describe the topic and what kind of questions you need..." x-model="prompt"></textarea>
+        </div>
+
+        <!-- File Upload -->
+        <div class="control-group">
+          <label class="control-label">Upload File (optional)</label>
+          <div class="file-upload-area" @click="$refs.fileInput.click()" @dragover.prevent="fileDragOver = true" @dragleave.prevent="fileDragOver = false" @drop.prevent="handleFileDrop($event)" :class="{'file-drag-over': fileDragOver}">
+            <template x-if="!uploadedFile">
+              <div class="file-upload-placeholder">
+                <i data-feather="upload" style="width:16px;height:16px;"></i>
+                <span>Drop a .txt or .csv file, or click to browse</span>
+              </div>
+            </template>
+            <template x-if="uploadedFile">
+              <div class="file-upload-attached">
+                <i data-feather="file-text" style="width:14px;height:14px;"></i>
+                <span class="file-name" x-text="uploadedFile.name"></span>
+                <span class="file-size" x-text="formatFileSize(uploadedFile.size)"></span>
+                <button class="file-remove-btn" @click.stop="removeFile()" title="Remove file">
+                  <i data-feather="x" style="width:12px;height:12px;"></i>
+                </button>
+              </div>
+            </template>
+          </div>
+          <input type="file" x-ref="fileInput" accept=".txt,.csv,text/plain,text/csv" @change="handleFileSelect($event)" style="display:none;">
+          <template x-if="fileError">
+            <p class="file-error-text" x-text="fileError"></p>
+          </template>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          class="btn btn-generate w-100"
+          @click="generateFromModal()"
+          :disabled="generating || !category || (!prompt.trim() && !fileContent) || !aiConfigured"
+        >
+          <template x-if="generating">
+            <span>
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              Generating...
+            </span>
+          </template>
+          <template x-if="!generating">
+            <span>
+              <i data-feather="zap" style="width:14px;height:14px;"></i>
+              Generate Questions
+            </span>
+          </template>
+        </button>
+      </div>
     </div>
   </div>
 </div>

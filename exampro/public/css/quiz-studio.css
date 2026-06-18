@@ -854,3 +854,31 @@
     padding: 0.3rem 0.35rem;
   }
 }
+
+/* Quiz Generate Modal */
+#quizGenerateModal .modal-content {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#quizGenerateModal .modal-header {
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 1rem 1.25rem;
+}
+
+#quizGenerateModal .modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+#quizGenerateModal .modal-footer {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fafbfc;
+}

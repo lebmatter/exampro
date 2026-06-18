@@ -4,57 +4,70 @@
 
     <!-- COLUMN 1: Quiz selector -->
     <div class="col-lg-3 col-md-4">
-      <div class="studio-controls">
-        <h6 class="controls-title">
-          <i data-feather="list" style="width:14px;height:14px;"></i>
-          Quizzes
-          <span class="tab-count" x-text="quizzes.length" x-show="quizzes.length > 0" style="margin-left:auto;"></span>
-        </h6>
-
-        <!-- New Quiz button -->
-        <button class="btn btn-generate w-100 mb-3" @click="openNewQuizModal()">
-          <i data-feather="plus" style="width:14px;height:14px;"></i>
-          New
-        </button>
-
-        <!-- Search -->
-        <div class="control-group">
-          <input type="text" class="form-control form-control-sm" placeholder="Search quizzes..." x-model="searchQuery">
+      <div class="question-list-card">
+        <div class="question-list-header">
+          <h6>
+            <i data-feather="zap" style="width:14px;height:14px;"></i>
+            Quizzes
+            <span class="tab-count" x-text="quizzes.length" x-show="quizzes.length > 0"></span>
+          </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="openNewQuizModal()">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> New
+          </button>
         </div>
 
-        <!-- Quiz list -->
-        <div class="quiz-list-scroll">
+        <!-- Search box -->
+        <div class="exam-search-box">
+          <div class="exam-search-wrap">
+            <i data-feather="search" class="exam-search-icon" style="width:13px;height:13px;"></i>
+            <input type="text" class="form-control form-control-sm exam-search-input" placeholder="Search quizzes..." x-model="searchQuery">
+            <button class="exam-search-clear" x-show="searchQuery" @click="searchQuery = ''">
+              <i data-feather="x" style="width:12px;height:12px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="question-list-body">
           <template x-for="quiz in filteredQuizzes" :key="quiz.name">
-            <div class="quiz-list-card" :class="{'quiz-list-card-active': selectedQuiz && selectedQuiz.name === quiz.name}" @click="selectQuiz(quiz)">
-              <div class="quiz-list-card-title" x-text="quiz.title"></div>
-              <div class="quiz-list-card-meta">
-                <span class="quiz-mode-pill" :class="'quiz-mode-' + quiz.quiz_mode.toLowerCase()" x-text="quiz.quiz_mode"></span>
-                <span class="quiz-status-pill" :class="'quiz-status-' + quiz.status.toLowerCase()" x-text="quiz.status"></span>
-                <span class="text-muted" style="font-size:0.75rem;" x-text="quiz.total_questions + ' Qs'"></span>
+            <div class="question-item" :class="{'exam-item-active': selectedQuiz && selectedQuiz.name === quiz.name}" @click="selectQuiz(quiz)">
+              <div class="question-item-body">
+                <div class="question-preview" x-text="quiz.title"></div>
+                <div class="question-badges">
+                  <span class="quiz-mode-pill" :class="'quiz-mode-' + quiz.quiz_mode.toLowerCase()" x-text="quiz.quiz_mode"></span>
+                  <span class="quiz-status-pill" :class="'quiz-status-' + quiz.status.toLowerCase()" x-text="quiz.status"></span>
+                  <span class="badge-meta">
+                    <span x-text="quiz.total_questions + ' Qs'"></span>
+                  </span>
+                </div>
+              </div>
+              <div class="question-actions" x-show="selectedQuiz && selectedQuiz.name === quiz.name">
+                <button class="btn btn-sm btn-link" @click.stop="openSettingsModal()" title="Settings">
+                  <i data-feather="settings" style="width:12px;height:12px;"></i>
+                </button>
               </div>
             </div>
           </template>
 
           <template x-if="filteredQuizzes.length === 0 && !searchQuery">
-            <div class="empty-state-inline">
-              <i data-feather="inbox" style="width:24px;height:24px;color:#adb5bd;"></i>
-              <p class="text-muted mb-0" style="font-size:0.8rem;">No quizzes yet</p>
+            <div class="empty-state">
+              <i data-feather="inbox" style="width:2rem;height:2rem;"></i>
+              <h6>No quizzes yet</h6>
+              <p class="text-muted mb-0">Create a quiz to get started</p>
             </div>
           </template>
           <template x-if="filteredQuizzes.length === 0 && searchQuery">
-            <div class="empty-state-inline">
-              <p class="text-muted mb-0" style="font-size:0.8rem;">No matches</p>
+            <div class="empty-state">
+              <i data-feather="search" style="width:2rem;height:2rem;"></i>
+              <h6>No matches</h6>
+              <p class="text-muted mb-0">Try a different search term</p>
             </div>
           </template>
         </div>
 
         <!-- Actions + publish for selected quiz -->
         <template x-if="editData && editData.name">
-          <div>
+          <div class="approved-footer">
             <div class="quiz-action-bar">
-              <button class="btn btn-sm btn-outline-secondary" @click="openSettingsModal()" title="Settings">
-                <i data-feather="settings" style="width:13px;height:13px;"></i>
-              </button>
               <button class="btn btn-sm btn-outline-secondary" @click="takeDemo()" title="Preview">
                 <i data-feather="play" style="width:13px;height:13px;"></i>
               </button>
@@ -74,7 +87,7 @@
 
             <!-- Share card (shown when published) -->
             <template x-if="editData.status === 'Published'">
-              <div class="share-card">
+              <div class="share-card mt-2">
                 <div class="share-url-row">
                   <i data-feather="link" style="width:14px;height:14px;flex-shrink:0;color:#6c757d;"></i>
                   <span class="share-url" x-text="shareUrl()"></span>
@@ -102,6 +115,9 @@
             Questions
             <span class="tab-count" x-text="editData ? editData.questions.length : 0" x-show="editData && editData.questions.length > 0"></span>
           </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="openQuizGenerateModal()" x-show="editData">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> Add
+          </button>
         </div>
 
         <template x-if="!editData">
@@ -116,85 +132,6 @@
 
         <template x-if="editData">
           <div>
-            <!-- Toolbar -->
-            <div class="panel-toolbar">
-              <button class="btn btn-sm btn-outline-primary" @click="showAiGenerate = !showAiGenerate" :disabled="!aiConfigured">
-                <i data-feather="cpu" style="width:13px;height:13px;"></i>
-                AI Generate
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" @click="showImport = !showImport">
-                <i data-feather="download" style="width:13px;height:13px;"></i>
-                Import
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" @click="addQuestion()">
-                <i data-feather="plus" style="width:13px;height:13px;"></i>
-                Add
-              </button>
-              <button class="btn btn-sm btn-generate ms-auto" @click="saveQuiz()" :disabled="saving">
-                <template x-if="!saving">
-                  <span><i data-feather="save" style="width:13px;height:13px;"></i> Save</span>
-                </template>
-                <template x-if="saving">
-                  <span><span class="spinner-border spinner-border-sm" style="width:0.65rem;height:0.65rem;"></span> Saving...</span>
-                </template>
-              </button>
-            </div>
-
-            <!-- AI Generate panel -->
-            <div x-show="showAiGenerate" x-transition class="collapsible-panel">
-              <div class="row g-2 align-items-end">
-                <div class="col">
-                  <label class="control-label">Topic</label>
-                  <input type="text" class="form-control form-control-sm" x-model="aiTopic" placeholder="e.g., World capitals...">
-                </div>
-                <div class="col-auto">
-                  <label class="control-label">Count</label>
-                  <input type="number" class="form-control form-control-sm" x-model.number="aiCount" min="1" max="20" style="width:60px;">
-                </div>
-                <div class="col-auto">
-                  <label class="control-label">Tone</label>
-                  <select class="form-select form-select-sm" x-model="aiTone" style="width:85px;">
-                    <option value="fun">Fun</option>
-                    <option value="serious">Serious</option>
-                  </select>
-                </div>
-                <div class="col-auto">
-                  <button class="btn btn-sm btn-generate" @click="generateQuestions()" :disabled="aiGenerating || !aiTopic.trim()">
-                    <template x-if="!aiGenerating">
-                      <span><i data-feather="zap" style="width:12px;height:12px;"></i> Generate</span>
-                    </template>
-                    <template x-if="aiGenerating">
-                      <span><span class="spinner-border spinner-border-sm me-1" style="width:0.7rem;height:0.7rem;"></span> Generating...</span>
-                    </template>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Import panel -->
-            <div x-show="showImport" x-transition class="collapsible-panel">
-              <div class="row g-2 align-items-end">
-                <div class="col">
-                  <label class="control-label">Category</label>
-                  <select class="form-select form-select-sm" x-model="importCategory">
-                    <option value="">Select category...</option>
-                    <template x-for="cat in importCategories" :key="cat.name">
-                      <option :value="cat.name" x-text="cat.title"></option>
-                    </template>
-                  </select>
-                </div>
-                <div class="col-auto">
-                  <label class="control-label">Count</label>
-                  <input type="number" class="form-control form-control-sm" x-model.number="importCount" min="1" max="50" style="width:60px;">
-                </div>
-                <div class="col-auto">
-                  <button class="btn btn-sm btn-outline-primary" @click="importQuestions()" :disabled="!importCategory">
-                    <i data-feather="download" style="width:12px;height:12px;"></i> Import
-                  </button>
-                </div>
-              </div>
-            </div>
-
             <!-- Question list -->
             <div class="panel-body">
               <template x-for="(q, idx) in editData.questions" :key="idx">
@@ -250,9 +187,31 @@
                 <div class="empty-state">
                   <i data-feather="help-circle" style="width:2rem;height:2rem;"></i>
                   <h6>No questions yet</h6>
-                  <p class="text-muted mb-0">Add manually, generate with AI, or import from the question bank</p>
+                  <p class="text-muted mb-0">Click + Add to generate, import, or add manually</p>
                 </div>
               </template>
+            </div>
+
+            <div class="approved-footer" x-show="editData.questions.length > 0">
+              <button
+                class="btn btn-save-all w-100"
+                @click="saveQuiz()"
+                :disabled="saving"
+              >
+                <template x-if="saving">
+                  <span>
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Saving...
+                  </span>
+                </template>
+                <template x-if="!saving">
+                  <span>
+                    <i data-feather="save" style="width:14px;height:14px;"></i>
+                    Save All
+                    <span x-text="'(' + editData.questions.length + ')'"></span>
+                  </span>
+                </template>
+              </button>
             </div>
           </div>
         </template>
@@ -462,6 +421,144 @@
             </div>
           </div>
         </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Questions Modal -->
+  <div class="modal fade" id="quizGenerateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title">
+            <i data-feather="plus-circle" style="width:16px;height:16px;color:#868e96;"></i>
+            Add Questions
+          </span>
+          <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+            <i data-feather="x" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs modal-editor-tabs px-3 pt-2">
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': addQuestionTab === 'generate'}" @click="addQuestionTab = 'generate'; $nextTick(() => replaceIcons())">
+              <i data-feather="zap" style="width:13px;height:13px;"></i> AI Generate
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': addQuestionTab === 'import'}" @click="addQuestionTab = 'import'; $nextTick(() => replaceIcons())">
+              <i data-feather="download" style="width:13px;height:13px;"></i> Import
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': addQuestionTab === 'manual'}" @click="addQuestionTab = 'manual'; $nextTick(() => replaceIcons())">
+              <i data-feather="edit-3" style="width:13px;height:13px;"></i> Manual
+            </button>
+          </li>
+        </ul>
+
+        <!-- AI Generate tab -->
+        <div class="modal-body" style="padding:1.25rem;" x-show="addQuestionTab === 'generate'">
+          <div class="control-group">
+            <label class="control-label">Topic</label>
+            <input type="text" class="form-control form-control-sm" x-model="aiTopic" placeholder="e.g., World capitals, Indian history...">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Number of Questions</label>
+            <input type="number" class="form-control form-control-sm" x-model.number="aiCount" min="1" max="20">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Tone</label>
+            <div class="pill-group">
+              <template x-for="t in ['fun', 'serious']" :key="'tone-' + t">
+                <button class="pill-btn" :class="{'pill-active': aiTone === t}" @click="aiTone = t" x-text="t" style="text-transform:capitalize;"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Import tab -->
+        <div class="modal-body" style="padding:1.25rem;" x-show="addQuestionTab === 'import'">
+          <div class="control-group">
+            <label class="control-label">Category</label>
+            <select class="form-select form-select-sm" x-model="importCategory">
+              <option value="">Select category...</option>
+              <template x-for="cat in importCategories" :key="cat.name">
+                <option :value="cat.name" x-text="cat.title"></option>
+              </template>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Number of Questions</label>
+            <input type="number" class="form-control form-control-sm" x-model.number="importCount" min="1" max="50">
+          </div>
+        </div>
+
+        <!-- Manual tab -->
+        <div class="modal-body" style="padding:1.25rem;" x-show="addQuestionTab === 'manual'">
+          <div class="control-group">
+            <label class="control-label">Question</label>
+            <textarea class="form-control form-control-sm" x-model="manualQuestion" rows="2" placeholder="Enter your question..."></textarea>
+          </div>
+          <div class="row g-2">
+            <template x-for="optNum in [1, 2, 3, 4]" :key="'manual-opt-' + optNum">
+              <div class="col-6">
+                <div class="option-input-group">
+                  <input type="text" class="form-control form-control-sm"
+                    x-model="manualOptions[optNum - 1]"
+                    :placeholder="'Option ' + optNum">
+                  <label class="option-correct-label">
+                    <input type="radio" name="manual_correct"
+                      :checked="manualCorrect === optNum"
+                      @change="manualCorrect = optNum">
+                    <span>Correct</span>
+                  </label>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div class="control-group mt-2">
+            <label class="control-label">Explanation (optional)</label>
+            <input type="text" class="form-control form-control-sm" x-model="manualExplanation" placeholder="Why is this the correct answer?">
+          </div>
+        </div>
+
+        <!-- Footer with context-appropriate button -->
+        <div class="modal-footer">
+          <template x-if="addQuestionTab === 'generate'">
+            <button
+              class="btn btn-generate w-100"
+              @click="generateFromModal()"
+              :disabled="aiGenerating || !aiTopic.trim() || !aiConfigured"
+            >
+              <template x-if="aiGenerating">
+                <span><span class="spinner-border spinner-border-sm me-1"></span> Generating...</span>
+              </template>
+              <template x-if="!aiGenerating">
+                <span><i data-feather="zap" style="width:14px;height:14px;"></i> Generate Questions</span>
+              </template>
+            </button>
+          </template>
+          <template x-if="addQuestionTab === 'import'">
+            <button
+              class="btn btn-generate w-100"
+              @click="importFromModal()"
+              :disabled="!importCategory"
+            >
+              <i data-feather="download" style="width:14px;height:14px;"></i> Import Questions
+            </button>
+          </template>
+          <template x-if="addQuestionTab === 'manual'">
+            <button
+              class="btn btn-generate w-100"
+              @click="addManualFromModal()"
+              :disabled="!manualQuestion.trim()"
+            >
+              <i data-feather="plus" style="width:14px;height:14px;"></i> Add Question
+            </button>
+          </template>
+        </div>
       </div>
     </div>
   </div>

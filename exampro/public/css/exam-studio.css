@@ -1241,6 +1241,11 @@
   transition: background 0.15s ease;
 }
 
+.candidate-search-item .form-check-input {
+  margin: 0;
+  flex-shrink: 0;
+}
+
 .candidate-search-item:last-child {
   border-bottom: none;
 }
@@ -1488,4 +1493,32 @@
 
 .csv-row-error td {
   color: #c92a2a;
+}
+
+/* Generate Questions Modal */
+#generateQuestionsModal .modal-content {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#generateQuestionsModal .modal-header {
+  background: #fafbfc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 1rem 1.25rem;
+}
+
+#generateQuestionsModal .modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+#generateQuestionsModal .modal-footer {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fafbfc;
 }

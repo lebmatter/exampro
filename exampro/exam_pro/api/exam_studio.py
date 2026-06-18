@@ -506,6 +506,31 @@ def _get_recent_exams(limit=10):
 
 
 @frappe.whitelist()
+def search_categories(query):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	query = (query or "").strip()
+	if not query or len(query) < 2:
+		return []
+
+	like = f"%{frappe.db.escape(query, percent=False)}%"
+	rows = frappe.db.sql(
+		"""
+		SELECT c.name, c.title,
+		       (SELECT COUNT(*) FROM `tabExam Question` q WHERE q.category = c.name) AS question_count
+		FROM `tabExam Question Category` c
+		WHERE c.title LIKE %(like)s
+		ORDER BY c.modified DESC
+		LIMIT 20
+		""",
+		{"like": like},
+		as_dict=True,
+	)
+	return rows
+
+
+@frappe.whitelist()
 def search_exams(query):
 	if "Exam Manager" not in frappe.get_roles():
 		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
@@ -666,16 +691,16 @@ def search_users(query):
 	if not query or len(query) < 2:
 		return []
 
-	like = f"%{frappe.db.escape(query, percent=False)}%"
+	like = f"%{query}%"
 	return frappe.db.sql(
 		"""
-		SELECT name, full_name
-		FROM `tabUser`
-		WHERE enabled = 1
-		  AND user_type = 'Website User'
-		  AND name NOT IN ('Guest', 'Administrator')
-		  AND (name LIKE %(like)s OR full_name LIKE %(like)s)
-		ORDER BY full_name
+		SELECT DISTINCT u.name, u.full_name
+		FROM `tabUser` u
+		INNER JOIN `tabHas Role` r ON r.parent = u.name AND r.role = 'Exam Candidate'
+		WHERE u.enabled = 1
+		  AND u.name NOT IN ('Guest', 'Administrator')
+		  AND (u.name LIKE %(like)s OR u.full_name LIKE %(like)s)
+		ORDER BY u.full_name
 		LIMIT 20
 		""",
 		{"like": like},

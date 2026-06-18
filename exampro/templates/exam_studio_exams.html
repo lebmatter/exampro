@@ -340,7 +340,7 @@
                   <label class="control-label" x-show="ci === 0">Category</label>
                   <select class="form-select form-select-sm" x-model="cat.question_category">
                     <option value="">Select...</option>
-                    <template x-for="c in categories" :key="'ecc-' + ci + '-' + c.name">
+                    <template x-for="c in allCategories" :key="'ecc-' + ci + '-' + c.name">
                       <option :value="c.name" x-text="c.title"></option>
                     </template>
                   </select>

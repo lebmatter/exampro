@@ -12,10 +12,15 @@ def get_context(context):
 
 	context.no_cache = 1
 
-	context.categories = frappe.get_all(
-		"Exam Question Category",
-		fields=["name", "title"],
-		order_by="title",
+	context.categories = frappe.db.sql(
+		"""
+		SELECT c.name, c.title,
+		       (SELECT COUNT(*) FROM `tabExam Question` q WHERE q.category = c.name) AS question_count
+		FROM `tabExam Question Category` c
+		ORDER BY c.modified DESC
+		LIMIT 10
+		""",
+		as_dict=True,
 	)
 
 	settings = frappe.get_single("Exam Settings")

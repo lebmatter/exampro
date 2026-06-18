@@ -12,9 +12,9 @@ function quizStudioApp() {
     // Modal
     modalData: null,
 
-    // AI generate
-    showAiGenerate: false,
-    showImport: false,
+    // Add questions modal
+    _quizGenerateModal: null,
+    addQuestionTab: "generate",
     aiTopic: "",
     aiCount: 5,
     aiTone: "fun",
@@ -24,6 +24,12 @@ function quizStudioApp() {
     importCategories: [],
     importCategory: "",
     importCount: 5,
+
+    // Manual
+    manualQuestion: "",
+    manualOptions: ["", "", "", ""],
+    manualCorrect: 1,
+    manualExplanation: "",
 
     // Submissions
     submissions: [],
@@ -47,6 +53,10 @@ function quizStudioApp() {
       this.aiConfigured = (window.examStudioData && window.examStudioData.aiConfigured) || this.$el.dataset.aiConfigured === "true";
       this.loadQuizzes();
       this.loadCategories();
+      this.$nextTick(() => {
+        var el = document.getElementById("quizGenerateModal");
+        if (el) this._quizGenerateModal = new bootstrap.Modal(el);
+      });
     },
 
     randomPin() {
@@ -288,6 +298,52 @@ function quizStudioApp() {
     },
 
     // --- AI generation ---
+
+    openQuizGenerateModal() {
+      if (this._quizGenerateModal) this._quizGenerateModal.show();
+      this.replaceIcons();
+    },
+
+    generateFromModal() {
+      var self = this;
+      self.generateQuestions();
+      var checkDone = setInterval(function () {
+        if (!self.aiGenerating) {
+          clearInterval(checkDone);
+          if (self._quizGenerateModal) self._quizGenerateModal.hide();
+        }
+      }, 200);
+    },
+
+    importFromModal() {
+      var self = this;
+      this.importQuestions();
+      if (this._quizGenerateModal) this._quizGenerateModal.hide();
+    },
+
+    addManualFromModal() {
+      if (!this.manualQuestion.trim()) return;
+      this.editData.questions.push({
+        question: this.manualQuestion,
+        question_image: "",
+        option_1: this.manualOptions[0],
+        option_2: this.manualOptions[1],
+        option_3: this.manualOptions[2],
+        option_4: this.manualOptions[3],
+        is_correct_1: this.manualCorrect === 1 ? 1 : 0,
+        is_correct_2: this.manualCorrect === 2 ? 1 : 0,
+        is_correct_3: this.manualCorrect === 3 ? 1 : 0,
+        is_correct_4: this.manualCorrect === 4 ? 1 : 0,
+        explanation: this.manualExplanation,
+        points: 100,
+      });
+      this.manualQuestion = "";
+      this.manualOptions = ["", "", "", ""];
+      this.manualCorrect = 1;
+      this.manualExplanation = "";
+      if (this._quizGenerateModal) this._quizGenerateModal.hide();
+      this.replaceIcons();
+    },
 
     generateQuestions() {
       var self = this;
