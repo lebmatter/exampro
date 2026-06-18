@@ -382,7 +382,121 @@ def create_sample_exams():
         }).insert()
 
     frappe.db.commit()
+
+    create_sample_quizzes()
+
     frappe.msgprint("Sample exams, questions, and certificate template created successfully.")
+
+
+def create_sample_quizzes():
+    kahoot_quiz_title = "World Capitals Speed Round"
+    if not frappe.db.exists("Quick Quiz", {"title": kahoot_quiz_title}):
+        frappe.get_doc({
+            "doctype": "Quick Quiz",
+            "title": kahoot_quiz_title,
+            "quiz_mode": "Kahoot",
+            "status": "Published",
+            "access_type": "PIN",
+            "pin_code": "1234",
+            "timer_enabled": 1,
+            "timer_seconds": 15,
+            "theme": "Fun Neon",
+            "randomize_questions": 0,
+            "show_correct_after_answer": 1,
+            "description": "Race against the clock! How many world capitals can you get right?",
+            "questions": [
+                {
+                    "question": "What is the capital of France?",
+                    "option_1": "Paris", "option_2": "London", "option_3": "Berlin", "option_4": "Madrid",
+                    "is_correct_1": 1, "is_correct_2": 0, "is_correct_3": 0, "is_correct_4": 0,
+                    "explanation": "Paris has been the capital of France since 987 AD.",
+                    "points": 100,
+                },
+                {
+                    "question": "What is the capital of Japan?",
+                    "option_1": "Beijing", "option_2": "Tokyo", "option_3": "Seoul", "option_4": "Bangkok",
+                    "is_correct_1": 0, "is_correct_2": 1, "is_correct_3": 0, "is_correct_4": 0,
+                    "explanation": "Tokyo became Japan's capital in 1868 during the Meiji Restoration.",
+                    "points": 100,
+                },
+                {
+                    "question": "What is the capital of Australia?",
+                    "option_1": "Sydney", "option_2": "Melbourne", "option_3": "Canberra", "option_4": "Perth",
+                    "is_correct_1": 0, "is_correct_2": 0, "is_correct_3": 1, "is_correct_4": 0,
+                    "explanation": "Canberra was purpose-built as a compromise between Sydney and Melbourne.",
+                    "points": 100,
+                },
+                {
+                    "question": "What is the capital of Brazil?",
+                    "option_1": "Rio de Janeiro", "option_2": "São Paulo", "option_3": "Salvador", "option_4": "Brasília",
+                    "is_correct_1": 0, "is_correct_2": 0, "is_correct_3": 0, "is_correct_4": 1,
+                    "explanation": "Brasília was inaugurated as the capital in 1960, replacing Rio de Janeiro.",
+                    "points": 100,
+                },
+                {
+                    "question": "What is the capital of Canada?",
+                    "option_1": "Toronto", "option_2": "Vancouver", "option_3": "Ottawa", "option_4": "Montreal",
+                    "is_correct_1": 0, "is_correct_2": 0, "is_correct_3": 1, "is_correct_4": 0,
+                    "explanation": "Ottawa was selected by Queen Victoria in 1857.",
+                    "points": 100,
+                },
+            ],
+        }).insert(ignore_permissions=True)
+
+    simple_quiz_title = "Science Quick Check"
+    if not frappe.db.exists("Quick Quiz", {"title": simple_quiz_title}):
+        frappe.get_doc({
+            "doctype": "Quick Quiz",
+            "title": simple_quiz_title,
+            "quiz_mode": "Simple",
+            "status": "Published",
+            "access_type": "Auth",
+            "timer_enabled": 0,
+            "theme": "Default",
+            "randomize_questions": 0,
+            "show_correct_after_answer": 1,
+            "description": "A quick science check — test your basic science knowledge.",
+            "questions": [
+                {
+                    "question": "Which planet is known as the Red Planet?",
+                    "option_1": "Mars", "option_2": "Venus", "option_3": "Jupiter", "option_4": "Saturn",
+                    "is_correct_1": 1, "is_correct_2": 0, "is_correct_3": 0, "is_correct_4": 0,
+                    "explanation": "Mars appears red due to iron oxide (rust) on its surface.",
+                    "points": 100,
+                },
+                {
+                    "question": "What is the chemical symbol for water?",
+                    "option_1": "CO2", "option_2": "H2O", "option_3": "O2", "option_4": "NaCl",
+                    "is_correct_1": 0, "is_correct_2": 1, "is_correct_3": 0, "is_correct_4": 0,
+                    "explanation": "H2O represents two hydrogen atoms bonded to one oxygen atom.",
+                    "points": 100,
+                },
+                {
+                    "question": "What gas do plants absorb from the atmosphere?",
+                    "option_1": "Oxygen", "option_2": "Nitrogen", "option_3": "Carbon Dioxide", "option_4": "Hydrogen",
+                    "is_correct_1": 0, "is_correct_2": 0, "is_correct_3": 1, "is_correct_4": 0,
+                    "explanation": "Plants use CO2 in photosynthesis to produce oxygen and glucose.",
+                    "points": 100,
+                },
+                {
+                    "question": "What is the largest organ in the human body?",
+                    "option_1": "Heart", "option_2": "Liver", "option_3": "Brain", "option_4": "Skin",
+                    "is_correct_1": 0, "is_correct_2": 0, "is_correct_3": 0, "is_correct_4": 1,
+                    "explanation": "The skin covers about 20 square feet in adults.",
+                    "points": 100,
+                },
+                {
+                    "question": "How many bones are in the adult human body?",
+                    "option_1": "106", "option_2": "206", "option_3": "306", "option_4": "406",
+                    "is_correct_1": 0, "is_correct_2": 1, "is_correct_3": 0, "is_correct_4": 0,
+                    "explanation": "Adults have 206 bones; babies are born with about 270 that fuse over time.",
+                    "points": 100,
+                },
+            ],
+        }).insert(ignore_permissions=True)
+
+    frappe.db.commit()
+
 
 def validate_user_email(doc, method=None):
     """

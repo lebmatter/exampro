@@ -235,7 +235,9 @@ website_route_rules = [
     {"from_route": "/exam/<exam_submission>", "to_route": "exam/result"},
     {"from_route": "/manage", "to_route": "manage/users"},
     {"from_route": "/exam/invite/<invite_code>", "to_route": "exam/invite"},
-    {"from_route": "/leaderboard/<submission>", "to_route": "leaderboard"}
+    {"from_route": "/leaderboard/<submission>", "to_route": "leaderboard"},
+    {"from_route": "/quiz/<short_uuid>", "to_route": "quiz"},
+    {"from_route": "/quiz/<short_uuid>/host", "to_route": "quiz"},
 ]
 
 fixtures = [

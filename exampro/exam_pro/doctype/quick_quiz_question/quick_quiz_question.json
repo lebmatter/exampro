@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-17 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "question",
+  "question_image",
+  "option_1",
+  "is_correct_1",
+  "column_break_opt2",
+  "option_2",
+  "is_correct_2",
+  "section_break_opt34",
+  "option_3",
+  "is_correct_3",
+  "column_break_opt4",
+  "option_4",
+  "is_correct_4",
+  "section_break_meta",
+  "explanation",
+  "column_break_meta2",
+  "points"
+ ],
+ "fields": [
+  {
+   "fieldname": "question",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Question",
+   "reqd": 1
+  },
+  {
+   "fieldname": "question_image",
+   "fieldtype": "Attach Image",
+   "label": "Question Image"
+  },
+  {
+   "fieldname": "option_1",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Option 1",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_correct_1",
+   "fieldtype": "Check",
+   "label": "Correct"
+  },
+  {
+   "fieldname": "column_break_opt2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "option_2",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Option 2",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_correct_2",
+   "fieldtype": "Check",
+   "label": "Correct"
+  },
+  {
+   "fieldname": "section_break_opt34",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "option_3",
+   "fieldtype": "Small Text",
+   "label": "Option 3"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_correct_3",
+   "fieldtype": "Check",
+   "label": "Correct"
+  },
+  {
+   "fieldname": "column_break_opt4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "option_4",
+   "fieldtype": "Small Text",
+   "label": "Option 4"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_correct_4",
+   "fieldtype": "Check",
+   "label": "Correct"
+  },
+  {
+   "fieldname": "section_break_meta",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "explanation",
+   "fieldtype": "Small Text",
+   "label": "Explanation"
+  },
+  {
+   "fieldname": "column_break_meta2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "100",
+   "fieldname": "points",
+   "fieldtype": "Int",
+   "label": "Points",
+   "non_negative": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-06-17 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Exam Pro",
+ "name": "Quick Quiz Question",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

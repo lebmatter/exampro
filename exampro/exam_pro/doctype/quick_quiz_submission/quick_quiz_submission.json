@@ -1,0 +1,194 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-17 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "quiz",
+  "short_uuid",
+  "quiz_mode",
+  "status",
+  "column_break_main",
+  "participant_name",
+  "participant_email",
+  "user",
+  "section_break_score",
+  "score",
+  "total_points",
+  "column_break_score2",
+  "correct_count",
+  "total_questions",
+  "section_break_time",
+  "started_at",
+  "completed_at",
+  "column_break_time2",
+  "time_taken_seconds",
+  "answers_tab",
+  "section_break_answers",
+  "answers"
+ ],
+ "fields": [
+  {
+   "fieldname": "quiz",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Quiz",
+   "options": "Quick Quiz",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "short_uuid",
+   "fieldtype": "Data",
+   "label": "Submission ID",
+   "read_only": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "quiz_mode",
+   "fieldtype": "Data",
+   "label": "Quiz Mode",
+   "read_only": 1
+  },
+  {
+   "default": "Waiting",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Waiting\nIn Progress\nCompleted\nAbandoned"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "participant_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Participant Name"
+  },
+  {
+   "fieldname": "participant_email",
+   "fieldtype": "Data",
+   "label": "Participant Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_break_score",
+   "fieldtype": "Section Break",
+   "label": "Score"
+  },
+  {
+   "default": "0",
+   "fieldname": "score",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Score",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_points",
+   "fieldtype": "Int",
+   "label": "Total Points",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_score2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "correct_count",
+   "fieldtype": "Int",
+   "label": "Correct Answers",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_questions",
+   "fieldtype": "Int",
+   "label": "Total Questions",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "section_break_time",
+   "fieldtype": "Section Break",
+   "label": "Timing"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At"
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At"
+  },
+  {
+   "fieldname": "column_break_time2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "time_taken_seconds",
+   "fieldtype": "Float",
+   "label": "Time Taken (seconds)"
+  },
+  {
+   "fieldname": "answers_tab",
+   "fieldtype": "Tab Break",
+   "label": "Answers"
+  },
+  {
+   "fieldname": "section_break_answers",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "answers",
+   "fieldtype": "Table",
+   "label": "Answers",
+   "options": "Quick Quiz Answer"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-06-17 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Exam Pro",
+ "name": "Quick Quiz Submission",
+ "naming_rule": "autoincrement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Exam Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

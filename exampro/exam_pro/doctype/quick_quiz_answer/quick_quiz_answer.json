@@ -1,0 +1,71 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-17 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "question_idx",
+  "selected_option",
+  "is_correct",
+  "column_break_score",
+  "points_earned",
+  "time_taken_ms"
+ ],
+ "fields": [
+  {
+   "fieldname": "question_idx",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Question #",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "selected_option",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Selected Option",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_correct",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Correct"
+  },
+  {
+   "fieldname": "column_break_score",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "points_earned",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Points Earned",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "time_taken_ms",
+   "fieldtype": "Int",
+   "label": "Time Taken (ms)",
+   "non_negative": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-06-17 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Exam Pro",
+ "name": "Quick Quiz Answer",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

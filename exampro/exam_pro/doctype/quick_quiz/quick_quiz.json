@@ -1,0 +1,199 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "prompt",
+ "creation": "2025-06-17 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "short_uuid",
+  "quiz_mode",
+  "status",
+  "column_break_main",
+  "access_type",
+  "pin_code",
+  "image",
+  "section_break_settings",
+  "timer_enabled",
+  "timer_seconds",
+  "column_break_settings2",
+  "theme",
+  "randomize_questions",
+  "show_correct_after_answer",
+  "section_break_desc",
+  "description",
+  "questions_tab",
+  "section_break_questions",
+  "questions",
+  "total_questions"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "short_uuid",
+   "fieldtype": "Data",
+   "label": "Share Code",
+   "read_only": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "default": "Simple",
+   "fieldname": "quiz_mode",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode",
+   "options": "Kahoot\nSimple",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nPublished\nArchived"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "PIN",
+   "fieldname": "access_type",
+   "fieldtype": "Select",
+   "label": "Access Type",
+   "options": "Auth\nPIN"
+  },
+  {
+   "depends_on": "eval: doc.access_type == 'PIN'",
+   "fieldname": "pin_code",
+   "fieldtype": "Data",
+   "label": "PIN Code"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Preview Image"
+  },
+  {
+   "fieldname": "section_break_settings",
+   "fieldtype": "Section Break",
+   "label": "Quiz Settings"
+  },
+  {
+   "default": "0",
+   "fieldname": "timer_enabled",
+   "fieldtype": "Check",
+   "label": "Timer Enabled"
+  },
+  {
+   "default": "30",
+   "depends_on": "eval: doc.timer_enabled",
+   "fieldname": "timer_seconds",
+   "fieldtype": "Int",
+   "label": "Seconds Per Question",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_settings2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Default",
+   "fieldname": "theme",
+   "fieldtype": "Select",
+   "label": "Theme",
+   "options": "Default\nFun Neon\nDark Mode\nPastel"
+  },
+  {
+   "default": "0",
+   "fieldname": "randomize_questions",
+   "fieldtype": "Check",
+   "label": "Randomize Questions"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_correct_after_answer",
+   "fieldtype": "Check",
+   "label": "Show Correct Answer After Each Question"
+  },
+  {
+   "fieldname": "section_break_desc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "fieldname": "questions_tab",
+   "fieldtype": "Tab Break",
+   "label": "Questions"
+  },
+  {
+   "fieldname": "section_break_questions",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "questions",
+   "fieldtype": "Table",
+   "label": "Questions",
+   "options": "Quick Quiz Question"
+  },
+  {
+   "fieldname": "total_questions",
+   "fieldtype": "Int",
+   "label": "Total Questions",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "Submissions",
+   "link_doctype": "Quick Quiz Submission",
+   "link_fieldname": "quiz"
+  }
+ ],
+ "modified": "2025-06-17 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Exam Pro",
+ "name": "Quick Quiz",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Exam Manager",
+   "select": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

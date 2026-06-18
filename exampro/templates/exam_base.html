@@ -114,6 +114,9 @@
                 <li>
                   <a class="dropdown-item" href="/exam-studio">Exam Studio</a>
                 </li>
+                <li>
+                  <a class="dropdown-item" href="/quiz-studio">Quiz Studio</a>
+                </li>
               </ul>
             </li>
             {% endif %} {% endif %}
@@ -201,6 +204,8 @@ get_telemetry_boot_info() %}
       $('a[href="/evaluate"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/exam-studio") {
       $('a[href="/exam-studio"]').closest(".nav-item").addClass("active");
+    } else if (currentPath === "/quiz-studio") {
+      $('a[href="/quiz-studio"]').closest(".nav-item").addClass("active");
     }
 
     // Logout: hit Frappe's logout RPC, then redirect — the API returns JSON

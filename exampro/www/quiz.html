@@ -1,0 +1,258 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Quick Quiz{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/quiz.css" />
+{% endblock %}
+
+{% block page_content %}
+<div x-data="quizApp()" x-init="init()" :data-theme="theme">
+
+  <!-- 1. JOIN SCREEN -->
+  <template x-if="screen === 'join'">
+    <div class="quiz-join-screen">
+      <div class="quiz-join-card">
+        <div class="quiz-join-header" x-show="quizInfo.image">
+          <img :src="quizInfo.image" alt="Quiz image">
+        </div>
+        <h2 x-text="quizInfo.title" class="quiz-title"></h2>
+        <p x-text="quizInfo.description" class="quiz-description text-muted"></p>
+        <div class="quiz-meta-pills">
+          <span class="quiz-pill" x-text="quizInfo.quiz_mode"></span>
+          <span class="quiz-pill" x-text="quizInfo.total_questions + ' questions'"></span>
+          <span class="quiz-pill" x-show="quizInfo.timer_enabled" x-text="quizInfo.timer_seconds + 's per question'"></span>
+        </div>
+
+        <!-- PIN input (shown when access_type is PIN) -->
+        <template x-if="quizInfo.access_type === 'PIN'">
+          <div class="quiz-input-group">
+            <label>Enter PIN</label>
+            <input type="text" x-model="pinInput" placeholder="Enter quiz PIN" class="quiz-input" maxlength="6" inputmode="numeric">
+          </div>
+        </template>
+
+        <!-- Name input -->
+        <div class="quiz-input-group">
+          <label>Your Name</label>
+          <input type="text" x-model="participantName" placeholder="Enter your name" class="quiz-input" maxlength="50">
+        </div>
+
+        <button class="quiz-btn quiz-btn-primary" @click="joinQuiz()" :disabled="joining || !participantName.trim()">
+          <span x-show="!joining">Join Quiz</span>
+          <span x-show="joining">Joining...</span>
+        </button>
+        <p x-show="joinError" class="quiz-error" x-text="joinError"></p>
+      </div>
+    </div>
+  </template>
+
+  <!-- 2. WAITING LOBBY (Kahoot only) -->
+  <template x-if="screen === 'waiting'">
+    <div class="quiz-waiting-screen">
+      <div class="quiz-waiting-card">
+        <i data-feather="clock" style="width:48px;height:48px;"></i>
+        <h3>Waiting for host to start...</h3>
+        <p class="text-muted">You're in! The quiz will begin shortly.</p>
+        <div class="quiz-participant-name" x-text="participantName"></div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 3. QUESTION SCREEN -->
+  <template x-if="screen === 'question'">
+    <div class="quiz-question-screen">
+      <div class="quiz-question-header">
+        <span class="quiz-progress" x-text="'Question ' + (currentQuestionIdx + 1) + ' of ' + questions.length"></span>
+        <span class="quiz-score" x-show="quizInfo.quiz_mode === 'Kahoot'" x-text="'Score: ' + totalScore"></span>
+      </div>
+
+      <!-- Timer bar -->
+      <div class="quiz-timer-bar-container" x-show="quizInfo.timer_enabled">
+        <div class="quiz-timer-bar" :style="'width: ' + timerPercent + '%'" :class="{'quiz-timer-danger': timerPercent < 20}"></div>
+      </div>
+      <div class="quiz-timer-text" x-show="quizInfo.timer_enabled" x-text="timerDisplay"></div>
+
+      <div class="quiz-question-card">
+        <div class="quiz-question-image" x-show="currentQuestion.question_image">
+          <img :src="currentQuestion.question_image" alt="Question image">
+        </div>
+        <h3 class="quiz-question-text" x-text="currentQuestion.question"></h3>
+      </div>
+
+      <div class="quiz-options-grid">
+        <template x-for="(opt, i) in currentQuestion.options" :key="i">
+          <button class="quiz-option-card"
+            :class="optionClass(i)"
+            @click="selectOption(i + 1)"
+            :disabled="answered">
+            <span class="quiz-option-label" x-text="['A', 'B', 'C', 'D'][i]"></span>
+            <span class="quiz-option-text" x-text="opt"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+  </template>
+
+  <!-- 4. ANSWER FEEDBACK -->
+  <template x-if="screen === 'feedback'">
+    <div class="quiz-feedback-screen" :class="lastAnswerCorrect ? 'quiz-feedback-correct' : 'quiz-feedback-wrong'">
+      <div class="quiz-feedback-icon">
+        <i x-show="lastAnswerCorrect" data-feather="check-circle" style="width:64px;height:64px;"></i>
+        <i x-show="!lastAnswerCorrect" data-feather="x-circle" style="width:64px;height:64px;"></i>
+      </div>
+      <h3 x-text="lastAnswerCorrect ? 'Correct!' : 'Wrong!'"></h3>
+      <p class="quiz-feedback-points" x-show="quizInfo.quiz_mode === 'Kahoot'" x-text="'+' + lastPointsEarned + ' points'"></p>
+      <p class="quiz-feedback-explanation" x-show="lastExplanation" x-text="lastExplanation"></p>
+    </div>
+  </template>
+
+  <!-- 5. LEADERBOARD (Kahoot between questions) -->
+  <template x-if="screen === 'leaderboard'">
+    <div class="quiz-leaderboard-screen">
+      <h2>Leaderboard</h2>
+      <div class="quiz-leaderboard-list">
+        <template x-for="(entry, i) in leaderboard" :key="i">
+          <div class="quiz-leaderboard-row" :class="{'quiz-leaderboard-self': entry.participant_name === participantName}">
+            <span class="quiz-leaderboard-rank" x-text="'#' + (i + 1)"></span>
+            <span class="quiz-leaderboard-name" x-text="entry.participant_name"></span>
+            <span class="quiz-leaderboard-score" x-text="entry.score + ' pts'"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+  </template>
+
+  <!-- 6. RESULTS / COMPLETION SCREEN -->
+  <template x-if="screen === 'complete'">
+    <div class="quiz-complete-screen">
+      <!-- Simple mode: just completion message -->
+      <template x-if="quizInfo.quiz_mode === 'Simple'">
+        <div class="quiz-complete-card">
+          <i data-feather="check-circle" style="width:64px;height:64px;color:#198754;"></i>
+          <h2>Quiz Complete!</h2>
+          <p class="text-muted">Thank you for participating.</p>
+        </div>
+      </template>
+
+      <!-- Kahoot mode: score and leaderboard -->
+      <template x-if="quizInfo.quiz_mode === 'Kahoot'">
+        <div class="quiz-results-card">
+          <h2>Final Results</h2>
+          <div class="quiz-final-score">
+            <span class="quiz-final-score-value" x-text="results.score"></span>
+            <span class="quiz-final-score-label">points</span>
+          </div>
+          <div class="quiz-final-stats">
+            <div><strong x-text="results.correct_count"></strong> / <span x-text="results.total_questions"></span> correct</div>
+            <div>Rank: <strong x-text="'#' + results.rank"></strong></div>
+            <div>Time: <strong x-text="Math.round(results.time_taken_seconds) + 's'"></strong></div>
+          </div>
+          <h4>Leaderboard</h4>
+          <div class="quiz-leaderboard-list">
+            <template x-for="(entry, i) in results.leaderboard" :key="i">
+              <div class="quiz-leaderboard-row" :class="{'quiz-leaderboard-self': entry.participant_name === participantName}">
+                <span class="quiz-leaderboard-rank" x-text="'#' + (i + 1)"></span>
+                <span class="quiz-leaderboard-name" x-text="entry.participant_name"></span>
+                <span class="quiz-leaderboard-score" x-text="entry.score + ' pts'"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- 7. HOST SCREEN (Kahoot host mode) -->
+  <template x-if="screen === 'host-lobby'">
+    <div class="quiz-host-screen" x-init="$nextTick(() => { if (typeof feather !== 'undefined') feather.replace() })">
+      <div class="quiz-host-card">
+        <h2 x-text="quizInfo.title"></h2>
+        <div class="quiz-host-join-info">
+          <p>Share this link or PIN:</p>
+          <div class="quiz-host-url">
+            <span x-text="joinUrl"></span>
+            <svg class="quiz-copy-icon" @click="copyToClipboard(joinUrl)" title="Copy URL" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </div>
+          <div class="quiz-host-pin" x-show="quizInfo.access_type === 'PIN'">
+            <span x-text="'PIN: ' + quizInfo.pin_code"></span>
+            <svg class="quiz-copy-icon" @click="copyToClipboard(quizInfo.pin_code)" title="Copy PIN" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </div>
+        </div>
+        <div class="quiz-host-participants">
+          <h4><span x-text="participants.length"></span> participants joined</h4>
+          <div class="quiz-host-participant-list">
+            <template x-for="p in participants" :key="p.participant_name">
+              <span class="quiz-participant-badge" x-text="p.participant_name"></span>
+            </template>
+          </div>
+        </div>
+        <button class="quiz-btn quiz-btn-primary quiz-btn-large" @click="hostStartQuiz()" :disabled="participants.length === 0">
+          Start Quiz
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <!-- HOST: Question display -->
+  <template x-if="screen === 'host-question'">
+    <div class="quiz-host-question-screen">
+      <div class="quiz-question-header">
+        <span class="quiz-progress" x-text="'Question ' + (currentQuestionIdx + 1) + ' of ' + questions.length"></span>
+        <span class="quiz-answer-count" x-text="hostAnswerCount + ' answers'"></span>
+      </div>
+      <div class="quiz-timer-bar-container" x-show="quizInfo.timer_enabled">
+        <div class="quiz-timer-bar" :style="'width: ' + timerPercent + '%'"></div>
+      </div>
+      <div class="quiz-question-card">
+        <h3 class="quiz-question-text" x-text="currentQuestion.question"></h3>
+      </div>
+      <div class="quiz-options-grid quiz-options-host">
+        <template x-for="(opt, i) in currentQuestion.options" :key="i">
+          <div class="quiz-option-card" :class="'quiz-option-color-' + (i + 1)">
+            <span class="quiz-option-label" x-text="['A', 'B', 'C', 'D'][i]"></span>
+            <span class="quiz-option-text" x-text="opt"></span>
+          </div>
+        </template>
+      </div>
+      <div class="quiz-host-controls">
+        <button class="quiz-btn quiz-btn-secondary" @click="hostShowLeaderboard()">Show Leaderboard</button>
+        <button class="quiz-btn quiz-btn-primary" @click="hostNextQuestion()" x-text="currentQuestionIdx < questions.length - 1 ? 'Next Question' : 'End Quiz'"></button>
+      </div>
+    </div>
+  </template>
+
+  <!-- HOST: Leaderboard -->
+  <template x-if="screen === 'host-leaderboard'">
+    <div class="quiz-leaderboard-screen">
+      <h2>Leaderboard</h2>
+      <div class="quiz-leaderboard-list">
+        <template x-for="(entry, i) in leaderboard" :key="i">
+          <div class="quiz-leaderboard-row quiz-leaderboard-animated" :style="'animation-delay: ' + (i * 0.1) + 's'">
+            <span class="quiz-leaderboard-rank" x-text="'#' + (i + 1)"></span>
+            <span class="quiz-leaderboard-name" x-text="entry.participant_name"></span>
+            <span class="quiz-leaderboard-score" x-text="entry.score + ' pts'"></span>
+          </div>
+        </template>
+      </div>
+      <div class="quiz-host-controls" x-show="!quizEnded">
+        <button class="quiz-btn quiz-btn-primary" @click="hostNextQuestion()" x-text="currentQuestionIdx < questions.length - 1 ? 'Next Question' : 'End Quiz'"></button>
+      </div>
+      <div class="quiz-host-controls" x-show="quizEnded">
+        <p class="text-muted mb-2">Quiz ended</p>
+        <button class="quiz-btn quiz-btn-primary" @click="hostRestartQuiz()">Restart Quiz</button>
+        <button class="quiz-btn quiz-btn-secondary" @click="window.location.href='/quiz-studio'">Close</button>
+      </div>
+    </div>
+  </template>
+
+</div>
+
+<script>
+  window.quizPageData = {
+    shortUuid: {{ short_uuid | tojson | safe }},
+    isHost: {{ is_host | tojson | safe }},
+    isPreview: {{ is_preview | tojson | safe }},
+  };
+</script>
+<script src="/assets/exampro/js/quiz.js"></script>
+{% endblock %}
