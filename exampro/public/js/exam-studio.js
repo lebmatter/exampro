@@ -963,7 +963,27 @@ function examStudioApp() {
         };
       }
       if (this._scheduleModal) this._scheduleModal.show();
+      this._initScheduleDatetime();
       this.replaceIcons();
+    },
+
+    _initScheduleDatetime() {
+      var el = document.getElementById("schedule-datetime-picker");
+      if (!el) return;
+      if (this._scheduleDatetimePicker) this._scheduleDatetimePicker.destroy();
+      var self = this;
+      var defaultDate = this.scheduleForm.start_date_time
+        ? this.scheduleForm.start_date_time.replace("T", " ")
+        : null;
+      this._scheduleDatetimePicker = flatpickr(el, {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        time_24hr: true,
+        defaultDate: defaultDate,
+        onChange: function (selectedDates, dateStr) {
+          self.scheduleForm.start_date_time = dateStr ? dateStr + ":00" : "";
+        },
+      });
     },
 
     async saveSchedule() {
