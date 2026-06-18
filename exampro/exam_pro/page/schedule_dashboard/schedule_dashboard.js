@@ -178,14 +178,20 @@ class ScheduleDashboard {
 				this.refresh();
 				return;
 			}
-			let h = Math.floor(diff / 3600);
-			let m = Math.floor((diff % 3600) / 60);
-			let s = diff % 60;
+			let d = Math.floor(diff / 86400);
 			let parts = [];
-			if (h) parts.push(h + 'h');
-			if (m) parts.push(m + 'm');
-			parts.push(s + 's');
-			$('#sd-countdown').text(parts.join(' ') + ' ' + label);
+			if (d) {
+				parts.push(d + 'd');
+				$('#sd-countdown').text(parts.join(' ') + ' ' + label);
+			} else {
+				let h = Math.floor(diff / 3600);
+				let m = Math.floor((diff % 3600) / 60);
+				let s = diff % 60;
+				if (h) parts.push(h + 'h');
+				if (m) parts.push(m + 'm');
+				parts.push(s + 's');
+				$('#sd-countdown').text(parts.join(' ') + ' ' + label);
+			}
 		};
 		update();
 		this._countdown_interval = setInterval(update, 1000);
