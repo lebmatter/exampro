@@ -1,0 +1,469 @@
+<!-- Quick Quiz Tab -->
+<div class="tab-pane fade" id="tab-quick-quiz" x-data="quizStudioApp()" x-init="init()">
+  <div class="row g-3">
+
+    <!-- COLUMN 1: Quiz selector -->
+    <div class="col-lg-3 col-md-4">
+      <div class="studio-controls">
+        <h6 class="controls-title">
+          <i data-feather="list" style="width:14px;height:14px;"></i>
+          Quizzes
+          <span class="tab-count" x-text="quizzes.length" x-show="quizzes.length > 0" style="margin-left:auto;"></span>
+        </h6>
+
+        <!-- New Quiz button -->
+        <button class="btn btn-generate w-100 mb-3" @click="openNewQuizModal()">
+          <i data-feather="plus" style="width:14px;height:14px;"></i>
+          New
+        </button>
+
+        <!-- Search -->
+        <div class="control-group">
+          <input type="text" class="form-control form-control-sm" placeholder="Search quizzes..." x-model="searchQuery">
+        </div>
+
+        <!-- Quiz list -->
+        <div class="quiz-list-scroll">
+          <template x-for="quiz in filteredQuizzes" :key="quiz.name">
+            <div class="quiz-list-card" :class="{'quiz-list-card-active': selectedQuiz && selectedQuiz.name === quiz.name}" @click="selectQuiz(quiz)">
+              <div class="quiz-list-card-title" x-text="quiz.title"></div>
+              <div class="quiz-list-card-meta">
+                <span class="quiz-mode-pill" :class="'quiz-mode-' + quiz.quiz_mode.toLowerCase()" x-text="quiz.quiz_mode"></span>
+                <span class="quiz-status-pill" :class="'quiz-status-' + quiz.status.toLowerCase()" x-text="quiz.status"></span>
+                <span class="text-muted" style="font-size:0.75rem;" x-text="quiz.total_questions + ' Qs'"></span>
+              </div>
+            </div>
+          </template>
+
+          <template x-if="filteredQuizzes.length === 0 && !searchQuery">
+            <div class="empty-state-inline">
+              <i data-feather="inbox" style="width:24px;height:24px;color:#adb5bd;"></i>
+              <p class="text-muted mb-0" style="font-size:0.8rem;">No quizzes yet</p>
+            </div>
+          </template>
+          <template x-if="filteredQuizzes.length === 0 && searchQuery">
+            <div class="empty-state-inline">
+              <p class="text-muted mb-0" style="font-size:0.8rem;">No matches</p>
+            </div>
+          </template>
+        </div>
+
+        <!-- Actions + publish for selected quiz -->
+        <template x-if="editData && editData.name">
+          <div>
+            <div class="quiz-action-bar">
+              <button class="btn btn-sm btn-outline-secondary" @click="openSettingsModal()" title="Settings">
+                <i data-feather="settings" style="width:13px;height:13px;"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" @click="takeDemo()" title="Preview">
+                <i data-feather="play" style="width:13px;height:13px;"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" @click="duplicateQuiz()" title="Duplicate">
+                <i data-feather="copy" style="width:13px;height:13px;"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-warning" @click="hostQuiz()" title="Host Kahoot" x-show="editData.quiz_mode === 'Kahoot' && editData.status === 'Published'">
+                <i data-feather="monitor" style="width:13px;height:13px;"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" @click="archiveQuiz()" title="Archive" x-show="editData.status !== 'Archived'">
+                <i data-feather="archive" style="width:13px;height:13px;"></i>
+              </button>
+              <button class="btn btn-sm ms-auto" :class="editData.status === 'Published' ? 'btn-outline-secondary' : 'btn-generate'" @click="togglePublish()">
+                <span x-text="editData.status === 'Published' ? 'Unpublish' : 'Publish'"></span>
+              </button>
+            </div>
+
+            <!-- Share card (shown when published) -->
+            <template x-if="editData.status === 'Published'">
+              <div class="share-card">
+                <div class="share-url-row">
+                  <i data-feather="link" style="width:14px;height:14px;flex-shrink:0;color:#6c757d;"></i>
+                  <span class="share-url" x-text="shareUrl()"></span>
+                  <button class="share-copy-btn" @click="copyShareLink()" title="Copy link">
+                    <i data-feather="clipboard" style="width:13px;height:13px;"></i>
+                  </button>
+                </div>
+                <div class="share-pin-row" x-show="editData.access_type === 'PIN' && editData.pin_code">
+                  <span class="share-pin-label">PIN</span>
+                  <span class="share-pin-value" x-text="editData.pin_code"></span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- COLUMN 2: Questions -->
+    <div class="col-lg-5 col-md-4">
+      <div class="question-panel">
+        <div class="panel-header">
+          <h6>
+            <i data-feather="help-circle" style="width:14px;height:14px;"></i>
+            Questions
+            <span class="tab-count" x-text="editData ? editData.questions.length : 0" x-show="editData && editData.questions.length > 0"></span>
+          </h6>
+        </div>
+
+        <template x-if="!editData">
+          <div class="panel-body">
+            <div class="empty-state">
+              <i data-feather="edit-3" style="width:2rem;height:2rem;"></i>
+              <h6>Select or create a quiz</h6>
+              <p class="text-muted mb-0">Questions will appear here</p>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="editData">
+          <div>
+            <!-- Toolbar -->
+            <div class="panel-toolbar">
+              <button class="btn btn-sm btn-outline-primary" @click="showAiGenerate = !showAiGenerate" :disabled="!aiConfigured">
+                <i data-feather="cpu" style="width:13px;height:13px;"></i>
+                AI Generate
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" @click="showImport = !showImport">
+                <i data-feather="download" style="width:13px;height:13px;"></i>
+                Import
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" @click="addQuestion()">
+                <i data-feather="plus" style="width:13px;height:13px;"></i>
+                Add
+              </button>
+              <button class="btn btn-sm btn-generate ms-auto" @click="saveQuiz()" :disabled="saving">
+                <template x-if="!saving">
+                  <span><i data-feather="save" style="width:13px;height:13px;"></i> Save</span>
+                </template>
+                <template x-if="saving">
+                  <span><span class="spinner-border spinner-border-sm" style="width:0.65rem;height:0.65rem;"></span> Saving...</span>
+                </template>
+              </button>
+            </div>
+
+            <!-- AI Generate panel -->
+            <div x-show="showAiGenerate" x-transition class="collapsible-panel">
+              <div class="row g-2 align-items-end">
+                <div class="col">
+                  <label class="control-label">Topic</label>
+                  <input type="text" class="form-control form-control-sm" x-model="aiTopic" placeholder="e.g., World capitals...">
+                </div>
+                <div class="col-auto">
+                  <label class="control-label">Count</label>
+                  <input type="number" class="form-control form-control-sm" x-model.number="aiCount" min="1" max="20" style="width:60px;">
+                </div>
+                <div class="col-auto">
+                  <label class="control-label">Tone</label>
+                  <select class="form-select form-select-sm" x-model="aiTone" style="width:85px;">
+                    <option value="fun">Fun</option>
+                    <option value="serious">Serious</option>
+                  </select>
+                </div>
+                <div class="col-auto">
+                  <button class="btn btn-sm btn-generate" @click="generateQuestions()" :disabled="aiGenerating || !aiTopic.trim()">
+                    <template x-if="!aiGenerating">
+                      <span><i data-feather="zap" style="width:12px;height:12px;"></i> Generate</span>
+                    </template>
+                    <template x-if="aiGenerating">
+                      <span><span class="spinner-border spinner-border-sm me-1" style="width:0.7rem;height:0.7rem;"></span> Generating...</span>
+                    </template>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Import panel -->
+            <div x-show="showImport" x-transition class="collapsible-panel">
+              <div class="row g-2 align-items-end">
+                <div class="col">
+                  <label class="control-label">Category</label>
+                  <select class="form-select form-select-sm" x-model="importCategory">
+                    <option value="">Select category...</option>
+                    <template x-for="cat in importCategories" :key="cat.name">
+                      <option :value="cat.name" x-text="cat.title"></option>
+                    </template>
+                  </select>
+                </div>
+                <div class="col-auto">
+                  <label class="control-label">Count</label>
+                  <input type="number" class="form-control form-control-sm" x-model.number="importCount" min="1" max="50" style="width:60px;">
+                </div>
+                <div class="col-auto">
+                  <button class="btn btn-sm btn-outline-primary" @click="importQuestions()" :disabled="!importCategory">
+                    <i data-feather="download" style="width:12px;height:12px;"></i> Import
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Question list -->
+            <div class="panel-body">
+              <template x-for="(q, idx) in editData.questions" :key="idx">
+                <div class="question-item-row">
+                  <div class="question-item-header" @click="editQuestion(idx)">
+                    <span class="question-number" x-text="'Q' + (idx + 1)"></span>
+                    <span class="question-preview" x-text="q.question.substring(0, 80) + (q.question.length > 80 ? '...' : '')"></span>
+                    <div class="question-actions">
+                      <button class="btn btn-sm btn-link" @click.stop="editQuestion(idx)">
+                        <i data-feather="edit-2" style="width:12px;height:12px;"></i>
+                      </button>
+                      <button class="btn btn-sm btn-link text-danger" @click.stop="removeQuestion(idx)">
+                        <i data-feather="trash-2" style="width:12px;height:12px;"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div x-show="editingQuestionIdx === idx" x-transition class="question-editor">
+                    <div class="mb-2">
+                      <label class="control-label">Question</label>
+                      <textarea class="form-control form-control-sm" x-model="q.question" rows="2"></textarea>
+                    </div>
+                    <div class="row g-2">
+                      <template x-for="optNum in [1, 2, 3, 4]" :key="optNum">
+                        <div class="col-6">
+                          <div class="option-input-group">
+                            <input type="text" class="form-control form-control-sm"
+                              x-model="q['option_' + optNum]"
+                              :placeholder="'Option ' + optNum">
+                            <label class="option-correct-label">
+                              <input type="radio" :name="'correct_' + idx"
+                                :checked="q['is_correct_' + optNum]"
+                                @change="setCorrectOption(idx, optNum)">
+                              <span>Correct</span>
+                            </label>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                    <div class="row g-2 mt-2">
+                      <div class="col">
+                        <input type="text" class="form-control form-control-sm" x-model="q.explanation" placeholder="Explanation (optional)">
+                      </div>
+                      <div class="col-auto">
+                        <input type="number" class="form-control form-control-sm" x-model.number="q.points" min="1" style="width:70px;" placeholder="Pts">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <template x-if="editData.questions.length === 0">
+                <div class="empty-state">
+                  <i data-feather="help-circle" style="width:2rem;height:2rem;"></i>
+                  <h6>No questions yet</h6>
+                  <p class="text-muted mb-0">Add manually, generate with AI, or import from the question bank</p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- COLUMN 3: Submissions -->
+    <div class="col-lg-4 col-md-4">
+      <div class="submissions-panel">
+        <div class="panel-header">
+          <h6>
+            <i data-feather="users" style="width:14px;height:14px;"></i>
+            Submissions
+            <span class="tab-count" x-text="submissions.length" x-show="submissions.length > 0"></span>
+          </h6>
+          <template x-if="editData && submissions.length > 0">
+            <div class="submission-tab-switcher">
+              <button class="submission-tab-btn" :class="{'submission-tab-active': submissionTab === 'analytics'}" @click="switchSubmissionTab('analytics')">Analytics</button>
+              <button class="submission-tab-btn" :class="{'submission-tab-active': submissionTab === 'responses'}" @click="switchSubmissionTab('responses')">Responses</button>
+            </div>
+          </template>
+        </div>
+
+        <div class="panel-body">
+          <template x-if="!editData">
+            <div class="empty-state">
+              <i data-feather="users" style="width:2rem;height:2rem;"></i>
+              <h6>Select a quiz</h6>
+              <p class="text-muted mb-0">Submissions will appear here</p>
+            </div>
+          </template>
+
+          <template x-if="editData && submissions.length === 0">
+            <div class="empty-state">
+              <i data-feather="inbox" style="width:2rem;height:2rem;"></i>
+              <h6>No submissions yet</h6>
+              <p class="text-muted mb-0">Submissions appear once participants take the quiz</p>
+            </div>
+          </template>
+
+          <!-- Analytics tab -->
+          <template x-if="editData && submissions.length > 0 && submissionTab === 'analytics'">
+            <div>
+              <template x-if="analyticsLoading">
+                <div class="empty-state">
+                  <span class="spinner-border spinner-border-sm"></span>
+                  <p class="text-muted mb-0 mt-2" style="font-size:0.8rem;">Loading analytics...</p>
+                </div>
+              </template>
+
+              <template x-if="!analyticsLoading && analytics && analytics.questions.length > 0">
+                <div>
+                  <div class="analytics-summary">
+                    <span x-text="analytics.total_respondents + ' respondent' + (analytics.total_respondents !== 1 ? 's' : '')"></span>
+                  </div>
+
+                  <template x-for="(q, qIdx) in analytics.questions" :key="qIdx">
+                    <div class="analytics-question-card">
+                      <div class="analytics-question-header">
+                        <span class="analytics-question-num" x-text="'Q' + (qIdx + 1)"></span>
+                        <span class="analytics-question-text" x-text="q.question"></span>
+                      </div>
+                      <div class="analytics-options">
+                        <template x-for="opt in q.options" :key="opt.num">
+                          <div class="analytics-option-row" :class="{'analytics-option-correct': opt.is_correct}">
+                            <div class="analytics-option-info">
+                              <span class="analytics-option-text" x-text="opt.text"></span>
+                              <template x-if="opt.is_correct">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#198754;flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              </template>
+                            </div>
+                            <div class="analytics-bar-row">
+                              <div class="analytics-bar-track">
+                                <div class="analytics-bar-fill" :class="{'analytics-bar-correct': opt.is_correct}" :style="'width:' + opt.pct + '%'"></div>
+                              </div>
+                              <span class="analytics-option-stats" x-text="opt.count + ' (' + opt.pct.toFixed(0) + '%)'"></span>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <template x-if="!analyticsLoading && (!analytics || analytics.questions.length === 0)">
+                <div class="empty-state">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#adb5bd;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                  <h6>No analytics yet</h6>
+                  <p class="text-muted mb-0">Analytics appear once participants complete the quiz</p>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- Responses tab -->
+          <template x-if="editData && submissions.length > 0 && submissionTab === 'responses'">
+            <div>
+              <template x-for="sub in submissions" :key="sub.name">
+                <div class="submission-card">
+                  <div class="submission-card-top">
+                    <span class="submission-participant" x-text="sub.participant_name || sub.participant"></span>
+                    <span class="submission-score" x-text="sub.score + '/' + sub.total_points"></span>
+                  </div>
+                  <div class="submission-card-bottom">
+                    <span class="text-muted" x-text="sub.correct_count + '/' + sub.total_questions + ' correct'"></span>
+                    <span class="text-muted" x-text="sub.time_taken ? sub.time_taken + 's' : ''"></span>
+                    <span class="submission-status-pill" :class="'submission-status-' + (sub.status || 'completed').toLowerCase()" x-text="sub.status || 'Completed'"></span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quiz Settings Modal (New / Edit) -->
+  <div class="modal fade" id="quizSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <template x-if="modalData">
+          <div>
+            <div class="modal-header">
+              <span class="modal-title" x-text="modalData.name ? 'Quiz Settings' : 'New Quiz'"></span>
+              <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+                <i data-feather="x" style="width:18px;height:18px;"></i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <!-- Title -->
+              <div class="control-group">
+                <label class="control-label">Title</label>
+                <input type="text" class="form-control form-control-sm" x-model="modalData.title" placeholder="Quiz title...">
+              </div>
+
+              <!-- Quiz Mode -->
+              <div class="control-group">
+                <label class="control-label">Mode</label>
+                <div class="pill-group">
+                  <template x-for="mode in ['Simple', 'Kahoot']" :key="'m-' + mode">
+                    <button class="pill-btn" :class="{'pill-active': modalData.quiz_mode === mode}" @click="modalData.quiz_mode = mode" x-text="mode"></button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Access Type -->
+              <div class="control-group">
+                <label class="control-label">Access</label>
+                <div class="pill-group">
+                  <template x-for="atype in ['Auth', 'PIN']" :key="'m-' + atype">
+                    <button class="pill-btn" :class="{'pill-active': modalData.access_type === atype}" @click="modalData.access_type = atype" x-text="atype"></button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- PIN Code -->
+              <div class="control-group" x-show="modalData.access_type === 'PIN'">
+                <label class="control-label">PIN Code</label>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="text" class="form-control form-control-sm" x-model="modalData.pin_code" placeholder="PIN" style="max-width:120px;letter-spacing:0.15em;font-weight:600;">
+                  <svg class="quiz-copy-icon" @click="modalData.pin_code = randomPin()" title="Regenerate PIN" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor:pointer;"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                </div>
+              </div>
+
+              <!-- Timer -->
+              <div class="control-group">
+                <label class="control-label">Timer per Question</label>
+                <div class="d-flex align-items-center gap-2">
+                  <label class="toggle-label">
+                    <input type="checkbox" class="form-check-input" :checked="modalData.timer_enabled" @change="modalData.timer_enabled = $event.target.checked ? 1 : 0">
+                  </label>
+                  <div x-show="modalData.timer_enabled" class="d-flex align-items-center gap-1">
+                    <input type="number" class="form-control form-control-sm" x-model.number="modalData.timer_seconds" min="5" max="300" style="width:70px;">
+                    <span class="text-muted" style="font-size:0.75rem;">sec</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Theme -->
+              <div class="control-group">
+                <label class="control-label">Theme</label>
+                <div class="pill-group">
+                  <template x-for="t in ['Default', 'Fun Neon', 'Dark Mode', 'Pastel']" :key="'m-' + t">
+                    <button class="pill-btn" :class="{'pill-active': modalData.theme === t}" @click="modalData.theme = t" x-text="t"></button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Toggles -->
+              <div class="control-group" x-show="modalData.quiz_mode === 'Simple'">
+                <label class="toggle-label">
+                  <input type="checkbox" class="form-check-input" :checked="modalData.randomize_questions" @change="modalData.randomize_questions = $event.target.checked ? 1 : 0">
+                  <span class="ms-2" style="font-size:0.85rem;font-weight:500;">Randomize question order</span>
+                </label>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button class="btn btn-sm btn-generate" @click="confirmModal()" :disabled="!modalData.title.trim()">
+                <i data-feather="check" style="width:14px;height:14px;"></i>
+                <span x-text="modalData.name ? 'Save Settings' : 'Create Quiz'"></span>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+</div>

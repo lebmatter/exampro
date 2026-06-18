@@ -1,0 +1,369 @@
+<!-- Users Tab -->
+<div class="tab-pane fade" id="tab-users" x-data="usersStudioApp()" x-init="init()">
+  <div class="row g-3">
+
+    <!-- Column 1: Batches List -->
+    <div class="col-lg-3 col-md-4">
+      <div class="question-list-card">
+        <div class="question-list-header">
+          <h6>
+            <i data-feather="layers" style="width:14px;height:14px;"></i>
+            Batches
+            <span class="tab-count" x-text="batches.length" x-show="batches.length > 0"></span>
+          </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="openBatchModal()">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> New
+          </button>
+        </div>
+
+        <div class="exam-search-box">
+          <div class="exam-search-wrap">
+            <i data-feather="search" class="exam-search-icon" style="width:13px;height:13px;"></i>
+            <input type="text" class="form-control form-control-sm exam-search-input" x-model="batchSearchQuery" placeholder="Search batches...">
+            <button class="exam-search-clear" x-show="batchSearchQuery" @click="batchSearchQuery = ''">
+              <i data-feather="x" style="width:12px;height:12px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="question-list-body">
+          <template x-if="filteredBatches.length === 0 && !batchSearchQuery">
+            <div class="empty-state">
+              <i data-feather="layers" style="width:2rem;height:2rem;"></i>
+              <h6>No batches yet</h6>
+              <p class="text-muted mb-0">Create a batch to manage users</p>
+            </div>
+          </template>
+
+          <template x-if="filteredBatches.length === 0 && batchSearchQuery">
+            <div class="empty-state">
+              <i data-feather="search" style="width:2rem;height:2rem;"></i>
+              <h6>No batches found</h6>
+              <p class="text-muted mb-0">Try a different search term</p>
+            </div>
+          </template>
+
+          <template x-for="(batch, index) in filteredBatches" :key="batch.name">
+            <div class="question-item" :class="{'exam-item-active': selectedBatch && selectedBatch.name === batch.name}" @click="selectBatch(batch)">
+              <div class="question-item-body">
+                <div class="question-preview" x-text="batch.batch_name"></div>
+                <div class="question-badges">
+                  <span class="badge-meta">
+                    <i data-feather="users" style="width:10px;height:10px;"></i>
+                    <span x-text="batch.user_count"></span>
+                  </span>
+                  <span class="badge-type" x-text="batch.description" x-show="batch.description" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column 2: Users in Batch -->
+    <div class="col-lg-5 col-md-4">
+      <div class="question-list-card">
+        <div class="question-list-header">
+          <h6>
+            <i data-feather="users" style="width:14px;height:14px;"></i>
+            Users
+            <span class="tab-count" x-text="batchUsers.length" x-show="batchUsers.length > 0"></span>
+          </h6>
+        </div>
+
+        <template x-if="selectedBatch">
+          <div class="exam-search-box">
+            <div class="exam-search-wrap">
+              <i data-feather="search" class="exam-search-icon" style="width:13px;height:13px;"></i>
+              <input type="text" class="form-control form-control-sm exam-search-input" x-model="userFilterQuery" placeholder="Filter users...">
+              <button class="exam-search-clear" x-show="userFilterQuery" @click="userFilterQuery = ''">
+                <i data-feather="x" style="width:12px;height:12px;"></i>
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <div class="question-list-body">
+          <template x-if="!selectedBatch">
+            <div class="empty-state">
+              <i data-feather="arrow-left" style="width:2rem;height:2rem;"></i>
+              <h6>Select a batch</h6>
+              <p class="text-muted mb-0">Choose a batch to view its users</p>
+            </div>
+          </template>
+
+          <template x-if="selectedBatch && loadingUsers">
+            <div class="empty-state">
+              <span class="spinner-border text-muted mb-2" style="width:2rem;height:2rem;"></span>
+              <h6>Loading users...</h6>
+            </div>
+          </template>
+
+          <template x-if="selectedBatch && !loadingUsers && filteredUsers.length === 0 && !userFilterQuery">
+            <div class="empty-state">
+              <i data-feather="users" style="width:2rem;height:2rem;"></i>
+              <h6>No users in this batch</h6>
+              <p class="text-muted mb-0">Add users from the panel on the right</p>
+            </div>
+          </template>
+
+          <template x-if="selectedBatch && !loadingUsers && filteredUsers.length === 0 && userFilterQuery">
+            <div class="empty-state">
+              <i data-feather="search" style="width:2rem;height:2rem;"></i>
+              <h6>No matching users</h6>
+              <p class="text-muted mb-0">Try a different filter</p>
+            </div>
+          </template>
+
+          <template x-for="(user, index) in filteredUsers" :key="user.batch_user_name">
+            <div class="batch-user-item">
+              <div>
+                <div style="font-size:0.85rem;font-weight:600;color:#212529;" x-text="user.full_name || user.candidate"></div>
+                <div class="text-muted" style="font-size:0.78rem;" x-text="user.candidate"></div>
+              </div>
+              <button class="batch-user-remove" @click.stop="removeUser(user)" :disabled="removingUser === user.candidate" title="Remove from batch">
+                <template x-if="removingUser === user.candidate">
+                  <span class="spinner-border spinner-border-sm"></span>
+                </template>
+                <template x-if="removingUser !== user.candidate">
+                  <i data-feather="x" style="width:14px;height:14px;"></i>
+                </template>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column 3: Add Users -->
+    <div class="col-lg-4 col-md-4">
+      <div class="approved-card">
+        <div class="approved-header">
+          <h6>
+            <i data-feather="user-plus" style="width:14px;height:14px;"></i>
+            Add Users
+          </h6>
+        </div>
+
+        <div class="approved-body">
+          <template x-if="!selectedBatch">
+            <div class="empty-state">
+              <i data-feather="arrow-left" style="width:2rem;height:2rem;"></i>
+              <h6>Select a batch</h6>
+              <p class="text-muted mb-0">Choose a batch to add users</p>
+            </div>
+          </template>
+
+          <template x-if="selectedBatch">
+            <div style="padding:0.75rem;">
+              <!-- Mode selector -->
+              <div class="pill-group mb-3">
+                <button class="pill-btn pill-btn-sm" :class="{'pill-active': addMode === 'search'}" @click="addMode = 'search'">
+                  <i data-feather="search" style="width:12px;height:12px;"></i> Existing
+                </button>
+                <button class="pill-btn pill-btn-sm" :class="{'pill-active': addMode === 'new'}" @click="addMode = 'new'">
+                  <i data-feather="user-plus" style="width:12px;height:12px;"></i> New User
+                </button>
+                <button class="pill-btn pill-btn-sm" :class="{'pill-active': addMode === 'csv'}" @click="addMode = 'csv'">
+                  <i data-feather="upload" style="width:12px;height:12px;"></i> CSV
+                </button>
+              </div>
+
+              <!-- Search Existing Users -->
+              <div x-show="addMode === 'search'">
+                <div class="control-group">
+                  <label class="control-label">Search by name or email</label>
+                  <input type="text" class="form-control form-control-sm" x-model="searchQuery" @input.debounce.300ms="searchExistingUsers()" placeholder="Type to search...">
+                </div>
+
+                <div class="candidate-search-results" x-show="searchResults.length > 0">
+                  <template x-for="(user, ui) in searchResults" :key="'su-' + user.name">
+                    <div class="candidate-search-item" @click="toggleUserSelection(user.name)">
+                      <input type="checkbox" class="form-check-input" :checked="selectedEmails.includes(user.name)" @click.stop="toggleUserSelection(user.name)">
+                      <div>
+                        <div style="font-size:0.85rem;font-weight:600;" x-text="user.full_name"></div>
+                        <div class="text-muted" style="font-size:0.78rem;" x-text="user.name"></div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <template x-if="searchQuery && searchResults.length === 0">
+                  <p class="text-muted" style="font-size:0.8rem;">No users found.</p>
+                </template>
+
+                <div class="mt-2" x-show="selectedEmails.length > 0">
+                  <span class="text-muted" style="font-size:0.8rem;" x-text="selectedEmails.length + ' user(s) selected'"></span>
+                </div>
+
+                <button class="btn btn-sm btn-generate w-100 mt-2" @click="addSelectedUsers()" :disabled="addingUsers || selectedEmails.length === 0" x-show="selectedEmails.length > 0">
+                  <template x-if="addingUsers">
+                    <span><span class="spinner-border spinner-border-sm me-1"></span> Adding...</span>
+                  </template>
+                  <template x-if="!addingUsers">
+                    <span>
+                      <i data-feather="user-plus" style="width:14px;height:14px;"></i>
+                      Add to Batch
+                    </span>
+                  </template>
+                </button>
+              </div>
+
+              <!-- New User Form -->
+              <div x-show="addMode === 'new'">
+                <div class="control-group">
+                  <label class="control-label">Email <span class="text-danger">*</span></label>
+                  <input type="email" class="form-control form-control-sm" x-model="newUserForm.email" placeholder="user@example.com">
+                </div>
+                <div class="control-group">
+                  <label class="control-label">First Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control form-control-sm" x-model="newUserForm.first_name" placeholder="First name">
+                </div>
+                <div class="control-group">
+                  <label class="control-label">Last Name</label>
+                  <input type="text" class="form-control form-control-sm" x-model="newUserForm.last_name" placeholder="Last name">
+                </div>
+
+                <button class="btn btn-sm btn-generate w-100" @click="createAndAddUser()" :disabled="creatingUser || !newUserForm.email || !newUserForm.first_name">
+                  <template x-if="creatingUser">
+                    <span><span class="spinner-border spinner-border-sm me-1"></span> Creating...</span>
+                  </template>
+                  <template x-if="!creatingUser">
+                    <span>
+                      <i data-feather="user-plus" style="width:14px;height:14px;"></i>
+                      Create &amp; Add
+                    </span>
+                  </template>
+                </button>
+                <p class="text-muted mt-2 mb-0" style="font-size:0.78rem;">Creates a new user account and adds them to this batch. If the user already exists, they will just be added to the batch.</p>
+              </div>
+
+              <!-- CSV Upload -->
+              <div x-show="addMode === 'csv'">
+                <template x-if="!csvFile">
+                  <div>
+                    <div class="file-upload-area" :class="{'file-drag-over': csvDragOver}"
+                         @click="$refs.csvFileInput.click()"
+                         @dragover.prevent="csvDragOver = true"
+                         @dragleave.prevent="csvDragOver = false"
+                         @drop.prevent="csvDragOver = false; handleCsvDrop($event)">
+                      <div class="file-upload-placeholder">
+                        <i data-feather="upload-cloud" style="width:16px;height:16px;"></i>
+                        <span>Drop a CSV file here or click to browse</span>
+                      </div>
+                    </div>
+                    <input type="file" accept=".csv" x-ref="csvFileInput" style="display:none;" @change="handleCsvSelect($event)">
+                    <p class="text-muted mt-2 mb-0" style="font-size:0.78rem;">CSV should have columns: email, first_name, last_name</p>
+                  </div>
+                </template>
+
+                <template x-if="csvFile">
+                  <div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <span style="font-size:0.85rem;font-weight:600;" x-text="csvFile.name"></span>
+                      <button class="btn btn-sm btn-link text-danger p-0" @click="removeCsvFile()">
+                        <i data-feather="x" style="width:14px;height:14px;"></i>
+                      </button>
+                    </div>
+
+                    <template x-if="csvError">
+                      <div class="alert-banner mb-2" style="font-size:0.78rem;">
+                        <i data-feather="alert-triangle" style="width:14px;height:14px;"></i>
+                        <span x-text="csvError"></span>
+                      </div>
+                    </template>
+
+                    <template x-if="csvParsed.length > 0">
+                      <div>
+                        <div class="csv-preview-wrap">
+                          <table class="table table-sm mb-0">
+                            <thead>
+                              <tr>
+                                <th style="font-size:0.72rem;text-transform:uppercase;color:#6c757d;">Email</th>
+                                <th style="font-size:0.72rem;text-transform:uppercase;color:#6c757d;">First Name</th>
+                                <th style="font-size:0.72rem;text-transform:uppercase;color:#6c757d;">Last Name</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="(row, ri) in csvParsed.slice(0, 50)" :key="'csv-' + ri">
+                                <tr :class="{'csv-row-error': !row.email || !row.first_name}">
+                                  <td style="font-size:0.8rem;" x-text="row.email"></td>
+                                  <td style="font-size:0.8rem;" x-text="row.first_name"></td>
+                                  <td style="font-size:0.8rem;" x-text="row.last_name"></td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mt-2">
+                          <span class="text-muted" style="font-size:0.78rem;" x-text="csvParsed.length + ' row(s) parsed'"></span>
+                          <template x-if="csvParsed.length > 50">
+                            <span class="text-muted" style="font-size:0.78rem;">Showing first 50</span>
+                          </template>
+                        </div>
+
+                        <button class="btn btn-sm btn-generate w-100 mt-2" @click="importCsvUsers()" :disabled="importingCsv || csvParsed.length === 0">
+                          <template x-if="importingCsv">
+                            <span><span class="spinner-border spinner-border-sm me-1"></span> Importing...</span>
+                          </template>
+                          <template x-if="!importingCsv">
+                            <span>
+                              <i data-feather="upload" style="width:14px;height:14px;"></i>
+                              Import <span x-text="csvParsed.length"></span> Users
+                            </span>
+                          </template>
+                        </button>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Batch Modal -->
+  <div class="modal fade" id="batchCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title">Create Batch</span>
+          <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+            <i data-feather="x" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="control-group">
+            <label class="control-label">Batch Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" x-model="batchForm.batch_name" placeholder="e.g. Batch 2026 Q3">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Description</label>
+            <textarea class="form-control form-control-sm" rows="2" x-model="batchForm.description" placeholder="Optional description..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="d-flex gap-2 w-100">
+            <button class="btn btn-sm btn-generate" @click="createBatch()" :disabled="creatingBatch || !batchForm.batch_name.trim()">
+              <template x-if="creatingBatch">
+                <span><span class="spinner-border spinner-border-sm me-1"></span> Creating...</span>
+              </template>
+              <template x-if="!creatingBatch">
+                <span>
+                  <i data-feather="save" style="width:14px;height:14px;"></i>
+                  Create Batch
+                </span>
+              </template>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

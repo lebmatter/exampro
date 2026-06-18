@@ -44,7 +44,7 @@ function quizStudioApp() {
     },
 
     init() {
-      this.aiConfigured = this.$el.dataset.aiConfigured === "true";
+      this.aiConfigured = (window.examStudioData && window.examStudioData.aiConfigured) || this.$el.dataset.aiConfigured === "true";
       this.loadQuizzes();
       this.loadCategories();
     },

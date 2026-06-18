@@ -3,6 +3,7 @@ import json
 import re
 
 import frappe
+from frappe.utils import now_datetime
 import requests
 
 
@@ -477,6 +478,364 @@ def _extract_image_url(content):
 	return None
 
 
+# --- Exams tab API ---
+
+
+@frappe.whitelist()
+def get_exams():
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	return _get_recent_exams()
+
+
+def _get_recent_exams(limit=10):
+	rows = frappe.db.sql(
+		"""
+		SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
+			   e.question_type, e.total_questions, e.total_marks
+		FROM `tabExam` e
+		INNER JOIN `tabExam Schedule` s ON s.exam = e.name
+		ORDER BY s.start_date_time DESC
+		LIMIT %(limit)s
+		""",
+		{"limit": limit},
+		as_dict=True,
+	)
+	return rows
+
+
+@frappe.whitelist()
+def search_exams(query):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	query = (query or "").strip()
+	if not query or len(query) < 2:
+		return []
+
+	like = f"%{frappe.db.escape(query, percent=False)}%"
+	return frappe.db.sql(
+		"""
+		SELECT name, title, exam_mode, duration, question_type,
+			   total_questions, total_marks
+		FROM `tabExam`
+		WHERE title LIKE %(like)s
+		ORDER BY modified DESC
+		LIMIT 20
+		""",
+		{"like": like},
+		as_dict=True,
+	)
+
+
+@frappe.whitelist()
+def get_exam_detail(name):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	doc = frappe.get_doc("Exam", name)
+	return {
+		"name": doc.name,
+		"title": doc.title,
+		"exam_mode": doc.exam_mode,
+		"duration": doc.duration,
+		"pass_percentage": doc.pass_percentage,
+		"question_type": doc.question_type,
+		"description": doc.description or "",
+		"instructions": doc.instructions or "",
+		"randomize_questions": bool(doc.randomize_questions),
+		"select_questions": [
+			{
+				"question_category": sq.question_category,
+				"no_of_questions": sq.no_of_questions,
+				"mark_per_question": sq.mark_per_question,
+			}
+			for sq in (doc.select_questions or [])
+		],
+	}
+
+
+@frappe.whitelist()
+def get_exam_schedules(exam):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	schedules = frappe.get_all(
+		"Exam Schedule",
+		filters={"exam": exam},
+		fields=["name", "start_date_time", "schedule_type", "duration",
+				"schedule_expire_in_days", "badge"],
+		order_by="start_date_time desc",
+	)
+
+	now = now_datetime()
+	for sch in schedules:
+		sch["status"] = _compute_schedule_status(sch, now)
+		sch["candidate_count"] = frappe.db.count(
+			"Exam Submission", {"exam_schedule": sch["name"]}
+		)
+
+	return schedules
+
+
+@frappe.whitelist()
+def get_ongoing_schedules():
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	now = now_datetime()
+	schedules = frappe.db.sql(
+		"""
+		SELECT es.name, es.exam, es.start_date_time, es.duration,
+		       es.schedule_type, es.schedule_expire_in_days,
+		       e.title as exam_title
+		FROM `tabExam Schedule` es
+		JOIN `tabExam` e ON e.name = es.exam
+		ORDER BY es.start_date_time
+		""",
+		as_dict=True,
+	)
+
+	ongoing = []
+	for sch in schedules:
+		status = _compute_schedule_status(sch, now)
+		if status == "Ongoing":
+			sch["candidate_count"] = frappe.db.count(
+				"Exam Submission", {"exam_schedule": sch["name"]}
+			)
+			ongoing.append(sch)
+
+	return ongoing
+
+
+def _compute_schedule_status(sch, now):
+	from datetime import timedelta
+	start = sch.get("start_date_time")
+	if not start:
+		return "Upcoming"
+
+	duration_mins = sch.get("duration") or 0
+	expire_days = sch.get("schedule_expire_in_days") or 0
+	schedule_type = sch.get("schedule_type") or "Fixed"
+
+	end = start + timedelta(minutes=duration_mins)
+	if schedule_type == "Flexible":
+		end = start + timedelta(days=expire_days, minutes=duration_mins)
+
+	if now < start:
+		return "Upcoming"
+	elif now <= end:
+		return "Ongoing"
+	else:
+		return "Completed"
+
+
+@frappe.whitelist()
+def get_schedule_candidates(schedule):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	candidates = frappe.get_all(
+		"Exam Submission",
+		filters={"exam_schedule": schedule},
+		fields=["name", "candidate", "candidate_name", "status",
+				"total_marks", "result_status"],
+		order_by="creation desc",
+	)
+
+	exam_total = 0
+	sch_doc = frappe.db.get_value("Exam Schedule", schedule, "exam")
+	if sch_doc:
+		exam_total = frappe.db.get_value("Exam", sch_doc, "total_marks") or 0
+
+	for c in candidates:
+		c["exam_total_marks"] = exam_total
+
+	return candidates
+
+
+@frappe.whitelist()
+def search_users(query):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	query = (query or "").strip()
+	if not query or len(query) < 2:
+		return []
+
+	like = f"%{frappe.db.escape(query, percent=False)}%"
+	return frappe.db.sql(
+		"""
+		SELECT name, full_name
+		FROM `tabUser`
+		WHERE enabled = 1
+		  AND user_type = 'Website User'
+		  AND name NOT IN ('Guest', 'Administrator')
+		  AND (name LIKE %(like)s OR full_name LIKE %(like)s)
+		ORDER BY full_name
+		LIMIT 20
+		""",
+		{"like": like},
+		as_dict=True,
+	)
+
+
+@frappe.whitelist()
+def save_exam(data):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	if isinstance(data, str):
+		data = json.loads(data)
+
+	name = data.get("name")
+	if name:
+		doc = frappe.get_doc("Exam", name)
+	else:
+		doc = frappe.new_doc("Exam")
+
+	for field in ("title", "exam_mode", "duration", "pass_percentage",
+				  "question_type", "description", "instructions"):
+		if field in data:
+			doc.set(field, data[field])
+
+	if "randomize_questions" in data:
+		doc.randomize_questions = 1 if data["randomize_questions"] else 0
+
+	if "select_questions" in data:
+		doc.select_questions = []
+		for sq in data["select_questions"]:
+			if sq.get("question_category"):
+				doc.append("select_questions", {
+					"question_category": sq["question_category"],
+					"no_of_questions": sq.get("no_of_questions", 1),
+					"mark_per_question": sq.get("mark_per_question", 1),
+				})
+
+	doc.save()
+	return {
+		"name": doc.name,
+		"title": doc.title,
+		"exam_mode": doc.exam_mode,
+		"duration": doc.duration,
+		"question_type": doc.question_type,
+		"total_questions": doc.total_questions or 0,
+		"total_marks": doc.total_marks or 0,
+	}
+
+
+@frappe.whitelist()
+def save_schedule(data):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	if isinstance(data, str):
+		data = json.loads(data)
+
+	name = data.get("name")
+	if name:
+		doc = frappe.get_doc("Exam Schedule", name)
+	else:
+		doc = frappe.new_doc("Exam Schedule")
+		doc.exam = data.get("exam")
+
+	for field in ("start_date_time", "schedule_type", "schedule_expire_in_days", "badge"):
+		if field in data:
+			doc.set(field, data[field])
+
+	doc.save()
+
+	now = now_datetime()
+	sch_dict = {
+		"name": doc.name,
+		"start_date_time": doc.start_date_time,
+		"schedule_type": doc.schedule_type,
+		"duration": doc.duration,
+		"schedule_expire_in_days": doc.schedule_expire_in_days or 0,
+		"badge": doc.badge or "",
+	}
+	sch_dict["status"] = _compute_schedule_status(sch_dict, now)
+	sch_dict["candidate_count"] = frappe.db.count(
+		"Exam Submission", {"exam_schedule": doc.name}
+	)
+	return sch_dict
+
+
+@frappe.whitelist()
+def get_batches():
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	return frappe.get_all("Exam Batch", fields=["name"], order_by="name")
+
+
+@frappe.whitelist()
+def add_candidates_to_schedule(schedule_name, emails=None, batch_name=None):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	schedule = frappe.get_doc("Exam Schedule", schedule_name)
+	added = 0
+	duplicates = 0
+	invalid_users = []
+
+	if emails:
+		email_list = [e.strip() for e in re.split(r"[,;\n]+", emails) if e.strip()]
+		for email in email_list:
+			if not frappe.db.exists("User", email):
+				invalid_users.append(email)
+				continue
+
+			existing = frappe.db.exists("Exam Submission", {
+				"exam_schedule": schedule_name,
+				"candidate": email,
+				"status": ["not in", ["Terminated", "Registration Cancelled"]],
+			})
+			if existing:
+				duplicates += 1
+				continue
+
+			doc = frappe.get_doc({
+				"doctype": "Exam Submission",
+				"exam": schedule.exam,
+				"exam_schedule": schedule_name,
+				"candidate": email,
+				"status": "Registered",
+			})
+			doc.insert(ignore_permissions=True)
+			added += 1
+
+	if batch_name:
+		batch_users = frappe.get_all(
+			"Exam Batch User",
+			filters={"exam_batch": batch_name},
+			fields=["candidate"],
+		)
+		for bu in batch_users:
+			existing = frappe.db.exists("Exam Submission", {
+				"exam_schedule": schedule_name,
+				"candidate": bu.candidate,
+				"status": ["not in", ["Terminated", "Registration Cancelled"]],
+			})
+			if existing:
+				duplicates += 1
+				continue
+
+			doc = frappe.get_doc({
+				"doctype": "Exam Submission",
+				"exam": schedule.exam,
+				"exam_schedule": schedule_name,
+				"candidate": bu.candidate,
+				"status": "Registered",
+			})
+			doc.insert(ignore_permissions=True)
+			added += 1
+
+	frappe.db.commit()
+	return {"added": added, "duplicates": duplicates, "invalid_users": invalid_users}
+
+
 def build_user_prompt(prompt, file_content, count, difficulty, question_type, category):
 	parts = []
 
@@ -554,3 +913,184 @@ def parse_questions_json(content):
 			pass
 
 	return None
+
+
+@frappe.whitelist()
+def get_batches_with_counts():
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	batches = frappe.get_all(
+		"Exam Batch",
+		fields=["name", "batch_name", "description"],
+		order_by="batch_name",
+	)
+	for b in batches:
+		b["user_count"] = frappe.db.count("Exam Batch User", {"exam_batch": b.name})
+	return batches
+
+
+@frappe.whitelist()
+def get_batch_users(batch_name):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	if not frappe.db.exists("Exam Batch", batch_name):
+		frappe.throw("Batch not found", frappe.DoesNotExistError)
+
+	return frappe.db.sql(
+		"""
+		SELECT bu.name as batch_user_name, bu.candidate,
+		       u.full_name, u.enabled
+		FROM `tabExam Batch User` bu
+		LEFT JOIN `tabUser` u ON u.name = bu.candidate
+		WHERE bu.exam_batch = %(batch)s
+		ORDER BY u.full_name
+		""",
+		{"batch": batch_name},
+		as_dict=True,
+	)
+
+
+@frappe.whitelist()
+def create_batch(batch_name, description=""):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	doc = frappe.get_doc({
+		"doctype": "Exam Batch",
+		"batch_name": batch_name,
+		"description": description,
+	})
+	doc.insert()
+	return {
+		"name": doc.name,
+		"batch_name": doc.batch_name,
+		"description": doc.description,
+		"user_count": 0,
+	}
+
+
+@frappe.whitelist()
+def add_users_to_batch(batch_name, emails):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	if not frappe.db.exists("Exam Batch", batch_name):
+		frappe.throw("Batch not found", frappe.DoesNotExistError)
+
+	email_list = [e.strip() for e in re.split(r"[,;\n]+", emails) if e.strip()]
+	added = 0
+	skipped = 0
+	not_found = []
+
+	for email in email_list:
+		if not frappe.db.exists("User", email):
+			not_found.append(email)
+			continue
+
+		if frappe.db.exists("Exam Batch User", {"exam_batch": batch_name, "candidate": email}):
+			skipped += 1
+			continue
+
+		doc = frappe.get_doc({
+			"doctype": "Exam Batch User",
+			"exam_batch": batch_name,
+			"candidate": email,
+		})
+		doc.insert(ignore_permissions=True)
+		added += 1
+
+	frappe.db.commit()
+	return {"added": added, "skipped": skipped, "not_found": not_found}
+
+
+@frappe.whitelist()
+def create_users_and_add_to_batch(batch_name, users_data):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	if not frappe.db.exists("Exam Batch", batch_name):
+		frappe.throw("Batch not found", frappe.DoesNotExistError)
+
+	if isinstance(users_data, str):
+		users_data = json.loads(users_data)
+
+	email_pattern = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
+	created = 0
+	existing_added = 0
+	skipped = 0
+	errors = []
+
+	for entry in users_data:
+		email = (entry.get("email") or "").strip().lower()
+		first_name = (entry.get("first_name") or "").strip()
+		last_name = (entry.get("last_name") or "").strip()
+
+		if not email or not email_pattern.match(email):
+			errors.append({"email": email, "error": "Invalid email format"})
+			continue
+
+		if not first_name:
+			errors.append({"email": email, "error": "First name is required"})
+			continue
+
+		user_exists = frappe.db.exists("User", email)
+
+		if not user_exists:
+			try:
+				user_doc = frappe.get_doc({
+					"doctype": "User",
+					"email": email,
+					"first_name": first_name,
+					"last_name": last_name,
+					"user_type": "Website User",
+					"send_welcome_email": 0,
+					"roles": [{"role": "Exam Candidate"}],
+				})
+				user_doc.insert(ignore_permissions=True)
+				created += 1
+			except Exception as e:
+				errors.append({"email": email, "error": str(e)})
+				continue
+		else:
+			existing_added += 1
+
+		if frappe.db.exists("Exam Batch User", {"exam_batch": batch_name, "candidate": email}):
+			if user_exists:
+				existing_added -= 1
+			skipped += 1
+			continue
+
+		batch_user = frappe.get_doc({
+			"doctype": "Exam Batch User",
+			"exam_batch": batch_name,
+			"candidate": email,
+		})
+		batch_user.insert(ignore_permissions=True)
+
+	frappe.db.commit()
+	return {
+		"created": created,
+		"existing_added": existing_added,
+		"skipped": skipped,
+		"errors": errors,
+	}
+
+
+@frappe.whitelist()
+def remove_user_from_batch(batch_name, email):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	batch_user = frappe.db.get_value(
+		"Exam Batch User",
+		{"exam_batch": batch_name, "candidate": email},
+		"name",
+	)
+	if not batch_user:
+		frappe.throw("User not found in batch", frappe.DoesNotExistError)
+
+	frappe.delete_doc("Exam Batch User", batch_user, ignore_permissions=True)
+	frappe.db.commit()
+	return {"success": True}

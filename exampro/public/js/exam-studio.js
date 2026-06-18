@@ -42,17 +42,87 @@ function examStudioApp() {
     _cacheTimer: null,
     _modal: null,
 
+    // --- Exams tab state ---
+    exams: window.examStudioData?.exams || [],
+    selectedExam: null,
+    schedules: [],
+    selectedSchedule: null,
+    candidates: [],
+    batches: window.examStudioData?.batches || [],
+
+    loadingSchedules: false,
+    loadingCandidates: false,
+    savingExam: false,
+    savingSchedule: false,
+    addingCandidates: false,
+
+    examModalMode: "create",
+    examModalTab: "details",
+    examForm: {
+      name: "",
+      title: "",
+      exam_mode: "Exam",
+      duration: 60,
+      pass_percentage: 50,
+      question_type: "Choices",
+      description: "",
+      instructions: "",
+      randomize_questions: false,
+      select_questions: [],
+    },
+
+    scheduleForm: {
+      start_date_time: "",
+      schedule_type: "Fixed",
+      schedule_expire_in_days: 7,
+      badge: "",
+    },
+
+    candidateAddMode: "search",
+    candidateEmails: "",
+    candidateSearchQuery: "",
+    candidateSearchResults: [],
+    selectedUsers: [],
+    candidateBatch: "",
+
+    examSearchQuery: "",
+    scheduleModalMode: "create",
+
+    ongoingSchedules: [],
+
+    _examModal: null,
+    _scheduleModal: null,
+    _candidateModal: null,
+
     init() {
       this.restoreState();
+      this.loadOngoingSchedules();
       this.$nextTick(() => {
         if (typeof feather !== "undefined") feather.replace();
         this._modal = new bootstrap.Modal(document.getElementById("questionEditorModal"));
+
+        var examModalEl = document.getElementById("examEditorModal");
+        if (examModalEl) this._examModal = new bootstrap.Modal(examModalEl);
+        var scheduleModalEl = document.getElementById("scheduleEditorModal");
+        if (scheduleModalEl) this._scheduleModal = new bootstrap.Modal(scheduleModalEl);
+        var candidateModalEl = document.getElementById("candidateAddModal");
+        if (candidateModalEl) this._candidateModal = new bootstrap.Modal(candidateModalEl);
       });
     },
 
     replaceIcons() {
       this.$nextTick(() => {
         if (typeof feather !== "undefined") feather.replace();
+      });
+    },
+
+    loadOngoingSchedules() {
+      frappe.call({
+        method: "exampro.exam_pro.api.exam_studio.get_ongoing_schedules",
+        callback: (r) => {
+          this.ongoingSchedules = r.message || [];
+          this.replaceIcons();
+        },
       });
     },
 
@@ -631,6 +701,398 @@ function examStudioApp() {
       }
 
       this.saving = false;
+    },
+
+    // =============================================
+    // Exams Tab Methods
+    // =============================================
+
+    formatDateTime(dt) {
+      if (!dt) return "";
+      var d = new Date(dt);
+      return d.toLocaleDateString("en-IN", {
+        day: "numeric", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      });
+    },
+
+    async selectExam(exam) {
+      this.selectedExam = exam;
+      this.selectedSchedule = null;
+      this.candidates = [];
+      this.schedules = [];
+      await this.loadSchedules(exam.name);
+      this.replaceIcons();
+    },
+
+    async loadSchedules(examName) {
+      this.loadingSchedules = true;
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.get_exam_schedules",
+          args: { exam: examName },
+        });
+        this.schedules = r.message || [];
+      } catch (e) {
+        this.schedules = [];
+      }
+      this.loadingSchedules = false;
+      this.replaceIcons();
+    },
+
+    async selectSchedule(sch) {
+      this.selectedSchedule = sch;
+      this.candidates = [];
+      await this.loadCandidates(sch.name);
+      this.replaceIcons();
+    },
+
+    async loadCandidates(scheduleName) {
+      this.loadingCandidates = true;
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.get_schedule_candidates",
+          args: { schedule: scheduleName },
+        });
+        this.candidates = r.message || [];
+      } catch (e) {
+        this.candidates = [];
+      }
+      this.loadingCandidates = false;
+      this.replaceIcons();
+    },
+
+    // --- Exam search ---
+
+    async searchExams() {
+      var q = (this.examSearchQuery || "").trim();
+      if (!q) {
+        this.exams = window.examStudioData?.exams || [];
+        this.replaceIcons();
+        return;
+      }
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.search_exams",
+          args: { query: q },
+        });
+        this.exams = r.message || [];
+      } catch (e) {
+        this.exams = [];
+      }
+      this.replaceIcons();
+    },
+
+    clearExamSearch() {
+      this.examSearchQuery = "";
+      this.exams = window.examStudioData?.exams || [];
+      this.replaceIcons();
+    },
+
+    // --- Edit shortcuts ---
+
+    async editExam(exam) {
+      this.examModalMode = "edit";
+      this.examModalTab = "details";
+      this.examForm = {
+        name: exam.name,
+        title: exam.title || "",
+        exam_mode: exam.exam_mode || "Exam",
+        duration: exam.duration || 60,
+        pass_percentage: exam.pass_percentage || 50,
+        question_type: exam.question_type || "Choices",
+        description: "",
+        instructions: "",
+        randomize_questions: false,
+        select_questions: [],
+      };
+      if (this._examModal) this._examModal.show();
+      this.replaceIcons();
+
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.get_exam_detail",
+          args: { name: exam.name },
+        });
+        if (r.message) {
+          var detail = r.message;
+          this.examForm.description = detail.description || "";
+          this.examForm.instructions = detail.instructions || "";
+          this.examForm.randomize_questions = detail.randomize_questions || false;
+          this.examForm.pass_percentage = detail.pass_percentage || 50;
+          this.examForm.select_questions = (detail.select_questions || []).map(function(sq) {
+            return {
+              question_category: sq.question_category,
+              no_of_questions: sq.no_of_questions,
+              mark_per_question: sq.mark_per_question,
+            };
+          });
+        }
+      } catch (e) {
+        // keep modal open with basic data
+      }
+      this.replaceIcons();
+    },
+
+    editSchedule(sch) {
+      this.openScheduleModal("edit", sch);
+    },
+
+    // --- Exam modal ---
+
+    openExamModal(mode, exam) {
+      this.examModalMode = mode;
+      this.examModalTab = "details";
+      if (mode === "edit" && exam) {
+        this.examForm = {
+          name: exam.name,
+          title: exam.title || "",
+          exam_mode: exam.exam_mode || "Exam",
+          duration: exam.duration || 60,
+          pass_percentage: exam.pass_percentage || 50,
+          question_type: exam.question_type || "Choices",
+          description: exam.description || "",
+          instructions: exam.instructions || "",
+          randomize_questions: exam.randomize_questions || false,
+          select_questions: (exam.select_questions || []).map(function(sq) {
+            return {
+              question_category: sq.question_category,
+              no_of_questions: sq.no_of_questions,
+              mark_per_question: sq.mark_per_question,
+            };
+          }),
+        };
+      } else {
+        this.examForm = {
+          name: "",
+          title: "",
+          exam_mode: "Exam",
+          duration: 60,
+          pass_percentage: 50,
+          question_type: "Choices",
+          description: "",
+          instructions: "",
+          randomize_questions: false,
+          select_questions: [],
+        };
+      }
+      if (this._examModal) this._examModal.show();
+      this.replaceIcons();
+    },
+
+    addExamCategory() {
+      this.examForm.select_questions.push({
+        question_category: "",
+        no_of_questions: 1,
+        mark_per_question: 1,
+      });
+      this.replaceIcons();
+    },
+
+    async saveExam() {
+      if (!this.examForm.title || !this.examForm.duration || !this.examForm.description) return;
+      this.savingExam = true;
+
+      try {
+        var payload = {
+          title: this.examForm.title,
+          exam_mode: this.examForm.exam_mode,
+          duration: this.examForm.duration,
+          pass_percentage: this.examForm.pass_percentage,
+          question_type: this.examForm.question_type,
+          description: this.examForm.description,
+          instructions: this.examForm.instructions,
+          randomize_questions: this.examForm.randomize_questions,
+          select_questions: this.examForm.select_questions.filter(function(sq) {
+            return sq.question_category;
+          }),
+        };
+        if (this.examModalMode === "edit" && this.examForm.name) {
+          payload.name = this.examForm.name;
+        }
+
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.save_exam",
+          args: { data: JSON.stringify(payload) },
+        });
+
+        if (r.message) {
+          var result = r.message;
+          if (this.examModalMode === "create") {
+            this.exams.unshift(result);
+            frappe.show_alert({ message: "Exam created", indicator: "green" });
+          } else {
+            var idx = this.exams.findIndex(function(e) { return e.name === result.name; });
+            if (idx >= 0) {
+              this.exams[idx] = result;
+            }
+            frappe.show_alert({ message: "Exam updated", indicator: "green" });
+          }
+        }
+
+        if (this._examModal) this._examModal.hide();
+      } catch (e) {
+        // error shown by frappe
+      }
+
+      this.savingExam = false;
+      this.replaceIcons();
+    },
+
+    // --- Schedule modal ---
+
+    openScheduleModal(mode, sch) {
+      this.scheduleModalMode = mode || "create";
+      if (mode === "edit" && sch) {
+        var dt = (sch.start_date_time || "").replace(" ", "T");
+        if (dt.length > 16) dt = dt.substring(0, 16);
+        this.scheduleForm = {
+          name: sch.name,
+          start_date_time: dt,
+          schedule_type: sch.schedule_type || "Fixed",
+          schedule_expire_in_days: sch.schedule_expire_in_days || 7,
+          badge: sch.badge || "",
+        };
+      } else {
+        this.scheduleForm = {
+          name: "",
+          start_date_time: "",
+          schedule_type: "Fixed",
+          schedule_expire_in_days: 7,
+          badge: "",
+        };
+      }
+      if (this._scheduleModal) this._scheduleModal.show();
+      this.replaceIcons();
+    },
+
+    async saveSchedule() {
+      if (!this.scheduleForm.start_date_time || !this.selectedExam) return;
+      this.savingSchedule = true;
+
+      try {
+        var startDt = this.scheduleForm.start_date_time.replace("T", " ");
+        if (startDt.length === 16) startDt += ":00";
+
+        var payload = {
+          exam: this.selectedExam.name,
+          start_date_time: startDt,
+          schedule_type: this.scheduleForm.schedule_type,
+          badge: this.scheduleForm.badge || "",
+        };
+        if (this.scheduleForm.schedule_type === "Flexible") {
+          payload.schedule_expire_in_days = this.scheduleForm.schedule_expire_in_days;
+        }
+        if (this.scheduleModalMode === "edit" && this.scheduleForm.name) {
+          payload.name = this.scheduleForm.name;
+        }
+
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.save_schedule",
+          args: { data: JSON.stringify(payload) },
+        });
+
+        if (r.message) {
+          var label = this.scheduleModalMode === "create" ? "Schedule created" : "Schedule updated";
+          frappe.show_alert({ message: label, indicator: "green" });
+          await this.loadSchedules(this.selectedExam.name);
+        }
+
+        if (this._scheduleModal) this._scheduleModal.hide();
+      } catch (e) {
+        // error shown by frappe
+      }
+
+      this.savingSchedule = false;
+      this.replaceIcons();
+    },
+
+    // --- Candidate modal ---
+
+    openCandidateModal() {
+      this.candidateAddMode = "search";
+      this.candidateEmails = "";
+      this.candidateSearchQuery = "";
+      this.candidateSearchResults = [];
+      this.selectedUsers = [];
+      this.candidateBatch = "";
+      if (this._candidateModal) this._candidateModal.show();
+      this.replaceIcons();
+    },
+
+    async searchUsers() {
+      var q = (this.candidateSearchQuery || "").trim();
+      if (q.length < 2) {
+        this.candidateSearchResults = [];
+        return;
+      }
+
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.search_users",
+          args: { query: q },
+        });
+        this.candidateSearchResults = r.message || [];
+      } catch (e) {
+        this.candidateSearchResults = [];
+      }
+    },
+
+    toggleUserSelection(user) {
+      var idx = this.selectedUsers.indexOf(user.name);
+      if (idx >= 0) {
+        this.selectedUsers.splice(idx, 1);
+      } else {
+        this.selectedUsers.push(user.name);
+      }
+    },
+
+    async addCandidates() {
+      if (!this.selectedSchedule) return;
+      this.addingCandidates = true;
+
+      try {
+        var args = { schedule_name: this.selectedSchedule.name };
+
+        if (this.candidateAddMode === "search") {
+          args.emails = this.selectedUsers.join(",");
+        } else if (this.candidateAddMode === "email") {
+          args.emails = this.candidateEmails;
+        } else if (this.candidateAddMode === "batch") {
+          args.batch_name = this.candidateBatch;
+        }
+
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.add_candidates_to_schedule",
+          args: args,
+        });
+
+        if (r.message) {
+          var msg = r.message;
+          var text = msg.added + " candidate(s) added";
+          if (msg.duplicates > 0) text += ", " + msg.duplicates + " already registered";
+          if (msg.invalid_users && msg.invalid_users.length > 0) {
+            text += ", " + msg.invalid_users.length + " invalid";
+          }
+          frappe.show_alert({
+            message: text,
+            indicator: msg.added > 0 ? "green" : "orange",
+          });
+
+          await this.loadCandidates(this.selectedSchedule.name);
+
+          if (this.selectedExam) {
+            await this.loadSchedules(this.selectedExam.name);
+          }
+        }
+
+        if (this._candidateModal) this._candidateModal.hide();
+      } catch (e) {
+        // error shown by frappe
+      }
+
+      this.addingCandidates = false;
+      this.replaceIcons();
     },
   };
 }

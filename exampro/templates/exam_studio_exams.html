@@ -1,0 +1,545 @@
+<!-- Exams Tab -->
+<div class="tab-pane fade show active" id="tab-exams">
+
+  <!-- Live exam banner -->
+  <template x-for="sch in ongoingSchedules" :key="'live-' + sch.name">
+    <div class="live-exam-banner mb-3">
+      <div class="live-exam-banner-left">
+        <span class="live-pulse"></span>
+        <span class="live-exam-banner-label">LIVE</span>
+        <span class="live-exam-banner-info">
+          <strong x-text="sch.exam_title"></strong>
+          <span class="text-muted mx-1">&middot;</span>
+          <span x-text="formatDateTime(sch.start_date_time)"></span>
+          <span class="text-muted mx-1">&middot;</span>
+          <span x-text="(sch.candidate_count || 0) + ' candidates'"></span>
+        </span>
+      </div>
+      <a :href="'/app/schedule-dashboard?exam_schedule=' + encodeURIComponent(sch.name)" class="live-exam-banner-link">
+        See live dashboard
+        <i data-feather="arrow-right" style="width:14px;height:14px;"></i>
+      </a>
+    </div>
+  </template>
+
+  <div class="row g-3">
+
+    <!-- Column 1: Exams List -->
+    <div class="col-lg-3 col-md-4">
+      <div class="question-list-card">
+        <div class="question-list-header">
+          <h6>
+            <i data-feather="file-text" style="width:14px;height:14px;"></i>
+            Exams
+            <span class="tab-count" x-text="exams.length" x-show="exams.length > 0"></span>
+          </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="openExamModal('create')">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> New
+          </button>
+        </div>
+
+        <!-- Search box -->
+        <div class="exam-search-box">
+          <div class="exam-search-wrap">
+            <i data-feather="search" class="exam-search-icon" style="width:13px;height:13px;"></i>
+            <input type="text" class="form-control form-control-sm exam-search-input" x-model="examSearchQuery" @input.debounce.300ms="searchExams()" placeholder="Search exams...">
+            <button class="exam-search-clear" x-show="examSearchQuery" @click="clearExamSearch()">
+              <i data-feather="x" style="width:12px;height:12px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="question-list-body">
+          <template x-if="exams.length === 0 && !examSearchQuery">
+            <div class="empty-state">
+              <i data-feather="file-text" style="width:2rem;height:2rem;"></i>
+              <h6>No recent exams</h6>
+              <p class="text-muted mb-0">Create an exam and schedule it</p>
+            </div>
+          </template>
+
+          <template x-if="exams.length === 0 && examSearchQuery">
+            <div class="empty-state">
+              <i data-feather="search" style="width:2rem;height:2rem;"></i>
+              <h6>No exams found</h6>
+              <p class="text-muted mb-0">Try a different search term</p>
+            </div>
+          </template>
+
+          <template x-for="(exam, index) in exams" :key="exam.name">
+            <div class="question-item" :class="{'exam-item-active': selectedExam && selectedExam.name === exam.name}" @click="selectExam(exam)">
+              <div class="question-item-body">
+                <div class="question-preview" x-text="exam.title"></div>
+                <div class="question-badges">
+                  <span class="badge-type" x-text="exam.exam_mode"></span>
+                  <span class="badge-type" x-text="exam.question_type" x-show="exam.question_type"></span>
+                  <span class="badge-meta">
+                    <i data-feather="clock" style="width:10px;height:10px;"></i>
+                    <span x-text="exam.duration + ' min'"></span>
+                  </span>
+                </div>
+              </div>
+              <div class="question-actions" x-show="selectedExam && selectedExam.name === exam.name">
+                <button class="btn btn-sm btn-link" @click.stop="editExam(exam)" title="Edit">
+                  <i data-feather="edit-2" style="width:12px;height:12px;"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column 2: Schedules -->
+    <div class="col-lg-5 col-md-4">
+      <div class="question-list-card">
+        <div class="question-list-header">
+          <h6>
+            <i data-feather="calendar" style="width:14px;height:14px;"></i>
+            Schedules
+            <span class="tab-count" x-text="schedules.length" x-show="schedules.length > 0"></span>
+          </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="openScheduleModal('create')" x-show="selectedExam" :disabled="!selectedExam">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> New
+          </button>
+        </div>
+
+        <div class="question-list-body">
+          <template x-if="!selectedExam">
+            <div class="empty-state">
+              <i data-feather="arrow-left" style="width:2rem;height:2rem;"></i>
+              <h6>Select an exam</h6>
+              <p class="text-muted mb-0">Choose an exam to view its schedules</p>
+            </div>
+          </template>
+
+          <template x-if="selectedExam && loadingSchedules">
+            <div class="empty-state">
+              <span class="spinner-border text-muted mb-2" style="width:2rem;height:2rem;"></span>
+              <h6>Loading schedules...</h6>
+            </div>
+          </template>
+
+          <template x-if="selectedExam && !loadingSchedules && schedules.length === 0">
+            <div class="empty-state">
+              <i data-feather="calendar" style="width:2rem;height:2rem;"></i>
+              <h6>No schedules</h6>
+              <p class="text-muted mb-0">Create a schedule for this exam</p>
+            </div>
+          </template>
+
+          <template x-for="(sch, index) in schedules" :key="sch.name">
+            <div class="question-item" :class="{'exam-item-active': selectedSchedule && selectedSchedule.name === sch.name}" @click="selectSchedule(sch)">
+              <div class="question-item-body">
+                <div class="question-preview" x-text="formatDateTime(sch.start_date_time)"></div>
+                <div class="question-badges">
+                  <span class="badge-schedule-status" :class="'badge-status-' + (sch.status || 'upcoming').toLowerCase()" x-text="sch.status || 'Upcoming'"></span>
+                  <span class="badge-type" x-text="sch.schedule_type"></span>
+                  <span class="badge-type" x-text="sch.badge" x-show="sch.badge"></span>
+                  <span class="badge-meta" x-show="sch.candidate_count > 0">
+                    <i data-feather="users" style="width:10px;height:10px;"></i>
+                    <span x-text="sch.candidate_count"></span>
+                  </span>
+                </div>
+              </div>
+              <div class="question-actions" x-show="selectedSchedule && selectedSchedule.name === sch.name">
+                <button class="btn btn-sm btn-link" @click.stop="editSchedule(sch)" title="Edit">
+                  <i data-feather="edit-2" style="width:12px;height:12px;"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column 3: Candidates -->
+    <div class="col-lg-4 col-md-4">
+      <div class="approved-card">
+        <div class="approved-header">
+          <h6>
+            <i data-feather="users" style="width:14px;height:14px;"></i>
+            Candidates
+            <span class="tab-count" x-text="candidates.length" x-show="candidates.length > 0"></span>
+          </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="openCandidateModal()" x-show="selectedSchedule && selectedSchedule.status !== 'Completed'" :disabled="!selectedSchedule">
+            <i data-feather="user-plus" style="width:14px;height:14px;"></i> Add
+          </button>
+        </div>
+
+        <div class="approved-body">
+          <template x-if="!selectedSchedule">
+            <div class="empty-state">
+              <i data-feather="arrow-left" style="width:2rem;height:2rem;"></i>
+              <h6>Select a schedule</h6>
+              <p class="text-muted mb-0">Choose a schedule to view candidates</p>
+            </div>
+          </template>
+
+          <template x-if="selectedSchedule && loadingCandidates">
+            <div class="empty-state">
+              <span class="spinner-border text-muted mb-2" style="width:2rem;height:2rem;"></span>
+              <h6>Loading candidates...</h6>
+            </div>
+          </template>
+
+          <template x-if="selectedSchedule && !loadingCandidates && candidates.length === 0">
+            <div class="empty-state">
+              <i data-feather="users" style="width:2rem;height:2rem;"></i>
+              <h6>No candidates</h6>
+              <p class="text-muted mb-0">Add candidates to this schedule</p>
+            </div>
+          </template>
+
+          <template x-for="(cand, index) in candidates" :key="cand.name">
+            <div class="submission-card">
+              <div class="submission-card-top">
+                <span class="submission-participant" x-text="cand.candidate_name || cand.candidate"></span>
+                <span class="submission-score" x-show="cand.status === 'Submitted'" x-text="(cand.total_marks || 0) + '/' + (cand.exam_total_marks || 0)"></span>
+              </div>
+              <div class="submission-card-bottom">
+                <span class="badge-schedule-status" :class="'badge-status-' + (cand.status || '').toLowerCase().replace(/ /g, '-')" x-text="cand.status"></span>
+                <span class="badge-result-status" x-show="cand.result_status && cand.result_status !== 'NA'" :class="'badge-result-' + (cand.result_status || '').toLowerCase()" x-text="cand.result_status"></span>
+                <a class="submission-link" :href="'/app/exam-submission/' + cand.name" target="_blank" @click.stop title="Open submission">
+                  <i data-feather="external-link" style="width:11px;height:11px;"></i>
+                </a>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Exam Create/Edit Modal -->
+<div class="modal fade" id="examEditorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" x-text="examModalMode === 'create' ? 'Create Exam' : 'Edit Exam'"></span>
+        <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+          <i data-feather="x" style="width:18px;height:18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Tabs -->
+        <ul class="nav modal-editor-tabs px-3">
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': examModalTab === 'details'}" @click="examModalTab = 'details'">
+              <i data-feather="settings" style="width:12px;height:12px;"></i> Details
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': examModalTab === 'questions'}" @click="examModalTab = 'questions'">
+              <i data-feather="list" style="width:12px;height:12px;"></i> Questions
+              <span class="tab-count" x-text="examForm.select_questions.length" x-show="examForm.select_questions.length > 0"></span>
+            </button>
+          </li>
+        </ul>
+
+        <!-- Details tab -->
+        <div class="modal-tab-content" x-show="examModalTab === 'details'">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <div class="control-group">
+                <label class="control-label">Title <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" x-model="examForm.title" placeholder="Exam title">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="control-group">
+                <label class="control-label">Mode</label>
+                <div class="pill-group">
+                  <template x-for="m in ['Exam', 'Training']" :key="'em-' + m">
+                    <button class="pill-btn pill-btn-sm" :class="{'pill-active': examForm.exam_mode === m}" @click="examForm.exam_mode = m" x-text="m"></button>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="control-group">
+                <label class="control-label">Duration (minutes) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control form-control-sm" x-model.number="examForm.duration" min="1">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="control-group">
+                <label class="control-label">Pass Percentage</label>
+                <input type="number" class="form-control form-control-sm" x-model.number="examForm.pass_percentage" min="0" max="100" step="0.01">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="control-group">
+                <label class="control-label">Question Type</label>
+                <div class="pill-group">
+                  <template x-for="t in ['Choices', 'User Input', 'Mixed']" :key="'eqt-' + t">
+                    <button class="pill-btn pill-btn-sm" :class="{'pill-active': examForm.question_type === t}" @click="examForm.question_type = t" x-text="t"></button>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control form-control-sm" rows="3" x-model="examForm.description" placeholder="Exam description..."></textarea>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">Instructions (optional)</label>
+            <textarea class="form-control form-control-sm" rows="2" x-model="examForm.instructions" placeholder="Instructions for candidates..."></textarea>
+          </div>
+
+          <div class="control-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" x-model="examForm.randomize_questions" id="examRandomize">
+              <label class="form-check-label" for="examRandomize" style="font-size:0.85rem;">Randomize question order</label>
+            </div>
+          </div>
+
+          <template x-if="examModalMode === 'edit' && examForm.name">
+            <div class="mt-2">
+              <a :href="'/app/exam/' + examForm.name" target="_blank" class="text-muted" style="font-size:0.8rem;">
+                <i data-feather="external-link" style="width:12px;height:12px;"></i>
+                Advanced settings in Frappe
+              </a>
+            </div>
+          </template>
+        </div>
+
+        <!-- Questions tab -->
+        <div class="modal-tab-content" x-show="examModalTab === 'questions'">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+              <span style="font-size:0.85rem;font-weight:600;color:#212529;">Question Categories</span>
+              <span class="text-muted d-block" style="font-size:0.78rem;">Define which categories to pull questions from and how many.</span>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" @click="addExamCategory()">
+              <i data-feather="plus" style="width:12px;height:12px;"></i> Add Category
+            </button>
+          </div>
+
+          <template x-if="examForm.select_questions.length === 0">
+            <div class="empty-state">
+              <i data-feather="layers" style="width:2rem;height:2rem;"></i>
+              <h6>No categories added</h6>
+              <p class="text-muted mb-0">Add categories to pull questions into this exam.</p>
+            </div>
+          </template>
+
+          <template x-for="(cat, ci) in examForm.select_questions" :key="'ecat-' + ci">
+            <div class="exam-category-row">
+              <div class="row g-2 align-items-end">
+                <div class="col-5">
+                  <label class="control-label" x-show="ci === 0">Category</label>
+                  <select class="form-select form-select-sm" x-model="cat.question_category">
+                    <option value="">Select...</option>
+                    <template x-for="c in categories" :key="'ecc-' + ci + '-' + c.name">
+                      <option :value="c.name" x-text="c.title"></option>
+                    </template>
+                  </select>
+                </div>
+                <div class="col-3">
+                  <label class="control-label" x-show="ci === 0">No. of Questions</label>
+                  <input type="number" class="form-control form-control-sm" x-model.number="cat.no_of_questions" min="1" placeholder="Count">
+                </div>
+                <div class="col-3">
+                  <label class="control-label" x-show="ci === 0">Marks Each</label>
+                  <input type="number" class="form-control form-control-sm" x-model.number="cat.mark_per_question" min="1" placeholder="Marks">
+                </div>
+                <div class="col-1">
+                  <button class="btn btn-sm btn-link text-danger p-0" @click="examForm.select_questions.splice(ci, 1)" style="margin-bottom:0.3rem;">
+                    <i data-feather="x" style="width:14px;height:14px;"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template x-if="examForm.select_questions.length > 0">
+            <div class="exam-questions-summary">
+              <span x-text="examForm.select_questions.reduce(function(sum, c) { return sum + (c.no_of_questions || 0); }, 0) + ' questions'"></span>
+              <span class="text-muted mx-1">&middot;</span>
+              <span x-text="examForm.select_questions.reduce(function(sum, c) { return sum + ((c.no_of_questions || 0) * (c.mark_per_question || 0)); }, 0) + ' marks'"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="d-flex gap-2 w-100">
+          <button class="btn btn-sm btn-insert" @click="saveExam()" :disabled="savingExam || !examForm.title || !examForm.duration || !examForm.description">
+            <template x-if="savingExam">
+              <span><span class="spinner-border spinner-border-sm me-1"></span> Saving...</span>
+            </template>
+            <template x-if="!savingExam">
+              <span>
+                <i data-feather="save" style="width:14px;height:14px;"></i>
+                <span x-text="examModalMode === 'create' ? 'Create Exam' : 'Update Exam'"></span>
+              </span>
+            </template>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Create/Edit Modal -->
+<div class="modal fade" id="scheduleEditorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" x-text="scheduleModalMode === 'create' ? 'Create Schedule' : 'Edit Schedule'"></span>
+        <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+          <i data-feather="x" style="width:18px;height:18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="control-group">
+          <label class="control-label">Start Date & Time <span class="text-danger">*</span></label>
+          <input type="datetime-local" class="form-control form-control-sm" x-model="scheduleForm.start_date_time">
+        </div>
+
+        <div class="control-group">
+          <label class="control-label">Schedule Type</label>
+          <div class="pill-group">
+            <template x-for="t in ['Fixed', 'Flexible']" :key="'st-' + t">
+              <button class="pill-btn pill-btn-sm" :class="{'pill-active': scheduleForm.schedule_type === t}" @click="scheduleForm.schedule_type = t" x-text="t"></button>
+            </template>
+          </div>
+        </div>
+
+        <template x-if="scheduleForm.schedule_type === 'Flexible'">
+          <div class="control-group">
+            <label class="control-label">Expires in (days)</label>
+            <input type="number" class="form-control form-control-sm" x-model.number="scheduleForm.schedule_expire_in_days" min="1">
+          </div>
+        </template>
+
+        <div class="control-group">
+          <label class="control-label">Badge (optional)</label>
+          <input type="text" class="form-control form-control-sm" x-model="scheduleForm.badge" placeholder="e.g. BATCH A" maxlength="20">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="d-flex gap-2 w-100">
+          <button class="btn btn-sm btn-insert" @click="saveSchedule()" :disabled="savingSchedule || !scheduleForm.start_date_time">
+            <template x-if="savingSchedule">
+              <span><span class="spinner-border spinner-border-sm me-1"></span> Saving...</span>
+            </template>
+            <template x-if="!savingSchedule">
+              <span>
+                <i data-feather="calendar" style="width:14px;height:14px;"></i>
+                <span x-text="scheduleModalMode === 'create' ? 'Create Schedule' : 'Update Schedule'"></span>
+              </span>
+            </template>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Candidate Add Modal -->
+<div class="modal fade" id="candidateAddModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">Add Candidates</span>
+        <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+          <i data-feather="x" style="width:18px;height:18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Mode selector -->
+        <div class="pill-group mb-3">
+          <button class="pill-btn pill-btn-sm" :class="{'pill-active': candidateAddMode === 'search'}" @click="candidateAddMode = 'search'">
+            <i data-feather="search" style="width:12px;height:12px;"></i> Existing Users
+          </button>
+          <button class="pill-btn pill-btn-sm" :class="{'pill-active': candidateAddMode === 'email'}" @click="candidateAddMode = 'email'">
+            <i data-feather="mail" style="width:12px;height:12px;"></i> By Email
+          </button>
+          <button class="pill-btn pill-btn-sm" :class="{'pill-active': candidateAddMode === 'batch'}" @click="candidateAddMode = 'batch'">
+            <i data-feather="layers" style="width:12px;height:12px;"></i> By Batch
+          </button>
+        </div>
+
+        <!-- Search existing users -->
+        <div x-show="candidateAddMode === 'search'">
+          <div class="control-group">
+            <label class="control-label">Search users by name or email</label>
+            <input type="text" class="form-control form-control-sm" x-model="candidateSearchQuery" @input.debounce.300ms="searchUsers()" placeholder="Type to search...">
+          </div>
+
+          <div class="candidate-search-results" x-show="candidateSearchResults.length > 0">
+            <template x-for="(user, ui) in candidateSearchResults" :key="'usr-' + user.name">
+              <div class="candidate-search-item" @click="toggleUserSelection(user)">
+                <input type="checkbox" class="form-check-input" :checked="selectedUsers.includes(user.name)" @click.stop="toggleUserSelection(user)">
+                <div>
+                  <div style="font-size:0.85rem;font-weight:600;" x-text="user.full_name"></div>
+                  <div class="text-muted" style="font-size:0.78rem;" x-text="user.name"></div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <template x-if="candidateSearchQuery && candidateSearchResults.length === 0">
+            <p class="text-muted" style="font-size:0.8rem;">No users found.</p>
+          </template>
+
+          <div class="mt-2" x-show="selectedUsers.length > 0">
+            <span class="text-muted" style="font-size:0.8rem;" x-text="selectedUsers.length + ' user(s) selected'"></span>
+          </div>
+        </div>
+
+        <!-- By email -->
+        <div x-show="candidateAddMode === 'email'">
+          <div class="control-group">
+            <label class="control-label">Email addresses (comma separated)</label>
+            <textarea class="form-control form-control-sm" rows="4" x-model="candidateEmails" placeholder="user1@example.com, user2@example.com"></textarea>
+          </div>
+          <p class="text-muted" style="font-size:0.78rem;">Only existing users will be added. Invalid or unregistered emails will be skipped.</p>
+        </div>
+
+        <!-- By batch -->
+        <div x-show="candidateAddMode === 'batch'">
+          <div class="control-group">
+            <label class="control-label">Select Batch</label>
+            <select class="form-select form-select-sm" x-model="candidateBatch">
+              <option value="">Select a batch...</option>
+              <template x-for="b in batches" :key="'batch-' + b.name">
+                <option :value="b.name" x-text="b.name"></option>
+              </template>
+            </select>
+          </div>
+          <p class="text-muted" style="font-size:0.78rem;">All users in the selected batch will be added as candidates.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="d-flex gap-2 w-100">
+          <button class="btn btn-sm btn-insert" @click="addCandidates()" :disabled="addingCandidates || (candidateAddMode === 'search' && selectedUsers.length === 0) || (candidateAddMode === 'email' && !candidateEmails.trim()) || (candidateAddMode === 'batch' && !candidateBatch)">
+            <template x-if="addingCandidates">
+              <span><span class="spinner-border spinner-border-sm me-1"></span> Adding...</span>
+            </template>
+            <template x-if="!addingCandidates">
+              <span>
+                <i data-feather="user-plus" style="width:14px;height:14px;"></i> Add Candidates
+              </span>
+            </template>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
