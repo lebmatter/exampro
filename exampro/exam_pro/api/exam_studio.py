@@ -54,7 +54,7 @@ def get_category_questions(category):
 			"is_correct_1", "is_correct_2", "is_correct_3", "is_correct_4",
 			"explanation_1", "explanation_2", "explanation_3", "explanation_4",
 			"possibility_1", "possibility_2", "possibility_3", "possibility_4",
-			"help_show", "help_text",
+			"help_show", "help_type", "help_text", "help_link",
 			"description_image", "option_1_image", "option_2_image",
 			"option_3_image", "option_4_image", "helper_text_image",
 		],
@@ -72,7 +72,9 @@ def get_category_questions(category):
 			"difficulty": q.difficulty or "",
 			"_existing": True,
 			"help_show": q.help_show or "Do not show",
+			"help_type": q.help_type or "Text",
 			"help_text": q.help_text or "",
+			"help_link": q.help_link or "",
 			"help_quiz": [],
 			"description_image": q.description_image or "",
 			"helper_text_image": q.helper_text_image or "",
@@ -272,7 +274,9 @@ def update_question(name, data):
 			doc.set(f"possibility_{i}", answers[i - 1] if i <= len(answers) else "")
 
 	doc.help_show = data.get("help_show", doc.help_show)
+	doc.help_type = data.get("help_type", doc.help_type)
 	doc.help_text = data.get("help_text", doc.help_text)
+	doc.help_link = data.get("help_link", doc.help_link)
 
 	if "help_quiz" in data:
 		doc.help_quiz = []
@@ -495,8 +499,8 @@ def _get_recent_exams(limit=10):
 		SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
 			   e.question_type, e.total_questions, e.total_marks
 		FROM `tabExam` e
-		INNER JOIN `tabExam Schedule` s ON s.exam = e.name
-		ORDER BY s.start_date_time DESC
+		LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
+		ORDER BY COALESCE(s.start_date_time, e.modified) DESC
 		LIMIT %(limit)s
 		""",
 		{"limit": limit},

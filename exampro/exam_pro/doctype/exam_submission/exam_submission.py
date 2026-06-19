@@ -698,6 +698,7 @@ def get_question(exam_submission=None, qsno=1):
 		frappe.throw("Invalid question requested.")
 
 	help_show = question_doc.help_show or "Do not show"
+	help_type = question_doc.help_type or "Text"
 	help_quiz = []
 	if help_show != "Do not show":
 		help_quiz = [
@@ -710,6 +711,18 @@ def get_question(exam_submission=None, qsno=1):
 			}
 			for r in (question_doc.help_quiz or [])
 		]
+
+	help_embed_url = ""
+	if help_type == "YouTube Video" and question_doc.help_link:
+		from exampro.exam_pro.doctype.exam_question.exam_question import extract_youtube_id
+		vid = extract_youtube_id(question_doc.help_link)
+		if vid:
+			help_embed_url = f"https://www.youtube-nocookie.com/embed/{vid}"
+	elif help_type == "Google Slides" and question_doc.help_link:
+		link = (question_doc.help_link or "").strip().rstrip("/")
+		if "/embed" not in link:
+			link = link.replace("/edit", "").replace("/pub", "") + "/embed"
+		help_embed_url = link
 
 	res = {
 		"question": question_doc.question,
@@ -731,10 +744,12 @@ def get_question(exam_submission=None, qsno=1):
 		"answer": answer_doc["answer"],
 		# optional training help text
 		"help_show": help_show,
+		"help_type": help_type,
 		"help_minimum_reading_time": (
 			frappe.db.get_value("Exam Question Category", question_doc.category, "help_minimum_reading_time") or 0
 		) if question_doc.category else 0,
 		"help_text": question_doc.help_text or "",
+		"help_embed_url": help_embed_url,
 		"helper_text_image": resolve_question_image(question_doc.helper_text_image),
 		"help_quiz": help_quiz,
 	}

@@ -32,8 +32,8 @@ def get_context(context):
 		SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
 			   e.question_type, e.total_questions, e.total_marks
 		FROM `tabExam` e
-		INNER JOIN `tabExam Schedule` s ON s.exam = e.name
-		ORDER BY s.start_date_time DESC
+		LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
+		ORDER BY COALESCE(s.start_date_time, e.modified) DESC
 		LIMIT 10
 		""",
 		as_dict=True,

@@ -1,6 +1,8 @@
 # Copyright (c) 2024, Labeeb Mattra and contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 from frappe.model.document import Document
 
@@ -40,14 +42,41 @@ def validate_correct_options(question):
 			)
 		)
 
+def extract_youtube_id(url):
+	match = re.search(
+		r"(?:youtube\.com/watch\?.*v=|youtu\.be/|youtube\.com/embed/|youtube\.com/shorts/)([a-zA-Z0-9_-]{11})",
+		url or "",
+	)
+	return match.group(1) if match else None
+
+
 def validate_help_section(question):
 	if question.help_show in (None, "", "Do not show"):
 		return
 
-	if not (question.help_text or "").strip():
-		frappe.throw(
-			frappe._("Help text is required when 'Show help' is enabled.")
-		)
+	help_type = question.help_type or "Text"
+
+	if help_type == "Text":
+		if not (question.help_text or "").strip():
+			frappe.throw(
+				frappe._("Help text is required when help type is 'Text'.")
+			)
+	elif help_type == "YouTube Video":
+		link = (question.help_link or "").strip()
+		if not link:
+			frappe.throw(frappe._("Help URL is required for YouTube Video type."))
+		if not extract_youtube_id(link):
+			frappe.throw(
+				frappe._("Invalid YouTube URL. Use youtube.com/watch?v=ID, youtu.be/ID, or youtube.com/embed/ID.")
+			)
+	elif help_type == "Google Slides":
+		link = (question.help_link or "").strip()
+		if not link:
+			frappe.throw(frappe._("Help URL is required for Google Slides type."))
+		if "docs.google.com/presentation" not in link:
+			frappe.throw(
+				frappe._("Invalid Google Slides URL. Use a URL like docs.google.com/presentation/d/ID/embed.")
+			)
 
 	if question.type == "User Input" and question.help_show == "After wrong answer":
 		frappe.throw(

@@ -21,6 +21,7 @@
         <div class="help-panel-body">
             <div id="help-text-content" class="help-text-content"></div>
             <div id="help-text-image" class="help-text-image mt-3"></div>
+            <div id="help-embed-content" class="help-embed-content hide"></div>
         </div>
         <div class="quiz-footer">
             <div
@@ -491,6 +492,24 @@
         .help-text-content img {
             max-width: 100%;
             border-radius: 4px;
+        }
+
+        .help-embed-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .help-embed-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
         .help-quiz-row {

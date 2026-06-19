@@ -1852,21 +1852,35 @@ function showHelpFlow(qs, onDone) {
     setHelpNavigationLock(true);
     $("#quiz-form").addClass("hide");
     $("#help-quiz-panel").addClass("hide");
-    // help_text is editor-authored HTML stored on the question doctype (same
-    // trust level as the question body itself).
-    $("#help-text-content").html(qs.help_text || "");
-    if (qs.helper_text_image) {
-        const imageSrc = getImageSrc(qs.helper_text_image);
-        if (imageSrc) {
-            $("#help-text-image").html(`
-                <img src="${imageSrc}" class="img-fluid" alt="Helper text image"
-                     style="max-width: 70%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
-                     onerror="this.style.display='none';">`);
-        } else {
-            $("#help-text-image").html("");
+
+    const helpType = qs.help_type || "Text";
+
+    $("#help-text-content").html("");
+    $("#help-text-image").html("");
+    $("#help-embed-content").html("").addClass("hide");
+
+    if (helpType === "Text") {
+        $("#help-text-content").html(qs.help_text || "");
+        if (qs.helper_text_image) {
+            const imageSrc = getImageSrc(qs.helper_text_image);
+            if (imageSrc) {
+                $("#help-text-image").html(`
+                    <img src="${imageSrc}" class="img-fluid" alt="Helper text image"
+                         style="max-width: 70%; height: auto; border-radius: 8px;"
+                         onerror="this.style.display='none';">`);
+            }
         }
-    } else {
-        $("#help-text-image").html("");
+    } else if (qs.help_embed_url) {
+        var title = helpType === "YouTube Video" ? "YouTube video" : "Google Slides presentation";
+        $("#help-embed-content")
+            .html('<div class="help-embed-wrapper">' +
+                '<iframe src="' + escapeHtml(qs.help_embed_url) + '"' +
+                ' title="' + title + '"' +
+                ' frameborder="0" allowfullscreen' +
+                ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"' +
+                ' loading="lazy"></iframe>' +
+                '</div>')
+            .removeClass("hide");
     }
     const helpTitle = qs.help_show === "Before question"
         ? "Read before next question"

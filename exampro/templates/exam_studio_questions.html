@@ -324,6 +324,27 @@
               <template x-if="currentQ().help_show !== 'Do not show'">
                 <div>
                   <div class="detail-section">
+                    <label class="control-label">Help Type</label>
+                    <div class="pill-group">
+                      <template x-for="t in ['Text', 'YouTube Video', 'Google Slides']" :key="'ht-' + t">
+                        <button class="pill-btn pill-btn-sm" :class="{'pill-active': currentQ().help_type === t}" @click="currentQ().help_type = t" x-text="t"></button>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div class="detail-section" x-show="currentQ().help_type !== 'Text'">
+                    <label class="control-label">Help URL</label>
+                    <input
+                      type="url"
+                      class="form-control form-control-sm"
+                      x-model="currentQ().help_link"
+                      :placeholder="currentQ().help_type === 'YouTube Video' ? 'https://www.youtube.com/watch?v=...' : 'https://docs.google.com/presentation/d/.../embed'"
+                    >
+                    <small class="text-muted" x-show="currentQ().help_type === 'YouTube Video'">Paste a YouTube URL (youtube.com/watch?v=, youtu.be/, or embed link)</small>
+                    <small class="text-muted" x-show="currentQ().help_type === 'Google Slides'">Paste a Google Slides URL or embed link</small>
+                  </div>
+
+                  <div class="detail-section" x-show="currentQ().help_type === 'Text'">
                     <label class="control-label">Help Text</label>
                     <div class="help-generate-bar mb-2">
                       <div class="d-flex align-items-center gap-2">
