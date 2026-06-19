@@ -514,7 +514,7 @@ def search_categories(query):
 	if not query or len(query) < 2:
 		return []
 
-	like = f"%{frappe.db.escape(query, percent=False)}%"
+	like = f"%{query}%"
 	rows = frappe.db.sql(
 		"""
 		SELECT c.name, c.title,
@@ -539,7 +539,7 @@ def search_exams(query):
 	if not query or len(query) < 2:
 		return []
 
-	like = f"%{frappe.db.escape(query, percent=False)}%"
+	like = f"%{query}%"
 	return frappe.db.sql(
 		"""
 		SELECT name, title, exam_mode, duration, question_type,
@@ -753,6 +753,28 @@ def save_exam(data):
 
 
 @frappe.whitelist()
+def duplicate_exam(name):
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+	source = frappe.get_doc("Exam", name)
+	new_doc = frappe.copy_doc(source)
+	new_doc.title = f"{source.title} (Copy)"
+	new_doc.short_uuid = ""
+	new_doc.insert()
+
+	return {
+		"name": new_doc.name,
+		"title": new_doc.title,
+		"exam_mode": new_doc.exam_mode,
+		"duration": new_doc.duration,
+		"question_type": new_doc.question_type,
+		"total_questions": new_doc.total_questions or 0,
+		"total_marks": new_doc.total_marks or 0,
+	}
+
+
+@frappe.whitelist()
 def save_schedule(data):
 	if "Exam Manager" not in frappe.get_roles():
 		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
@@ -771,7 +793,11 @@ def save_schedule(data):
 		doc.__newname = schedule_name
 		doc.exam = data.get("exam")
 
-	for field in ("start_date_time", "schedule_type", "schedule_expire_in_days", "badge"):
+	update_fields = ["schedule_type", "schedule_expire_in_days", "badge"]
+	if doc.is_new():
+		update_fields.insert(0, "start_date_time")
+
+	for field in update_fields:
 		if field in data:
 			doc.set(field, data[field])
 
@@ -812,7 +838,10 @@ def add_candidates_to_schedule(schedule_name, emails=None, batch_name=None):
 	invalid_users = []
 
 	if emails:
-		email_list = [e.strip() for e in re.split(r"[,;\n]+", emails) if e.strip()]
+		if isinstance(emails, str):
+			email_list = [e.strip() for e in re.split(r"[,;\n]+", emails) if e.strip()]
+		else:
+			email_list = [e.strip() for e in emails if isinstance(e, str) and e.strip()]
 		for email in email_list:
 			if not frappe.db.exists("User", email):
 				invalid_users.append(email)
