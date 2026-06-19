@@ -71,8 +71,6 @@ def get_quiz_detail(name):
 			"is_correct_2": q.is_correct_2,
 			"is_correct_3": q.is_correct_3,
 			"is_correct_4": q.is_correct_4,
-			"explanation": q.explanation or "",
-			"points": q.points or 100,
 		})
 
 	return {
@@ -89,6 +87,7 @@ def get_quiz_detail(name):
 		"theme": doc.theme,
 		"randomize_questions": doc.randomize_questions,
 		"show_correct_after_answer": doc.show_correct_after_answer,
+		"marks_per_question": doc.marks_per_question or 1,
 		"description": doc.description or "",
 		"total_questions": doc.total_questions,
 		"questions": questions,
@@ -111,7 +110,8 @@ def save_quiz(data):
 		for field in (
 			"title", "quiz_mode", "status", "access_type", "pin_code",
 			"image", "timer_enabled", "timer_seconds", "theme",
-			"randomize_questions", "show_correct_after_answer", "description",
+			"marks_per_question", "randomize_questions",
+			"show_correct_after_answer", "description",
 		):
 			if field in data:
 				doc.set(field, data[field])
@@ -129,8 +129,6 @@ def save_quiz(data):
 				"is_correct_2": q.get("is_correct_2", 0),
 				"is_correct_3": q.get("is_correct_3", 0),
 				"is_correct_4": q.get("is_correct_4", 0),
-				"explanation": q.get("explanation", ""),
-				"points": q.get("points", 100),
 			})
 
 		doc.save()
@@ -147,6 +145,7 @@ def save_quiz(data):
 			"timer_enabled": data.get("timer_enabled", 0),
 			"timer_seconds": data.get("timer_seconds", 30),
 			"theme": data.get("theme", "Default"),
+			"marks_per_question": data.get("marks_per_question", 1),
 			"randomize_questions": data.get("randomize_questions", 0),
 			"show_correct_after_answer": data.get("show_correct_after_answer", 1),
 			"description": data.get("description", ""),
@@ -165,8 +164,6 @@ def save_quiz(data):
 				"is_correct_2": q.get("is_correct_2", 0),
 				"is_correct_3": q.get("is_correct_3", 0),
 				"is_correct_4": q.get("is_correct_4", 0),
-				"explanation": q.get("explanation", ""),
-				"points": q.get("points", 100),
 			})
 
 		doc = frappe.get_doc(doc_dict).insert()
@@ -202,6 +199,7 @@ def duplicate_quiz(name):
 		"timer_enabled": source.timer_enabled,
 		"timer_seconds": source.timer_seconds,
 		"theme": source.theme,
+		"marks_per_question": source.marks_per_question or 1,
 		"randomize_questions": source.randomize_questions,
 		"show_correct_after_answer": source.show_correct_after_answer,
 		"description": source.description or "",
@@ -220,8 +218,6 @@ def duplicate_quiz(name):
 			"is_correct_2": q.is_correct_2,
 			"is_correct_3": q.is_correct_3,
 			"is_correct_4": q.is_correct_4,
-			"explanation": q.explanation or "",
-			"points": q.points or 100,
 		})
 
 	new_doc = frappe.get_doc(new_doc_dict).insert()
@@ -248,7 +244,7 @@ def generate_quiz_questions(topic, count, tone="fun"):
 		f"questions about {topic}. Tone: {tone} (fun = playful/engaging language, "
 		f"serious = straightforward). Return ONLY a valid JSON array. Each object: "
 		f'{{\"question\", \"option_1\", \"option_2\", \"option_3\", \"option_4\", '
-		f'\"correct_option\" (1-4), \"explanation\"}}. Rules: exactly 4 options per '
+		f'\"correct_option\" (1-4)}}. Rules: exactly 4 options per '
 		f"question, one correct, all plausible. No markdown fences."
 	)
 
@@ -305,8 +301,6 @@ def generate_quiz_questions(topic, count, tone="fun"):
 			"is_correct_2": 1 if correct == 2 else 0,
 			"is_correct_3": 1 if correct == 3 else 0,
 			"is_correct_4": 1 if correct == 4 else 0,
-			"explanation": q.get("explanation", ""),
-			"points": 100,
 		})
 
 	return {"questions": result}
@@ -325,7 +319,6 @@ def import_from_question_bank(category, count=10):
 			"name", "question",
 			"option_1", "option_2", "option_3", "option_4",
 			"is_correct_1", "is_correct_2", "is_correct_3", "is_correct_4",
-			"explanation_1",
 		],
 		limit=count,
 		order_by="RAND()",
@@ -343,8 +336,6 @@ def import_from_question_bank(category, count=10):
 			"is_correct_2": q.is_correct_2,
 			"is_correct_3": q.is_correct_3,
 			"is_correct_4": q.is_correct_4,
-			"explanation": q.explanation_1 or "",
-			"points": 100,
 		})
 
 	return {"questions": result}

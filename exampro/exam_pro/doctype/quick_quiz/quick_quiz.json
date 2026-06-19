@@ -19,6 +19,7 @@
   "timer_seconds",
   "column_break_settings2",
   "theme",
+  "marks_per_question",
   "randomize_questions",
   "show_correct_after_answer",
   "section_break_desc",
@@ -112,6 +113,14 @@
    "fieldtype": "Select",
    "label": "Theme",
    "options": "Default\nFun Neon\nDark Mode\nPastel"
+  },
+  {
+   "default": "1",
+   "fieldname": "marks_per_question",
+   "fieldtype": "Int",
+   "label": "Marks Per Question",
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "default": "0",

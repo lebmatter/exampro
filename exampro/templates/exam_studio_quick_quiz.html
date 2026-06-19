@@ -173,14 +173,6 @@
                         </div>
                       </template>
                     </div>
-                    <div class="row g-2 mt-2">
-                      <div class="col">
-                        <input type="text" class="form-control form-control-sm" x-model="q.explanation" placeholder="Explanation (optional)">
-                      </div>
-                      <div class="col-auto">
-                        <input type="number" class="form-control form-control-sm" x-model.number="q.points" min="1" style="width:70px;" placeholder="Pts">
-                      </div>
-                    </div>
                   </div>
                 </div>
               </template>
@@ -405,6 +397,12 @@
                 </div>
               </div>
 
+              <!-- Marks Per Question -->
+              <div class="control-group">
+                <label class="control-label">Marks Per Question</label>
+                <input type="number" class="form-control form-control-sm" x-model.number="modalData.marks_per_question" min="1" style="max-width:120px;">
+              </div>
+
               <!-- Toggles -->
               <div class="control-group" x-show="modalData.quiz_mode === 'Simple'">
                 <label class="toggle-label">
@@ -519,10 +517,6 @@
                 </div>
               </div>
             </template>
-          </div>
-          <div class="control-group mt-2">
-            <label class="control-label">Explanation (optional)</label>
-            <input type="text" class="form-control form-control-sm" x-model="manualExplanation" placeholder="Why is this the correct answer?">
           </div>
         </div>
 

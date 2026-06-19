@@ -34,6 +34,7 @@ def _build_question_list(quiz, include_correct=False):
 	"""Build a list of question dicts from the quiz, optionally shuffled."""
 	questions = []
 	ordered = list(enumerate(quiz.questions or [], start=0))
+	marks = quiz.marks_per_question or 1
 
 	if quiz.randomize_questions:
 		random.shuffle(ordered)
@@ -47,11 +48,10 @@ def _build_question_list(quiz, include_correct=False):
 			"option_2": q.option_2,
 			"option_3": q.option_3,
 			"option_4": q.option_4,
-			"points": q.points or 1,
+			"points": marks,
 		}
 		if include_correct:
 			item["correct_option"] = _get_correct_option(q)
-			item["explanation"] = q.explanation
 		questions.append(item)
 
 	return questions
@@ -93,7 +93,7 @@ def _broadcast_question(quiz, question_idx):
 		"option_2": q.option_2,
 		"option_3": q.option_3,
 		"option_4": q.option_4,
-		"points": q.points or 1,
+		"points": quiz.marks_per_question or 1,
 		"total_questions": len(questions),
 	}
 
@@ -222,7 +222,7 @@ def submit_answer(submission_id, question_idx, selected_option, time_taken_ms=0)
 	q = questions[question_idx]
 	correct_option = _get_correct_option(q)
 	is_correct = selected_option == correct_option
-	base_points = q.points or 1
+	base_points = quiz.marks_per_question or 1
 
 	# Calculate points
 	points_earned = 0
@@ -283,7 +283,6 @@ def submit_answer(submission_id, question_idx, selected_option, time_taken_ms=0)
 	if quiz.show_correct_after_answer:
 		response["is_correct"] = is_correct
 		response["correct_option"] = correct_option
-		response["explanation"] = q.explanation
 
 	return response
 
@@ -316,7 +315,8 @@ def finish_quiz(submission_id):
 	submission.score = sum(a.points_earned or 0 for a in answers)
 
 	quiz = frappe.get_doc("Quick Quiz", submission.quiz)
-	submission.total_points = sum(q.points or 1 for q in quiz.questions or [])
+	marks = quiz.marks_per_question or 1
+	submission.total_points = marks * len(quiz.questions or [])
 
 	submission.save(ignore_permissions=True)
 
@@ -480,7 +480,8 @@ def host_end_quiz(short_uuid):
 		sub.total_questions = len(answers)
 		sub.correct_count = sum(1 for a in answers if a.is_correct)
 		sub.score = sum(a.points_earned or 0 for a in answers)
-		sub.total_points = sum(q.points or 1 for q in quiz.questions or [])
+		marks = quiz.marks_per_question or 1
+		sub.total_points = marks * len(quiz.questions or [])
 
 		sub.save(ignore_permissions=True)
 

@@ -21,7 +21,6 @@ function quizApp() {
     selectedOption: null,
     lastAnswerCorrect: false,
     lastPointsEarned: 0,
-    lastExplanation: '',
     totalScore: 0,
 
     // Timer
@@ -259,7 +258,6 @@ function quizApp() {
           const data = r.message;
           this.lastAnswerCorrect = data.is_correct || false;
           this.lastPointsEarned = data.points_earned || 0;
-          this.lastExplanation = data.explanation || '';
           this.totalScore += this.lastPointsEarned;
 
           // Show feedback briefly

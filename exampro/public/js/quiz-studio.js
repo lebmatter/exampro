@@ -29,7 +29,6 @@ function quizStudioApp() {
     manualQuestion: "",
     manualOptions: ["", "", "", ""],
     manualCorrect: 1,
-    manualExplanation: "",
 
     // Dropdowns
     quizDropdownOpen: null,
@@ -108,6 +107,7 @@ function quizStudioApp() {
         timer_enabled: 0,
         timer_seconds: 30,
         theme: "Default",
+        marks_per_question: 1,
         randomize_questions: 0,
         show_correct_after_answer: 0,
         description: "",
@@ -161,8 +161,8 @@ function quizStudioApp() {
       if (this.modalData.name) {
         // Editing existing — copy settings back
         var keep = ["title", "quiz_mode", "status", "access_type", "pin_code",
-          "timer_enabled", "timer_seconds", "theme", "randomize_questions",
-          "description"];
+          "timer_enabled", "timer_seconds", "theme", "marks_per_question",
+          "randomize_questions", "description"];
         for (var i = 0; i < keep.length; i++) {
           self.editData[keep[i]] = self.modalData[keep[i]];
         }
@@ -308,8 +308,6 @@ function quizStudioApp() {
         is_correct_2: 0,
         is_correct_3: 0,
         is_correct_4: 0,
-        explanation: "",
-        points: 100,
       });
       this.editingQuestionIdx = this.editData.questions.length - 1;
       this.replaceIcons();
@@ -370,13 +368,10 @@ function quizStudioApp() {
         is_correct_2: this.manualCorrect === 2 ? 1 : 0,
         is_correct_3: this.manualCorrect === 3 ? 1 : 0,
         is_correct_4: this.manualCorrect === 4 ? 1 : 0,
-        explanation: this.manualExplanation,
-        points: 100,
       });
       this.manualQuestion = "";
       this.manualOptions = ["", "", "", ""];
       this.manualCorrect = 1;
-      this.manualExplanation = "";
       if (this._quizGenerateModal) this._quizGenerateModal.hide();
       this.replaceIcons();
     },

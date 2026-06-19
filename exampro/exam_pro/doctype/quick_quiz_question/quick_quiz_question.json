@@ -18,11 +18,7 @@
   "is_correct_3",
   "column_break_opt4",
   "option_4",
-  "is_correct_4",
-  "section_break_meta",
-  "explanation",
-  "column_break_meta2",
-  "points"
+  "is_correct_4"
  ],
  "fields": [
   {
@@ -96,26 +92,6 @@
    "fieldname": "is_correct_4",
    "fieldtype": "Check",
    "label": "Correct"
-  },
-  {
-   "fieldname": "section_break_meta",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "explanation",
-   "fieldtype": "Small Text",
-   "label": "Explanation"
-  },
-  {
-   "fieldname": "column_break_meta2",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "100",
-   "fieldname": "points",
-   "fieldtype": "Int",
-   "label": "Points",
-   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
