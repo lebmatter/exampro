@@ -1495,6 +1495,27 @@
   color: #c92a2a;
 }
 
+/* Advanced settings link in modal footer */
+.studio-advanced-link {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #868e96;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.studio-advanced-link[style*="display: none"] {
+  display: none !important;
+}
+
+.studio-advanced-link:hover {
+  color: #495057;
+  text-decoration: underline;
+}
+
 /* Generate Questions Modal */
 #generateQuestionsModal .modal-content {
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -1521,4 +1542,75 @@
   padding: 0.75rem 1.25rem;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   background: #fafbfc;
+}
+
+/* Show three-dot on hover or when active */
+.quiz-actions-hoverable {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.quiz-actions-visible,
+.question-item:hover > .quiz-actions-hoverable {
+  opacity: 1;
+}
+
+/* Three-dot trigger button */
+.quiz-dropdown-wrap {
+  position: relative;
+}
+
+.quiz-dropdown-wrap > .btn-link {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.1s ease;
+}
+
+.quiz-dropdown-wrap > .btn-link:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Dropdown menu */
+.quiz-dropdown-menu {
+  position: fixed;
+  z-index: 1050;
+  min-width: 150px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 0.3rem 0;
+}
+
+.quiz-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #212529;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
+}
+
+.quiz-dropdown-item:hover {
+  background: rgba(245, 195, 68, 0.08);
+}
+
+.quiz-dropdown-item i,
+.quiz-dropdown-item svg {
+  color: #6c757d;
+  flex-shrink: 0;
+}
+
+.quiz-dropdown-sep {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 0.25rem 0;
 }

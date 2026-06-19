@@ -79,10 +79,20 @@
                   </span>
                 </div>
               </div>
-              <div class="question-actions" x-show="selectedExam && selectedExam.name === exam.name">
-                <button class="btn btn-sm btn-link" @click.stop="editExam(exam)" title="Edit">
-                  <i data-feather="edit-2" style="width:12px;height:12px;"></i>
-                </button>
+              <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedExam && selectedExam.name === exam.name}">
+                <div class="quiz-dropdown-wrap">
+                  <button class="btn btn-sm btn-link" @click.stop="toggleExamDropdown(exam.name)" title="Actions">
+                    <i data-feather="more-vertical" style="width:12px;height:12px;"></i>
+                  </button>
+                  <div class="quiz-dropdown-menu" x-show="examDropdownOpen === exam.name" @click.outside="examDropdownOpen = null" x-transition>
+                    <button class="quiz-dropdown-item" @click.stop="editExam(exam); examDropdownOpen = null">
+                      <i data-feather="edit-2" style="width:13px;height:13px;"></i> Edit
+                    </button>
+                    <button class="quiz-dropdown-item" @click.stop="duplicateExam(exam); examDropdownOpen = null">
+                      <i data-feather="copy" style="width:13px;height:13px;"></i> Duplicate
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
@@ -288,12 +298,48 @@
 
           <div class="control-group">
             <label class="control-label">Description <span class="text-danger">*</span></label>
-            <textarea class="form-control form-control-sm" rows="3" x-model="examForm.description" placeholder="Exam description..."></textarea>
+            <div class="rich-editor-wrap">
+              <div class="rich-toolbar">
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('bold')" title="Bold"><b>B</b></button>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('italic')" title="Italic"><i>I</i></button>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('underline')" title="Underline"><u>U</u></button>
+                <span class="rich-toolbar-sep"></span>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('insertUnorderedList')" title="Bullet list"><i data-feather="list" style="width:13px;height:13px;"></i></button>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('insertOrderedList')" title="Numbered list"><i data-feather="hash" style="width:13px;height:13px;"></i></button>
+                <span class="rich-toolbar-sep"></span>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('removeFormat')" title="Clear formatting"><i data-feather="x-circle" style="width:13px;height:13px;"></i></button>
+              </div>
+              <div
+                class="rich-editor"
+                contenteditable="true"
+                x-ref="examDescriptionEditor"
+                @input="examForm.description = $event.target.innerHTML"
+                data-placeholder="Exam description..."
+              ></div>
+            </div>
           </div>
 
           <div class="control-group">
             <label class="control-label">Instructions (optional)</label>
-            <textarea class="form-control form-control-sm" rows="2" x-model="examForm.instructions" placeholder="Instructions for candidates..."></textarea>
+            <div class="rich-editor-wrap">
+              <div class="rich-toolbar">
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('bold')" title="Bold"><b>B</b></button>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('italic')" title="Italic"><i>I</i></button>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('underline')" title="Underline"><u>U</u></button>
+                <span class="rich-toolbar-sep"></span>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('insertUnorderedList')" title="Bullet list"><i data-feather="list" style="width:13px;height:13px;"></i></button>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('insertOrderedList')" title="Numbered list"><i data-feather="hash" style="width:13px;height:13px;"></i></button>
+                <span class="rich-toolbar-sep"></span>
+                <button type="button" class="rich-toolbar-btn" @click="execFormat('removeFormat')" title="Clear formatting"><i data-feather="x-circle" style="width:13px;height:13px;"></i></button>
+              </div>
+              <div
+                class="rich-editor"
+                contenteditable="true"
+                x-ref="examInstructionsEditor"
+                @input="examForm.instructions = $event.target.innerHTML"
+                data-placeholder="Instructions for candidates..."
+              ></div>
+            </div>
           </div>
 
           <div class="control-group">
@@ -303,14 +349,6 @@
             </div>
           </div>
 
-          <template x-if="examModalMode === 'edit' && examForm.name">
-            <div class="mt-2">
-              <a :href="'/app/exam/' + examForm.name" target="_blank" class="text-muted" style="font-size:0.8rem;">
-                <i data-feather="external-link" style="width:12px;height:12px;"></i>
-                Advanced settings in Frappe
-              </a>
-            </div>
-          </template>
         </div>
 
         <!-- Questions tab -->
@@ -373,7 +411,7 @@
       </div>
 
       <div class="modal-footer">
-        <div class="d-flex gap-2 w-100">
+        <div class="d-flex align-items-center gap-2 w-100">
           <button class="btn btn-sm btn-insert" @click="saveExam()" :disabled="savingExam || !examForm.title || !examForm.duration || !examForm.description">
             <template x-if="savingExam">
               <span><span class="spinner-border spinner-border-sm me-1"></span> Saving...</span>
@@ -385,7 +423,10 @@
               </span>
             </template>
           </button>
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+          <a class="studio-advanced-link ms-auto" :href="'/app/exam/' + encodeURIComponent(examForm.name)" x-show="examForm.name" target="_blank">
+            Advanced settings
+            <i data-feather="external-link" style="width:12px;height:12px;"></i>
+          </a>
         </div>
       </div>
     </div>

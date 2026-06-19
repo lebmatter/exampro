@@ -31,6 +31,10 @@ function quizStudioApp() {
     manualCorrect: 1,
     manualExplanation: "",
 
+    // Dropdowns
+    quizDropdownOpen: null,
+    questionDropdownOpen: null,
+
     // Submissions
     submissions: [],
     submissionTab: "responses",
@@ -110,6 +114,38 @@ function quizStudioApp() {
         questions: [],
       };
       this._showModal();
+    },
+
+    _positionDropdown(btnEl) {
+      this.$nextTick(() => {
+        var menu = btnEl.closest('.quiz-dropdown-wrap').querySelector('.quiz-dropdown-menu');
+        if (!menu) return;
+        var rect = btnEl.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 2) + 'px';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.left = 'auto';
+        this.replaceIcons();
+      });
+    },
+
+    toggleQuizDropdown(quizName) {
+      this.questionDropdownOpen = null;
+      if (this.quizDropdownOpen === quizName) {
+        this.quizDropdownOpen = null;
+        return;
+      }
+      this.quizDropdownOpen = quizName;
+      this._positionDropdown(this.$event.currentTarget);
+    },
+
+    toggleQuestionDropdown(idx) {
+      this.quizDropdownOpen = null;
+      if (this.questionDropdownOpen === idx) {
+        this.questionDropdownOpen = null;
+        return;
+      }
+      this.questionDropdownOpen = idx;
+      this._positionDropdown(this.$event.currentTarget);
     },
 
     openSettingsModal() {

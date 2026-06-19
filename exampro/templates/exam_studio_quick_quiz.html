@@ -40,10 +40,43 @@
                   </span>
                 </div>
               </div>
-              <div class="question-actions" x-show="selectedQuiz && selectedQuiz.name === quiz.name">
-                <button class="btn btn-sm btn-link" @click.stop="openSettingsModal()" title="Settings">
-                  <i data-feather="settings" style="width:12px;height:12px;"></i>
-                </button>
+              <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedQuiz && selectedQuiz.name === quiz.name}">
+                <div class="quiz-dropdown-wrap">
+                  <button class="btn btn-sm btn-link" @click.stop="toggleQuizDropdown(quiz.name)" title="Actions">
+                    <i data-feather="more-vertical" style="width:12px;height:12px;"></i>
+                  </button>
+                  <div class="quiz-dropdown-menu" x-show="quizDropdownOpen === quiz.name" @click.outside="quizDropdownOpen = null" x-transition>
+                    <button class="quiz-dropdown-item" @click.stop="openSettingsModal(); quizDropdownOpen = null">
+                      <i data-feather="settings" style="width:13px;height:13px;"></i> Edit
+                    </button>
+                    <button class="quiz-dropdown-item" @click.stop="takeDemo(); quizDropdownOpen = null">
+                      <i data-feather="play" style="width:13px;height:13px;"></i> Preview
+                    </button>
+                    <button class="quiz-dropdown-item" @click.stop="duplicateQuiz(); quizDropdownOpen = null">
+                      <i data-feather="copy" style="width:13px;height:13px;"></i> Copy
+                    </button>
+                    <button class="quiz-dropdown-item" @click.stop="copyShareLink(); quizDropdownOpen = null" x-show="editData && editData.status === 'Published'">
+                      <i data-feather="share-2" style="width:13px;height:13px;"></i> Share
+                    </button>
+                    <div class="quiz-dropdown-sep"></div>
+                    <button class="quiz-dropdown-item" @click.stop="togglePublish(); quizDropdownOpen = null">
+                      <template x-if="editData && editData.status === 'Published'">
+                        <i data-feather="eye-off" style="width:13px;height:13px;"></i>
+                      </template>
+                      <template x-if="!editData || editData.status !== 'Published'">
+                        <i data-feather="globe" style="width:13px;height:13px;"></i>
+                      </template>
+                      <span x-text="editData && editData.status === 'Published' ? 'Unpublish' : 'Publish'"></span>
+                    </button>
+                    <button class="quiz-dropdown-item" @click.stop="hostQuiz(); quizDropdownOpen = null" x-show="editData && editData.quiz_mode === 'Kahoot' && editData.status === 'Published'">
+                      <i data-feather="monitor" style="width:13px;height:13px;"></i> Host Kahoot
+                    </button>
+                    <div class="quiz-dropdown-sep" x-show="editData && editData.status !== 'Archived'"></div>
+                    <button class="quiz-dropdown-item quiz-dropdown-danger" @click.stop="archiveQuiz(); quizDropdownOpen = null" x-show="editData && editData.status !== 'Archived'">
+                      <i data-feather="archive" style="width:13px;height:13px;"></i> Archive
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
@@ -64,45 +97,6 @@
           </template>
         </div>
 
-        <!-- Actions + publish for selected quiz -->
-        <template x-if="editData && editData.name">
-          <div class="approved-footer">
-            <div class="quiz-action-bar">
-              <button class="btn btn-sm btn-outline-secondary" @click="takeDemo()" title="Preview">
-                <i data-feather="play" style="width:13px;height:13px;"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" @click="duplicateQuiz()" title="Duplicate">
-                <i data-feather="copy" style="width:13px;height:13px;"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-warning" @click="hostQuiz()" title="Host Kahoot" x-show="editData.quiz_mode === 'Kahoot' && editData.status === 'Published'">
-                <i data-feather="monitor" style="width:13px;height:13px;"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger" @click="archiveQuiz()" title="Archive" x-show="editData.status !== 'Archived'">
-                <i data-feather="archive" style="width:13px;height:13px;"></i>
-              </button>
-              <button class="btn btn-sm ms-auto" :class="editData.status === 'Published' ? 'btn-outline-secondary' : 'btn-generate'" @click="togglePublish()">
-                <span x-text="editData.status === 'Published' ? 'Unpublish' : 'Publish'"></span>
-              </button>
-            </div>
-
-            <!-- Share card (shown when published) -->
-            <template x-if="editData.status === 'Published'">
-              <div class="share-card mt-2">
-                <div class="share-url-row">
-                  <i data-feather="link" style="width:14px;height:14px;flex-shrink:0;color:#6c757d;"></i>
-                  <span class="share-url" x-text="shareUrl()"></span>
-                  <button class="share-copy-btn" @click="copyShareLink()" title="Copy link">
-                    <i data-feather="clipboard" style="width:13px;height:13px;"></i>
-                  </button>
-                </div>
-                <div class="share-pin-row" x-show="editData.access_type === 'PIN' && editData.pin_code">
-                  <span class="share-pin-label">PIN</span>
-                  <span class="share-pin-value" x-text="editData.pin_code"></span>
-                </div>
-              </div>
-            </template>
-          </div>
-        </template>
       </div>
     </div>
 
@@ -135,17 +129,25 @@
             <!-- Question list -->
             <div class="panel-body">
               <template x-for="(q, idx) in editData.questions" :key="idx">
-                <div class="question-item-row">
+                <div class="question-item-row" :class="{'question-item-row-active': editingQuestionIdx === idx}">
                   <div class="question-item-header" @click="editQuestion(idx)">
                     <span class="question-number" x-text="'Q' + (idx + 1)"></span>
                     <span class="question-preview" x-text="q.question.substring(0, 80) + (q.question.length > 80 ? '...' : '')"></span>
-                    <div class="question-actions">
-                      <button class="btn btn-sm btn-link" @click.stop="editQuestion(idx)">
-                        <i data-feather="edit-2" style="width:12px;height:12px;"></i>
-                      </button>
-                      <button class="btn btn-sm btn-link text-danger" @click.stop="removeQuestion(idx)">
-                        <i data-feather="trash-2" style="width:12px;height:12px;"></i>
-                      </button>
+                    <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': editingQuestionIdx === idx}">
+                      <div class="quiz-dropdown-wrap">
+                        <button class="btn btn-sm btn-link" @click.stop="toggleQuestionDropdown(idx)" title="Actions">
+                          <i data-feather="more-vertical" style="width:12px;height:12px;"></i>
+                        </button>
+                        <div class="quiz-dropdown-menu" x-show="questionDropdownOpen === idx" @click.outside="questionDropdownOpen = null" x-transition>
+                          <button class="quiz-dropdown-item" @click.stop="editQuestion(idx); questionDropdownOpen = null">
+                            <i data-feather="edit-2" style="width:13px;height:13px;"></i> Edit
+                          </button>
+                          <div class="quiz-dropdown-sep"></div>
+                          <button class="quiz-dropdown-item quiz-dropdown-danger" @click.stop="removeQuestion(idx); questionDropdownOpen = null">
+                            <i data-feather="trash-2" style="width:13px;height:13px;"></i> Delete
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

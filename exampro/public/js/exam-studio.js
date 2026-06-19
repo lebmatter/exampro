@@ -47,6 +47,7 @@ function examStudioApp() {
     _generateModal: null,
 
     // --- Exams tab state ---
+    examDropdownOpen: null,
     exams: window.examStudioData?.exams || [],
     selectedExam: null,
     schedules: [],
@@ -98,6 +99,7 @@ function examStudioApp() {
     _examModal: null,
     _scheduleModal: null,
     _candidateModal: null,
+    _newCategoryModal: null,
 
     init() {
       this.restoreState();
@@ -114,6 +116,8 @@ function examStudioApp() {
         if (scheduleModalEl) this._scheduleModal = new bootstrap.Modal(scheduleModalEl);
         var candidateModalEl = document.getElementById("candidateAddModal");
         if (candidateModalEl) this._candidateModal = new bootstrap.Modal(candidateModalEl);
+        var newCategoryModalEl = document.getElementById("newCategoryModal");
+        if (newCategoryModalEl) this._newCategoryModal = new bootstrap.Modal(newCategoryModalEl);
       });
     },
 
@@ -715,6 +719,17 @@ function examStudioApp() {
       }
     },
 
+    openNewCategoryModal() {
+      this.newCategoryName = "";
+      if (this._newCategoryModal) this._newCategoryModal.show();
+      this.replaceIcons();
+    },
+
+    async createCategoryFromModal() {
+      await this.createCategory();
+      if (this._newCategoryModal) this._newCategoryModal.hide();
+    },
+
     // --- Save all ---
 
     async saveAll() {
@@ -842,6 +857,40 @@ function examStudioApp() {
 
     // --- Edit shortcuts ---
 
+    toggleExamDropdown(examName) {
+      if (this.examDropdownOpen === examName) {
+        this.examDropdownOpen = null;
+        return;
+      }
+      this.examDropdownOpen = examName;
+      var btn = this.$event.currentTarget;
+      this.$nextTick(() => {
+        var menu = btn.closest('.quiz-dropdown-wrap').querySelector('.quiz-dropdown-menu');
+        if (!menu) return;
+        var rect = btn.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 2) + 'px';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.left = 'auto';
+        this.replaceIcons();
+      });
+    },
+
+    async duplicateExam(exam) {
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.duplicate_exam",
+          args: { name: exam.name },
+        });
+        if (r.message) {
+          this.exams.unshift(r.message);
+          frappe.show_alert({ message: "Exam duplicated", indicator: "green" });
+          this.replaceIcons();
+        }
+      } catch (e) {
+        // error shown by frappe
+      }
+    },
+
     async editExam(exam) {
       this.examModalMode = "edit";
       this.examModalTab = "details";
@@ -858,7 +907,7 @@ function examStudioApp() {
         select_questions: [],
       };
       if (this._examModal) this._examModal.show();
-      this.replaceIcons();
+      this.syncExamEditors();
 
       try {
         const r = await frappe.call({
@@ -882,7 +931,7 @@ function examStudioApp() {
       } catch (e) {
         // keep modal open with basic data
       }
-      this.replaceIcons();
+      this.syncExamEditors();
     },
 
     editSchedule(sch) {
@@ -890,6 +939,18 @@ function examStudioApp() {
     },
 
     // --- Exam modal ---
+
+    syncExamEditors() {
+      this.$nextTick(() => {
+        if (this.$refs.examDescriptionEditor) {
+          this.$refs.examDescriptionEditor.innerHTML = this.examForm.description || "";
+        }
+        if (this.$refs.examInstructionsEditor) {
+          this.$refs.examInstructionsEditor.innerHTML = this.examForm.instructions || "";
+        }
+        this.replaceIcons();
+      });
+    },
 
     openExamModal(mode, exam) {
       this.examModalMode = mode;
@@ -928,7 +989,7 @@ function examStudioApp() {
         };
       }
       if (this._examModal) this._examModal.show();
-      this.replaceIcons();
+      this.syncExamEditors();
     },
 
     addExamCategory() {

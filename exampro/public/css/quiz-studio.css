@@ -298,87 +298,89 @@
   color: #adb5bd;
 }
 
-/* Action bar below quiz list */
-.quiz-action-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  flex-wrap: wrap;
+/* Show three-dot on hover or when active */
+.quiz-actions-hoverable {
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
-/* Share card — shown when quiz is published */
-.share-card {
-  margin-top: 0.65rem;
-  padding: 0.65rem 0.75rem;
-  background: #f0faf3;
-  border: 1px solid rgba(25, 135, 84, 0.15);
-  border-radius: 6px;
+.quiz-actions-visible,
+.question-item:hover > .quiz-actions-hoverable,
+.question-item-header:hover > .quiz-actions-hoverable {
+  opacity: 1;
 }
 
-.share-url-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.share-url {
-  flex: 1;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: #212529;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.share-copy-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+/* Three-dot trigger button */
+.quiz-dropdown-wrap > .btn-link {
+  border: 1px solid transparent;
   border-radius: 4px;
-  background: #fff;
-  color: #495057;
-  cursor: pointer;
-  flex-shrink: 0;
   transition: all 0.1s ease;
 }
 
-.share-copy-btn:hover {
-  border-color: rgba(0, 0, 0, 0.2);
-  color: #212529;
-  background: #fafbfc;
+.quiz-dropdown-wrap > .btn-link:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
 }
 
-.share-pin-row {
+/* Quiz dropdown menu on active card */
+.quiz-dropdown-wrap {
+  position: relative;
+}
+
+.quiz-dropdown-menu {
+  position: fixed;
+  z-index: 1050;
+  min-width: 150px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 0.3rem 0;
+}
+
+.quiz-dropdown-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.45rem;
-  padding-top: 0.45rem;
-  border-top: 1px solid rgba(25, 135, 84, 0.1);
-}
-
-.share-pin-label {
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #6c757d;
-}
-
-.share-pin-value {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  width: 100%;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: #212529;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
+}
+
+.quiz-dropdown-item:hover {
+  background: rgba(245, 195, 68, 0.08);
+}
+
+.quiz-dropdown-item i,
+.quiz-dropdown-item svg {
+  color: #6c757d;
+  flex-shrink: 0;
+}
+
+.quiz-dropdown-danger {
+  color: #dc3545;
+}
+
+.quiz-dropdown-danger i,
+.quiz-dropdown-danger svg {
+  color: #dc3545;
+}
+
+.quiz-dropdown-danger:hover {
+  background: rgba(220, 53, 69, 0.06);
+}
+
+.quiz-dropdown-sep {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 0.25rem 0;
 }
 
 /* ---- Modal — matches exam-studio modal ---- */
@@ -498,6 +500,11 @@
   overflow: hidden;
 }
 
+.question-item-row-active {
+  border-left-color: #f5c344;
+  background: rgba(245, 195, 68, 0.06);
+}
+
 .question-item-header {
   display: flex;
   align-items: center;
@@ -509,6 +516,11 @@
 
 .question-item-header:hover {
   background: #fafbfc;
+}
+
+.question-item-row-active .question-item-header,
+.question-item-row-active .question-item-header:hover {
+  background: transparent;
 }
 
 .question-number {

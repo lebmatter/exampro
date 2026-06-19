@@ -11,20 +11,10 @@
             Categories
             <span class="tab-count" x-text="categories.length" x-show="categories.length > 0"></span>
           </h6>
-          <button class="btn btn-sm btn-generate-sm" @click="showNewCategory = !showNewCategory">
+          <button class="btn btn-sm btn-generate-sm" @click="openNewCategoryModal()">
             <i data-feather="plus" style="width:14px;height:14px;"></i> New
           </button>
         </div>
-
-        <!-- New category inline -->
-        <template x-if="showNewCategory">
-          <div class="exam-search-box">
-            <div class="d-flex gap-2">
-              <input type="text" class="form-control form-control-sm" placeholder="Category name" x-model="newCategoryName" @keydown.enter="createCategory()">
-              <button class="btn btn-sm btn-primary flex-shrink-0" @click="createCategory()" :disabled="!newCategoryName.trim()">Add</button>
-            </div>
-          </div>
-        </template>
 
         <!-- Search box -->
         <div class="exam-search-box">
@@ -705,6 +695,34 @@
             </span>
           </template>
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Category Modal -->
+<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">New Category</span>
+        <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+          <i data-feather="x" style="width:18px;height:18px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="control-group mb-0">
+          <label class="control-label">Category Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control form-control-sm" x-model="newCategoryName" placeholder="e.g. General Knowledge" @keydown.enter="createCategoryFromModal()">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="d-flex gap-2 w-100">
+          <button class="btn btn-sm btn-insert" @click="createCategoryFromModal()" :disabled="!newCategoryName.trim()">
+            <i data-feather="folder-plus" style="width:14px;height:14px;"></i> Create Category
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
