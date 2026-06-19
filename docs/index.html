@@ -3,19 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ExamPro - Proctored Exams for Frappe Framework</title>
+    <title>ExamPro - Exams & Quizzes for Frappe Framework</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
       rel="stylesheet"
     />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <style>
       :root {
         --primary-color: #0d6efd;
@@ -88,6 +85,9 @@
         border-radius: 6px;
         transition: all 0.2s ease;
         text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
       }
 
       .nav-link:hover {
@@ -132,7 +132,7 @@
         color: var(--text-grey);
         margin-bottom: 3rem;
         font-weight: 400;
-        max-width: 600px;
+        max-width: 650px;
         margin-left: auto;
         margin-right: auto;
       }
@@ -254,8 +254,12 @@
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 1.25rem;
         margin-bottom: 1.5rem;
+      }
+
+      .feature-icon svg {
+        width: 22px;
+        height: 22px;
       }
 
       .feature-item h3 {
@@ -286,7 +290,7 @@
       }
 
       .feature-list li:before {
-        content: "✓";
+        content: "\2713";
         position: absolute;
         left: 0;
         color: var(--primary-color);
@@ -350,6 +354,7 @@
         object-fit: cover;
         border-radius: 8px;
         margin-bottom: 2rem;
+        background: var(--light-grey);
       }
 
       .showcase-item h3 {
@@ -528,11 +533,8 @@
               target="_blank"
               rel="noopener"
             >
-              <i
-                class="bi bi-github"
-                style="font-size: 1.2rem; vertical-align: middle"
-              ></i>
-              <span class="d-none d-lg-inline ms-1">GitHub</span>
+              <i data-feather="github" style="width: 18px; height: 18px"></i>
+              <span class="d-none d-lg-inline">GitHub</span>
             </a>
             <a href="#" class="btn-nav">Get Started</a>
           </div>
@@ -545,10 +547,10 @@
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-lg-10">
-            <h1>Proctored exams,<br />perfected for Frappe</h1>
+            <h1>Exams & quizzes,<br />built for Frappe</h1>
             <p class="hero-subtitle">
-              Conduct secure, video-monitored examinations with seamless
-              integration into your Frappe environment
+              Proctored exams, quick quizzes, AI-powered question generation, and
+              a full studio editor &mdash; all inside your Frappe environment
             </p>
 
             <div class="hero-buttons">
@@ -567,61 +569,112 @@
     <!-- Features Section -->
     <section id="features" class="features">
       <div class="container">
-        <h2>Built for education & training</h2>
+        <h2>Everything you need</h2>
         <p class="features-subtitle">
-          Everything you need to conduct secure, professional exams for schools,
-          universities, and workplace training.
+          From quick classroom quizzes to high-stakes proctored exams &mdash;
+          create, conduct, and evaluate with one app.
         </p>
 
         <div class="feature-grid">
           <div class="feature-item">
             <div class="feature-icon">
-              <i class="bi bi-camera-video"></i>
+              <i data-feather="zap"></i>
+            </div>
+            <h3>Quick Quiz</h3>
+            <p>
+              Run gamified, real-time quizzes with Kahoot-style competitive mode
+              or simple standalone quizzes.
+            </p>
+            <ul class="feature-list">
+              <li>Kahoot &amp; simple quiz modes</li>
+              <li>PIN-protected or authenticated access</li>
+              <li>Live leaderboard &amp; score bonuses</li>
+              <li>Multiple themes &amp; question timers</li>
+            </ul>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i data-feather="cpu"></i>
+            </div>
+            <h3>AI-Powered Content</h3>
+            <p>
+              Generate questions, help text, and images using AI. Supports
+              multiple models via OpenRouter.
+            </p>
+            <ul class="feature-list">
+              <li>AI question generation from prompts</li>
+              <li>Contextual help text &amp; tutoring</li>
+              <li>AI image generation for questions</li>
+              <li>Configurable difficulty levels</li>
+            </ul>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i data-feather="layout"></i>
+            </div>
+            <h3>Studio Editor</h3>
+            <p>
+              A visual editor for building exams and quizzes with drag-and-drop
+              simplicity and batch import.
+            </p>
+            <ul class="feature-list">
+              <li>Visual question builder</li>
+              <li>Batch import from question bank</li>
+              <li>Category search &amp; filtering</li>
+              <li>State caching for work-in-progress</li>
+            </ul>
+          </div>
+
+          <div class="feature-item">
+            <div class="feature-icon">
+              <i data-feather="video"></i>
             </div>
             <h3>Live Proctoring</h3>
             <p>
-              Monitor candidates in real-time with advanced video surveillance
-              and automatic recording capabilities.
+              Monitor candidates in real-time with webcam surveillance, face
+              detection, and automatic recording.
             </p>
             <ul class="feature-list">
               <li>Real-time video monitoring</li>
-              <li>Automatic session recording</li>
-              <li>Live chat support</li>
-              <li>Smart alerts and notifications</li>
+              <li>Face detection &amp; multi-face alerts</li>
+              <li>Tab &amp; window focus tracking</li>
+              <li>Configurable warning thresholds</li>
             </ul>
           </div>
 
           <div class="feature-item">
             <div class="feature-icon">
-              <i class="bi bi-question-circle"></i>
+              <i data-feather="list"></i>
             </div>
             <h3>Flexible Questions</h3>
             <p>
-              Create diverse question types to suit any examination format with
-              our intuitive question builder.
+              Multiple choice, free text, image-based questions with
+              explanations, help quizzes, and difficulty levels.
             </p>
             <ul class="feature-list">
-              <li>Multiple choice questions</li>
-              <li>True/false responses</li>
-              <li>Subjective questions</li>
-              <li>Image-based questions</li>
+              <li>MCQ &amp; subjective question types</li>
+              <li>Image-based questions &amp; options</li>
+              <li>Embedded help quizzes per question</li>
+              <li>Question bank with categories</li>
             </ul>
           </div>
 
           <div class="feature-item">
             <div class="feature-icon">
-              <i class="bi bi-award"></i>
+              <i data-feather="award"></i>
             </div>
-            <h3>Digital Certificates</h3>
+            <h3>Certificates &amp; Leaderboards</h3>
             <p>
-              Issue professional certificates automatically upon successful
-              completion of examinations.
+              Auto-generate digital certificates on completion and display
+              competitive leaderboards.
             </p>
             <ul class="feature-list">
               <li>Custom certificate templates</li>
-              <li>Automated distribution</li>
-              <li>Digital verification</li>
-              <li>Bulk generation</li>
+              <li>Configurable certificate expiry</li>
+              <li>Exam &amp; schedule-level leaderboards</li>
+              <li>Time-based ranking</li>
             </ul>
           </div>
         </div>
@@ -633,12 +686,39 @@
       <div class="container">
         <h2>See it in action</h2>
         <p class="showcase-subtitle">
-          Explore the features that make ExamPro powerful yet simple to use
+          Explore the interfaces that make ExamPro powerful yet simple to use
         </p>
 
         <div class="showcase-container">
           <div class="showcase-content">
             <div class="showcase-item active">
+              <img src="screenshots/studio.png" alt="Exam Studio" />
+              <h3>Exam Studio</h3>
+              <p>
+                Build exams visually with the studio editor. Add questions,
+                configure settings, and import from your question bank.
+              </p>
+            </div>
+
+            <div class="showcase-item">
+              <img src="screenshots/quick-quiz.png" alt="Quick Quiz" />
+              <h3>Quick Quiz</h3>
+              <p>
+                Run gamified quizzes with live leaderboards, score bonuses, and
+                multiple themes for engaging classroom sessions.
+              </p>
+            </div>
+
+            <div class="showcase-item">
+              <img src="screenshots/ai.png" alt="AI Question Generation" />
+              <h3>AI Question Generation</h3>
+              <p>
+                Generate exam questions, help text, and images with AI. Choose
+                difficulty, quantity, and question type.
+              </p>
+            </div>
+
+            <div class="showcase-item">
               <img src="screenshots/proc.png" alt="Proctor Dashboard" />
               <h3>Proctor Dashboard</h3>
               <p>
@@ -646,18 +726,13 @@
                 Communicate with them instantly and manage sessions with ease.
               </p>
             </div>
-            <div class="showcase-item">
-              <img src="screenshots/eval.png" alt="Evaluation Overview" />
-              <h3>Evaluation Dashboard</h3>
-              <p>Evaluate subjective responses with easy to use tools.</p>
-            </div>
 
             <div class="showcase-item">
-              <img src="screenshots/chat.png" alt="Live Monitoring" />
-              <h3>Real-time Chat & Calculator</h3>
+              <img src="screenshots/eval.png" alt="Evaluation Dashboard" />
+              <h3>Evaluation Dashboard</h3>
               <p>
-                Engage with candidates through live chat, provide assistance,
-                and allow them to use a built-in calculator during exams.
+                Evaluate subjective responses with easy-to-use tools and
+                configurable evaluation periods.
               </p>
             </div>
 
@@ -665,8 +740,8 @@
               <img src="screenshots/leader.png" alt="Leaderboard" />
               <h3>Leaderboard</h3>
               <p>
-                Optional leaderboard to display top candidates based on their
-                scores.
+                Display top candidates with time-based ranking across exams and
+                schedules.
               </p>
             </div>
           </div>
@@ -676,6 +751,8 @@
             <div class="showcase-dot" data-slide="1"></div>
             <div class="showcase-dot" data-slide="2"></div>
             <div class="showcase-dot" data-slide="3"></div>
+            <div class="showcase-dot" data-slide="4"></div>
+            <div class="showcase-dot" data-slide="5"></div>
           </div>
         </div>
       </div>
@@ -708,13 +785,14 @@
     <!-- Footer -->
     <footer>
       <div class="container">
-        <p>&copy; 2025 ExamPro. Built with ❤️ for the Frappe community.</p>
+        <p>&copy; 2025 ExamPro. Built for the Frappe community.</p>
       </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      // Showcase slideshow functionality
+      feather.replace();
+
       let currentSlide = 0;
       const slides = document.querySelectorAll(".showcase-item");
       const dots = document.querySelectorAll(".showcase-dot");
@@ -732,10 +810,8 @@
         showSlide(currentSlide);
       }
 
-      // Auto-advance slides
       setInterval(nextSlide, 5000);
 
-      // Dot navigation
       dots.forEach((dot, index) => {
         dot.addEventListener("click", () => {
           currentSlide = index;
@@ -743,7 +819,6 @@
         });
       });
 
-      // Smooth scrolling
       document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
         anchor.addEventListener("click", function (e) {
           e.preventDefault();
