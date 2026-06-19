@@ -3,7 +3,6 @@ function quizApp() {
     // Config from page
     shortUuid: '',
     isHost: false,
-    isPreview: false,
 
     // State
     screen: 'join', // join|waiting|question|feedback|leaderboard|complete|host-lobby|host-question|host-leaderboard
@@ -47,8 +46,6 @@ function quizApp() {
       const pageData = window.quizPageData || {};
       this.shortUuid = pageData.shortUuid || '';
       this.isHost = pageData.isHost || false;
-      this.isPreview = pageData.isPreview || false;
-
       if (this.isHost) {
         this.screen = 'host-lobby';
       }

@@ -377,6 +377,15 @@
   background: rgba(220, 53, 69, 0.06);
 }
 
+.quiz-dropdown-pin {
+  cursor: default;
+  color: #6c757d;
+}
+
+.quiz-dropdown-pin:hover {
+  background: none;
+}
+
 .quiz-dropdown-sep {
   height: 1px;
   background: rgba(0, 0, 0, 0.06);

@@ -49,15 +49,15 @@
                     <button class="quiz-dropdown-item" @click.stop="openSettingsModal(); quizDropdownOpen = null">
                       <i data-feather="settings" style="width:13px;height:13px;"></i> Edit
                     </button>
-                    <button class="quiz-dropdown-item" @click.stop="takeDemo(); quizDropdownOpen = null">
-                      <i data-feather="play" style="width:13px;height:13px;"></i> Preview
-                    </button>
                     <button class="quiz-dropdown-item" @click.stop="duplicateQuiz(); quizDropdownOpen = null">
                       <i data-feather="copy" style="width:13px;height:13px;"></i> Copy
                     </button>
                     <button class="quiz-dropdown-item" @click.stop="copyShareLink(); quizDropdownOpen = null" x-show="editData && editData.status === 'Published'">
                       <i data-feather="share-2" style="width:13px;height:13px;"></i> Share
                     </button>
+                    <div class="quiz-dropdown-item quiz-dropdown-pin" x-show="editData && editData.access_type === 'PIN'" @click.stop>
+                      <i data-feather="lock" style="width:13px;height:13px;"></i> PIN: <strong x-text="editData && editData.pin_code"></strong>
+                    </div>
                     <div class="quiz-dropdown-sep"></div>
                     <button class="quiz-dropdown-item" @click.stop="togglePublish(); quizDropdownOpen = null">
                       <template x-if="editData && editData.status === 'Published'">

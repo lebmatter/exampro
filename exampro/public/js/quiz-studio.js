@@ -282,11 +282,6 @@ function quizStudioApp() {
       this.saveQuiz();
     },
 
-    takeDemo() {
-      var uuid = this.editData.short_uuid || "preview";
-      window.open("/quiz/" + uuid + "?preview=1", "_blank");
-    },
-
     hostQuiz() {
       window.open(
         "/quiz/" + this.editData.short_uuid + "/host",
