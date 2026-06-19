@@ -1095,31 +1095,27 @@ def create_users_and_add_to_batch(batch_name, users_data):
 			errors.append({"email": email, "error": "First name is required"})
 			continue
 
-		user_exists = frappe.db.exists("User", email)
+		if frappe.db.exists("User", email):
+			skipped += 1
+			continue
 
-		if not user_exists:
-			try:
-				user_doc = frappe.get_doc({
-					"doctype": "User",
-					"email": email,
-					"first_name": first_name,
-					"last_name": last_name,
-					"user_type": "Website User",
-					"send_welcome_email": 0,
-					"roles": [{"role": "Exam Candidate"}],
-				})
-				user_doc.insert(ignore_permissions=True)
-				created += 1
-			except Exception as e:
-				errors.append({"email": email, "error": str(e)})
-				continue
-		else:
-			existing_added += 1
+		try:
+			user_doc = frappe.get_doc({
+				"doctype": "User",
+				"email": email,
+				"first_name": first_name,
+				"last_name": last_name,
+				"user_type": "Website User",
+				"send_welcome_email": 1,
+				"roles": [{"role": "Exam Candidate"}],
+			})
+			user_doc.insert(ignore_permissions=True)
+			created += 1
+		except Exception as e:
+			errors.append({"email": email, "error": str(e)})
+			continue
 
 		if frappe.db.exists("Exam Batch User", {"exam_batch": batch_name, "candidate": email}):
-			if user_exists:
-				existing_added -= 1
-			skipped += 1
 			continue
 
 		batch_user = frappe.get_doc({
@@ -1132,7 +1128,6 @@ def create_users_and_add_to_batch(batch_name, users_data):
 	frappe.db.commit()
 	return {
 		"created": created,
-		"existing_added": existing_added,
 		"skipped": skipped,
 		"errors": errors,
 	}

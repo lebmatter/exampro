@@ -13,11 +13,14 @@ function usersStudioApp() {
     creatingBatch: false,
     importingCsv: false,
 
-    addMode: "search",
+    addMode: "new",
 
+    existingAddMode: "search",
     searchQuery: "",
     searchResults: [],
     selectedEmails: [],
+    bulkEmailsText: "",
+    _addExistingModal: null,
 
     newUserForm: { email: "", first_name: "", last_name: "" },
 
@@ -52,6 +55,8 @@ function usersStudioApp() {
       this.$nextTick(function() {
         var el = document.getElementById("batchCreateModal");
         if (el) this._batchModal = new bootstrap.Modal(el);
+        var el2 = document.getElementById("addExistingUsersModal");
+        if (el2) this._addExistingModal = new bootstrap.Modal(el2);
         if (typeof feather !== "undefined") feather.replace();
       }.bind(this));
     },
@@ -186,6 +191,58 @@ function usersStudioApp() {
       });
     },
 
+    openAddExistingModal() {
+      this.existingAddMode = "search";
+      this.searchQuery = "";
+      this.searchResults = [];
+      this.selectedEmails = [];
+      this.bulkEmailsText = "";
+      if (this._addExistingModal) this._addExistingModal.show();
+      this.replaceIcons();
+    },
+
+    addExistingUsersFromModal() {
+      var self = this;
+      if (!self.selectedBatch) return;
+
+      var emails;
+      if (self.existingAddMode === "search") {
+        if (self.selectedEmails.length === 0) return;
+        emails = self.selectedEmails.join(",");
+      } else {
+        if (!self.bulkEmailsText.trim()) return;
+        emails = self.bulkEmailsText.trim();
+      }
+
+      self.addingUsers = true;
+      frappe.call({
+        method: "exampro.exam_pro.api.exam_studio.add_users_to_batch",
+        args: {
+          batch_name: self.selectedBatch.name,
+          emails: emails,
+        },
+        callback: function(r) {
+          self.addingUsers = false;
+          var d = r.message || {};
+          var parts = [];
+          if (d.added) parts.push(d.added + " added");
+          if (d.skipped) parts.push(d.skipped + " already in batch");
+          if (d.not_found && d.not_found.length) parts.push(d.not_found.length + " not found");
+          frappe.show_alert({ message: parts.join(", ") || "Done", indicator: d.added ? "green" : "orange" });
+          if (self._addExistingModal) self._addExistingModal.hide();
+          self.selectedEmails = [];
+          self.searchQuery = "";
+          self.searchResults = [];
+          self.bulkEmailsText = "";
+          self.loadBatchUsers(self.selectedBatch.name);
+          self.refreshBatchCount(self.selectedBatch.name);
+        },
+        error: function() {
+          self.addingUsers = false;
+        },
+      });
+    },
+
     createAndAddUser() {
       var self = this;
       if (!self.newUserForm.email || !self.newUserForm.first_name || !self.selectedBatch) return;
@@ -207,11 +264,11 @@ function usersStudioApp() {
             frappe.show_alert({ message: d.errors[0].error, indicator: "red" });
             return;
           }
-          var parts = [];
-          if (d.created) parts.push("User created");
-          if (d.existing_added) parts.push("Existing user added");
-          if (d.skipped) parts.push("Already in batch");
-          frappe.show_alert({ message: parts.join(", ") || "Done", indicator: d.created || d.existing_added ? "green" : "orange" });
+          if (d.skipped) {
+            frappe.show_alert({ message: "User already exists", indicator: "orange" });
+          } else if (d.created) {
+            frappe.show_alert({ message: "User created and added to batch", indicator: "green" });
+          }
           self.newUserForm = { email: "", first_name: "", last_name: "" };
           self.loadBatchUsers(self.selectedBatch.name);
           self.refreshBatchCount(self.selectedBatch.name);
@@ -312,6 +369,16 @@ function usersStudioApp() {
       this.csvParsed = parsed;
     },
 
+    downloadCsvTemplate() {
+      var csv = "email,first_name,last_name\n";
+      var blob = new Blob([csv], { type: "text/csv" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "users_template.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },
+
     removeCsvFile() {
       this.csvFile = null;
       this.csvParsed = [];
@@ -334,10 +401,9 @@ function usersStudioApp() {
           var d = r.message || {};
           var parts = [];
           if (d.created) parts.push(d.created + " created");
-          if (d.existing_added) parts.push(d.existing_added + " existing added");
-          if (d.skipped) parts.push(d.skipped + " already in batch");
+          if (d.skipped) parts.push(d.skipped + " existing skipped");
           if (d.errors && d.errors.length) parts.push(d.errors.length + " errors");
-          frappe.show_alert({ message: parts.join(", ") || "Done", indicator: d.created || d.existing_added ? "green" : "orange" });
+          frappe.show_alert({ message: parts.join(", ") || "Done", indicator: d.created ? "green" : "orange" });
           self.removeCsvFile();
           self.loadBatchUsers(self.selectedBatch.name);
           self.refreshBatchCount(self.selectedBatch.name);

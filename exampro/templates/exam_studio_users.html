@@ -67,9 +67,12 @@
         <div class="question-list-header">
           <h6>
             <i data-feather="users" style="width:14px;height:14px;"></i>
-            Users
+            Users in Batch
             <span class="tab-count" x-text="batchUsers.length" x-show="batchUsers.length > 0"></span>
           </h6>
+          <button class="btn btn-sm btn-generate-sm" x-show="selectedBatch" @click="openAddExistingModal()">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> Add
+          </button>
         </div>
 
         <template x-if="selectedBatch">
@@ -142,7 +145,7 @@
         <div class="approved-header">
           <h6>
             <i data-feather="user-plus" style="width:14px;height:14px;"></i>
-            Add Users
+            Add New Users
           </h6>
         </div>
 
@@ -159,54 +162,11 @@
             <div style="padding:0.75rem;">
               <!-- Mode selector -->
               <div class="pill-group mb-3">
-                <button class="pill-btn pill-btn-sm" :class="{'pill-active': addMode === 'search'}" @click="addMode = 'search'">
-                  <i data-feather="search" style="width:12px;height:12px;"></i> Existing
-                </button>
                 <button class="pill-btn pill-btn-sm" :class="{'pill-active': addMode === 'new'}" @click="addMode = 'new'">
                   <i data-feather="user-plus" style="width:12px;height:12px;"></i> New User
                 </button>
                 <button class="pill-btn pill-btn-sm" :class="{'pill-active': addMode === 'csv'}" @click="addMode = 'csv'">
                   <i data-feather="upload" style="width:12px;height:12px;"></i> CSV
-                </button>
-              </div>
-
-              <!-- Search Existing Users -->
-              <div x-show="addMode === 'search'">
-                <div class="control-group">
-                  <label class="control-label">Search by name or email</label>
-                  <input type="text" class="form-control form-control-sm" x-model="searchQuery" @input.debounce.300ms="searchExistingUsers()" placeholder="Type to search...">
-                </div>
-
-                <div class="candidate-search-results" x-show="searchResults.length > 0">
-                  <template x-for="(user, ui) in searchResults" :key="'su-' + user.name">
-                    <div class="candidate-search-item" @click="toggleUserSelection(user.name)">
-                      <input type="checkbox" class="form-check-input" :checked="selectedEmails.includes(user.name)" @click.stop="toggleUserSelection(user.name)">
-                      <div>
-                        <div style="font-size:0.85rem;font-weight:600;" x-text="user.full_name"></div>
-                        <div class="text-muted" style="font-size:0.78rem;" x-text="user.name"></div>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-
-                <template x-if="searchQuery && searchResults.length === 0">
-                  <p class="text-muted" style="font-size:0.8rem;">No users found.</p>
-                </template>
-
-                <div class="mt-2" x-show="selectedEmails.length > 0">
-                  <span class="text-muted" style="font-size:0.8rem;" x-text="selectedEmails.length + ' user(s) selected'"></span>
-                </div>
-
-                <button class="btn btn-sm btn-generate w-100 mt-2" @click="addSelectedUsers()" :disabled="addingUsers || selectedEmails.length === 0" x-show="selectedEmails.length > 0">
-                  <template x-if="addingUsers">
-                    <span><span class="spinner-border spinner-border-sm me-1"></span> Adding...</span>
-                  </template>
-                  <template x-if="!addingUsers">
-                    <span>
-                      <i data-feather="user-plus" style="width:14px;height:14px;"></i>
-                      Add to Batch
-                    </span>
-                  </template>
                 </button>
               </div>
 
@@ -236,7 +196,10 @@
                     </span>
                   </template>
                 </button>
-                <p class="text-muted mt-2 mb-0" style="font-size:0.78rem;">Creates a new user account and adds them to this batch. If the user already exists, they will just be added to the batch.</p>
+                <div class="alert-banner mt-2 mb-0" style="font-size:0.78rem;background:#fff8e1;border-color:#ffe082;">
+                  <i data-feather="mail" style="width:13px;height:13px;color:#f9a825;"></i>
+                  <span>A welcome email with login details will be sent to newly created users.</span>
+                </div>
               </div>
 
               <!-- CSV Upload -->
@@ -254,7 +217,10 @@
                       </div>
                     </div>
                     <input type="file" accept=".csv" x-ref="csvFileInput" style="display:none;" @change="handleCsvSelect($event)">
-                    <p class="text-muted mt-2 mb-0" style="font-size:0.78rem;">CSV should have columns: email, first_name, last_name</p>
+                    <p class="text-muted mt-2 mb-0" style="font-size:0.78rem;">
+                      CSV should have columns: email, first_name, last_name.
+                      <a href="#" @click.prevent="downloadCsvTemplate()" style="text-decoration:underline;">Download template</a>
+                    </p>
                   </div>
                 </template>
 
@@ -314,6 +280,10 @@
                             </span>
                           </template>
                         </button>
+                        <div class="alert-banner mt-2 mb-0" style="font-size:0.78rem;background:#fff8e1;border-color:#ffe082;">
+                          <i data-feather="mail" style="width:13px;height:13px;color:#f9a825;"></i>
+                          <span>A welcome email with login details will be sent to newly created users.</span>
+                        </div>
                       </div>
                     </template>
                   </div>
@@ -321,6 +291,84 @@
               </div>
             </div>
           </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Existing Users Modal -->
+  <div class="modal fade" id="addExistingUsersModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title">Add Existing Users</span>
+          <button type="button" class="modal-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Close">
+            <i data-feather="x" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Mode selector -->
+          <div class="pill-group mb-3">
+            <button class="pill-btn pill-btn-sm" :class="{'pill-active': existingAddMode === 'search'}" @click="existingAddMode = 'search'">
+              <i data-feather="search" style="width:12px;height:12px;"></i> Search
+            </button>
+            <button class="pill-btn pill-btn-sm" :class="{'pill-active': existingAddMode === 'emails'}" @click="existingAddMode = 'emails'">
+              <i data-feather="mail" style="width:12px;height:12px;"></i> Emails
+            </button>
+          </div>
+
+          <!-- Search mode -->
+          <div x-show="existingAddMode === 'search'">
+            <div class="control-group">
+              <label class="control-label">Search by name or email</label>
+              <input type="text" class="form-control form-control-sm" x-model="searchQuery" @input.debounce.300ms="searchExistingUsers()" placeholder="Type to search...">
+            </div>
+
+            <div class="candidate-search-results" x-show="searchResults.length > 0" style="max-height:240px;overflow-y:auto;">
+              <template x-for="(user, ui) in searchResults" :key="'su-' + user.name">
+                <div class="candidate-search-item" @click="toggleUserSelection(user.name)">
+                  <input type="checkbox" class="form-check-input" :checked="selectedEmails.includes(user.name)" @click.stop="toggleUserSelection(user.name)">
+                  <div>
+                    <div style="font-size:0.85rem;font-weight:600;" x-text="user.full_name"></div>
+                    <div class="text-muted" style="font-size:0.78rem;" x-text="user.name"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <template x-if="searchQuery && searchQuery.length >= 2 && searchResults.length === 0">
+              <p class="text-muted" style="font-size:0.8rem;">No users found.</p>
+            </template>
+
+            <div class="mt-2" x-show="selectedEmails.length > 0">
+              <span class="text-muted" style="font-size:0.8rem;" x-text="selectedEmails.length + ' user(s) selected'"></span>
+            </div>
+          </div>
+
+          <!-- Emails mode -->
+          <div x-show="existingAddMode === 'emails'">
+            <div class="control-group">
+              <label class="control-label">Enter email addresses</label>
+              <textarea class="form-control form-control-sm" rows="4" x-model="bulkEmailsText" placeholder="Enter comma-separated emails&#10;e.g. user1@example.com, user2@example.com"></textarea>
+            </div>
+            <p class="text-muted mb-0" style="font-size:0.78rem;">Separate emails with commas, semicolons, or new lines.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="d-flex gap-2 w-100">
+            <button class="btn btn-sm btn-generate" @click="addExistingUsersFromModal()" :disabled="addingUsers || (existingAddMode === 'search' && selectedEmails.length === 0) || (existingAddMode === 'emails' && !bulkEmailsText.trim())">
+              <template x-if="addingUsers">
+                <span><span class="spinner-border spinner-border-sm me-1"></span> Adding...</span>
+              </template>
+              <template x-if="!addingUsers">
+                <span>
+                  <i data-feather="user-plus" style="width:14px;height:14px;"></i>
+                  Add to Batch
+                </span>
+              </template>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-bs-dismiss="modal">Close</button>
+          </div>
         </div>
       </div>
     </div>
