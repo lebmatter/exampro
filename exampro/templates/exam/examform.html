@@ -7,9 +7,9 @@
         </div>
     </div>
 
-    <div id="help-panel" class="common-card-style column-card help-card hide">
+    <div id="help-panel" class="common-card-style column-card help-card hide" role="region" aria-label="Study material">
         <div class="help-panel-header">
-            <i data-feather="info"></i>
+            <i data-feather="info" aria-hidden="true"></i>
             <span id="help-panel-title" class="help-panel-title"
                 >Read before next question</span
             >
@@ -41,9 +41,11 @@
     <div
         id="help-quiz-panel"
         class="common-card-style column-card help-card hide"
+        role="region"
+        aria-label="Comprehension quiz"
     >
         <div class="help-panel-header">
-            <i data-feather="info"></i>
+            <i data-feather="info" aria-hidden="true"></i>
             <span id="help-quiz-panel-title" class="help-panel-title"
                 >Read before next question</span
             >
@@ -73,7 +75,7 @@
         </div>
     </div>
 
-    <form id="quiz-form" class="common-card-style column-card hide">
+    <form id="quiz-form" class="common-card-style column-card hide" role="region" aria-label="Current question">
         <div
             class="question"
             id="question"
@@ -82,14 +84,14 @@
             data-multi=""
         >
             <div>
-                <div class="question-number" id="question-number"></div>
-                <div class="question-text" id="question-text"></div>
+                <div class="question-number" id="question-number" aria-live="polite" aria-atomic="true"></div>
+                <div class="question-text" id="question-text" aria-live="polite"></div>
                 <div class="question-image" style="display: none">
                     <img src="" class="img-fluid" alt="" id="question-image" />
                 </div>
             </div>
 
-            <div id="choices"></div>
+            <div id="choices" role="group" aria-labelledby="question-text"></div>
 
             <div
                 class="control-input-wrapper"
@@ -141,26 +143,29 @@
                     <button
                         class="btn btn-outline-secondary ms-2 exam-navigation-btn"
                         id="prevQs"
+                        aria-label="Previous question"
                         style="display: none"
                     >
                         <span class="d-flex align-items-center">
-                            <i data-feather="arrow-left"></i>
+                            <i data-feather="arrow-left" aria-hidden="true"></i>
                             Previous
                         </span>
                     </button>
                     <button
                         class="btn btn-primary ms-2 exam-navigation-btn"
                         id="nextQs"
+                        aria-label="Next question"
                         style="display: none"
                     >
                         <span class="d-flex align-items-center">
                             Next
-                            <i data-feather="arrow-right"></i>
+                            <i data-feather="arrow-right" aria-hidden="true"></i>
                         </span>
                     </button>
                     <button
                         class="btn btn-success ms-2"
                         id="finish"
+                        aria-label="Submit exam"
                         style="display: none"
                     >
                         <span class="d-flex align-items-center"> Submit</span>
@@ -197,6 +202,8 @@
                         class="badge bg-light text-dark px-2 py-1 rounded"
                         style="font-size: 0.9rem"
                         id="answeredCount"
+                        aria-live="polite"
+                        aria-atomic="true"
                         >00</span
                     >
                 </div>
@@ -209,6 +216,8 @@
                         class="badge bg-light text-dark px-2 py-1 rounded"
                         style="font-size: 0.9rem"
                         id="markedForLaterCount"
+                        aria-live="polite"
+                        aria-atomic="true"
                         >00</span
                     >
                 </div>
@@ -228,7 +237,7 @@
             x-transition:leave-start="opacity-100 transform translate-y-0"
             x-transition:leave-end="opacity-0 transform -translate-y-2"
         >
-            <div id="button-grid">
+            <div id="button-grid" role="navigation" aria-label="Question navigation">
                 <!-- Buttons will be added here -->
             </div>
         </div>

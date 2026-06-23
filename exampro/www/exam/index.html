@@ -6,6 +6,7 @@ head_include %}
 <link rel="stylesheet" href="/assets/exampro/css/exam-index.css" />
 {% endblock %} {% block page_content %}
 
+<a href="#quiz-form" class="visually-hidden visually-hidden-focusable">Skip to exam questions</a>
 <div class="container mt-4 mb-4">
   {% if alert %}
   <div class="alert-card">
@@ -43,7 +44,7 @@ head_include %}
   {% else %}
   <div class="row">
     {% if exam.exam_mode != "Training" %}
-    <div class="col-md-3">
+    <div class="col-md-3" role="complementary" aria-label="Exam tools">
       <!-- Sidebar content -->
       <div class="bold-heading mb-3">{{ exam.title }}</div>
       <!-- Bootstrap Navigation -->
@@ -51,7 +52,7 @@ head_include %}
         <li class="nav-item">
           <a class="nav-link active" data-toggle="tab" href="#messages">
             <span class="d-flex align-items-center">
-              <i data-feather="message-circle" style="width:14px;height:14px;margin-right:5px;"></i>
+              <i data-feather="message-circle" style="width:14px;height:14px;margin-right:5px;" aria-hidden="true"></i>
               Chat {% if exam.enable_chat %}
               <span
                 class="badge badge-pill badge-warning ms-2"
@@ -64,7 +65,7 @@ head_include %}
         <li class="nav-item">
           <a class="nav-link" data-toggle="tab" href="#calculator">
             <span class="d-flex align-items-center">
-              <i data-feather="hash" style="width:14px;height:14px;margin-right:5px;"></i>
+              <i data-feather="hash" style="width:14px;height:14px;margin-right:5px;" aria-hidden="true"></i>
               Calculator
             </span>
           </a>
@@ -103,7 +104,8 @@ head_include %}
           aria-controls="video-content"
         >
           <span class="d-flex align-items-center text-dark fw-semibold" style="font-size: 1.1rem;">
-            <i data-feather="video"></i>
+            <i data-feather="video" aria-hidden="true"></i>
+            <span class="visually-hidden">Video proctoring</span>
           </span>
           <span class="text-primary arrow-icon" style="font-size: 1.2rem">
             <i x-show="videoVisible" data-feather="chevron-up" style="width:18px;height:18px;"></i>
@@ -125,6 +127,7 @@ head_include %}
           <video
             id="webcam-stream"
             autoplay
+            aria-label="Your webcam feed"
             style="max-width: 100%; border-radius: 4px"
           ></video>
           <!-- Hidden surfaces used to burn a timestamp watermark into the
@@ -147,17 +150,42 @@ head_include %}
       </div>
     </div>
     {% endif %}
-    <div class="{{ 'col-md-9' if exam.exam_mode != 'Training' else 'col-md-12' }}">
+    <div class="{{ 'col-md-9' if exam.exam_mode != 'Training' else 'col-md-12' }}" role="main">
       <!-- Main content -->
       {% if exam.submission_status == "Started" %}
       <div class="row mb-3">
         <div class="col-md-6">
           {% if exam.exam_mode == "Training" %}
-          <div class="d-flex justify-content-start align-items-center h-100">
-            <div class="bold-heading">{{ exam.title }}</div>
+          <div class="d-flex justify-content-start align-items-center h-100 gap-3">
+            <div class="bold-heading mb-0">{{ exam.title }}</div>
+            <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility controls">
+              <button type="button" onclick="examA11y.decreaseFontSize()" aria-label="Decrease font size" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="minus" aria-hidden="true"></i>
+              </button>
+              <span class="small text-muted a11y-font-label" id="fontSizeLabel">100%</span>
+              <button type="button" onclick="examA11y.increaseFontSize()" aria-label="Increase font size" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="plus" aria-hidden="true"></i>
+              </button>
+              <button type="button" onclick="examA11y.toggleHighContrast()" aria-label="Toggle high contrast" id="hcToggleBtn" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="eye" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           {% else %}
-          <div class="d-flex justify-content-start"></div>
+          <div class="d-flex justify-content-start align-items-center h-100">
+            <div class="a11y-toolbar" role="toolbar" aria-label="Accessibility controls">
+              <button type="button" onclick="examA11y.decreaseFontSize()" aria-label="Decrease font size" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="minus" aria-hidden="true"></i>
+              </button>
+              <span class="small text-muted a11y-font-label" id="fontSizeLabel">100%</span>
+              <button type="button" onclick="examA11y.increaseFontSize()" aria-label="Increase font size" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="plus" aria-hidden="true"></i>
+              </button>
+              <button type="button" onclick="examA11y.toggleHighContrast()" aria-label="Toggle high contrast" id="hcToggleBtn" class="btn btn-sm btn-outline-secondary">
+                <i data-feather="eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
           {% endif %}
         </div>
         <div class="col-md-6">
@@ -180,7 +208,7 @@ head_include %}
                   :title="timerVisible ? 'Hide Timer' : 'Show Timer'"
                   style="cursor: pointer"
                 >
-                  <span x-show="timerVisible" class="timer" id="exam-timer">--:--</span>
+                  <span x-show="timerVisible" class="timer" id="exam-timer" role="timer" aria-label="Exam time remaining" aria-live="off">--:--</span>
                   <span x-show="!timerVisible">Show Timer</span>
                   <span class="ms-2">
                     <i x-show="timerVisible" data-feather="eye-off" style="width:16px;height:16px;" aria-label="Hide timer"></i>
@@ -283,14 +311,14 @@ head_include %}
   {% endif %}
   {% if exam.exam_mode != "Training" %}
   <!-- Fullscreen exit warning banner -->
-  <div id="fullscreenBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-    <i data-feather="alert-triangle"></i>
+  <div id="fullscreenBanner" role="alert" aria-live="assertive" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i data-feather="alert-triangle" aria-hidden="true"></i>
     You have exited fullscreen mode. This has been reported to the proctor.
   </div>
   <!-- Fullscreen enforcement overlay -->
-  <div id="fullscreenOverlay" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.92); justify-content:center; align-items:center; flex-direction:column; color:#fff; text-align:center;">
-    <i data-feather="maximize" style="width:48px; height:48px; margin-bottom:16px;"></i>
-    <h3 style="margin-bottom:8px;">Fullscreen Required</h3>
+  <div id="fullscreenOverlay" role="alertdialog" aria-modal="true" aria-labelledby="fullscreen-overlay-heading" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.92); justify-content:center; align-items:center; flex-direction:column; color:#fff; text-align:center;">
+    <i data-feather="maximize" style="width:48px; height:48px; margin-bottom:16px;" aria-hidden="true"></i>
+    <h3 id="fullscreen-overlay-heading" style="margin-bottom:8px;">Fullscreen Required</h3>
     <p style="margin-bottom:24px; max-width:400px; color:#ccc;">This exam must be taken in fullscreen mode. Exiting fullscreen is reported to the proctor.</p>
     <button id="fullscreenEnterBtn" style="padding:12px 32px; font-size:1.1rem; font-weight:600; border:none; border-radius:8px; background:#0d6efd; color:#fff; cursor:pointer;">
       Enter Fullscreen
@@ -298,24 +326,24 @@ head_include %}
   </div>
   {% endif %}
   <!-- No-face termination warning banner -->
-  <div id="noFaceBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-    <i data-feather="alert-triangle"></i>
+  <div id="noFaceBanner" role="alert" aria-live="assertive" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i data-feather="alert-triangle" aria-hidden="true"></i>
     Face not detected. Your exam will be terminated soon. Please ensure your face is clearly visible to the camera.
   </div>
   <!-- Webcam disconnection warning banner -->
-  <div id="webcamBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-    <i data-feather="alert-triangle"></i>
+  <div id="webcamBanner" role="alert" aria-live="assertive" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i data-feather="alert-triangle" aria-hidden="true"></i>
     Webcam disconnected. Your exam will be terminated soon. Please reconnect your camera.
   </div>
 
-  <div id="screenCaptureBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-    <i data-feather="alert-triangle"></i>
+  <div id="screenCaptureBanner" role="alert" aria-live="assertive" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:#dc3545; color:#fff; padding:15px 20px; text-align:center; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+    <i data-feather="alert-triangle" aria-hidden="true"></i>
     Screen recording stopped. Your exam will be terminated in <span class="countdown">60</span> seconds. Please re-share your screen.
   </div>
 
-  <div id="screenCaptureOverlay" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.92); justify-content:center; align-items:center; flex-direction:column; color:#fff; text-align:center;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-    <h3 style="margin-bottom:8px;">Screen Recording Required</h3>
+  <div id="screenCaptureOverlay" role="alertdialog" aria-modal="true" aria-labelledby="screen-capture-overlay-heading" style="display:none; position:fixed; inset:0; z-index:10001; background:rgba(0,0,0,0.92); justify-content:center; align-items:center; flex-direction:column; color:#fff; text-align:center;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    <h3 id="screen-capture-overlay-heading" style="margin-bottom:8px;">Screen Recording Required</h3>
     <p style="margin-bottom:24px; max-width:460px; color:#ccc;">
       This exam requires screen recording. Please share your <strong>entire screen</strong> (not a window or tab).
       If you have multiple monitors, please disconnect extra displays before proceeding.

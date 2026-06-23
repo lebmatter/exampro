@@ -165,6 +165,16 @@ function updateTimer() {
             $(".timer").text(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
 
         }
+        // Escalate aria-live as time runs low so screen readers announce urgency
+        var timerEl = document.getElementById("exam-timer");
+        if (timerEl) {
+            if (remainingTime <= 60000) {
+                timerEl.setAttribute("aria-live", "assertive");
+            } else if (remainingTime <= 300000) {
+                timerEl.setAttribute("aria-live", "polite");
+            }
+        }
+
         // Update the timer every second
         setTimeout(updateTimer, 1000);
     }
@@ -1074,14 +1084,26 @@ function updateOverviewMap() {
                     dotColor = "#adb5bd";
                 }
 
+                // Determine status text for accessibility
+                let statusText = "not answered";
+                if (data.message.submitted[i] && data.message.submitted[i].marked_for_later) {
+                    statusText = "marked for review";
+                } else if (data.message.submitted[i] && data.message.submitted[i].answer) {
+                    statusText = "answered";
+                }
+
                 // Create a new button
                 const button = $("<button></button>");
                 button.addClass(btnCls);
                 button.attr("id", "button-" + i);
+                button.attr("aria-label", "Question " + i + " - " + statusText);
+                if (currentQuestion && i === currentQuestion["no"]) {
+                    button.attr("aria-current", "true");
+                }
 
                 // Set the button content with colored dot indicator
-                button.html(`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};"></span><span class="fw-bold text-dark">${i}</span>`);
-                
+                button.html(`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};" aria-hidden="true"></span><span class="fw-bold text-dark">${i}</span>`);
+
                 // Append the button to the grid
                 $("#button-grid").append(button);
                 
@@ -1257,7 +1279,7 @@ function renderCurrentQuestion() {
         if (imageSrc) {
             questionContentHtml += `
             <div class="question-description-image mt-3">
-                <img src="${imageSrc}" class="img-fluid" alt="Question description image" 
+                <img src="${imageSrc}" class="img-fluid" alt="Image for question ${currentQuestion['no']}"
                      style="max-width: 70%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
                      onerror="this.style.display='none'; console.warn('Failed to load question description image');">
             </div>`;
@@ -1298,7 +1320,7 @@ function renderCurrentQuestion() {
                     if (imageSrc) {
                         optImgHtml = `
                         <div class="option-image mt-2">
-                            <img src="${imageSrc}" class="img-fluid" alt="Option image" 
+                            <img src="${imageSrc}" class="img-fluid" alt="Image for ${key.replace('_', ' ')}"
                                  style="max-width: 200px; height: auto; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);"
                                  onerror="this.style.display='none'; console.warn('Failed to load option image');">
                         </div>`;

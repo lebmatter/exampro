@@ -491,3 +491,343 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
 }
+
+/* ── Accessibility utilities ─────────────────────────────────── */
+
+.visually-hidden,
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ── Font scale variable ─────────────────────────────────────── */
+
+.question-text,
+.option-item,
+.option-text,
+.question-number,
+.quiz-footer,
+.bold-heading,
+.help-panel-body,
+#instruction,
+.help-text-content,
+.chat-container,
+#exam-summary,
+.form-check-label,
+.explanation,
+.help-quiz-row,
+.help-quiz-question {
+  font-size: calc(var(--exam-font-scale, 1) * 1em);
+}
+
+/* ── Accessibility toolbar ───────────────────────────────────── */
+
+.a11y-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.a11y-toolbar .btn {
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.a11y-toolbar .a11y-font-label {
+  min-width: 2.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── High contrast mode ──────────────────────────────────────── */
+
+[data-high-contrast="true"] {
+  --hc-bg: #000;
+  --hc-text: #fff;
+  --hc-card-bg: #1a1a1a;
+  --hc-border: #fff;
+  --hc-accent: #ffff00;
+  --hc-link: #ffff00;
+  --hc-focus: #fff;
+  --hc-muted: #ccc;
+}
+
+[data-high-contrast="true"] body {
+  background-color: var(--hc-bg) !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .container {
+  color: var(--hc-text);
+}
+
+[data-high-contrast="true"] .common-card-style,
+[data-high-contrast="true"] .card {
+  background-color: var(--hc-card-bg) !important;
+  border-color: var(--hc-border) !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .card-header {
+  background-color: #111 !important;
+  border-color: var(--hc-border) !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .card-body {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .bold-heading,
+[data-high-contrast="true"] .card-title,
+[data-high-contrast="true"] h5,
+[data-high-contrast="true"] .text-dark {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .text-muted,
+[data-high-contrast="true"] .small {
+  color: var(--hc-muted) !important;
+}
+
+[data-high-contrast="true"] .question-text,
+[data-high-contrast="true"] .question-number,
+[data-high-contrast="true"] .question-number-text {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .question-instruction {
+  color: var(--hc-muted) !important;
+}
+
+[data-high-contrast="true"] #question {
+  background-color: var(--hc-card-bg) !important;
+}
+
+[data-high-contrast="true"] .option-item {
+  background-color: #222 !important;
+  border-color: #666 !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .option-item:hover {
+  border-color: var(--hc-accent) !important;
+  background-color: #333 !important;
+}
+
+[data-high-contrast="true"] .option-item.selected {
+  border-color: var(--hc-accent) !important;
+  background-color: #333 !important;
+  box-shadow: 0 0 0 2px var(--hc-accent) !important;
+}
+
+[data-high-contrast="true"] .option-text {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .btn-primary {
+  background-color: var(--hc-accent) !important;
+  border-color: var(--hc-accent) !important;
+  color: #000 !important;
+}
+
+[data-high-contrast="true"] .btn-primary:hover {
+  background-color: #e6e600 !important;
+  border-color: #e6e600 !important;
+  color: #000 !important;
+}
+
+[data-high-contrast="true"] .btn-outline-secondary {
+  border-color: var(--hc-border) !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .btn-outline-secondary:hover {
+  background-color: #333 !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .btn-warning {
+  background-color: var(--hc-accent) !important;
+  border-color: var(--hc-accent) !important;
+  color: #000 !important;
+}
+
+[data-high-contrast="true"] .btn-success {
+  background-color: #00ff00 !important;
+  border-color: #00ff00 !important;
+  color: #000 !important;
+}
+
+[data-high-contrast="true"] .timer {
+  color: #00ff00 !important;
+}
+
+[data-high-contrast="true"] a {
+  color: var(--hc-link) !important;
+}
+
+[data-high-contrast="true"] .nav-tabs {
+  border-color: var(--hc-border) !important;
+}
+
+[data-high-contrast="true"] .nav-tabs .nav-link {
+  color: var(--hc-muted) !important;
+}
+
+[data-high-contrast="true"] .nav-tabs .nav-link.active {
+  color: var(--hc-accent) !important;
+  border-bottom-color: var(--hc-accent) !important;
+}
+
+[data-high-contrast="true"] #button-grid .btn {
+  border-color: #888 !important;
+  color: var(--hc-text) !important;
+  background-color: #222 !important;
+}
+
+[data-high-contrast="true"] #button-grid .current-question-btn {
+  border-color: var(--hc-accent) !important;
+  background-color: #333 !important;
+}
+
+[data-high-contrast="true"] .help-card {
+  background-color: var(--hc-card-bg) !important;
+  border-color: var(--hc-accent) !important;
+  border-left-color: var(--hc-accent) !important;
+}
+
+[data-high-contrast="true"] .help-panel-header {
+  border-color: var(--hc-accent) !important;
+}
+
+[data-high-contrast="true"] .help-panel-title,
+[data-high-contrast="true"] .help-text-content {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .chat-container,
+[data-high-contrast="true"] #messages {
+  background-color: #111 !important;
+}
+
+[data-high-contrast="true"] .chat-bubble.chat-left {
+  background-color: #003366 !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .chat-bubble.chat-right {
+  background-color: #333 !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .form-control,
+[data-high-contrast="true"] textarea {
+  background-color: #222 !important;
+  border-color: var(--hc-border) !important;
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .form-check-label {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .badge {
+  color: var(--hc-text) !important;
+  background-color: #333 !important;
+}
+
+[data-high-contrast="true"] .alert-card {
+  background-color: var(--hc-card-bg) !important;
+  border-color: var(--hc-border) !important;
+}
+
+[data-high-contrast="true"] .alert-status {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .alert-message-box p {
+  color: var(--hc-muted) !important;
+}
+
+[data-high-contrast="true"] .navbar {
+  background-color: #111 !important;
+  border-color: var(--hc-border) !important;
+}
+
+[data-high-contrast="true"] .navbar .nav-link {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .dropdown-menu {
+  background-color: #222 !important;
+  border-color: var(--hc-border) !important;
+}
+
+[data-high-contrast="true"] .dropdown-item {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .dropdown-item:hover {
+  background-color: #333 !important;
+}
+
+[data-high-contrast="true"] *:focus-visible {
+  outline: 3px solid var(--hc-focus) !important;
+  outline-offset: 2px !important;
+}
+
+[data-high-contrast="true"] .quiz-footer {
+  color: var(--hc-text) !important;
+}
+
+[data-high-contrast="true"] .quiz-footer .current-question,
+[data-high-contrast="true"] .quiz-footer #question-length {
+  color: var(--hc-accent) !important;
+}
+
+[data-high-contrast="true"] .text-primary {
+  color: var(--hc-accent) !important;
+}
+
+/* Auto-apply high contrast from OS preference */
+@media (prefers-contrast: more) {
+  :root:not([data-high-contrast="false"]) {
+    --hc-bg: #000;
+    --hc-text: #fff;
+    --hc-card-bg: #1a1a1a;
+    --hc-border: #fff;
+    --hc-accent: #ffff00;
+    --hc-link: #ffff00;
+    --hc-focus: #fff;
+    --hc-muted: #ccc;
+  }
+
+  :root:not([data-high-contrast="false"]) body {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+}

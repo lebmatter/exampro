@@ -1,3 +1,44 @@
+// ── Accessibility: font size + high contrast ────────────────────
+(function initAccessibility() {
+  var scale = parseInt(localStorage.getItem('examFontScale'), 10) || 100;
+  var hc = localStorage.getItem('examHighContrast') === 'true';
+
+  applyFontScale(scale);
+  applyHighContrast(hc);
+
+  window.examA11y = {
+    increaseFontSize: function () {
+      scale = Math.min(150, scale + 10);
+      applyFontScale(scale);
+      localStorage.setItem('examFontScale', scale);
+    },
+    decreaseFontSize: function () {
+      scale = Math.max(80, scale - 10);
+      applyFontScale(scale);
+      localStorage.setItem('examFontScale', scale);
+    },
+    toggleHighContrast: function () {
+      hc = !hc;
+      applyHighContrast(hc);
+      localStorage.setItem('examHighContrast', hc);
+    }
+  };
+
+  function applyFontScale(val) {
+    document.documentElement.style.setProperty('--exam-font-scale', (val / 100).toString());
+    var label = document.getElementById('fontSizeLabel');
+    if (label) label.textContent = val + '%';
+  }
+
+  function applyHighContrast(on) {
+    document.documentElement.setAttribute('data-high-contrast', on ? 'true' : 'false');
+    var btn = document.getElementById('hcToggleBtn');
+    if (btn) {
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
+})();
+
 // Global variable to track media permissions
 let mediaPermissionsGranted = false;
 let mediaStream = null;
