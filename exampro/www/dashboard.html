@@ -3,6 +3,7 @@
 {% block head_include %}
 {{ super() }}
 <link rel="stylesheet" href="/assets/exampro/css/dashboard.css" />
+<link rel="stylesheet" href="/assets/exampro/css/public-exams.css" />
 {% endblock %}
 
 {% block page_content %}
@@ -39,6 +40,94 @@
     <div class="col">
       <h4 class="bold-heading"><i data-feather="book-open" style="width:20px;height:20px;margin-right:6px;"></i> Dashboard</h4>
       <p class="text-muted mb-0">{{ subheading }}</p>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col">
+      <h5 class="bold-heading"><i data-feather="globe" style="width:18px;height:18px;margin-right:6px;"></i> Open Exams</h5>
+      <p class="text-muted mb-0">Browse available exams and register for a schedule.</p>
+    </div>
+  </div>
+
+  {% if open_exams %}
+  <div class="row g-4 mb-5">
+    {% for exam in open_exams %}
+    <div class="col-md-6 col-lg-4">
+      <div class="dashboard-card public-exam-card" x-data="{ selectedSchedule: '' }">
+        <div class="dashboard-card-header">
+          <div class="dashboard-badges">
+            {% if exam.enable_payment %}
+            <span class="dashboard-badge badge-paid">₹{{ exam.price | int }}</span>
+            {% else %}
+            <span class="dashboard-badge badge-free">Free</span>
+            {% endif %}
+            {% if exam.question_type %}
+            <span class="dashboard-badge badge-exam">{{ exam.question_type }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if exam.image %}
+        <div class="public-exam-image">
+          <img src="{{ exam.image }}" alt="{{ exam.title }}" />
+        </div>
+        {% endif %}
+        <div class="dashboard-card-body">
+          <h5 class="dashboard-card-title">{{ exam.title }}</h5>
+          {% if exam.description %}
+          <p class="dashboard-card-desc">{{ exam.description }}</p>
+          {% endif %}
+          <ul class="dashboard-meta">
+            <li>
+              <i data-feather="clock"></i>
+              <span>{{ exam.duration }} min</span>
+            </li>
+            <li>
+              <i data-feather="calendar"></i>
+              <span>{{ exam.schedules | length }} schedule{{ 's' if exam.schedules | length > 1 else '' }}</span>
+            </li>
+          </ul>
+
+          <div class="schedule-selector mt-3">
+            <label class="form-label text-muted small">Select Schedule</label>
+            <select class="form-select form-select-sm" x-model="selectedSchedule">
+              <option value="">-- Choose a date --</option>
+              {% for sched in exam.schedules %}
+              <option value="{{ sched.short_uuid }}">
+                {{ sched.start_date_time }}
+                {% if sched.schedule_type == 'Flexible' %} (Flexible){% endif %}
+                — {{ sched.status }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="dashboard-card-footer">
+          <a
+            class="btn btn-sm btn-primary dashboard-action"
+            :href="selectedSchedule ? '/exams/register/' + selectedSchedule : '#'"
+            :class="{ 'disabled': !selectedSchedule }"
+            :aria-disabled="!selectedSchedule"
+          >
+            Register
+            <i data-feather="arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state mb-5">
+    <i data-feather="inbox"></i>
+    <h5>No exams available for registration</h5>
+    <p class="text-muted mb-0">Check back later for upcoming exams.</p>
+  </div>
+  {% endif %}
+
+  <div class="row mb-4">
+    <div class="col">
+      <h5 class="bold-heading"><i data-feather="user" style="width:18px;height:18px;margin-right:6px;"></i> Your Exams</h5>
     </div>
   </div>
 
