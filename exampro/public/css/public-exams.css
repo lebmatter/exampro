@@ -27,8 +27,27 @@
   color: #fff;
 }
 
+.schedule-selector .form-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #868e96;
+  margin-bottom: 0.3rem;
+}
+
 .schedule-selector .form-select {
   font-size: 0.85rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  color: #495057;
+  padding: 0.4rem 0.6rem;
+  background-color: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.schedule-selector .form-select:focus {
+  border-color: #f5c344ff;
+  box-shadow: 0 0 0 2px rgba(245, 195, 68, 0.15);
+  outline: none;
 }
 
 /* Registration page */

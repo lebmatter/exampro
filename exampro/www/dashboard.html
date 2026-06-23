@@ -39,13 +39,12 @@
   <div class="row mb-4">
     <div class="col">
       <h4 class="bold-heading"><i data-feather="book-open" style="width:20px;height:20px;margin-right:6px;"></i> Dashboard</h4>
-      <p class="text-muted mb-0">{{ subheading }}</p>
     </div>
   </div>
 
   <div class="row mb-4">
     <div class="col">
-      <h5 class="bold-heading"><i data-feather="globe" style="width:18px;height:18px;margin-right:6px;"></i> Open Exams</h5>
+      <h6 class="section-heading"><i data-feather="globe" style="width:16px;height:16px;"></i> Open Exams</h6>
       <p class="text-muted mb-0">Browse available exams and register for a schedule.</p>
     </div>
   </div>
@@ -89,14 +88,13 @@
           </ul>
 
           <div class="schedule-selector mt-3">
-            <label class="form-label text-muted small">Select Schedule</label>
+            <label class="form-label">Select Schedule</label>
             <select class="form-select form-select-sm" x-model="selectedSchedule">
               <option value="">-- Choose a date --</option>
               {% for sched in exam.schedules %}
               <option value="{{ sched.short_uuid }}">
                 {{ sched.start_date_time }}
                 {% if sched.schedule_type == 'Flexible' %} (Flexible){% endif %}
-                — {{ sched.status }}
               </option>
               {% endfor %}
             </select>
@@ -127,7 +125,8 @@
 
   <div class="row mb-4">
     <div class="col">
-      <h5 class="bold-heading"><i data-feather="user" style="width:18px;height:18px;margin-right:6px;"></i> Your Exams</h5>
+      <h6 class="section-heading"><i data-feather="user" style="width:16px;height:16px;"></i> Your Exams</h6>
+      <p class="text-muted mb-0">{{ subheading }}</p>
     </div>
   </div>
 

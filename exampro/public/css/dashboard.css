@@ -23,6 +23,20 @@
   align-items: center;
 }
 
+.dashboard-page .section-heading {
+  font-weight: 500;
+  font-size: 1.1rem;
+  color: #6c757d;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-page .section-heading > i,
+.dashboard-page .section-heading > svg {
+  margin-right: 0.5rem;
+}
+
 /* Tabs */
 .dashboard-tabs {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);

@@ -52,14 +52,13 @@
           </ul>
 
           <div class="schedule-selector mt-3">
-            <label class="form-label text-muted small">Select Schedule</label>
+            <label class="form-label">Select Schedule</label>
             <select class="form-select form-select-sm" x-model="selectedSchedule">
               <option value="">-- Choose a date --</option>
               {% for sched in exam.schedules %}
               <option value="{{ sched.short_uuid }}">
                 {{ sched.start_date_time }}
                 {% if sched.schedule_type == 'Flexible' %} (Flexible){% endif %}
-                — {{ sched.status }}
               </option>
               {% endfor %}
             </select>

@@ -342,6 +342,8 @@ def _open_exams():
         status = get_schedule_status(sched.name)
         if status == "Completed":
             continue
+        if sched.schedule_type == "Fixed" and status != "Upcoming":
+            continue
 
         exams_map[exam_name]["schedules"].append({
             "name": sched.name,
@@ -349,7 +351,6 @@ def _open_exams():
             "start_date_time": format_datetime(sched.start_date_time, "dd MMM YYYY, HH:mm"),
             "schedule_type": sched.schedule_type,
             "duration": sched.duration,
-            "status": status,
             "badge": sched.badge or "Exam",
         })
 
