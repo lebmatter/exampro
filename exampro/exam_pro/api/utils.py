@@ -547,7 +547,7 @@ def submit_candidate_pending_exams(member=None):
 
             # delete frappe cache data
             cache_key = f"tracking_data:{doc.name}"
-            frappe.cache().delete(cache_key)
+            frappe.cache().delete_value(cache_key)
 
             frappe.db.commit()
 

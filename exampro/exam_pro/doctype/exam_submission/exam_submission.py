@@ -148,7 +148,7 @@ def convert_image_to_base64(image_path):
             b64 = base64.b64encode(image_data).decode('utf-8')
 
             if len(b64) <= _IMAGE_B64_CACHE_MAX_BYTES:
-                cache.set_value(cache_key, b64)
+                cache.set_value(cache_key, b64, expires_in_sec=86400)
             return b64
 
         # Remote HTTP(S) URL
@@ -647,7 +647,7 @@ def end_exam(exam_submission=None):
 
 		# delete frappe cache data
 		cache_key = f"tracking_data:{doc.name}"
-		frappe.cache().delete(cache_key)
+		frappe.cache().delete_value(cache_key)
 
 		frappe.db.commit()
 
@@ -1027,7 +1027,7 @@ def get_videos(exam_submission, ttl=None):
 
 					# check cache for presigned url
 					filetimestamp = obj['Key'].split("/")[-1][:-4]
-					cached_url = frappe.cache().get(obj['Key'])
+					cached_url = frappe.cache().get_value(obj['Key'], expires=True)
 					if not cached_url:
 						presigned_url = s3_client.generate_presigned_url(
 							'get_object', Params={
@@ -1037,9 +1037,9 @@ def get_videos(exam_submission, ttl=None):
 						)
 						res["videos"][filetimestamp] = presigned_url
 						if ttl:
-							frappe.cache().setex(obj['Key'], ttl, presigned_url)
+							frappe.cache().set_value(obj['Key'], presigned_url, expires_in_sec=ttl)
 					else:
-						res["videos"][filetimestamp] = cached_url.decode()
+						res["videos"][filetimestamp] = cached_url
 		return res
 	except Exception as e:
 		# Log the specific error for debugging
@@ -1559,8 +1559,9 @@ def post_tracking_info(info=None):
 	existing_data["total_distracted_time"] += total_distracted_time
 	existing_data["retina_locations"].extend(retina_locations)
 	
-	# Store updated data back to cache
-	frappe.cache().set_value(cache_key, existing_data)
+	# Safety TTL for abandoned exams — resets on every post_tracking_info call,
+	# so it only expires after 6h of client inactivity, not during active exams.
+	frappe.cache().set_value(cache_key, existing_data, expires_in_sec=21600)
 	
 	return {"status": "success", "cached_data": existing_data}
 
@@ -1606,6 +1607,7 @@ def save_tracking_info(exam_submission):
 	frappe.db.set_value("Exam Submission", exam_submission, update_data)
 
 	frappe.db.commit()
+	frappe.cache().delete_value(cache_key)
 	calculate_attention_score(exam_submission)
 
 	return True
