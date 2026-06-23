@@ -1,0 +1,129 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Register — {{ exam.title if exam else "Exam" }}{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/dashboard.css" />
+<link rel="stylesheet" href="/assets/exampro/css/exam-result.css" />
+<link rel="stylesheet" href="/assets/exampro/css/exam-invite.css" />
+<link rel="stylesheet" href="/assets/exampro/css/public-exams.css" />
+{% if valid and is_paid and not has_submission %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block page_content %}
+<div class="container dashboard-page">
+  {% if valid %}
+  <div class="result-card result-scorecard invite-card register-card">
+    <div class="result-card-title">
+      <i data-feather="clipboard"></i>Exam Registration
+    </div>
+    <div class="result-card-subtitle">{{ exam.title }}</div>
+
+    <div class="result-meta">
+      <div class="meta-row">
+        <span class="meta-label">Exam</span>
+        <span class="meta-value">{{ exam.title }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Duration</span>
+        <span class="meta-value">{{ exam_schedule.duration }} min</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Schedule</span>
+        <span class="meta-value">{{ start_time_display }}</span>
+      </div>
+      {% if exam_schedule.schedule_type == 'Flexible' %}
+      <div class="meta-row">
+        <span class="meta-label">Type</span>
+        <span class="meta-value">
+          <span class="schedule-pill schedule-flexible">Flexible</span>
+          — {{ exam_schedule.schedule_expire_in_days }} days
+        </span>
+      </div>
+      {% endif %}
+      <div class="meta-row">
+        <span class="meta-label">Status</span>
+        <span class="meta-value">
+          <span class="status-pill {% if schedule_status == 'Ongoing' %}status-passed{% else %}status-pending{% endif %}">
+            {{ schedule_status }}
+          </span>
+        </span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Price</span>
+        <span class="meta-value">
+          {% if is_paid %}
+          <span class="price-display">₹{{ price | int }}</span>
+          {% else %}
+          <span class="price-display free">Free</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    {% if has_submission %}
+    <div class="result-message">
+      <p class="mb-0">You are already registered for this exam.</p>
+    </div>
+    <div class="result-actions register-actions">
+      <a href="/dashboard" class="btn btn-primary">
+        <i data-feather="arrow-left"></i>Dashboard
+      </a>
+      <a href="/exams" class="btn btn-outline-secondary">
+        <i data-feather="list"></i>Browse Exams
+      </a>
+    </div>
+    {% else %}
+    <div class="result-actions register-actions">
+      {% if is_paid %}
+      <button
+        id="pay-btn"
+        class="btn btn-primary"
+        onclick="initiatePayment('{{ schedule_name }}')"
+      >
+        <i data-feather="credit-card"></i>Pay ₹{{ price | int }}
+      </button>
+      {% else %}
+      <button
+        id="register-btn"
+        class="btn btn-primary"
+        onclick="registerFree('{{ schedule_name }}')"
+      >
+        <i data-feather="check-circle"></i>Register
+      </button>
+      {% endif %}
+      <a href="/exams" class="btn btn-outline-secondary">
+        <i data-feather="arrow-left"></i>Back
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="result-card result-terminated register-card">
+    <div class="result-card-title">
+      <i data-feather="alert-triangle"></i>Registration Unavailable
+    </div>
+    <div class="result-hero">
+      <div class="hero-icon hero-icon-failed">
+        <i data-feather="alert-triangle"></i>
+      </div>
+    </div>
+    <div class="result-message">
+      <p class="mb-0">{{ message }}</p>
+    </div>
+    <div class="result-actions register-actions">
+      <a href="/exams" class="btn btn-primary">
+        <i data-feather="arrow-left"></i>Browse Exams
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script type="text/javascript" src="/assets/exampro/js/public-exams.js"></script>
+{% endblock %}

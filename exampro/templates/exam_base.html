@@ -73,6 +73,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="/exams">Exams</a>
+            </li>
             {% if frappe.session.user != "Guest" %}
             <!-- Dashboard link for all users -->
             <li class="nav-item">
@@ -193,7 +196,9 @@ get_telemetry_boot_info() %}
     $(".navbar-nav .nav-item").removeClass("active");
 
     // Map URLs to navigation items
-    if (currentPath === "/dashboard" || currentPath === "/") {
+    if (currentPath === "/exams" || currentPath.startsWith("/exams/")) {
+      $('a[href="/exams"]').closest(".nav-item").addClass("active");
+    } else if (currentPath === "/dashboard" || currentPath === "/") {
       $('a[href="/dashboard"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/my-exams") {
       $('a[href="/my-exams"]').closest(".nav-item").addClass("active");

@@ -1,0 +1,103 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Public Exams{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/dashboard.css" />
+<link rel="stylesheet" href="/assets/exampro/css/public-exams.css" />
+{% endblock %}
+
+{% block page_content %}
+<div class="container dashboard-page">
+  <div class="dashboard-header mb-4">
+    <h4 class="dashboard-title">Public Exams</h4>
+    <p class="text-muted">Browse available exams and register for a schedule.</p>
+  </div>
+
+  {% if exams %}
+  <div class="row g-4">
+    {% for exam in exams %}
+    <div class="col-md-6 col-lg-4">
+      <div class="dashboard-card public-exam-card" x-data="{ selectedSchedule: '' }">
+        <div class="dashboard-card-header">
+          <div class="dashboard-badges">
+            {% if exam.enable_payment %}
+            <span class="dashboard-badge badge-paid">₹{{ exam.price | int }}</span>
+            {% else %}
+            <span class="dashboard-badge badge-free">Free</span>
+            {% endif %}
+            {% if exam.question_type %}
+            <span class="dashboard-badge badge-exam">{{ exam.question_type }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if exam.image %}
+        <div class="public-exam-image">
+          <img src="{{ exam.image }}" alt="{{ exam.title }}" />
+        </div>
+        {% endif %}
+        <div class="dashboard-card-body">
+          <h5 class="dashboard-card-title">{{ exam.title }}</h5>
+          {% if exam.description %}
+          <p class="dashboard-card-desc">{{ exam.description }}</p>
+          {% endif %}
+          <ul class="dashboard-meta">
+            <li>
+              <i data-feather="clock"></i>
+              <span>{{ exam.duration }} min</span>
+            </li>
+            <li>
+              <i data-feather="calendar"></i>
+              <span>{{ exam.schedules | length }} schedule{{ 's' if exam.schedules | length > 1 else '' }}</span>
+            </li>
+          </ul>
+
+          <div class="schedule-selector mt-3">
+            <label class="form-label text-muted small">Select Schedule</label>
+            <select class="form-select form-select-sm" x-model="selectedSchedule">
+              <option value="">-- Choose a date --</option>
+              {% for sched in exam.schedules %}
+              <option value="{{ sched.short_uuid }}">
+                {{ sched.start_date_time }}
+                {% if sched.schedule_type == 'Flexible' %} (Flexible){% endif %}
+                — {{ sched.status }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="dashboard-card-footer">
+          {% if is_logged_in %}
+          <a
+            class="btn btn-sm btn-primary dashboard-action"
+            :href="selectedSchedule ? '/exams/register/' + selectedSchedule : '#'"
+            :class="{ 'disabled': !selectedSchedule }"
+            :aria-disabled="!selectedSchedule"
+          >
+            Register
+            <i data-feather="arrow-right"></i>
+          </a>
+          {% else %}
+          <a
+            class="btn btn-sm btn-primary dashboard-action"
+            :href="selectedSchedule ? '/login?redirect-to=/exams/register/' + selectedSchedule : '#'"
+            :class="{ 'disabled': !selectedSchedule }"
+            :aria-disabled="!selectedSchedule"
+          >
+            Login to Register
+            <i data-feather="arrow-right"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state text-center py-5">
+    <i data-feather="inbox" style="width:48px;height:48px;" class="text-muted mb-3"></i>
+    <h5 class="text-muted">No public exams available</h5>
+    <p class="text-muted">Check back later for upcoming exams.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

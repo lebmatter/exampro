@@ -34,6 +34,11 @@
   "enable_certification",
   "expiry",
   "certificate_template",
+  "public_payment_section",
+  "is_public",
+  "column_break_public",
+  "enable_payment",
+  "price",
   "questions_tab",
   "section_break_iifh",
   "question_type",
@@ -116,6 +121,37 @@
    "fieldname": "instructions",
    "fieldtype": "Markdown Editor",
    "label": "Instruction to Candidate"
+  },
+  {
+   "fieldname": "public_payment_section",
+   "fieldtype": "Section Break",
+   "label": "Public & Payment Settings"
+  },
+  {
+   "default": "0",
+   "description": "Makes this exam visible on the public exams page",
+   "fieldname": "is_public",
+   "fieldtype": "Check",
+   "label": "Public Exam"
+  },
+  {
+   "fieldname": "column_break_public",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "is_public",
+   "fieldname": "enable_payment",
+   "fieldtype": "Check",
+   "label": "Requires Payment"
+  },
+  {
+   "depends_on": "enable_payment",
+   "description": "Amount to charge candidates",
+   "fieldname": "price",
+   "fieldtype": "Currency",
+   "label": "Price (INR)",
+   "non_negative": 1
   },
   {
    "fieldname": "questions_tab",

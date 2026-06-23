@@ -13,6 +13,11 @@
   "s3_bucket",
   "user_settings_section",
   "restrict_user_account_domains",
+  "payment_settings_tab",
+  "razorpay_section",
+  "razorpay_key_id",
+  "column_break_razorpay",
+  "razorpay_key_secret",
   "ai_settings_tab",
   "openrouter_section",
   "openrouter_api_key",
@@ -63,6 +68,30 @@
    "fieldname": "restrict_user_account_domains",
    "fieldtype": "Small Text",
    "label": "Restrict User Account Domains"
+  },
+  {
+   "fieldname": "payment_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Payment Settings"
+  },
+  {
+   "fieldname": "razorpay_section",
+   "fieldtype": "Section Break",
+   "label": "Razorpay"
+  },
+  {
+   "fieldname": "razorpay_key_id",
+   "fieldtype": "Data",
+   "label": "Razorpay Key ID"
+  },
+  {
+   "fieldname": "column_break_razorpay",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "razorpay_key_secret",
+   "fieldtype": "Password",
+   "label": "Razorpay Key Secret"
   },
   {
    "fieldname": "ai_settings_tab",
