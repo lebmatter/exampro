@@ -1,0 +1,118 @@
+x-common: &common
+  restart: unless-stopped
+
+services:
+  frontend:
+    <<: *common
+    image: frappe/bench:latest
+    command: >
+      bash -c "
+        cd /home/frappe/frappe-bench &&
+        bench set-config -g db_host db &&
+        bench set-config -g db_port 5432 &&
+        bench set-config -g db_type postgres &&
+        bench set-config -g redis_cache redis://redis-cache:6379 &&
+        bench set-config -g redis_queue redis://redis-queue:6379 &&
+        bench set-config -g redis_socketio redis://redis-socketio:6379 &&
+        bench set-config -g socketio_port 9000 &&
+        if [ ! -d sites/${SITE_NAME:-exam.localhost} ]; then
+          bench new-site ${SITE_NAME:-exam.localhost} \
+            --db-type postgres \
+            --db-host db \
+            --db-port 5432 \
+            --db-name ${DB_NAME:-exampro} \
+            --db-root-username postgres \
+            --db-root-password ${DB_ROOT_PASSWORD:-postgres} \
+            --admin-password ${ADMIN_PASSWORD:-admin} \
+            --no-mariadb-socket;
+          bench --site ${SITE_NAME:-exam.localhost} install-app exampro;
+        fi &&
+        bench --site ${SITE_NAME:-exam.localhost} migrate --skip-failing &&
+        exec bench start
+      "
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - ..:/home/frappe/frappe-bench/apps/exampro
+    ports:
+      - "${WEBSERVER_PORT:-8080}:8000"
+      - "${SOCKETIO_PORT:-9000}:9000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
+      redis-socketio:
+        condition: service_healthy
+    environment:
+      - SITE_NAME=${SITE_NAME:-exam.localhost}
+
+  db:
+    <<: *common
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: ${DB_ROOT_PASSWORD:-postgres}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-cache:
+    <<: *common
+    image: redis:7-alpine
+    command: >
+      redis-server
+        --maxmemory 512mb
+        --maxmemory-policy allkeys-lru
+        --save ""
+        --appendonly no
+    volumes:
+      - redis-cache-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-queue:
+    <<: *common
+    image: redis:7-alpine
+    command: >
+      redis-server
+        --maxmemory-policy noeviction
+        --appendonly yes
+        --appendfsync everysec
+    volumes:
+      - redis-queue-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-socketio:
+    <<: *common
+    image: redis:7-alpine
+    command: >
+      redis-server
+        --maxmemory 128mb
+        --maxmemory-policy allkeys-lru
+        --save ""
+        --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  db-data:
+  redis-cache-data:
+  redis-queue-data:
+  sites:
