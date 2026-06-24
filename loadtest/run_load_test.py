@@ -71,9 +71,11 @@ def _percentile(data, p):
 # Phase 1: Admin setup
 # ---------------------------------------------------------------------------
 
-def _admin_session(url, admin_user, admin_password):
+def _admin_session(url, admin_user, admin_password, site_name=None):
     """Create an authenticated requests.Session for admin API calls."""
     s = requests.Session()
+    if site_name:
+        s.headers["Host"] = site_name
     r = s.post(f"{url}/api/method/login", data={"usr": admin_user, "pwd": admin_password})
     if r.status_code != 200:
         print(f"Admin login failed ({r.status_code}). Aborting.")
@@ -84,8 +86,8 @@ def _admin_session(url, admin_user, admin_password):
     return s
 
 
-def setup_test_data(url, admin_user, admin_password, exam_name, num_candidates, candidate_password):
-    admin = _admin_session(url, admin_user, admin_password)
+def setup_test_data(url, admin_user, admin_password, exam_name, num_candidates, candidate_password, site_name=None):
+    admin = _admin_session(url, admin_user, admin_password, site_name=site_name)
 
     r = admin.get(f"{url}/api/resource/Exam/{exam_name}")
     if r.status_code != 200:
@@ -95,11 +97,7 @@ def setup_test_data(url, admin_user, admin_password, exam_name, num_candidates, 
     print(f"Exam found: {exam.get('title', exam_name)}")
 
     session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-    num_batches = (num_candidates + 49) // 50
-    if num_batches > 1:
-        setup_buffer = num_batches * 75 + 60
-    else:
-        setup_buffer = 60
+    setup_buffer = max(60, num_candidates // 5 + 60)
     schedule_start = datetime.now() + timedelta(seconds=setup_buffer)
     schedule_name = f"LoadTest_{session_id}"
 
@@ -117,27 +115,12 @@ def setup_test_data(url, admin_user, admin_password, exam_name, num_candidates, 
 
     credentials = []
     created_users = []
-    # Frappe throttles: max 60 user creations per 60s sliding window.
-    # The cooldown must exceed 60s + time-to-create-the-batch so even the
-    # LAST user in the previous batch has aged out of the window.
-    BATCH_SIZE = 50
     register_url = (
         f"{url}/api/method/exampro.exam_pro.doctype.exam_submission"
         f".exam_submission.register_candidate"
     )
     print(f"Creating {num_candidates} candidates...")
-    batch_created = 0
-    last_batch_end = 0.0
     for i in range(num_candidates):
-        if batch_created >= BATCH_SIZE:
-            # Wait until 65s after the LAST creation in this batch
-            elapsed = time.time() - last_batch_end
-            wait = max(0, 65 - elapsed)
-            if wait > 0:
-                print(f"  Throttle cooldown: waiting {int(wait)}s...")
-                time.sleep(wait)
-            batch_created = 0
-
         email = f"loadrunner{i}_{session_id}@loadtest.example.com"
         user_display = f"Runner{i:04d} LT{session_id[:8]}"
 
@@ -160,8 +143,6 @@ def setup_test_data(url, admin_user, admin_password, exam_name, num_candidates, 
 
         if ok:
             created_users.append(email)
-            batch_created += 1
-            last_batch_end = time.time()
             admin.put(f"{url}/api/resource/User/{email}", json={
                 "new_password": candidate_password,
             })
@@ -185,6 +166,7 @@ def setup_test_data(url, admin_user, admin_password, exam_name, num_candidates, 
         "credentials": credentials,
         "created_users": created_users,
         "session_id": session_id,
+        "site_name": site_name,
     }
 
 
@@ -192,7 +174,7 @@ def setup_test_data(url, admin_user, admin_password, exam_name, num_candidates, 
 # Phase 2: Candidate execution
 # ---------------------------------------------------------------------------
 
-def run_candidate(url, email, password, barrier_start, barrier_end, think_time, index):
+def run_candidate(url, email, password, barrier_start, barrier_end, think_time, index, site_name=None, login_stagger=0):
     result = {
         "candidate": email,
         "index": index,
@@ -207,10 +189,14 @@ def run_candidate(url, email, password, barrier_start, barrier_end, think_time, 
     }
     wall_start = time.perf_counter()
     session = requests.Session()
+    if site_name:
+        session.headers["Host"] = site_name
     submission = None
     started = False
 
     try:
+        if login_stagger > 0:
+            time.sleep(login_stagger)
         # Login
         resp, ms = _timed_request(
             session, "POST", f"{url}/api/method/login",
@@ -372,12 +358,16 @@ def run_load_test(setup_data, think_time):
     barrier_end = threading.Barrier(n, timeout=600)
     results = []
 
-    print(f"Launching {n} candidate threads...")
+    site_name = setup_data.get("site_name")
+    login_spread = min(30.0, n * 0.03)
+    print(f"Launching {n} candidate threads (login spread over {login_spread:.1f}s)...")
     with ThreadPoolExecutor(max_workers=n) as pool:
         futures = {
             pool.submit(
                 run_candidate, url, email, pwd,
                 barrier_start, barrier_end, think_time, i,
+                site_name=site_name,
+                login_stagger=i * login_spread / n,
             ): i
             for i, (email, pwd) in enumerate(creds)
         }
@@ -541,6 +531,7 @@ def parse_args():
     p.add_argument("--candidates", "-n", required=True, type=int, help="Number of candidates")
     p.add_argument("--password", default="TestPass123!", help="Candidate password (default: TestPass123!)")
     p.add_argument("--think-time", type=float, default=0.5, help="Seconds between answers (default: 0.5, 0=max throughput)")
+    p.add_argument("--site-name", help="Frappe site name for Host header (needed when gunicorn serves localhost, e.g. exampro.test)")
     return p.parse_args()
 
 
@@ -559,6 +550,7 @@ def main():
     setup_data = setup_test_data(
         args.url, args.admin_user, args.admin_password,
         args.exam, args.candidates, args.password,
+        site_name=args.site_name,
     )
 
     try:
