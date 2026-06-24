@@ -180,13 +180,17 @@ def get_context(context):
 	context.terminated_candidates = proctor_list["terminated_candidates"]
 	context.latest_messages = get_latest_messages()
 	
-	# Get upcoming events for alert
+	# Get upcoming events for alert — only show when no live candidates
+	has_live_candidates = (
+		proctor_list["live_submissions"]
+		or proctor_list["pending_candidates"]
+		or proctor_list["terminated_candidates"]
+	)
 	upcoming_events = get_proctor_upcoming_events()
-	if upcoming_events:
-		# Show alert if there are upcoming events in next 24 hours
+	if upcoming_events and not has_live_candidates:
 		next_24_hours = frappe.utils.now_datetime() + timedelta(hours=24)
 		urgent_events = [e for e in upcoming_events if e['start_time'] <= next_24_hours]
-		
+
 		if urgent_events:
 			total_candidates = sum(e['candidate_count'] for e in urgent_events)
 			context.alert = {
