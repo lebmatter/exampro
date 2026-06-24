@@ -320,6 +320,7 @@
   align-items: center;
 }
 
+.alert-card-header h4 svg,
 .alert-card-header h4 i {
   margin-right: 0.45rem;
   color: inherit;
