@@ -517,39 +517,46 @@ def validate_user_email(doc, method=None):
 def submit_candidate_pending_exams(member=None):
     """
     Submit any pending exams for the user.
-    This is useful for exams that are not submitted automatically.
+    Uses lightweight queries instead of full doc.save() to avoid
+    loading and re-saving all child Exam Answer rows.
     """
     submissions = frappe.get_all(
         "Exam Submission",
         {
             "candidate": member or frappe.session.user,
             "status": ["in", ["Registered", "Started"]]
-        }, 
-        ["name", "exam_schedule", "status", "additional_time_given"],
+        },
+        ["name", "exam_schedule", "exam", "status", "additional_time_given"],
         ignore_permissions=True
     )
     for submission in submissions:
-        sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"], ignore_permissions=True)
-        if sched.get_status(additional_time=submission["additional_time_given"]) == "Completed":
-            doc = frappe.get_doc("Exam Submission", submission["name"], ignore_permissions=True)
-            if doc.status == "Started":
-                doc.status = "Submitted"
-            elif doc.status == "Registered":
-                doc.status = "Not Attempted"
-            total_marks, evaluation_status, result_status = evaluation_values(
-                doc.exam, doc.submitted_answers
-            )
-            doc.exam_submitted_time = frappe.utils.now()
-            doc.total_marks = total_marks
-            doc.evaluation_status = evaluation_status
-            doc.result_status = result_status
-            doc.save(ignore_permissions=True)
+        sched = frappe.get_doc("Exam Schedule", submission["exam_schedule"])
+        if sched.get_status(additional_time=submission["additional_time_given"]) != "Completed":
+            continue
 
-            # delete frappe cache data
-            cache_key = f"tracking_data:{doc.name}"
-            frappe.cache().delete_value(cache_key)
+        new_status = "Submitted" if submission["status"] == "Started" else "Not Attempted"
 
-            frappe.db.commit()
+        answers = frappe.get_all(
+            "Exam Answer",
+            filters={"parent": submission["name"]},
+            fields=["mark", "is_correct", "evaluation_status"],
+        )
+        total_marks, evaluation_status, result_status = evaluation_values(
+            submission["exam"], answers
+        )
+
+        frappe.db.set_value("Exam Submission", submission["name"], {
+            "status": new_status,
+            "exam_submitted_time": frappe.utils.now(),
+            "total_marks": total_marks,
+            "evaluation_status": evaluation_status,
+            "result_status": result_status,
+        })
+
+        cache_key = f"tracking_data:{submission['name']}"
+        frappe.cache().delete_value(cache_key)
+
+        frappe.db.commit()
 
 def can_show_exam_results_for_leaderboard(exam_doc, submission_doc):
     """Check if exam results can be shown for leaderboard based on show_result settings"""

@@ -98,7 +98,6 @@ class Exam(Document):
 			self.name = generate_slug(title, "Exam")
 
 	def before_save(self):
-		# TODO update question list only if the picked list is changed
 		"""
 		Function to update assigned questions
 		> Validate if required no. of questions
@@ -113,6 +112,27 @@ class Exam(Document):
 			self.evaluation_required = 0
 		self.validate_weightage_table()
 
+		if self._should_repick_questions():
+			self._repick_questions()
+
+		self.validate_added_questions_unique()
+
+	def _should_repick_questions(self):
+		"""Only re-randomize when the category/weightage table actually changed."""
+		old = self.get_doc_before_save()
+		if not old:
+			return True
+		if not self.added_questions:
+			return True
+		old_cats = {(r.question_category, r.no_of_questions, r.mark_per_question) for r in (old.select_questions or [])}
+		new_cats = {(r.question_category, r.no_of_questions, r.mark_per_question) for r in (self.select_questions or [])}
+		if old_cats != new_cats:
+			return True
+		if old.question_type != self.question_type:
+			return True
+		return False
+
+	def _repick_questions(self):
 		self.added_questions = []
 
 		total_qs = 0
@@ -126,7 +146,6 @@ class Exam(Document):
 			)
 			for qs in picked_questions:
 				if qs["name"] in seen_questions:
-					# defensive: should never happen because get_random_questions excludes
 					continue
 				seen_questions.add(qs["name"])
 				qs_data = frappe.db.get_value(
@@ -142,11 +161,8 @@ class Exam(Document):
 				total_marks += qs_data["mark"]
 				total_qs += 1
 
-		# update count fields
 		self.total_questions = total_qs
 		self.total_marks = total_marks
-
-		self.validate_added_questions_unique()
 
 	def validate_added_questions_unique(self):
 		"""Ensure no Exam Question appears twice in added_questions, regardless

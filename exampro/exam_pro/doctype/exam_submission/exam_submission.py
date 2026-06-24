@@ -580,33 +580,50 @@ def get_current_qs(exam_submission):
 @frappe.whitelist()
 def start_exam(exam_submission=None):
 	"""
-	start exam, Get questions and store in order
-	Caching flow:
-	> cache exam submission on exam_start
-	> SUBMISSION TOTAL_QS, EXPIRY, QS:1, QS:2...
-	> SUBMISSION:EXPIRY_TRACKER single key with cache expiry
-	> check EXPIRY_TRACKER, if not there, validate with db
+	Mark an exam as started and return the end time.
+
+	Uses lightweight db.set_value instead of a full doc.save() to avoid
+	loading and re-saving all child Exam Answer rows — critical when 100+
+	candidates start the same exam simultaneously.
 	"""
 	assert exam_submission
-	doc = frappe.get_doc("Exam Submission", exam_submission)
-	if doc.status == "Started":
+	sub = frappe.db.get_value(
+		"Exam Submission", exam_submission,
+		["candidate", "status", "exam_schedule", "exam_started_time", "additional_time_given"],
+		as_dict=True,
+	)
+	if not sub:
+		frappe.throw("Invalid exam submission.")
+	if sub.status == "Started":
 		return True
 
-	if frappe.session.user != doc.candidate:
+	if frappe.session.user != sub.candidate:
 		raise PermissionError("Incorrect exam for the user.")
 
-	start_time = doc.can_start_exam()
-	doc.exam_started_time = start_time
+	scheduled_start = frappe.get_cached_value(
+		"Exam Schedule", sub.exam_schedule, "start_date_time"
+	)
+	if sub.exam_started_time:
+		frappe.throw("Exam already started at {}".format(sub.exam_started_time))
 
-	doc.status = "Started"
-	doc.save(ignore_permissions=True)
+	start_time = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
+	if start_time < scheduled_start:
+		frappe.throw("This exam can be started only after {}".format(scheduled_start))
+
+	frappe.db.set_value("Exam Submission", exam_submission, {
+		"status": "Started",
+		"exam_started_time": start_time,
+	})
 	frappe.db.commit()
 
-	schedule = frappe.get_doc("Exam Schedule", doc.exam_schedule)
+	sched = frappe.get_cached_value(
+		"Exam Schedule", sub.exam_schedule,
+		["start_date_time", "duration"],
+		as_dict=True,
+	)
 
-	# end time is schedule start time + duration + additional time given
-	end_time = schedule.start_date_time + timedelta(minutes=schedule.duration) + \
-		timedelta(minutes=doc.additional_time_given)
+	end_time = sched.start_date_time + timedelta(minutes=sched.duration) + \
+		timedelta(minutes=sub.additional_time_given)
 
 	return {"end_time": end_time}
 
@@ -614,54 +631,74 @@ def start_exam(exam_submission=None):
 @frappe.whitelist()
 def end_exam(exam_submission=None):
 	"""
-	Submit Candidate exam
+	Submit Candidate exam.
+
+	Uses lightweight queries instead of a full doc.save() to avoid
+	loading and re-saving all child Exam Answer rows.
 	"""
 	assert exam_submission
-	doc = frappe.get_doc("Exam Submission", exam_submission)
+	sub = frappe.db.get_value(
+		"Exam Submission", exam_submission,
+		["candidate", "status", "exam"],
+		as_dict=True,
+	)
+	if not sub:
+		frappe.throw("Invalid exam submission.")
 
-	# check of the logged in user is same as exam submission candidate
-	if frappe.session.user != doc.candidate:
+	if frappe.session.user != sub.candidate:
 		raise PermissionError("You don't have access to this exam.")
-	
-	if doc.status == "Started":
-		# Capture final tracking state, but never let a metrics failure block the
-		# candidate's submission from completing.
+
+	if sub.status == "Started":
 		try:
-			save_tracking_info(doc.name)
+			save_tracking_info(exam_submission)
 		except Exception:
 			frappe.log_error(
-				f"save_tracking_info failed during end_exam for {doc.name}",
+				f"save_tracking_info failed during end_exam for {exam_submission}",
 				"exam tracking flush",
 			)
-		doc.reload()
 
-		doc.status = "Submitted"
-		total_marks, evaluation_status, result_status = evaluation_values(
-			doc.exam, doc.submitted_answers
+		answers = frappe.get_all(
+			"Exam Answer",
+			filters={"parent": exam_submission},
+			fields=["mark", "is_correct", "evaluation_status"],
 		)
-		doc.exam_submitted_time = frappe.utils.now()
-		doc.total_marks = total_marks
-		doc.evaluation_status = evaluation_status
-		doc.result_status = result_status
-		doc.save(ignore_permissions=True)
+		total_marks, evaluation_status, result_status = evaluation_values(
+			sub.exam, answers
+		)
+		frappe.db.set_value("Exam Submission", exam_submission, {
+			"status": "Submitted",
+			"exam_submitted_time": frappe.utils.now(),
+			"total_marks": total_marks,
+			"evaluation_status": evaluation_status,
+			"result_status": result_status,
+		})
 
-		# delete frappe cache data
-		cache_key = f"tracking_data:{doc.name}"
+		cache_key = f"tracking_data:{exam_submission}"
 		frappe.cache().delete_value(cache_key)
 
 		frappe.db.commit()
 
-	# return result details
 	exam = frappe.get_cached_value(
-		"Exam", doc.exam,
+		"Exam", sub.exam,
 		["show_result", "question_type"],
 		as_dict=True
 	)
 	if exam["question_type"] == "Choices" \
 		and exam["show_result"] == "After Exam Submission":
 		return {"show_result": 1}
-	
+
 	return {"show_result": 0}
+
+@frappe.whitelist()
+def _get_submission_question_count(exam_submission):
+	"""Actual number of Exam Answer rows for this submission, cached in Redis."""
+	cache_key = f"submission_qs_count:{exam_submission}"
+	count = frappe.cache().get_value(cache_key)
+	if count is None:
+		count = frappe.db.count("Exam Answer", {"parent": exam_submission})
+		frappe.cache().set_value(cache_key, count, expires_in_sec=21600)
+	return count
+
 
 @frappe.whitelist()
 def get_question(exam_submission=None, qsno=1):
@@ -682,9 +719,7 @@ def get_question(exam_submission=None, qsno=1):
 	if exam_ended:
 		frappe.throw("Exam has ended.")
 
-	total_qs = frappe.get_cached_value(
-		"Exam", exam, "total_questions"
-	)
+	total_qs = _get_submission_question_count(exam_submission)
 	if qs_no < 1 or qs_no > total_qs:
 		frappe.throw("Invalid question number requested: {}".format(qs_no))
 
@@ -977,11 +1012,7 @@ def exam_overview(exam_submission=None):
 	all_submitted = get_submitted_questions(
 		exam_submission, fields=["marked_for_later", "exam_question", "answer", "seq_no"]
 	)
-	exam_schedule = frappe.get_cached_value(
-		"Exam Submission", exam_submission, "exam_schedule"
-	)
-	exam = frappe.get_cached_value("Exam Schedule", exam_schedule, "exam")
-	total_questions = frappe.get_cached_value("Exam", exam, "total_questions")
+	total_questions = _get_submission_question_count(exam_submission)
 	res = {
 		"exam_submission": exam_submission,
 		"submitted": {},
