@@ -477,7 +477,13 @@ def can_process_question(doc, member=None):
 		frappe.throw("Exam submitted!")
 	elif doc.status == "Started":
 		# check if the exam is ended, if so, submit the exam
-		exam_ended, end_time = has_submission_ended(doc.name)
+		exam_ended, end_time = has_submission_ended(
+			doc.name,
+			schedule=doc.exam_schedule,
+			additional_time_given=doc.additional_time_given,
+			submission_status=doc.status,
+			sub_started_time=doc.exam_started_time,
+		)
 		if exam_ended:
 			doc.status = "Submitted"
 			doc.save(ignore_permissions=True)
@@ -490,7 +496,9 @@ def can_process_question(doc, member=None):
 		frappe.throw("Invalid exam requested.")
 
 
-def _validate_submission_writable(exam_submission, candidate, status, member=None):
+def _validate_submission_writable(exam_submission, candidate, status, member=None,
+								   schedule=None, additional_time_given=None,
+								   submission_status=None, sub_started_time=None):
 	"""
 	Lighter version of can_process_question that operates on raw fields, so
 	the hot answer-submit path doesn't have to load the full Exam Submission
@@ -507,7 +515,13 @@ def _validate_submission_writable(exam_submission, candidate, status, member=Non
 	elif status != "Started":
 		frappe.throw("Exam is not started yet.")
 	else:
-		exam_ended, end_time = has_submission_ended(exam_submission)
+		exam_ended, end_time = has_submission_ended(
+			exam_submission,
+			schedule=schedule,
+			additional_time_given=additional_time_given,
+			submission_status=submission_status,
+			sub_started_time=sub_started_time,
+		)
 		if exam_ended:
 			frappe.db.set_value("Exam Submission", exam_submission, "status", "Submitted")
 			frappe.db.commit()
@@ -709,13 +723,22 @@ def get_question(exam_submission=None, qsno=1):
 	assert exam_submission
 	qs_no = int(qsno)
 
-	exam_schedule, exam = frappe.get_cached_value("Exam Submission", exam_submission, ["exam_schedule", "exam"])
+	sub_status, exam_schedule, exam, additional_time_given, exam_started_time = frappe.db.get_value(
+		"Exam Submission", exam_submission,
+		["status", "exam_schedule", "exam", "additional_time_given", "exam_started_time"],
+	)
 	if get_schedule_status(exam_schedule) != "Ongoing":
 		frappe.throw("Exam is not ongoing or has ended.")
-	
-	if frappe.db.get_value("Exam Submission", exam_submission, "status") != "Started":
+
+	if sub_status != "Started":
 		frappe.throw("Exam is not started yet.")
-	exam_ended, _ = has_submission_ended(exam_submission)
+	exam_ended, _ = has_submission_ended(
+		exam_submission,
+		schedule=exam_schedule,
+		additional_time_given=additional_time_given,
+		submission_status=sub_status,
+		sub_started_time=exam_started_time,
+	)
 	if exam_ended:
 		frappe.throw("Exam has ended.")
 
@@ -804,7 +827,7 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	sub = frappe.db.get_value(
 		"Exam Submission",
 		exam_submission,
-		["candidate", "status"],
+		["candidate", "status", "exam_schedule", "additional_time_given", "exam_started_time"],
 		as_dict=True,
 	)
 	if not sub:
@@ -812,7 +835,13 @@ def submit_question_response(exam_submission=None, qs_name=None, answer="", mark
 	if frappe.session.user != sub.candidate:
 		raise PermissionError("You don't have access to submit and answer.")
 
-	_validate_submission_writable(exam_submission, sub.candidate, sub.status)
+	_validate_submission_writable(
+		exam_submission, sub.candidate, sub.status,
+		schedule=sub.exam_schedule,
+		additional_time_given=sub.additional_time_given,
+		submission_status=sub.status,
+		sub_started_time=sub.exam_started_time,
+	)
 	_maybe_save_tracking_info(exam_submission)
 
 	# A question can be added to an exam at multiple positions, so the same
@@ -1228,7 +1257,7 @@ def _assert_can_upload_media(exam_submission, feature_field="enable_video_procto
 	sub = frappe.db.get_value(
 		"Exam Submission",
 		exam_submission,
-		["candidate", "status", "exam"],
+		["candidate", "status", "exam", "exam_schedule", "additional_time_given", "exam_started_time"],
 		as_dict=True,
 	)
 	if not sub:
@@ -1240,7 +1269,13 @@ def _assert_can_upload_media(exam_submission, feature_field="enable_video_procto
 	if not frappe.get_cached_value("Exam", sub.exam, feature_field):
 		raise frappe.PermissionError(_("{0} is not enabled for this exam.").format(feature_field))
 
-	ended, _end_time = has_submission_ended(exam_submission)
+	ended, _end_time = has_submission_ended(
+		exam_submission,
+		schedule=sub.exam_schedule,
+		additional_time_given=sub.additional_time_given,
+		submission_status=sub.status,
+		sub_started_time=sub.exam_started_time,
+	)
 	if ended:
 		raise frappe.PermissionError(_("Exam has ended."))
 
@@ -1523,13 +1558,15 @@ def register_candidate(schedule='', user_email='', user_name=''):
 		frappe.db.commit()
 
 
-def has_submission_ended(exam_submission):
+def has_submission_ended(exam_submission, schedule=None, additional_time_given=None, submission_status=None, sub_started_time=None):
 	"""
 	End time is schedule start time + duration + additional time given
 	returns True, end_time if exam has ended
 	"""
-	schedule, additional_time_given = frappe.get_cached_value("Exam Submission", exam_submission, ["exam_schedule", "additional_time_given"])
-	submission_status, sub_started_time = frappe.get_cached_value("Exam Submission", exam_submission, ["status", "exam_started_time"])
+	if schedule is None or additional_time_given is None:
+		schedule, additional_time_given = frappe.get_cached_value("Exam Submission", exam_submission, ["exam_schedule", "additional_time_given"])
+	if submission_status is None or sub_started_time is None:
+		submission_status, sub_started_time = frappe.get_cached_value("Exam Submission", exam_submission, ["status", "exam_started_time"])
 	scheduled_start, duration, schedule_type = frappe.get_cached_value(
 	"Exam Schedule", schedule, ["start_date_time", "duration", "schedule_type"]
 	)
