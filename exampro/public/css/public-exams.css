@@ -77,3 +77,27 @@
   align-items: center;
   gap: 0.35rem;
 }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 575px) {
+  .public-exam-image {
+    height: 130px;
+  }
+
+  .register-card {
+    max-width: 100%;
+  }
+
+  .register-actions {
+    flex-direction: column;
+  }
+
+  .register-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .register-card .price-display {
+    font-size: 1.25rem;
+  }
+}

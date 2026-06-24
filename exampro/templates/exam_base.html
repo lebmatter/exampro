@@ -57,6 +57,33 @@
   .navbar .navbar-nav .nav-item.active {
     border-bottom: 2px solid #f5c344ff;
   }
+
+  /* Responsive navbar */
+  @media (max-width: 991px) {
+    .navbar .navbar-nav .nav-item.active {
+      border-bottom: none;
+      border-left: 2px solid #f5c344ff;
+    }
+
+    .user-email-display {
+      font-size: 0.8rem;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .user-email-display {
+      max-width: 150px;
+      font-size: 0.75rem;
+    }
+
+    .navbar-nav .nav-link {
+      font-size: 0.95rem;
+    }
+  }
 </style>
 {% endblock %} {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom" aria-label="Main navigation">

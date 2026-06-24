@@ -220,4 +220,58 @@
   .user-stats .stat-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .leaderboard-table thead th,
+  .leaderboard-table tbody td {
+    padding: 0.6rem 0.65rem;
+    font-size: 0.82rem;
+  }
+
+  .candidate-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.72rem;
+  }
+
+  .rank-medal {
+    width: 26px;
+    height: 26px;
+    font-size: 0.75rem;
+  }
+
+  .kpi-card {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .kpi-value {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .leaderboard-table thead th:nth-child(5),
+  .leaderboard-table tbody td:nth-child(5) {
+    display: none;
+  }
+
+  .user-stats .stat-cell {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .section-header {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+  }
+
+  .candidate-info {
+    gap: 0.4rem;
+  }
+
+  .candidate-name {
+    font-size: 0.82rem;
+  }
 }

@@ -752,12 +752,41 @@
 
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 767px) {
+  .proctor-page .bold-heading {
+    font-size: 1.25rem;
+  }
+
+  .proctor-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .proctor-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .proctor-tabs .nav-item {
+    flex-shrink: 0;
+  }
+
+  .proctor-tabs .nav-link {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.82rem;
+  }
+
   .video-controls { gap: 2px; padding: 0.3rem; }
   .controls__button { min-width: 24px; height: 24px; padding: 2px 4px; }
   #chatModal .modal-body { height: auto; min-height: auto; }
 }
 
 @media (max-width: 575px) {
+  .proctor-page .bold-heading {
+    font-size: 1.1rem;
+  }
+
   .alert-card-body { padding: 1.5rem 1.1rem; }
   .alert-icon-section { width: 72px; height: 72px; font-size: 1.85rem; }
   .alert-actions { flex-direction: column; }

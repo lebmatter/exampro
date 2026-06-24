@@ -876,6 +876,21 @@
   }
 }
 
+@media (max-width: 575px) {
+  .quiz-list-scroll {
+    max-height: 150px;
+  }
+
+  .panel-header {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .panel-body {
+    padding: 0.5rem;
+  }
+}
+
 /* Quiz Generate Modal */
 #quizGenerateModal .modal-content {
   border: 1px solid rgba(0, 0, 0, 0.08);

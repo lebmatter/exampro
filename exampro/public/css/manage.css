@@ -186,3 +186,59 @@ body .step-navigation .nav-link.active {
 .nav-tabs {
     border-bottom: none;
 }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    .sidebar {
+        position: static;
+        height: auto;
+        box-shadow: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding-top: 0;
+        padding-bottom: 0.5rem;
+    }
+
+    .sidebar .nav {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .sidebar .nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar .nav-link {
+        white-space: nowrap;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .table td, .table th {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.82rem;
+    }
+
+    .question-text {
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 575px) {
+    .question-text {
+        max-width: 140px;
+        font-size: 0.8rem;
+    }
+
+    .step-navigation .nav-link {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.5rem;
+    }
+
+    .available-categories-container,
+    .selected-categories-container {
+        padding: 0.5rem;
+    }
+}

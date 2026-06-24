@@ -109,3 +109,67 @@
 .my-exams-table .btn > i {
   margin-right: 0.45rem;
 }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .my-exams-table thead th,
+  .my-exams-table tbody td {
+    padding: 0.7rem 0.65rem;
+    font-size: 0.82rem;
+  }
+
+  .my-exams-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 0.6rem;
+  }
+
+  .my-exams-pagination nav {
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .btn-group .btn + .btn {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 575px) {
+  .my-exams-table thead th:nth-child(3),
+  .my-exams-table tbody td:nth-child(3) {
+    display: none;
+  }
+
+  .my-exams-table thead th,
+  .my-exams-table tbody td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .exam-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .my-exams-table .btn {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .my-exams-table .btn > i {
+    margin-right: 0.25rem;
+  }
+
+  .status-pill {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+}

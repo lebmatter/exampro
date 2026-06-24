@@ -899,8 +899,34 @@
 }
 
 @media (max-width: 767px) {
+  .studio-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .studio-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .studio-tabs .nav-item {
+    flex-shrink: 0;
+  }
+
+  .studio-tabs .nav-link {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.82rem;
+  }
+
   .studio-controls {
     margin-bottom: 1rem;
+  }
+
+  .studio-controls .btn {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.6rem;
   }
 
   .question-list-card,
@@ -911,6 +937,42 @@
   .pill-btn {
     font-size: 0.72rem;
     padding: 0.3rem 0.35rem;
+  }
+
+  .submission-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .image-thumb-filled:hover::after {
+    width: 280px;
+    height: 280px;
+  }
+}
+
+@media (max-width: 575px) {
+  .studio-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .studio-controls .btn {
+    width: 100%;
+  }
+
+  .question-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .batch-user-item {
+    font-size: 0.82rem;
+    padding: 0.45rem 0.5rem;
+  }
+
+  .csv-preview-wrap .table {
+    font-size: 0.72rem;
   }
 }
 
