@@ -36,11 +36,14 @@ class ScheduleDashboard {
 		this.page = page;
 		this._refresh_interval = null;
 		this._countdown_interval = null;
+		this._sort_state = { column: null, asc: true };
 		this.make();
+		this.fetch_ongoing_schedules();
 	}
 
 	make() {
 		this.$container = $('<div class="schedule-dashboard" style="max-width: 960px; margin: 0 auto; padding: 15px;">').appendTo(this.wrapper);
+		this.$banner_section = $('<div class="live-banners-section mb-3">').appendTo(this.$container);
 		this.$empty = $(`
 			<div class="text-muted text-center" style="padding: 60px 20px;">
 				<span style="color: #adb5bd;"><i data-feather="calendar" style="width:48px;height:48px;"></i></span>
@@ -67,12 +70,62 @@ class ScheduleDashboard {
 		if (!schedule_name) {
 			this.$empty.show();
 			this.$content.hide();
+			this.$banner_section.show();
+			this.fetch_ongoing_schedules();
 			this.page.clear_indicator();
 			return;
 		}
 		this.$empty.hide();
 		this.$content.show();
+		this.$banner_section.hide();
 		this.fetch_and_render_data(schedule_name);
+	}
+
+	fetch_ongoing_schedules() {
+		frappe.call({
+			method: 'exampro.exam_pro.api.exam_studio.get_ongoing_schedules',
+			callback: (r) => {
+				if (!r.exc && r.message && r.message.length) {
+					this.render_live_banners(r.message);
+				} else {
+					this.$banner_section.empty();
+				}
+			}
+		});
+	}
+
+	render_live_banners(schedules) {
+		this.$banner_section.empty();
+		schedules.forEach(sch => {
+			let start_formatted = frappe.datetime.str_to_user(sch.start_date_time);
+			let $banner = $(`
+				<div class="live-exam-banner mb-2">
+					<div class="live-exam-banner-left">
+						<span class="live-pulse"></span>
+						<span class="live-exam-banner-label">LIVE</span>
+						<span class="live-exam-banner-info">
+							<strong>${frappe.utils.escape_html(sch.exam_title)}</strong>
+							<span class="text-muted mx-1">&middot;</span>
+							<span>${start_formatted}</span>
+							<span class="text-muted mx-1">&middot;</span>
+							<span>${sch.candidate_count || 0} candidates</span>
+						</span>
+					</div>
+					<span class="live-exam-banner-link" data-schedule="${frappe.utils.escape_html(sch.name)}">
+						View Dashboard
+						<i data-feather="arrow-right" style="width:14px;height:14px;"></i>
+					</span>
+				</div>
+			`);
+			this.$banner_section.append($banner);
+		});
+
+		this.$banner_section.find('.live-exam-banner-link').on('click', (e) => {
+			let schedule_name = $(e.currentTarget).data('schedule');
+			this.page.fields_dict.exam_schedule.set_value(schedule_name);
+		});
+
+		if (typeof feather !== 'undefined') feather.replace();
 	}
 
 	fetch_and_render_data(schedule_name) {
@@ -122,7 +175,7 @@ class ScheduleDashboard {
 
 		if (status === 'Ongoing') {
 			this.$table_section.show();
-			this.render_live_candidates_table(data);
+			this.render_candidates_table(data);
 		}
 
 		if (typeof feather !== 'undefined') feather.replace();
@@ -255,8 +308,8 @@ class ScheduleDashboard {
 		let metrics = [
 			{ label: 'Avg Attention Score', value: data.avg_attention_score_live || 0 },
 			{ label: 'Total Warnings', value: data.total_warnings_live || 0 },
-			{ label: 'Avg Away Time', value: (data.avg_away_time_live || 0) + 's' },
-			{ label: 'Avg Distracted Time', value: (data.avg_distracted_time_live || 0) + 's' },
+			{ label: 'Avg Away Time', value: this._format_duration(data.avg_away_time_live || 0) },
+			{ label: 'Avg Distracted Time', value: this._format_duration(data.avg_distracted_time_live || 0) },
 		];
 
 		this.$live_section.html(`
@@ -371,52 +424,107 @@ class ScheduleDashboard {
 		}
 	}
 
-	render_live_candidates_table(data) {
-		let candidates = data.live_candidates || [];
+	render_candidates_table(data) {
+		let candidates = data.all_candidates || data.live_candidates || [];
+		this._candidates_data = candidates;
+		this._candidates_context = data;
+		this._sort_state = { column: null, asc: true };
+
+		let status_order = { 'Started': 0, 'Registered': 1, 'Submitted': 2, 'Terminated': 3, 'Not Attempted': 4 };
+		candidates.sort((a, b) => (status_order[a.status] ?? 99) - (status_order[b.status] ?? 99));
 
 		this.$table_section.html(`
 			<div style="background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; overflow: hidden;">
 				<div style="background: #fafbfc; border-bottom: 1px solid rgba(0,0,0,0.06); padding: 0.75rem 1.1rem; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 6px;">
-					<span style="color: #868e96;"><i data-feather="users" style="width:16px;height:16px;"></i></span> Live Candidates (${candidates.length})
+					<span style="color: #868e96;"><i data-feather="users" style="width:16px;height:16px;"></i></span> Candidates (${candidates.length})
 				</div>
-				<div style="padding: 0;" id="sd-live-table-body"></div>
+				<div style="padding: 0; overflow-x: auto;" id="sd-candidates-table-body"></div>
 			</div>
 		`);
 
+		this._render_candidates_rows(candidates, data);
+	}
+
+	_render_candidates_rows(candidates, data) {
+		let $body = $('#sd-candidates-table-body');
+		$body.empty();
+
 		if (!candidates.length) {
-			$('#sd-live-table-body').html('<div class="text-muted text-center" style="padding: 24px;">No candidates currently taking the exam.</div>');
+			$body.html('<div class="text-muted text-center" style="padding: 24px;">No candidates.</div>');
 			return;
 		}
 
+		const th_style = 'color: #6c757d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 0.75rem 1rem;';
+		const sort_icon = (col) => {
+			if (this._sort_state.column !== col) return '<span class="sort-icon">&#8597;</span>';
+			return this._sort_state.asc
+				? '<span class="sort-icon">&#9650;</span>'
+				: '<span class="sort-icon">&#9660;</span>';
+		};
+		const sorted_class = (col) => this._sort_state.column === col ? 'sortable-col sorted' : 'sortable-col';
+
 		let $table = $(`
-			<table class="table" style="margin: 0;">
+			<table class="table sortable" style="margin: 0;">
 				<thead>
 					<tr style="background: #fafbfc;">
-						<th style="color: #6c757d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 0.75rem 1rem;">Candidate</th>
-						<th style="color: #6c757d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 0.75rem 1rem;">Attention</th>
-						<th style="color: #6c757d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 0.75rem 1rem;">Warnings</th>
-						<th style="color: #6c757d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 0.75rem 1rem;">Away Time</th>
-						<th style="color: #6c757d; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; padding: 0.75rem 1rem;">Distracted</th>
+						<th class="${sorted_class('candidate_name')}" data-col="candidate_name" style="${th_style}">Candidate ${sort_icon('candidate_name')}</th>
+						<th class="${sorted_class('status')}" data-col="status" style="${th_style}">Status ${sort_icon('status')}</th>
+						<th class="${sorted_class('attention_score')}" data-col="attention_score" style="${th_style}">Attention ${sort_icon('attention_score')}</th>
+						<th class="${sorted_class('warning_count')}" data-col="warning_count" style="${th_style}">Warnings ${sort_icon('warning_count')}</th>
+						<th class="${sorted_class('total_away_time')}" data-col="total_away_time" style="${th_style}">Away % ${sort_icon('total_away_time')}</th>
+						<th class="${sorted_class('total_distracted_time')}" data-col="total_distracted_time" style="${th_style}">Distracted % ${sort_icon('total_distracted_time')}</th>
 					</tr>
 				</thead>
 				<tbody></tbody>
 			</table>
 		`);
 
+		let status_bg = { 'Started': '#e8f5e9', 'Registered': '#e7f1ff', 'Submitted': '#f3f0ff', 'Terminated': '#fdecea', 'Not Attempted': '#f1f3f5' };
+		let status_color = { 'Started': '#1b5e20', 'Registered': '#0d6efd', 'Submitted': '#7c5cfc', 'Terminated': '#b71c1c', 'Not Attempted': '#495057' };
+
 		candidates.forEach(c => {
 			let attention_color = (c.attention_score || 0) >= 70 ? '#198754' : (c.attention_score || 0) >= 40 ? '#fd7e14' : '#dc3545';
+			let st = c.status || 'Unknown';
+			let candidate_link = c.name
+				? `<a href="/app/exam-submission/${encodeURIComponent(c.name)}" style="color: inherit; text-decoration: none; border-bottom: 1px dashed #adb5bd;">${frappe.utils.escape_html(c.candidate_name || c.candidate)}</a>`
+				: frappe.utils.escape_html(c.candidate_name || c.candidate);
+
 			$table.find('tbody').append(`
 				<tr style="border-top: 1px solid rgba(0,0,0,0.05);">
-					<td style="padding: 0.85rem 1rem; font-weight: 600;">${frappe.utils.escape_html(c.candidate_name || c.candidate)}</td>
+					<td style="padding: 0.85rem 1rem; font-weight: 600;">${candidate_link}</td>
+					<td style="padding: 0.85rem 1rem;">
+						<span style="background: ${status_bg[st] || '#f1f3f5'}; color: ${status_color[st] || '#495057'}; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em;">${st}</span>
+					</td>
 					<td style="padding: 0.85rem 1rem;"><span style="color: ${attention_color}; font-weight: 600;">${c.attention_score || 0}</span></td>
 					<td style="padding: 0.85rem 1rem;">${c.warning_count || 0}</td>
-					<td style="padding: 0.85rem 1rem;">${(c.total_away_time || 0).toFixed(1)}s</td>
-					<td style="padding: 0.85rem 1rem;">${(c.total_distracted_time || 0).toFixed(1)}s</td>
+					<td style="padding: 0.85rem 1rem;">${this._format_time_pct(c.total_away_time || 0, data.duration)}</td>
+					<td style="padding: 0.85rem 1rem;">${this._format_time_pct(c.total_distracted_time || 0, data.duration)}</td>
 				</tr>
 			`);
 		});
 
-		$('#sd-live-table-body').append($table);
+		$table.find('th.sortable-col').on('click', (e) => {
+			let col = $(e.currentTarget).data('col');
+			if (this._sort_state.column === col) {
+				this._sort_state.asc = !this._sort_state.asc;
+			} else {
+				this._sort_state.column = col;
+				this._sort_state.asc = true;
+			}
+			let sorted = [...this._candidates_data].sort((a, b) => {
+				let va = a[col], vb = b[col];
+				if (typeof va === 'string') va = (va || '').toLowerCase();
+				if (typeof vb === 'string') vb = (vb || '').toLowerCase();
+				va = va ?? 0;
+				vb = vb ?? 0;
+				if (va < vb) return this._sort_state.asc ? -1 : 1;
+				if (va > vb) return this._sort_state.asc ? 1 : -1;
+				return 0;
+			});
+			this._render_candidates_rows(sorted, this._candidates_context);
+		});
+
+		$body.append($table);
 	}
 
 	render_tables(data) {
@@ -454,9 +562,13 @@ class ScheduleDashboard {
 			let result_bg = { 'Passed': '#e8f5e9', 'Failed': '#fdecea', 'NA': '#f1f3f5' };
 			let result_color = { 'Passed': '#1b5e20', 'Failed': '#b71c1c', 'NA': '#495057' };
 			let rs = s.result_status || 'NA';
+			let candidate_link = s.name
+				? `<a href="/app/exam-submission/${encodeURIComponent(s.name)}" style="color: inherit; text-decoration: none; border-bottom: 1px dashed #adb5bd;">${frappe.utils.escape_html(s.candidate_name || s.candidate)}</a>`
+				: frappe.utils.escape_html(s.candidate_name || s.candidate);
+
 			$table.find('tbody').append(`
 				<tr style="border-top: 1px solid rgba(0,0,0,0.05);">
-					<td style="padding: 0.85rem 1rem; font-weight: 600;">${frappe.utils.escape_html(s.candidate_name || s.candidate)}</td>
+					<td style="padding: 0.85rem 1rem; font-weight: 600;">${candidate_link}</td>
 					<td style="padding: 0.85rem 1rem;">${s.exam_submitted_time || ''}</td>
 					<td style="padding: 0.85rem 1rem;">${s.total_marks != null ? s.total_marks : 'N/A'}</td>
 					<td style="padding: 0.85rem 1rem;">
@@ -467,6 +579,21 @@ class ScheduleDashboard {
 		});
 
 		$('#sd-submissions-body').append($table);
+	}
+
+	_format_duration(seconds) {
+		if (!seconds) return '0s';
+		if (seconds > 60) {
+			let mins = (seconds / 60).toFixed(1);
+			return mins + 'm';
+		}
+		return seconds.toFixed(1) + 's';
+	}
+
+	_format_time_pct(seconds, duration_minutes) {
+		if (!duration_minutes) return '0%';
+		let pct = (seconds / (duration_minutes * 60)) * 100;
+		return pct.toFixed(1) + '%';
 	}
 
 	start_auto_refresh() {

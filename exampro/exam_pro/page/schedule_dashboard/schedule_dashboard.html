@@ -26,5 +26,89 @@
             max-width: 100% !important;
         }
     }
+
+    .live-exam-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.65rem 1rem;
+        background: #e8f5e9;
+        border: 1px solid rgba(27, 94, 32, 0.15);
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+
+    .live-exam-banner-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .live-pulse {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #1b5e20;
+        flex-shrink: 0;
+        animation: live-pulse-anim 1.5s ease-in-out infinite;
+    }
+
+    @keyframes live-pulse-anim {
+        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(27, 94, 32, 0.4); }
+        50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(27, 94, 32, 0); }
+    }
+
+    .live-exam-banner-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #1b5e20;
+        flex-shrink: 0;
+    }
+
+    .live-exam-banner-info {
+        color: #212529;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .live-exam-banner-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: #1b5e20;
+        font-weight: 600;
+        font-size: 0.82rem;
+        text-decoration: none;
+        white-space: nowrap;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .live-exam-banner-link:hover {
+        text-decoration: underline;
+        color: #145218;
+    }
+
+    .schedule-dashboard .table.sortable th.sortable-col {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .schedule-dashboard .table.sortable th.sortable-col:hover {
+        background: #f1f3f5;
+    }
+
+    .schedule-dashboard .table.sortable th .sort-icon {
+        margin-left: 4px;
+        opacity: 0.4;
+    }
+
+    .schedule-dashboard .table.sortable th.sorted .sort-icon {
+        opacity: 1;
+    }
 </style>
 {% endblock %}

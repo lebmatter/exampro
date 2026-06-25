@@ -95,17 +95,19 @@ def _get_status_counts(schedule_name):
 
 
 def _get_live_metrics(schedule_name):
-    live_candidates = frappe.db.sql(
+    all_candidates = frappe.db.sql(
         """
-        SELECT candidate, candidate_name, attention_score,
+        SELECT name, candidate, candidate_name, status, attention_score,
                warning_count, total_away_time, total_distracted_time
         FROM `tabExam Submission`
-        WHERE exam_schedule = %s AND status = 'Started'
+        WHERE exam_schedule = %s
+        ORDER BY status, candidate_name
         """,
         (schedule_name,),
         as_dict=True,
     )
 
+    live_candidates = [c for c in all_candidates if c.status == "Started"]
     candidates_live = len(live_candidates)
     avg_attention = 0
     total_warnings = 0
@@ -125,6 +127,7 @@ def _get_live_metrics(schedule_name):
         "avg_away_time_live": round(avg_away, 1),
         "avg_distracted_time_live": round(avg_distracted, 1),
         "live_candidates": live_candidates,
+        "all_candidates": all_candidates,
     }
 
 
