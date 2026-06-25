@@ -99,13 +99,18 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 		# ongoing exams can be in Not staryed, started or submitted states
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
 		if sched.start_date_time <= tnow <= end_time:
+			warning_message_count = frappe.db.count(
+				"Exam Messages",
+				{"exam_submission": submission["name"], "type_of_message": ["in", ["Warning", "Critical"]]}
+			)
 			userdata = {
 				"name": submission["name"],
 				"candidate_name": submission["candidate_name"],
 				"status": submission["status"],
 				"enable_video_proctoring": enable_video_proctoring,
 				"enable_chat": enable_chat,
-				"attention_score": submission.get("attention_score", 0) or 0
+				"attention_score": submission.get("attention_score", 0) or 0,
+				"warning_message_count": warning_message_count
 			}
 			if submission["status"] == "Started":
 				res["live_submissions"].append(userdata)
@@ -153,7 +158,8 @@ def get_latest_messages(proctor=None):
 			"message": msg_text,
 			"status": submission["status"],
 			"enable_video_proctoring": submission.get("enable_video_proctoring", 0),
-			"enable_chat": submission.get("enable_chat", 0)
+			"enable_chat": submission.get("enable_chat", 0),
+			"warning_message_count": submission.get("warning_message_count", 0)
 		})
 
 	return result

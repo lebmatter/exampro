@@ -43,6 +43,10 @@ def get_context(context):
 		exam_doc = frappe.get_cached_doc("Exam", sub["exam"])
 		sub["enable_video_proctoring"] = exam_doc.get("enable_video_proctoring", 0)
 		sub["enable_chat"] = exam_doc.get("enable_chat", 0)
+		sub["warning_message_count"] = frappe.db.count(
+			"Exam Messages",
+			{"exam_submission": sub["name"], "type_of_message": ["in", ["Warning", "Critical"]]}
+		)
 		if sub.get("exam_started_time"):
 			sub["exam_started_time"] = str(sub["exam_started_time"])
 		if sub.get("exam_submitted_time"):
@@ -64,6 +68,7 @@ def get_context(context):
 			"status": sub["status"],
 			"enable_video_proctoring": sub.get("enable_video_proctoring", 0),
 			"enable_chat": sub.get("enable_chat", 0),
+			"warning_message_count": sub.get("warning_message_count", 0),
 		})
 
 	exam_title = frappe.db.get_value("Exam", sched.exam, "title")
