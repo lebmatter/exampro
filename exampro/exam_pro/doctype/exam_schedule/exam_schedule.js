@@ -412,10 +412,10 @@ function show_ongoing_stats_banner(frm) {
                     gap: 12px;
                     flex-wrap: wrap;
                 ">
-                    <span class="indicator-pill blue no-indicator-dot">${total} Registered</span>
-                    <span class="indicator-pill green no-indicator-dot">${live} Live</span>
-                    <span class="indicator-pill orange no-indicator-dot">${submitted} Submitted</span>
-                    <span class="indicator-pill red no-indicator-dot">${terminated} Terminated</span>
+                    <a href="/app/exam-submission?exam_schedule=${encodeURIComponent(frm.doc.name)}" class="indicator-pill blue no-indicator-dot" style="text-decoration:none;">${total} Registered</a>
+                    <a href="/app/exam-submission?exam_schedule=${encodeURIComponent(frm.doc.name)}&status=Started" class="indicator-pill green no-indicator-dot" style="text-decoration:none;">${live} Live</a>
+                    <a href="/app/exam-submission?exam_schedule=${encodeURIComponent(frm.doc.name)}&status=Submitted" class="indicator-pill orange no-indicator-dot" style="text-decoration:none;">${submitted} Submitted</a>
+                    <a href="/app/exam-submission?exam_schedule=${encodeURIComponent(frm.doc.name)}&status=Terminated" class="indicator-pill red no-indicator-dot" style="text-decoration:none;">${terminated} Terminated</a>
                     <a class="btn btn-xs btn-info ongoing-dashboard-btn">
                         View Dashboard
                     </a>
