@@ -136,17 +136,6 @@ function checkMediaPermissionsBeforeStart() {
     return false;
   }
 
-  // Camera is open but lid/shutter may still be closed — require a visible face.
-  // faceCurrentlyVisible is set by the gazer's onFaceDetected callback in examform.js.
-  if (typeof faceCurrentlyVisible !== "undefined" && !faceCurrentlyVisible) {
-    frappe.show_alert({
-      message:
-        "Face not detected. Open your camera shutter and ensure your face is clearly visible before starting.",
-      indicator: "red",
-    });
-    return false;
-  }
-
   return true;
 }
 

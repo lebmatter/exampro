@@ -4,8 +4,6 @@ var examOverview;
 var currentQuestion;
 var detector;
 var gazer;
-var lastNoFaceAlertTime = 0;
-var noFaceAlertCooldown = 10000; // 10 seconds cooldown between no face alerts
 var lastWebcamErrorTime = 0;
 var webcamErrorCooldown = 5000; // 5 seconds cooldown between webcam error alerts
 var recordingInitialized = false; // Prevent multiple recording initializations
@@ -13,11 +11,7 @@ var submitAnswerTimeout; // Debounce timeout for textarea input
 var isSubmittingAnswer = false; // Flag to prevent concurrent submissions
 var pendingNavigation = false; // Set when a Next/Finish click arrives during an in-flight save
 var faceCurrentlyVisible = false; // Updated by gazer onFaceDetected; gates exam start
-var noFaceTerminationTimer = null; // setTimeout id for the 60s no-face termination
-var noFaceCountdownInterval = null; // setInterval id for the visible countdown
-var webcamTerminationTimer = null; // setTimeout id for the 60s no-webcam termination
-var NO_FACE_GRACE_SECONDS = 60;
-var WEBCAM_GRACE_SECONDS = 60;
+var webcamConnected = true; // Set false when video track ends; gates question navigation
 var helpShownFor = new Set(); // qs_no values where help has already been shown this session
 var helpReadingTimer = null;
 var fullscreenExitedIntentionally = false; // Set true during endExam to suppress the exit warning
@@ -486,7 +480,8 @@ function startRecording() {
                         console.error('Webcam was disabled or stopped');
                         sendMessage('Webcam was disabled or stopped', 'Warning', 'nowebcam');
                         lastWebcamErrorTime = currentTime;
-                        startWebcamCountdown();
+                        webcamConnected = false;
+                        showTerminationBanner('webcamBanner');
                     }
                 });
             });
@@ -534,27 +529,7 @@ function startRecording() {
                         showEyePoints: false,
                         enableLogs: false, 
                         onFaceDetected: (faces) => {
-                            const currentTime = Date.now();
-                            if (faces.length > 0) {
-                                faceCurrentlyVisible = true;
-                                // Face is back: cancel any pending termination
-                                cancelNoFaceCountdown();
-                            } else {
-                                faceCurrentlyVisible = false;
-                                // Existing chat warning (cooldown-throttled)
-                                if (currentTime - lastNoFaceAlertTime > noFaceAlertCooldown) {
-                                    console.warn('No face detected in camera view');
-                                    sendMessage('No face detected in camera view', 'Warning', 'noface');
-                                    lastNoFaceAlertTime = currentTime;
-
-                                    // Show a less intrusive notification
-                                    showNotification('Please ensure your face is visible to the camera', 'warning');
-                                }
-                                // During an active exam, start the 60s grace countdown
-                                if (exam.submission_status === "Started" && !examEnded) {
-                                    startNoFaceCountdown();
-                                }
-                            }
+                            faceCurrentlyVisible = faces.length > 0;
                         },
                         // Callback functions
                         onPostTrackingData: (trackingData) => {
@@ -645,7 +620,8 @@ function startRecording() {
             if (currentTime - lastWebcamErrorTime > webcamErrorCooldown) {
                 sendMessage('Webcam was not detected', 'Warning', 'nowebcam');
                 lastWebcamErrorTime = currentTime;
-                startWebcamCountdown();
+                webcamConnected = false;
+                showTerminationBanner('webcamBanner');
             }
 
             // Reset recording flag if initialization failed
@@ -1464,51 +1440,6 @@ function sendChatMessage() {
     }
 }
 
-function startNoFaceCountdown() {
-    if (noFaceTerminationTimer) return;
-    showTerminationBanner('noFaceBanner');
-    if (typeof playAlarm === 'function') playAlarm(false);
-    noFaceCountdownInterval = setInterval(() => {
-        if (typeof playAlarm === 'function') playAlarm(true);
-    }, 10000);
-    noFaceTerminationTimer = setTimeout(() => {
-        clearInterval(noFaceCountdownInterval);
-        noFaceCountdownInterval = null;
-        noFaceTerminationTimer = null;
-        terminateForNoFace();
-    }, NO_FACE_GRACE_SECONDS * 1000);
-}
-
-function cancelNoFaceCountdown() {
-    if (noFaceTerminationTimer) {
-        clearTimeout(noFaceTerminationTimer);
-        noFaceTerminationTimer = null;
-    }
-    if (noFaceCountdownInterval) {
-        clearInterval(noFaceCountdownInterval);
-        noFaceCountdownInterval = null;
-    }
-    hideTerminationBanner('noFaceBanner');
-}
-
-function startWebcamCountdown() {
-    if (webcamTerminationTimer) return;
-    showTerminationBanner('webcamBanner');
-    if (typeof playAlarm === 'function') playAlarm(false);
-    webcamTerminationTimer = setTimeout(() => {
-        webcamTerminationTimer = null;
-        terminateForNoWebcam();
-    }, WEBCAM_GRACE_SECONDS * 1000);
-}
-
-function cancelWebcamCountdown() {
-    if (webcamTerminationTimer) {
-        clearTimeout(webcamTerminationTimer);
-        webcamTerminationTimer = null;
-    }
-    hideTerminationBanner('webcamBanner');
-}
-
 function showTerminationBanner(id) {
     const banner = document.getElementById(id);
     if (banner) banner.style.display = 'block';
@@ -1519,66 +1450,11 @@ function hideTerminationBanner(id) {
     if (banner) banner.style.display = 'none';
 }
 
-function terminateForNoFace() {
-    if (examEnded) return;
-    examEnded = true;
-    fullscreenExitedIntentionally = true;
-    cancelNoFaceCountdown();
-
-    frappe.call({
-        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
-        type: "POST",
-        args: {
-            'exam_submission': exam["exam_submission"],
-            'message': 'Exam terminated: face not visible to camera for 60 seconds.',
-            'type_of_message': 'Critical',
-            'warning_type': 'nofacetimeout',
-        },
-        callback: () => {
-            if (detector) detector.destroy();
-            if (gazer) {
-                try { gazer.stop(); } catch (e) {}
-            }
-            stopRecording();
-            stopScreenCapture();
-            window.location.href = "/exam/" + exam.exam_submission;
-        },
-        error: (error) => {
-            console.error("Failed to post nofacetimeout:", error);
-            window.location.href = "/exam/" + exam.exam_submission;
-        }
-    });
-}
-
-function terminateForNoWebcam() {
-    if (examEnded) return;
-    examEnded = true;
-    fullscreenExitedIntentionally = true;
-    cancelWebcamCountdown();
-
-    frappe.call({
-        method: "exampro.exam_pro.doctype.exam_submission.exam_submission.post_exam_message",
-        type: "POST",
-        args: {
-            'exam_submission': exam["exam_submission"],
-            'message': 'Exam terminated: webcam disconnected for 60 seconds.',
-            'type_of_message': 'Critical',
-            'warning_type': 'nowebcamtimeout',
-        },
-        callback: () => {
-            if (detector) detector.destroy();
-            if (gazer) {
-                try { gazer.stop(); } catch (e) {}
-            }
-            stopRecording();
-            stopScreenCapture();
-            window.location.href = "/exam/" + exam.exam_submission;
-        },
-        error: (error) => {
-            console.error("Failed to post nowebcamtimeout:", error);
-            window.location.href = "/exam/" + exam.exam_submission;
-        }
-    });
+function isWebcamGated() {
+    if (!exam.enable_video_proctoring) return false;
+    if (webcamConnected) return false;
+    showNotification('Webcam disconnected. Please reconnect your camera to continue.', 'error');
+    return true;
 }
 
 function endExam(isAutoSubmit) {
@@ -1646,6 +1522,7 @@ function startExam() {
 };
 
 function getQuestion(qsno) {
+    if (isWebcamGated()) return;
     // Clear any pending textarea submission timeout
     clearTimeout(submitAnswerTimeout);
     // Callers (Next click, navigateToQuestion, subjective branches) save the
