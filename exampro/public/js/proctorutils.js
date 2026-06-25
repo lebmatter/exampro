@@ -20,6 +20,7 @@ function proctorApp() {
     showChatModal: false,
     currentChatSubmission: '',
     currentChatCandidate: '',
+    currentChatAttentionScore: null,
     chatMessage: '',
     chatUpdateInterval: null,
     
@@ -234,6 +235,11 @@ function proctorApp() {
         this.pendingCandidatesCount = pending.length;
         this.terminatedCandidatesCount = terminated.length;
 
+        if (this.currentChatSubmission) {
+          const current = live.find(s => s.name === this.currentChatSubmission);
+          if (current) this.currentChatAttentionScore = current.attention_score ?? null;
+        }
+
         // Kick off video loading for any newly appeared submissions
         for (const s of newLive) {
           if (!s.enable_video_proctoring) continue;
@@ -388,6 +394,7 @@ function proctorApp() {
       
       this.currentChatSubmission = submission.name;
       this.currentChatCandidate = submission.candidate_name;
+      this.currentChatAttentionScore = submission.attention_score ?? null;
       this.chatMessage = '';
       
       // Clear existing messages and reset

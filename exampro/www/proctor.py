@@ -73,7 +73,8 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 			"status",
 			"exam_started_time",
 			"exam_submitted_time",
-			"additional_time_given"
+			"additional_time_given",
+			"attention_score"
 	])
 	for submission in submissions:
 		if submission["status"] in ["Registration Cancelled", "Aborted"]:
@@ -103,7 +104,8 @@ def get_proctor_live_exams(proctor=None, skip_submitted=False):
 				"candidate_name": submission["candidate_name"],
 				"status": submission["status"],
 				"enable_video_proctoring": enable_video_proctoring,
-				"enable_chat": enable_chat
+				"enable_chat": enable_chat,
+				"attention_score": submission.get("attention_score", 0) or 0
 			}
 			if submission["status"] == "Started":
 				res["live_submissions"].append(userdata)

@@ -246,6 +246,18 @@
   text-overflow: ellipsis;
 }
 
+.attention-score-badge {
+  display: inline-block;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .video-container {
   position: relative;
   padding-bottom: 56.25%;

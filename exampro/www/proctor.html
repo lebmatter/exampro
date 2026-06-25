@@ -140,6 +140,12 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                   <div class="video-card">
                     <div class="video-card-header">
                       <span class="candidate-name" x-text="submission.candidate_name"></span>
+                      <span
+                        class="attention-score-badge"
+                        x-show="submission.attention_score != null"
+                        x-text="Math.round(submission.attention_score)"
+                        :style="`background:${(submission.attention_score || 0) >= 70 ? '#198754' : (submission.attention_score || 0) >= 40 ? '#fd7e14' : '#dc3545'}`"
+                      ></span>
                     </div>
                     <div class="card-body p-0" style="position:relative">
                       <!-- Video proctoring disabled overlay -->
@@ -349,6 +355,12 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
           <h5 class="modal-title" id="chatVideoModalLabel">
             <i data-feather="message-square" style="width:16px;height:16px;margin-right:0.4rem;"></i>
             Chat with: <span x-text="currentChatCandidate"></span>
+            <span
+              class="attention-score-badge ms-2"
+              x-show="currentChatAttentionScore != null"
+              x-text="'Attention: ' + Math.round(currentChatAttentionScore || 0)"
+              :style="`background:${(currentChatAttentionScore || 0) >= 70 ? '#198754' : (currentChatAttentionScore || 0) >= 40 ? '#fd7e14' : '#dc3545'}`"
+            ></span>
           </h5>
           <button
             type="button"

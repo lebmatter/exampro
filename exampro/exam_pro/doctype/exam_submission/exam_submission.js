@@ -183,7 +183,10 @@ frappe.ui.form.on("Exam Submission", {
                         <div id="proctorTimelineCaption" class="text-muted" style="margin-top: 6px; font-size: 11px;"></div>
                         <div style="margin-top: 20px; display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
                             <canvas id="proctorPie" width="240" height="240" style="flex: 0 0 auto;"></canvas>
-                            <div id="proctorPieBreakdown" style="font-size: 13px; line-height: 1.8; flex: 1 1 auto; min-width: 220px;"></div>
+                            <div style="flex: 1 1 auto; min-width: 220px;">
+                                <div id="proctorAttentionScore"></div>
+                                <div id="proctorPieBreakdown" style="font-size: 13px; line-height: 1.8;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -444,12 +447,12 @@ function drawProctorTimeline(frm) {
         caption.textContent = `Exam window: ${startStr} → ${endStr}`;
     }
 
-    drawProctorPie(points, lanes);
+    drawProctorPie(points, lanes, frm);
 }
 
 // Pie + breakdown of per-state time. Each sample's duration is the gap to the
 // next sample; the final sample carries no duration (no future to fill).
-function drawProctorPie(points, lanes) {
+function drawProctorPie(points, lanes, frm) {
     const canvas = document.getElementById('proctorPie');
     const breakdown = document.getElementById('proctorPieBreakdown');
     if (!canvas || !breakdown) return;
@@ -523,6 +526,43 @@ function drawProctorPie(points, lanes) {
     breakdown.innerHTML = `
         <div style="font-weight: 600; margin-bottom: 6px;">Time by state (total ${fmtMins(grandMs)})</div>
         ${rows}
+    `;
+
+    renderAttentionScore(totals, grandMs, frm);
+}
+
+function renderAttentionScore(totals, grandMs, frm) {
+    const el = document.getElementById('proctorAttentionScore');
+    if (!el) return;
+
+    if (grandMs <= 0) { el.innerHTML = ''; return; }
+    const durationSec = grandMs / 1000;
+    const durationHrs = durationSec / 3600;
+
+    const awayPct = ((totals.away || 0) / grandMs) * 100;
+    const distractedPct = ((totals.distracted || 0) / grandMs) * 100;
+    const faceChanges = (frm && frm.doc.face_count_changes) || 0;
+    const changesPerHr = durationHrs > 0 ? faceChanges / durationHrs : 0;
+
+    const awayScore = Math.max(0, 100 - Math.max(0, awayPct - 5) * 5);
+    const changesScore = Math.max(0, 100 - Math.max(0, changesPerHr - 3) * 15);
+    const distractedScore = Math.max(0, 100 - Math.max(0, distractedPct - 20) * 2);
+
+    const score = Math.round(awayScore * 0.45 + changesScore * 0.30 + distractedScore * 0.25);
+    const color = score >= 70 ? '#198754' : score >= 40 ? '#fd7e14' : '#dc3545';
+    const label = score >= 70 ? 'Good' : score >= 40 ? 'Moderate' : 'Poor';
+
+    el.innerHTML = `
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;">
+            <span style="font-size:2rem;font-weight:700;color:${color};line-height:1;font-variant-numeric:tabular-nums;">${score}</span>
+            <span style="font-size:0.85rem;font-weight:600;color:${color};">${label}</span>
+            <span style="font-size:0.75rem;color:#666;">Attention Score</span>
+        </div>
+        <div style="font-size:0.75rem;color:#666;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;">
+            <span>Away: ${awayPct.toFixed(1)}%</span>
+            <span>Distracted: ${distractedPct.toFixed(1)}%</span>
+            <span>Face changes/hr: ${changesPerHr.toFixed(1)}</span>
+        </div>
     `;
 }
 
