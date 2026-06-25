@@ -23,6 +23,7 @@ def get_live_exam(member=None):
 	"""
 	exam_details = {}
 	fallback = None
+	live_candidates = []
 
 	submissions = frappe.get_all(
 		"Exam Submission",
@@ -121,15 +122,23 @@ def get_live_exam(member=None):
 			if type(val) == datetime:
 				exam_details[key] = val.isoformat()
 
-		# checks if current time is between schedule start and end time
 		tnow = datetime.strptime(now(), '%Y-%m-%d %H:%M:%S.%f')
+
+		# Mark registered (never started) submissions whose window has ended
+		if submission["status"] == "Registered" and tnow >= end_time:
+			frappe.db.set_value(
+				"Exam Submission", submission["name"], "status", "Not Attempted"
+			)
+			frappe.db.commit()
+			continue
+
 		if submission["status"] == "Started":
 			exam_details["is_live"] = True
 			return exam_details
-		elif sched.start_date_time <= tnow <= end_time and submission["status"] in ["Registered", "Started"]:
+		elif sched.start_date_time <= tnow <= end_time and submission["status"] == "Registered":
 			exam_details["is_live"] = True
-			return exam_details
-		if sched.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":
+			live_candidates.append((sched.start_date_time, exam_details))
+		elif sched.start_date_time <= tnow <= end_time and submission["status"] == "Submitted":
 			if not fallback:
 				fallback = exam_details
 			continue
@@ -144,6 +153,10 @@ def get_live_exam(member=None):
 				)
 				frappe.db.commit()
 			continue
+
+	if live_candidates:
+		live_candidates.sort(key=lambda x: x[0], reverse=True)
+		return live_candidates[0][1]
 
 	return fallback or exam_details
 
