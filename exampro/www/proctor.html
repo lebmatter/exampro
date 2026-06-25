@@ -386,6 +386,11 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                     <i data-feather="image" style="width:14px;height:14px;"></i> Screenshots
                   </a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link" data-bs-toggle="tab" href="#modal-tab-gaze" @click="renderGazeCharts()">
+                    <i data-feather="activity" style="width:14px;height:14px;"></i> Gaze Metrics
+                  </a>
+                </li>
               </ul>
               <div class="tab-content">
                 <!-- Video Tab -->
@@ -419,6 +424,42 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
                     <div id="modal-screenshot-empty" class="text-center text-muted py-4" style="font-size:0.85rem">
                       <i data-feather="image" style="width:24px;height:24px;color:#adb5bd;display:block;margin:0 auto 0.5rem"></i>
                       No screenshots available
+                    </div>
+                  </div>
+                </div>
+                <!-- Gaze Metrics Tab -->
+                <div class="tab-pane fade" id="modal-tab-gaze">
+                  <div id="modal-gaze-wrap">
+                    <canvas id="modal-gaze-timeline" width="600" height="420" style="border:1px solid #ddd;border-radius:4px;max-width:100%;display:block;"></canvas>
+                    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:20px;font-size:12px;">
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#27ae60;"></div>
+                        <span>Screen Gaze</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#f1c40f;"></div>
+                        <span>Distracted Gaze</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#e74c3c;"></div>
+                        <span>Away Gaze</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#000000;"></div>
+                        <span>No Face</span>
+                      </div>
+                    </div>
+                    <div id="modal-gaze-caption" class="text-muted" style="margin-top:6px;font-size:11px;"></div>
+                    <div style="margin-top:20px;display:flex;align-items:center;gap:30px;flex-wrap:wrap;">
+                      <canvas id="modal-gaze-pie" width="240" height="240" style="flex:0 0 auto;"></canvas>
+                      <div style="flex:1 1 auto;min-width:220px;">
+                        <div id="modal-gaze-score"></div>
+                        <div id="modal-gaze-breakdown" style="font-size:13px;line-height:1.8;"></div>
+                      </div>
+                    </div>
+                    <div id="modal-gaze-empty" class="text-center text-muted py-4 hidden" style="font-size:0.85rem">
+                      <i data-feather="activity" style="width:24px;height:24px;color:#adb5bd;display:block;margin:0 auto 0.5rem"></i>
+                      No gaze data available
                     </div>
                   </div>
                 </div>
@@ -482,6 +523,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
 <script type="text/javascript" src="/assets/exampro/js/api-utils.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
 <script type="text/javascript" src="/assets/exampro/js/chatbox.js"></script>
+<script type="text/javascript" src="/assets/exampro/js/gaze_charts.js"></script>
 
 <script>
   // Pass server data to Alpine.js app

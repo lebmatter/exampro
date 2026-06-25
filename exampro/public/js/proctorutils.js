@@ -23,6 +23,10 @@ function proctorApp() {
     currentChatAttentionScore: null,
     chatMessage: '',
     chatUpdateInterval: null,
+
+    // Gaze metrics
+    _gazeData: null,
+    _gazeRendered: false,
     
     // Video properties
     videoStore: {},
@@ -396,7 +400,9 @@ function proctorApp() {
       this.currentChatCandidate = submission.candidate_name;
       this.currentChatAttentionScore = submission.attention_score ?? null;
       this.chatMessage = '';
-      
+      this._gazeData = null;
+      this._gazeRendered = false;
+
       // Clear existing messages and reset
       const chatMessages = document.getElementById('chat-messages');
       if (chatMessages) {
@@ -419,18 +425,23 @@ function proctorApp() {
       // Reset to Video tab
       const videoTab = document.querySelector('#chatModal .modal-media-tabs .nav-link[href="#modal-tab-video"]');
       const ssTab = document.querySelector('#chatModal .modal-media-tabs .nav-link[href="#modal-tab-screenshots"]');
+      const gazeTab = document.querySelector('#chatModal .modal-media-tabs .nav-link[href="#modal-tab-gaze"]');
       const videoPane = document.getElementById('modal-tab-video');
       const ssPane = document.getElementById('modal-tab-screenshots');
+      const gazePane = document.getElementById('modal-tab-gaze');
       if (videoTab) videoTab.classList.add('active');
       if (ssTab) ssTab.classList.remove('active');
+      if (gazeTab) gazeTab.classList.remove('active');
       if (videoPane) { videoPane.classList.add('show', 'active'); }
       if (ssPane) { ssPane.classList.remove('show', 'active'); }
+      if (gazePane) { gazePane.classList.remove('show', 'active'); }
 
       // Initialize modal VideoPlayer with current chunks
       this.initModalVideoPlayer(submission.name);
 
-      // Load screenshots into the modal
+      // Load screenshots and gaze data into the modal
       this.loadModalScreenshots(submission.name);
+      this.loadGazeData(submission.name);
 
       // Show modal using Bootstrap's modal API
       const modalElement = document.getElementById('chatModal');
@@ -579,6 +590,62 @@ function proctorApp() {
       const nextBtn = document.getElementById('modal-ss-next');
       if (prevBtn) prevBtn.onclick = function () { if (idx > 0) self._showModalScreenshot(list, idx - 1); };
       if (nextBtn) nextBtn.onclick = function () { if (idx < list.length - 1) self._showModalScreenshot(list, idx + 1); };
+    },
+
+    async loadGazeData(examSubmission) {
+      try {
+        var data = await this.apiCall({
+          method: "exampro.exam_pro.doctype.exam_submission.exam_submission.get_submission_gaze_data",
+          args: { exam_submission: examSubmission }
+        });
+        this._gazeData = data.message || null;
+      } catch (error) {
+        console.error('Failed to load gaze data:', error);
+        this._gazeData = null;
+      }
+    },
+
+    renderGazeCharts() {
+      if (this._gazeRendered) return;
+
+      var self = this;
+      setTimeout(function () {
+        if (!self._gazeData || !self._gazeData.retina_location_log) {
+          var emptyEl = document.getElementById('modal-gaze-empty');
+          if (emptyEl) emptyEl.classList.remove('hidden');
+          var canvas = document.getElementById('modal-gaze-timeline');
+          if (canvas) canvas.style.display = 'none';
+          return;
+        }
+
+        var canvas = document.getElementById('modal-gaze-timeline');
+        if (canvas) {
+          var wrap = canvas.closest('.tab-pane');
+          var w = wrap ? wrap.clientWidth : 600;
+          canvas.width = Math.max(400, w - 30);
+          canvas.height = 420;
+          canvas.style.display = 'block';
+        }
+
+        var emptyEl = document.getElementById('modal-gaze-empty');
+        if (emptyEl) emptyEl.classList.add('hidden');
+
+        if (typeof GazeCharts !== 'undefined') {
+          GazeCharts.renderAll({
+            retinaLog: self._gazeData.retina_location_log,
+            timelineCanvas: 'modal-gaze-timeline',
+            captionEl: 'modal-gaze-caption',
+            pieCanvas: 'modal-gaze-pie',
+            breakdownEl: 'modal-gaze-breakdown',
+            scoreEl: 'modal-gaze-score',
+            faceCountChanges: self._gazeData.face_count_changes || 0,
+            examStartedTime: self._gazeData.exam_started_time,
+            examSubmittedTime: self._gazeData.exam_submitted_time,
+          });
+        }
+
+        self._gazeRendered = true;
+      }, 150);
     },
 
     async updateChatMessages(examSubmission) {

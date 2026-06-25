@@ -1,0 +1,364 @@
+{% extends "exampro/templates/exam_base.html" %} {% block title %} Proctor Archive {%
+endblock %} {% block head_include %} {{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/proctor.css" />
+{% endblock %} {% block page_content %}
+<div x-data="window.proctorArchiveApp()" x-init="init()">
+  <div class="proctor-page {% if submissions|length > 0 %}container-fluid{% else %}container{% endif %}" :style="fullWidth ? '' : 'max-width:1400px'">
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+      <div class="col">
+        <h4 class="bold-heading">
+          <i data-feather="archive" style="width:20px;height:20px;"></i>
+          Proctor Archive
+        </h4>
+        <p class="text-muted mb-0">
+          {{ exam_title }} &middot;
+          {{ frappe.utils.format_datetime(schedule_date, "dd MMM yyyy, hh:mm a") }} &middot;
+          {{ schedule_duration }} min
+        </p>
+      </div>
+      <div class="col-auto d-flex align-items-center">
+        <button
+          class="btn btn-sm view-toggle-btn"
+          :class="fullWidth ? 'active' : ''"
+          @click="fullWidth = !fullWidth"
+          :title="fullWidth ? 'Switch to normal view' : 'Switch to full width'"
+        >
+          <i x-show="!fullWidth" data-feather="maximize-2" style="width:14px;height:14px;"></i>
+          <i x-show="fullWidth" data-feather="minimize-2" style="width:14px;height:14px;"></i>
+        </button>
+      </div>
+    </div>
+
+    {% if submissions|length > 0 %}
+    <div class="row">
+      <!-- Message Sidebar -->
+      <div class="col-md-3">
+        <div class="messages-card">
+          <div class="messages-card-header">
+            <h6><i data-feather="message-square" style="width:14px;height:14px;"></i> Messages</h6>
+          </div>
+          <div class="messages-sidebar">
+            <template x-for="msg in latestMessages" :key="msg.exam_submission">
+              <div
+                class="message-card"
+                :data-submission="msg.exam_submission"
+                @click="openModal({name: msg.exam_submission, candidate_name: msg.candidate_name, enable_video_proctoring: msg.enable_video_proctoring, enable_chat: msg.enable_chat, status: msg.status, attention_score: getSubmissionScore(msg.exam_submission)})"
+                style="cursor:pointer"
+              >
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="card-subtitle" x-text="msg.candidate_name"></span>
+                    <span
+                      class="status-pill"
+                      :class="`status-${msg.status.toLowerCase().replace(' ', '-')}`"
+                      x-text="msg.status"
+                    ></span>
+                  </div>
+                  <p class="message-text mb-0" x-text="msg.message"></p>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Grid -->
+      <div class="col-md-9">
+        <div class="row">
+          <template x-for="submission in submissions" :key="submission.name">
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+              <div class="video-card">
+                <div class="video-card-header">
+                  <span class="candidate-name" x-text="submission.candidate_name"></span>
+                  <span
+                    class="attention-score-badge"
+                    x-show="submission.attention_score != null"
+                    x-text="Math.round(submission.attention_score)"
+                    :style="`background:${(submission.attention_score || 0) >= 70 ? '#198754' : (submission.attention_score || 0) >= 40 ? '#fd7e14' : '#dc3545'}`"
+                  ></span>
+                </div>
+                <div class="card-body p-0" style="position:relative">
+                  <!-- Video proctoring disabled overlay -->
+                  <div x-show="!submission.enable_video_proctoring" class="video-disabled-overlay">
+                    <div class="text-center">
+                      <i data-feather="video-off" style="width:24px;height:24px;"></i>
+                      <div style="font-size:0.75rem;margin-top:0.4rem">Video proctoring disabled</div>
+                    </div>
+                  </div>
+                  <div
+                    class="video-container"
+                    :data-videoid="submission.name"
+                    :data-candidatename="submission.candidate_name"
+                    data-islive="0"
+                  >
+                    <video
+                      class="video"
+                      :id="submission.name"
+                      :data-videoid="submission.name"
+                      preload="metadata"
+                    >
+                      <p>Your browser doesn't support HTML5 video.</p>
+                    </video>
+                  </div>
+                </div>
+                <!-- Controls -->
+                <div class="video-controls">
+                  <small class="file-timestamp" :id="`fileTimeStamp-${submission.name}`"></small>
+                  <button
+                    class="controls__button"
+                    title="Play / Pause"
+                    @click="togglePlay(submission.name)"
+                    :disabled="!submission.enable_video_proctoring"
+                  >
+                    <i data-feather="play" style="width:12px;height:12px;"></i>
+                  </button>
+                  <button
+                    class="controls__button"
+                    :id="`skipBack-${submission.name}`"
+                    title="Previous"
+                    @click="playPreviousVideo(submission.name)"
+                    :disabled="!submission.enable_video_proctoring"
+                  >
+                    <i data-feather="rewind" style="width:12px;height:12px;"></i>
+                  </button>
+                  <button
+                    class="controls__button"
+                    :id="`skipFwd-${submission.name}`"
+                    title="Next"
+                    @click="playNextVideo(submission.name)"
+                    :disabled="!submission.enable_video_proctoring"
+                  >
+                    <i data-feather="fast-forward" style="width:12px;height:12px;"></i>
+                  </button>
+                  <button
+                    class="controls__button chat-btn"
+                    title="View Details"
+                    @click="openModal(submission)"
+                  >
+                    <i data-feather="eye" style="width:12px;height:12px;"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="row">
+      <div class="col-12">
+        <div class="proctor-empty-state">
+          <i data-feather="archive" style="width:2.5rem;height:2.5rem;"></i>
+          <h5>No Submissions Found</h5>
+          <p>There are no exam submissions to review in this schedule.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Archive Review Modal -->
+  <div
+    class="modal fade"
+    id="archiveModal"
+    tabindex="-1"
+    aria-labelledby="archiveModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="archiveModalLabel">
+            <i data-feather="eye" style="width:16px;height:16px;margin-right:0.4rem;"></i>
+            <span x-text="currentCandidate"></span>
+            <span
+              class="attention-score-badge ms-2"
+              x-show="currentAttentionScore != null"
+              x-text="'Attention: ' + Math.round(currentAttentionScore || 0)"
+              :style="`background:${(currentAttentionScore || 0) >= 70 ? '#198754' : (currentAttentionScore || 0) >= 40 ? '#fd7e14' : '#dc3545'}`"
+            ></span>
+            <span
+              class="status-pill ms-2"
+              :class="`status-${(currentStatus || '').toLowerCase().replace(' ', '-')}`"
+              x-text="currentStatus"
+              x-show="currentStatus"
+            ></span>
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            @click="closeModal()"
+            aria-label="Close"
+          >
+            <i data-feather="x" style="width:16px;height:16px;"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <!-- Media Column (Left) -->
+            <div class="col-md-5">
+              <ul class="nav nav-tabs modal-media-tabs mb-3">
+                <li class="nav-item">
+                  <a class="nav-link active" data-bs-toggle="tab" href="#archive-tab-video">
+                    <i data-feather="video" style="width:14px;height:14px;"></i> Video
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" data-bs-toggle="tab" href="#archive-tab-screenshots">
+                    <i data-feather="image" style="width:14px;height:14px;"></i> Screenshots
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" data-bs-toggle="tab" href="#archive-tab-gaze" @click="renderGazeCharts()">
+                    <i data-feather="activity" style="width:14px;height:14px;"></i> Gaze Metrics
+                  </a>
+                </li>
+              </ul>
+              <div class="tab-content">
+                <!-- Video Tab -->
+                <div class="tab-pane fade show active" id="archive-tab-video">
+                  <div id="archive-player-wrap">
+                    <video id="archive-player-video" style="width:100%;border-radius:4px;background:#000" preload="metadata"></video>
+                    <div class="d-flex align-items-center justify-content-center mt-2" style="gap:6px">
+                      <button class="btn btn-sm btn-light" id="archive-player-skip-back" title="Skip back 10s"><i data-feather="skip-back" style="width:14px;height:14px;"></i></button>
+                      <button class="btn btn-sm btn-light" id="archive-player-prev" title="Previous chunk"><i data-feather="rewind" style="width:14px;height:14px;"></i></button>
+                      <button class="btn btn-sm btn-light" id="archive-player-play" title="Play / Pause"><i data-feather="play" style="width:14px;height:14px;"></i></button>
+                      <button class="btn btn-sm btn-light" id="archive-player-next" title="Next chunk"><i data-feather="fast-forward" style="width:14px;height:14px;"></i></button>
+                      <button class="btn btn-sm btn-light" id="archive-player-skip-fwd" title="Skip forward 10s"><i data-feather="skip-forward" style="width:14px;height:14px;"></i></button>
+                      <span id="archive-player-index" class="text-muted" style="min-width:48px;text-align:center;font-variant-numeric:tabular-nums;font-size:0.78rem">0/0</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Screenshots Tab -->
+                <div class="tab-pane fade" id="archive-tab-screenshots">
+                  <div id="archive-screenshot-wrap">
+                    <div id="archive-screenshot-gallery" style="display:flex;gap:8px;overflow-x:auto;padding:8px 0"></div>
+                    <div id="archive-screenshot-viewer" class="hidden" style="margin-top:8px;text-align:center">
+                      <img id="archive-screenshot-full" style="max-width:100%;border-radius:4px;border:1px solid rgba(0,0,0,0.08)" />
+                      <div class="d-flex align-items-center justify-content-center mt-2" style="gap:8px">
+                        <button class="btn btn-sm btn-light" id="archive-ss-prev"><i data-feather="chevron-left" style="width:14px;height:14px;"></i></button>
+                        <span id="archive-ss-index" class="text-muted" style="min-width:48px;text-align:center;font-variant-numeric:tabular-nums;font-size:0.78rem">0/0</span>
+                        <button class="btn btn-sm btn-light" id="archive-ss-next"><i data-feather="chevron-right" style="width:14px;height:14px;"></i></button>
+                      </div>
+                      <div id="archive-ss-caption" class="text-muted" style="font-size:0.68rem;margin-top:4px"></div>
+                    </div>
+                    <div id="archive-screenshot-empty" class="text-center text-muted py-4" style="font-size:0.85rem">
+                      <i data-feather="image" style="width:24px;height:24px;color:#adb5bd;display:block;margin:0 auto 0.5rem"></i>
+                      No screenshots available
+                    </div>
+                  </div>
+                </div>
+                <!-- Gaze Metrics Tab -->
+                <div class="tab-pane fade" id="archive-tab-gaze">
+                  <div id="archive-gaze-wrap">
+                    <canvas id="archive-gaze-timeline" width="600" height="420" style="border:1px solid #ddd;border-radius:4px;max-width:100%;display:block;"></canvas>
+                    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:20px;font-size:12px;">
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#27ae60;"></div>
+                        <span>Screen Gaze</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#f1c40f;"></div>
+                        <span>Distracted Gaze</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#e74c3c;"></div>
+                        <span>Away Gaze</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:5px;">
+                        <div style="width:12px;height:12px;border-radius:2px;background-color:#000000;"></div>
+                        <span>No Face</span>
+                      </div>
+                    </div>
+                    <div id="archive-gaze-caption" class="text-muted" style="margin-top:6px;font-size:11px;"></div>
+                    <div style="margin-top:20px;display:flex;align-items:center;gap:30px;flex-wrap:wrap;">
+                      <canvas id="archive-gaze-pie" width="240" height="240" style="flex:0 0 auto;"></canvas>
+                      <div style="flex:1 1 auto;min-width:220px;">
+                        <div id="archive-gaze-score"></div>
+                        <div id="archive-gaze-breakdown" style="font-size:13px;line-height:1.8;"></div>
+                      </div>
+                    </div>
+                    <div id="archive-gaze-empty" class="text-center text-muted py-4 hidden" style="font-size:0.85rem">
+                      <i data-feather="activity" style="width:24px;height:24px;color:#adb5bd;display:block;margin:0 auto 0.5rem"></i>
+                      No gaze data available
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat History Column (Right, read-only) -->
+            <div class="col-md-7">
+              <div id="messages">
+                <div class="messages-card-header" style="margin-bottom:0.5rem;">
+                  <h6><i data-feather="message-square" style="width:14px;height:14px;"></i> Chat History</h6>
+                </div>
+                <div class="chat-container">
+                  <div id="archive-chat-messages" class="d-flex flex-column"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+<!-- Scripts -->
+{%- block script %} {{ super() }}
+<script type="text/javascript" src="/assets/exampro/js/api-utils.js"></script>
+<script type="text/javascript" src="/assets/exampro/js/examutils.js"></script>
+<script type="text/javascript" src="/assets/exampro/js/gaze_charts.js"></script>
+
+<script>
+  window.archiveData = {
+    submissions: {{ submissions|tojson|safe }},
+    latestMessages: {{ latest_messages|tojson|safe }},
+    examSchedule: {{ exam_schedule|tojson|safe }},
+    examTitle: {{ exam_title|tojson|safe }},
+    isManager: {{ is_manager|tojson|safe }}
+  };
+</script>
+
+<script
+  type="text/javascript"
+  src="/assets/exampro/js/video_player.js"
+></script>
+<script
+  type="text/javascript"
+  src="/assets/exampro/js/proctor_archive_utils.js"
+></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("mouseenter", function (e) {
+      var card = e.target.closest(".message-card[data-submission]");
+      if (!card) return;
+      var id = card.getAttribute("data-submission");
+      var vc = document.querySelector('[data-videoid="' + id + '"]');
+      if (vc) {
+        var vCard = vc.closest(".video-card");
+        if (vCard) vCard.classList.add("highlighted");
+      }
+    }, true);
+
+    document.addEventListener("mouseleave", function (e) {
+      var card = e.target.closest(".message-card[data-submission]");
+      if (!card) return;
+      var id = card.getAttribute("data-submission");
+      var vc = document.querySelector('[data-videoid="' + id + '"]');
+      if (vc) {
+        var vCard = vc.closest(".video-card");
+        if (vCard) vCard.classList.remove("highlighted");
+      }
+    }, true);
+  });
+</script>
+
+{% endblock %}

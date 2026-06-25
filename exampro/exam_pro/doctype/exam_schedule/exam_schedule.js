@@ -67,6 +67,11 @@ function add_status_based_actions(frm, status) {
     }
     
     if (status === "Completed") {
+        // Proctor Archive - review videos and messages from completed schedule
+        frm.add_custom_button(__('Proctor Archive'), function() {
+            window.open('/proctor-archive?exam_schedule=' + encodeURIComponent(frm.doc.name), '_blank');
+        }, __('Actions'));
+
         // Send Certificates - only show if status is Completed
         frm.add_custom_button(__('Send Certificates'), function() {
             send_certificates(frm);

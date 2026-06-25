@@ -14,7 +14,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/exampro/css/exampro.css"
-# app_include_js = "/assets/exampro/js/exampro.js"
+app_include_js = "/assets/exampro/js/gaze_charts.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/exampro/css/exampro.css"

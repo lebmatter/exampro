@@ -1005,8 +1005,8 @@ def exam_messages(exam_submission=None):
 	assert exam_submission
 	doc = frappe.get_doc("Exam Submission", exam_submission, ignore_permissions=True)
 
-	# check of the logged in user is same as exam submission candidate or proctor
-	if frappe.session.user not in [doc.candidate, doc.assigned_proctor]:
+	is_manager = "Exam Manager" in frappe.get_roles()
+	if frappe.session.user not in [doc.candidate, doc.assigned_proctor] and not is_manager:
 		raise PermissionError("You don't have access to view messages.")
 
 	res = frappe.get_all(
@@ -1150,8 +1150,8 @@ def proctor_video_list(exam_submission=None):
 	assigned_proctor = frappe.get_cached_value(
 		"Exam Submission", exam_submission, "assigned_proctor"
 	)
-	# make sure that logged in user is valid proctor
-	if frappe.session.user != assigned_proctor:
+	is_manager = "Exam Manager" in frappe.get_roles()
+	if frappe.session.user != assigned_proctor and not is_manager:
 		raise frappe.PermissionError(_("No permission to access this exam."))
 
 	exam = frappe.get_cached_value(
@@ -1160,7 +1160,7 @@ def proctor_video_list(exam_submission=None):
 	if not frappe.get_cached_value("Exam", exam, "enable_video_proctoring"):
 		return {"videos": {}}
 
-	ttl = frappe.get_cached_value("Exam", exam, "duration") * 60 + 900  # ttl is exam duration + 15 min buffer
+	ttl = frappe.get_cached_value("Exam", exam, "duration") * 60 + 900
 
 	try:
 		res = get_videos(exam_submission, ttl)
@@ -1175,6 +1175,28 @@ def proctor_video_list(exam_submission=None):
 							title=_("Storage Connection Error"), indicator="orange")
 
 	return res
+
+@frappe.whitelist()
+def get_submission_gaze_data(exam_submission=None):
+	"""Return gaze / attention metrics for the proctor archive and modal charts."""
+	assert exam_submission
+	if frappe.session.user == "Guest":
+		raise frappe.PermissionError(_("Please login to access this page."))
+
+	assigned_proctor = frappe.get_cached_value(
+		"Exam Submission", exam_submission, "assigned_proctor"
+	)
+	is_manager = "Exam Manager" in frappe.get_roles()
+	if frappe.session.user != assigned_proctor and not is_manager:
+		raise frappe.PermissionError(_("No permission to access this exam."))
+
+	fields = [
+		"retina_location_log", "face_count_changes",
+		"total_away_time", "total_distracted_time",
+		"attention_score", "exam_started_time", "exam_submitted_time",
+	]
+	data = frappe.db.get_value("Exam Submission", exam_submission, fields, as_dict=True)
+	return data or {}
 
 def _human_size(num_bytes):
 	"""Render a byte count as a short human-readable string (e.g. 1.2 MB)."""

@@ -137,24 +137,14 @@ frappe.ui.form.on("Exam Submission", {
             },
         });
 
-        // Replace retina_location_log field with a proctoring state timeline:
-        // x = exam start → end, y = discrete state (screen / distracted / away /
-        // noface) plotted as a coloured step line.
+        // Replace retina_location_log field with a proctoring state timeline
+        // using the shared GazeCharts module.
         if (frm.doc.retina_location_log && frm.fields_dict.retina_location_log) {
             const $fieldWrap = $(frm.fields_dict.retina_location_log.wrapper);
-
-            // The field lives in a half-width `.form-column`; anchor the timeline
-            // to the surrounding `.section-body` so it can span the full section
-            // width instead of being clipped to one column.
             const $section = $fieldWrap.closest('.section-body, .form-section');
 
-            // Avoid duplicate canvases when refresh fires more than once.
             $section.find('.proctor-timeline-group').remove();
 
-            // Do NOT set the field's `hidden` df property: this field is now the
-            // only one in its section, and hiding it would make Frappe treat the
-            // section as empty and collapse it (hiding our canvas too). Instead
-            // visually hide just the raw JSON editor; the section stays alive.
             $fieldWrap.find('.control-input-wrapper').hide();
             $fieldWrap.find('.control-label').hide();
 
@@ -192,14 +182,9 @@ frappe.ui.form.on("Exam Submission", {
                 </div>
             `;
 
-            // Append to the section body so the canvas can span the full section
-            // width, not just the half-width form-column the field sits in.
             const $target = $section.length ? $section : $fieldWrap.parent();
             $target.append(plotHtml);
 
-            // Size off the timeline group's own clientWidth (full section width),
-            // falling back to form-layout if it's not measurable yet. Redraw on
-            // tab activation and window resize so it fills the full width.
             const sizeAndDraw = () => {
                 const canvas = document.getElementById('proctorTimeline');
                 if (!canvas) return;
@@ -210,13 +195,21 @@ frappe.ui.form.on("Exam Submission", {
                     : (layoutEl && layoutEl.clientWidth ? layoutEl.clientWidth : 1100);
                 canvas.width = Math.max(600, w - 30);
                 canvas.height = 420;
-                drawProctorTimeline(frm);
+
+                var points = GazeCharts.parseRetinaLog(frm.doc.retina_location_log);
+                GazeCharts.drawTimeline('proctorTimeline', points, {
+                    captionEl: 'proctorTimelineCaption',
+                    examStartedTime: frm.doc.exam_started_time,
+                    examSubmittedTime: frm.doc.exam_submitted_time,
+                });
+                var result = GazeCharts.drawPie('proctorPie', 'proctorPieBreakdown', points);
+                if (result.grandMs > 0) {
+                    GazeCharts.renderAttentionScore('proctorAttentionScore', result.totals, result.grandMs, frm.doc.face_count_changes || 0);
+                }
             };
 
             setTimeout(sizeAndDraw, 150);
 
-            // Redraw when the Proctor tab is shown (canvas may have been sized
-            // while hidden) and on resize. Namespaced so we don't stack handlers.
             frm.$wrapper.off('shown.bs.tab.proctortl').on('shown.bs.tab.proctortl', () => {
                 setTimeout(sizeAndDraw, 50);
             });
@@ -297,273 +290,6 @@ function show_video_files_dialog(frm) {
             `);
         },
     });
-}
-
-// Render the proctoring state as a time-series step graph: x = exam start → end,
-// y = discrete state lanes (screen / distracted / away / noface). The line is
-// coloured per the current state; "noface" is black.
-function drawProctorTimeline(frm) {
-    const canvas = document.getElementById('proctorTimeline');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-
-    // Parse + normalize samples into {t, state}, sorted by time.
-    let raw = [];
-    try {
-        raw = JSON.parse(frm.doc.retina_location_log) || [];
-    } catch (e) {
-        console.error('Error parsing retina location data:', e);
-        return;
-    }
-
-    const points = [];
-    raw.forEach((p) => {
-        if (!p || !p.timestamp) return;
-        let state = p.state;
-        if (!state) {
-            // Back-compat with older records that only stored gazeDirection.
-            if (p.gazeDirection === 'screen') state = 'screen';
-            else if (p.gazeDirection === 'away') state = 'away';
-            else state = 'screen';
-        }
-        points.push({ t: Number(p.timestamp), state: state });
-    });
-    points.sort((a, b) => a.t - b.t);
-
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, H);
-
-    if (points.length === 0) {
-        ctx.fillStyle = '#999';
-        ctx.font = '13px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('No time-series proctoring data recorded.', W / 2, H / 2);
-        return;
-    }
-
-    // Lanes top → bottom (best to worst).
-    const lanes = [
-        { key: 'screen',     label: 'Screen Gaze',     color: '#27ae60' },
-        { key: 'distracted', label: 'Distracted Gaze', color: '#f1c40f' },
-        { key: 'away',       label: 'Away Gaze',       color: '#e74c3c' },
-        { key: 'noface',     label: 'No Face',         color: '#000000' },
-    ];
-    const laneIndex = {};
-    lanes.forEach((l, i) => { laneIndex[l.key] = i; });
-
-    const padLeft = 110, padRight = 20, padTop = 16, padBottom = 34;
-    const plotW = W - padLeft - padRight;
-    const plotH = H - padTop - padBottom;
-    const laneH = plotH / lanes.length;
-
-    const t0 = points[0].t;
-    const t1 = points.length > 1 ? points[points.length - 1].t : t0 + 1;
-    const span = Math.max(1, t1 - t0);
-    const X = (t) => padLeft + ((t - t0) / span) * plotW;
-    const laneCenterY = (i) => padTop + i * laneH + laneH / 2;
-
-    // Lane backgrounds + labels.
-    lanes.forEach((l, i) => {
-        const yTop = padTop + i * laneH;
-        ctx.fillStyle = (i % 2 === 0) ? '#fafafa' : '#f2f2f2';
-        ctx.fillRect(padLeft, yTop, plotW, laneH);
-        ctx.fillStyle = '#333';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(l.label, padLeft - 10, yTop + laneH / 2);
-        // Colour swatch beside the label.
-        ctx.fillStyle = l.color;
-        ctx.fillRect(padLeft - 6, yTop + laneH / 2 - 1, 4, 2);
-    });
-
-    // Vertical time gridlines + x-axis labels (clock time of the samples).
-    const ticks = 6;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    for (let k = 0; k <= ticks; k++) {
-        const tt = t0 + (span * k) / ticks;
-        const x = X(tt);
-        ctx.strokeStyle = '#eee';
-        ctx.beginPath();
-        ctx.moveTo(x, padTop);
-        ctx.lineTo(x, padTop + plotH);
-        ctx.stroke();
-        const d = new Date(tt);
-        const hh = String(d.getHours()).padStart(2, '0');
-        const mm = String(d.getMinutes()).padStart(2, '0');
-        const ss = String(d.getSeconds()).padStart(2, '0');
-        ctx.fillStyle = '#666';
-        ctx.font = '10px Arial';
-        ctx.fillText(`${hh}:${mm}:${ss}`, x, padTop + plotH + 5);
-    }
-
-    // Step line: horizontal segment per sample at its lane, with thin risers
-    // between consecutive states.
-    for (let i = 0; i < points.length; i++) {
-        const li = laneIndex[points[i].state];
-        if (li === undefined) continue;
-        const yC = laneCenterY(li);
-        const x1 = X(points[i].t);
-        const x2 = (i < points.length - 1) ? X(points[i + 1].t) : padLeft + plotW;
-
-        ctx.strokeStyle = lanes[li].color;
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'butt';
-        ctx.beginPath();
-        ctx.moveTo(x1, yC);
-        ctx.lineTo(Math.max(x1 + 1, x2), yC);
-        ctx.stroke();
-
-        if (i < points.length - 1) {
-            const lj = laneIndex[points[i + 1].state];
-            if (lj !== undefined && lj !== li) {
-                ctx.strokeStyle = '#bbb';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x2, yC);
-                ctx.lineTo(x2, laneCenterY(lj));
-                ctx.stroke();
-            }
-        }
-    }
-
-    // Plot border.
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(padLeft, padTop, plotW, plotH);
-
-    // Caption with absolute exam window from the doc, when available.
-    const caption = document.getElementById('proctorTimelineCaption');
-    if (caption) {
-        const startStr = frm.doc.exam_started_time
-            ? frappe.datetime.str_to_user(frm.doc.exam_started_time)
-            : new Date(t0).toLocaleString();
-        const endStr = frm.doc.exam_submitted_time
-            ? frappe.datetime.str_to_user(frm.doc.exam_submitted_time)
-            : new Date(t1).toLocaleString();
-        caption.textContent = `Exam window: ${startStr} → ${endStr}`;
-    }
-
-    drawProctorPie(points, lanes, frm);
-}
-
-// Pie + breakdown of per-state time. Each sample's duration is the gap to the
-// next sample; the final sample carries no duration (no future to fill).
-function drawProctorPie(points, lanes, frm) {
-    const canvas = document.getElementById('proctorPie');
-    const breakdown = document.getElementById('proctorPieBreakdown');
-    if (!canvas || !breakdown) return;
-
-    const totals = {};
-    lanes.forEach(l => { totals[l.key] = 0; });
-    for (let i = 0; i < points.length - 1; i++) {
-        const dur = points[i + 1].t - points[i].t;
-        if (dur > 0 && totals[points[i].state] !== undefined) {
-            totals[points[i].state] += dur;
-        }
-    }
-    const grandMs = lanes.reduce((s, l) => s + totals[l.key], 0);
-
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
-
-    const cx = W / 2, cy = H / 2, r = Math.min(W, H) / 2 - 6;
-
-    if (grandMs === 0) {
-        ctx.fillStyle = '#eee';
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.fillStyle = '#999';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('No duration data', cx, cy);
-        breakdown.innerHTML = '';
-        return;
-    }
-
-    let start = -Math.PI / 2;
-    lanes.forEach(l => {
-        const frac = totals[l.key] / grandMs;
-        if (frac <= 0) return;
-        const end = start + frac * 2 * Math.PI;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, r, start, end);
-        ctx.closePath();
-        ctx.fillStyle = l.color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        start = end;
-    });
-
-    const fmtMins = (ms) => {
-        const totalSec = Math.round(ms / 1000);
-        const m = Math.floor(totalSec / 60);
-        const s = totalSec % 60;
-        return `${m}m ${String(s).padStart(2, '0')}s`;
-    };
-
-    const rows = lanes.map(l => {
-        const ms = totals[l.key];
-        const pct = (ms / grandMs) * 100;
-        return `
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 2px; background:${l.color};"></span>
-                <span style="flex: 0 0 130px;">${l.label}</span>
-                <span style="flex: 0 0 80px; font-variant-numeric: tabular-nums;">${fmtMins(ms)}</span>
-                <span style="color:#666; font-variant-numeric: tabular-nums;">${pct.toFixed(1)}%</span>
-            </div>
-        `;
-    }).join('');
-    breakdown.innerHTML = `
-        <div style="font-weight: 600; margin-bottom: 6px;">Time by state (total ${fmtMins(grandMs)})</div>
-        ${rows}
-    `;
-
-    renderAttentionScore(totals, grandMs, frm);
-}
-
-function renderAttentionScore(totals, grandMs, frm) {
-    const el = document.getElementById('proctorAttentionScore');
-    if (!el) return;
-
-    if (grandMs <= 0) { el.innerHTML = ''; return; }
-    const durationSec = grandMs / 1000;
-    const durationHrs = durationSec / 3600;
-
-    const awayPct = ((totals.away || 0) / grandMs) * 100;
-    const distractedPct = ((totals.distracted || 0) / grandMs) * 100;
-    const faceChanges = (frm && frm.doc.face_count_changes) || 0;
-    const changesPerHr = durationHrs > 0 ? faceChanges / durationHrs : 0;
-
-    const awayScore = Math.max(0, 100 - Math.max(0, awayPct - 5) * 5);
-    const changesScore = Math.max(0, 100 - Math.max(0, changesPerHr - 3) * 15);
-    const distractedScore = Math.max(0, 100 - Math.max(0, distractedPct - 20) * 2);
-
-    const score = Math.round(awayScore * 0.45 + changesScore * 0.30 + distractedScore * 0.25);
-    const color = score >= 70 ? '#198754' : score >= 40 ? '#fd7e14' : '#dc3545';
-    const label = score >= 70 ? 'Good' : score >= 40 ? 'Moderate' : 'Poor';
-
-    el.innerHTML = `
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;">
-            <span style="font-size:2rem;font-weight:700;color:${color};line-height:1;font-variant-numeric:tabular-nums;">${score}</span>
-            <span style="font-size:0.85rem;font-weight:600;color:${color};">${label}</span>
-            <span style="font-size:0.75rem;color:#666;">Attention Score</span>
-        </div>
-        <div style="font-size:0.75rem;color:#666;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;">
-            <span>Away: ${awayPct.toFixed(1)}%</span>
-            <span>Distracted: ${distractedPct.toFixed(1)}%</span>
-            <span>Face changes/hr: ${changesPerHr.toFixed(1)}</span>
-        </div>
-    `;
 }
 
 // Coloured seek bar drawn below the player controls. Each segment shows the
