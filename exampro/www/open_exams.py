@@ -11,10 +11,21 @@ def _short_desc(html, length=160):
 	return text
 
 
-def get_context(context):
-	context.no_cache = 1
-	context.is_logged_in = frappe.session.user != "Guest"
+CACHE_KEY = "open_exams_data"
+CACHE_TTL = 3600
 
+
+def _get_open_exams():
+	cached = frappe.cache().get_value(CACHE_KEY)
+	if cached:
+		return cached
+
+	result = _fetch_open_exams()
+	frappe.cache().set_value(CACHE_KEY, result, expires_in_sec=CACHE_TTL)
+	return result
+
+
+def _fetch_open_exams():
 	schedules = frappe.get_all(
 		"Exam Schedule",
 		fields=[
@@ -63,8 +74,19 @@ def get_context(context):
 			"badge": sched.badge or "Exam",
 		})
 
-	context.exams = [e for e in exams_map.values() if e["schedules"]]
+	return [e for e in exams_map.values() if e["schedules"]]
+
+
+def get_context(context):
+	context.no_cache = 1
+	context.is_logged_in = frappe.session.user != "Guest"
+	context.exams = _get_open_exams()
 	context.metatags = {
 		"title": "Public Exams",
 		"description": "Browse and register for upcoming public exams.",
 	}
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def get():
+	return _get_open_exams()
