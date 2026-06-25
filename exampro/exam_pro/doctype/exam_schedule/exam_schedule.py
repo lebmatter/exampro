@@ -1,7 +1,7 @@
 # Copyright (c) 2024, Labeeb Mattra and contributors
 # For license information, please see license.txt
 
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime
 from dateutil.parser import parse
 import frappe
 import base64
@@ -280,7 +280,7 @@ class ExamSchedule(Document):
 				max_end = start_time + timedelta(minutes=self.duration or 0)
 			else:
 				max_end = start_time + timedelta(minutes=self.duration or 0, days=self.schedule_expire_in_days or 0)
-			if max_end.date() < date.today():
+			if max_end.date() < datetime.fromisoformat(now().split(".")[0]).date():
 				return "Completed"
 
 		current_time = datetime.fromisoformat(now().split(".")[0])
@@ -497,7 +497,7 @@ def _send_certificates(schedule_name):
 		try:
 			frappe.get_last_doc("Exam Certificate", filters={"exam_submission": subm["name"]})
 		except frappe.DoesNotExistError:
-			today = date.today()
+			today = datetime.fromisoformat(now().split(".")[0]).date()
 			certexp = frappe.db.get_value("Exam", subm["exam"], "expiry")
 
 			new_cert = frappe.get_doc({
@@ -568,7 +568,7 @@ def send_certificates(docname):
 				continue
 
 			# Create new certificate
-			today = date.today()
+			today = datetime.fromisoformat(now().split(".")[0]).date()
 			cert_expiry = frappe.db.get_value("Exam", subm["exam"], "expiry")
 
 			new_cert = frappe.get_doc({
@@ -643,10 +643,10 @@ def get_schedule_status(exam_schedule, additional_time=0):
 			max_end = start_date_time + timedelta(minutes=duration or 0)
 		else:
 			max_end = start_date_time + timedelta(minutes=duration or 0, days=schedule_expire_in_days or 0)
-		if max_end.date() < date.today():
+		if max_end.date() < datetime.fromisoformat(now().split(".")[0]).date():
 			return "Completed"
 
-	current_time = datetime.now()
+	current_time = datetime.fromisoformat(now().split(".")[0])
 
 	if schedule_type == "Fixed":
 		end_time = start_date_time + timedelta(minutes=duration or 0)
@@ -676,7 +676,7 @@ def get_schedule_end_time(exam_schedule, additional_time=0):
 	)
 	
 	if not isinstance(start_date_time, datetime):
-		start_date_time = parse(start_date_time) if start_date_time else datetime.now()
+		start_date_time = parse(start_date_time) if start_date_time else datetime.fromisoformat(now().split(".")[0])
 	
 	if schedule_type == "Fixed":
 		end_time = start_date_time + timedelta(minutes=duration or 0)
@@ -691,7 +691,7 @@ def get_schedule_end_time(exam_schedule, additional_time=0):
 @frappe.whitelist()
 def get_ongoing_schedules():
 	"""Return names of all currently ongoing exam schedules."""
-	now_dt = datetime.now()
+	now_dt = datetime.fromisoformat(now().split(".")[0])
 	schedules = frappe.get_all(
 		"Exam Schedule",
 		fields=["name", "start_date_time", "duration", "schedule_type", "schedule_expire_in_days"],

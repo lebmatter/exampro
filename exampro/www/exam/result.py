@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import frappe
 from frappe import _
+from frappe.utils import now
 
 from exampro.exam_pro.api.utils import (redirect_to_exams_list)
 from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_end_time
@@ -69,7 +70,7 @@ def set_exam_context(context, exmsubmn):
 		else:
 			# Check result display settings
 			if exam_data["show_result"] == "After Specific Date":
-				if datetime.now() < exam_data["show_result_after_date"]:
+				if datetime.fromisoformat(now().split(".")[0]) < exam_data["show_result_after_date"]:
 					context.result_type = "pending"
 					context.message = "Result will be published after {}.".format(
 						exam_data["show_result_after_date"].strftime("%d %b %Y"))
@@ -82,7 +83,7 @@ def set_exam_context(context, exmsubmn):
 				context.result_type = "scorecard"
 			elif exam_data["show_result"] == "After Schedule Completion":
 				schedule_completion = get_schedule_end_time(exam_submission.exam_schedule, exam_submission.additional_time_given)
-				ended = datetime.now() > schedule_completion
+				ended = datetime.fromisoformat(now().split(".")[0]) > schedule_completion
 				end_time = schedule_completion + timedelta(minutes=5)  # Adding a buffer of 5 minutes
 				if ended:
 					context.result_type = "scorecard"

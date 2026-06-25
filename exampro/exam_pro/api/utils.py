@@ -1,5 +1,6 @@
 from datetime import datetime
 import frappe
+from frappe.utils import now
 
 from exampro.exam_pro.api.examops import evaluation_values
 
@@ -569,7 +570,7 @@ def can_show_exam_results_for_leaderboard(exam_doc, submission_doc):
     show_result = exam_doc.show_result
     
     if show_result == "After Specific Date":
-        if datetime.now() < exam_doc.show_result_after_date:
+        if datetime.fromisoformat(now().split(".")[0]) < exam_doc.show_result_after_date:
             return False
         return True
     elif show_result == "Do Not Show Score":
@@ -636,7 +637,7 @@ def calculate_attention_score(exam_submission):
     face_changes = face_changes or 0
 
     # Calculate exam duration in seconds
-    duration_seconds = (datetime.now() - exam_started_time).total_seconds()
+    duration_seconds = (datetime.fromisoformat(now().split(".")[0]) - exam_started_time).total_seconds()
     if duration_seconds <= 0:
         # Exam just started (or clock skew): no measurable window yet to score.
         frappe.logger().warning(

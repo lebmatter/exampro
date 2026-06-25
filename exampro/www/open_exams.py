@@ -1,8 +1,6 @@
 import frappe
 from frappe.utils import format_datetime, strip_html
 
-from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_status
-
 
 def _short_desc(html, length=160):
 	if not html:
@@ -35,7 +33,7 @@ def get_context(context):
 			continue
 
 		if exam_name not in exams_map:
-			exam_doc = frappe.get_doc("Exam", exam_name)
+			exam_doc = frappe.get_doc("Exam", exam_name, ignore_permissions=True)
 			if not exam_doc.is_public:
 				skipped_exams.add(exam_name)
 				continue
@@ -51,10 +49,9 @@ def get_context(context):
 				"schedules": [],
 			}
 
-		status = get_schedule_status(sched.name)
-		if status == "Completed":
-			continue
-		if sched.schedule_type == "Fixed" and status != "Upcoming":
+		schedule_doc = frappe.get_doc("Exam Schedule", sched.name, ignore_permissions=True)
+		status = schedule_doc.get_status()
+		if status != "Upcoming":
 			continue
 
 		exams_map[exam_name]["schedules"].append({
@@ -67,7 +64,6 @@ def get_context(context):
 		})
 
 	context.exams = [e for e in exams_map.values() if e["schedules"]]
-
 	context.metatags = {
 		"title": "Public Exams",
 		"description": "Browse and register for upcoming public exams.",

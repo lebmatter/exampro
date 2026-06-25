@@ -239,6 +239,7 @@ website_route_rules = [
     {"from_route": "/quiz/<short_uuid>", "to_route": "quiz"},
     {"from_route": "/quiz/<short_uuid>/host", "to_route": "quiz"},
     {"from_route": "/exams/register/<schedule_id>", "to_route": "exams/register"},
+    {"from_route": "/open-exams", "to_route": "open_exams"},
 ]
 
 fixtures = [
