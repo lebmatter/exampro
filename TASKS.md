@@ -43,6 +43,20 @@
 - [ ] Unified candidate portal: upcoming exams with countdown, past results, certificates in one view
 - [ ] Download all certificates in bulk
 
+## Proctor Alerts (Live Dashboard)
+
+- [ ] Add "Alerts" tab alongside "Messages" in the Live tab sidebar (BS5 nav-tabs, same pattern as chat/calculator tabs in exam page)
+- [ ] Alert cards (chat-like, reuse `.message-card` class) generated client-side from existing polling data
+- [ ] Alert types: high warnings (>=5, high severity), critical warnings (>=10, critical), low attention score (<40, high), moderate attention (<70, medium), candidate offline (medium), candidate terminated (critical)
+- [ ] Gaze/attention alerts suppressed for first 5 minutes of exam (grace period) — pass `exam_started_time` from `proctor.py` to client
+- [ ] Alerts sorted by severity (critical > high > medium), then by value
+- [ ] Click alert card → open chat modal for that candidate
+- [ ] Hover alert card → highlight corresponding video tile (existing `.highlighted` mechanism)
+- [ ] Alert count badge on Alerts tab header (`.tab-count` style)
+- [ ] Empty state: "No alerts" with check-circle icon
+- [ ] Severity styling: left border color (red/orange/yellow), severity pill, colored feather icon per alert type
+- [ ] Files: `proctor.html`, `proctorutils.js`, `proctor.css`, `proctor.py`
+
 ## Advanced Proctor Tools
 
 - [ ] Flag/bookmark suspicious moments with timestamped notes during live proctoring

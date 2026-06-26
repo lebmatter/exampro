@@ -4,6 +4,9 @@ function proctorArchiveApp() {
     latestMessages: window.archiveData?.latestMessages || [],
     fullWidth: false,
 
+    currentPage: 1,
+    pageSize: 12,
+
     currentSubmission: '',
     currentCandidate: '',
     currentAttentionScore: null,
@@ -17,12 +20,38 @@ function proctorArchiveApp() {
     _gazeData: null,
     _gazeRendered: false,
 
+    get totalPages() {
+      return Math.max(1, Math.ceil(this.submissions.length / this.pageSize));
+    },
+
+    get paginatedSubmissions() {
+      var start = (this.currentPage - 1) * this.pageSize;
+      return this.submissions.slice(start, start + this.pageSize);
+    },
+
     async init() {
-      await this.updateVideoList();
+      await this.updateVideoList(this.paginatedSubmissions);
 
       this.$nextTick(function () {
         if (typeof feather !== 'undefined') feather.replace();
       });
+    },
+
+    async goToPage(page) {
+      if (page < 1 || page > this.totalPages) return;
+      this.currentPage = page;
+      await this.updateVideoList(this.paginatedSubmissions);
+      this.$nextTick(function () {
+        if (typeof feather !== 'undefined') feather.replace();
+      });
+    },
+
+    nextPage() {
+      this.goToPage(this.currentPage + 1);
+    },
+
+    prevPage() {
+      this.goToPage(this.currentPage - 1);
     },
 
     async apiCall(options) {
@@ -39,10 +68,12 @@ function proctorArchiveApp() {
       return sub ? sub.attention_score : null;
     },
 
-    async updateVideoList() {
-      for (var i = 0; i < this.submissions.length; i++) {
-        var submission = this.submissions[i];
+    async updateVideoList(submissionList) {
+      var list = submissionList || this.paginatedSubmissions;
+      for (var i = 0; i < list.length; i++) {
+        var submission = list[i];
         if (!submission.enable_video_proctoring) continue;
+        if (this.videoStore[submission.name]) continue;
 
         try {
           var data = await this.apiCall({
@@ -150,6 +181,18 @@ function proctorArchiveApp() {
       if (videoPane) { videoPane.classList.add('show', 'active'); }
       if (ssPane) { ssPane.classList.remove('show', 'active'); }
       if (gazePane) { gazePane.classList.remove('show', 'active'); }
+
+      if (submission.enable_video_proctoring && !this.videoStore[submission.name]) {
+        try {
+          var data = await this.apiCall({
+            method: "exampro.exam_pro.doctype.exam_submission.exam_submission.proctor_video_list",
+            args: { exam_submission: submission.name }
+          });
+          if (data.message && data.message.videos) {
+            this.processVideoData(submission.name, data.message.videos);
+          }
+        } catch (e) { console.error('Failed to load videos for modal:', e); }
+      }
 
       this.initModalVideoPlayer(submission.name);
       this.loadModalScreenshots(submission.name);
