@@ -1498,6 +1498,25 @@
   color: #b71c1c;
 }
 
+.cert-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #1b5e20;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1.6;
+}
+
+.cert-badge-btn:hover {
+  background: #c8e6c9;
+}
+
 /* Users tab — batch user rows */
 .batch-user-item {
   display: flex;
@@ -1669,6 +1688,11 @@
 .quiz-dropdown-item svg {
   color: #6c757d;
   flex-shrink: 0;
+}
+
+.quiz-dropdown-item-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
 }
 
 .quiz-dropdown-sep {

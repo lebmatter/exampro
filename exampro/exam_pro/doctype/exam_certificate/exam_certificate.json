@@ -55,7 +55,8 @@
    "label": "Exam Submission",
    "options": "Exam Submission",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "candidate",

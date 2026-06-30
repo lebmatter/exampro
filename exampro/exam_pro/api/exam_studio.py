@@ -497,7 +497,7 @@ def _get_recent_exams(limit=10):
 	rows = frappe.db.sql(
 		"""
 		SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
-			   e.question_type, e.total_questions, e.total_marks
+			   e.question_type, e.total_questions, e.total_marks, e.certificate_template
 		FROM `tabExam` e
 		LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
 		ORDER BY COALESCE(s.start_date_time, e.modified) DESC
@@ -594,7 +594,7 @@ def get_exam_schedules(exam):
 		"Exam Schedule",
 		filters={"exam": exam},
 		fields=["name", "start_date_time", "schedule_type", "duration",
-				"schedule_expire_in_days", "badge"],
+				"schedule_expire_in_days", "badge", "short_uuid", "certificate_template"],
 		order_by="start_date_time desc",
 	)
 
@@ -671,7 +671,7 @@ def get_schedule_candidates(schedule):
 		"Exam Submission",
 		filters={"exam_schedule": schedule},
 		fields=["name", "candidate", "candidate_name", "status",
-				"total_marks", "result_status"],
+				"total_marks", "result_status", "issued_certificate"],
 		order_by="creation desc",
 	)
 

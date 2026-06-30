@@ -6,9 +6,16 @@
       <span class="dashboard-badge {{ item.role_class }}">{{ item.role_label }}</span>
       {% endif %}
     </div>
-    {% if item.schedule_type == 'Flexible' %}
-    <span class="schedule-pill schedule-flexible">Flexible</span>
-    {% endif %}
+    <div class="schedule-pills">
+      {% if item.schedule_type == 'Flexible' %}
+      <span class="schedule-pill schedule-flexible">Flexible</span>
+      {% endif %}
+      {% if item.certificate_template %}
+      <span class="schedule-pill schedule-certificate">
+        <i data-feather="award" style="width:10px;height:10px;vertical-align:middle;margin-right:2px;"></i>Certificate
+      </span>
+      {% endif %}
+    </div>
   </div>
   <div class="dashboard-card-body">
     <h5 class="dashboard-card-title">{{ item.title }}</h5>

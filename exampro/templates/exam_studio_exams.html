@@ -77,6 +77,9 @@
                     <i data-feather="clock" style="width:10px;height:10px;"></i>
                     <span x-text="exam.duration + ' min'"></span>
                   </span>
+                  <span class="badge-meta" x-show="exam.certificate_template" title="Certificate exam" style="color:#adb5bd;">
+                    <i data-feather="award" style="width:10px;height:10px;"></i>
+                  </span>
                 </div>
               </div>
               <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedExam && selectedExam.name === exam.name}">
@@ -153,10 +156,25 @@
                   </span>
                 </div>
               </div>
-              <div class="question-actions" x-show="selectedSchedule && selectedSchedule.name === sch.name">
-                <button class="btn btn-sm btn-link" @click.stop="editSchedule(sch)" title="Edit">
-                  <i data-feather="edit-2" style="width:12px;height:12px;"></i>
-                </button>
+              <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedSchedule && selectedSchedule.name === sch.name}">
+                <div class="quiz-dropdown-wrap">
+                  <button class="btn btn-sm btn-link" @click.stop="toggleScheduleDropdown(sch.name)" title="Actions">
+                    <i data-feather="more-vertical" style="width:12px;height:12px;"></i>
+                  </button>
+                  <div class="quiz-dropdown-menu" x-show="scheduleDropdownOpen === sch.name" @click.outside="scheduleDropdownOpen = null" x-transition>
+                    <button class="quiz-dropdown-item" :class="{'quiz-dropdown-item-disabled': sch.status === 'Completed'}" :disabled="sch.status === 'Completed'" @click.stop="sch.status !== 'Completed' && (editSchedule(sch), scheduleDropdownOpen = null)">
+                      <i data-feather="edit-2" style="width:13px;height:13px;"></i> Edit
+                    </button>
+                    <button class="quiz-dropdown-item" :class="{'quiz-dropdown-item-disabled': sch.status === 'Completed'}" :disabled="sch.status === 'Completed'" @click.stop="sch.status !== 'Completed' && (copyScheduleInviteLink(sch), scheduleDropdownOpen = null)">
+                      <i data-feather="link" style="width:13px;height:13px;"></i> Copy Invite Link
+                    </button>
+                    <template x-if="sch.certificate_template">
+                      <button class="quiz-dropdown-item" :class="{'quiz-dropdown-item-disabled': sch.status !== 'Completed'}" :disabled="sch.status !== 'Completed'" @click.stop="sch.status === 'Completed' && (sendScheduleCertificates(sch), scheduleDropdownOpen = null)" :title="sch.status !== 'Completed' ? 'Available after schedule is completed' : ''">
+                        <i data-feather="award" style="width:13px;height:13px;"></i> Send Certificates
+                      </button>
+                    </template>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
@@ -211,6 +229,11 @@
               <div class="submission-card-bottom">
                 <span class="badge-schedule-status" :class="'badge-status-' + (cand.status || '').toLowerCase().replace(/ /g, '-')" x-text="cand.status"></span>
                 <span class="badge-result-status" x-show="cand.result_status && cand.result_status !== 'NA'" :class="'badge-result-' + (cand.result_status || '').toLowerCase()" x-text="cand.result_status"></span>
+                <template x-if="cand.issued_certificate">
+                  <button class="cert-badge-btn" @click.stop="openCertificatePdf(cand.issued_certificate)" title="View Certificate">
+                    <i data-feather="award" style="width:11px;height:11px;"></i> Certificate
+                  </button>
+                </template>
                 <a class="submission-link" :href="'/app/exam-submission/' + cand.name" target="_blank" @click.stop title="Open submission">
                   <i data-feather="external-link" style="width:11px;height:11px;"></i>
                 </a>

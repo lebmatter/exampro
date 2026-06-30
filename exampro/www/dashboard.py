@@ -72,6 +72,7 @@ def _candidate_items():
             "schedule_type": schedule.schedule_type,
             "duration": f"{schedule.duration} min",
             "flexible_note": flexible_note,
+            "certificate_template": exam.certificate_template,
             "action_link": "/exam",
             "status_label": None,
         }

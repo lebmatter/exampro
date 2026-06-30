@@ -48,6 +48,7 @@ function examStudioApp() {
 
     // --- Exams tab state ---
     examDropdownOpen: null,
+    scheduleDropdownOpen: null,
     exams: window.examStudioData?.exams || [],
     selectedExam: null,
     schedules: [],
@@ -875,6 +876,73 @@ function examStudioApp() {
         menu.style.left = 'auto';
         this.replaceIcons();
       });
+    },
+
+    toggleScheduleDropdown(scheduleName) {
+      if (this.scheduleDropdownOpen === scheduleName) {
+        this.scheduleDropdownOpen = null;
+        return;
+      }
+      this.scheduleDropdownOpen = scheduleName;
+      var btn = this.$event.currentTarget;
+      this.$nextTick(() => {
+        var menu = btn.closest('.quiz-dropdown-wrap').querySelector('.quiz-dropdown-menu');
+        if (!menu) return;
+        var rect = btn.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 2) + 'px';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.left = 'auto';
+        this.replaceIcons();
+      });
+    },
+
+    copyScheduleInviteLink(sch) {
+      if (!sch.short_uuid) {
+        frappe.show_alert({ message: "Invite link not available for this schedule.", indicator: "red" });
+        return;
+      }
+      const link = window.location.origin + "/exam/invite/" + sch.short_uuid;
+      navigator.clipboard.writeText(link).then(() => {
+        frappe.show_alert({ message: "Invite link copied to clipboard.", indicator: "green" });
+      }).catch(() => {
+        frappe.show_alert({ message: "Could not copy link. Please copy manually: " + link, indicator: "orange" });
+      });
+    },
+
+    async openCertificatePdf(certificateName) {
+      try {
+        const r = await frappe.call({
+          method: "exampro.exam_pro.doctype.exam_certificate.exam_certificate.download_certificate_pdf",
+          args: { certificate_name: certificateName },
+        });
+        if (r.message) {
+          const binary = atob(r.message);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const blob = new Blob([bytes], { type: "application/pdf" });
+          const url = URL.createObjectURL(blob);
+          window.open(url, "_blank");
+        }
+      } catch (e) {
+        // error shown by frappe
+      }
+    },
+
+    sendScheduleCertificates(sch) {
+      frappe.confirm(
+        `Send certificates to all passing candidates for schedule <strong>${sch.name}</strong>? This will create certificate records for eligible submissions.`,
+        async () => {
+          try {
+            const r = await frappe.call({
+              method: "exampro.exam_pro.doctype.exam_schedule.exam_schedule.send_certificates",
+              args: { docname: sch.name },
+            });
+            frappe.show_alert({ message: "Certificates sent successfully.", indicator: "green" });
+          } catch (e) {
+            // error shown by frappe
+          }
+        }
+      );
     },
 
     async duplicateExam(exam) {

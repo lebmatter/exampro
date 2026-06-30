@@ -490,28 +490,32 @@ def _send_certificates(schedule_name):
 	for subm in submissions:
 		if subm["status"] != "Submitted":
 			continue
-		
+
 		if subm["result_status"] != "Passed":
 			continue
 
+		if frappe.db.exists("Exam Certificate", {"exam_submission": subm["name"]}):
+			continue
+
 		try:
-			frappe.get_last_doc("Exam Certificate", filters={"exam_submission": subm["name"]})
-		except frappe.DoesNotExistError:
 			today = datetime.fromisoformat(now().split(".")[0]).date()
 			certexp = frappe.db.get_value("Exam", subm["exam"], "expiry")
 
 			new_cert = frappe.get_doc({
-				"doctype":"Exam Certificate",
+				"doctype": "Exam Certificate",
 				"exam_submission": subm["name"],
 				"exam": subm["exam"],
-				"member": subm["candidate"],
-				"member_name": subm["candidate_name"],
-				"issue_date": today
+				"candidate": subm["candidate"],
+				"candidate_name": subm["candidate_name"],
+				"issue_date": today,
+				"certificate_template": frappe.db.get_value("Exam", subm["exam"], "certificate_template")
 			})
 			if certexp:
 				certexp *= 365
 				new_cert.expiry_date = today + timedelta(days=certexp)
 			new_cert.insert()
+		except frappe.UniqueValidationError:
+			pass
 
 @frappe.whitelist()
 def send_certificates(docname):
@@ -561,13 +565,10 @@ def send_certificates(docname):
 
 	for subm in passed_submissions:
 		try:
-			# Check if certificate already exists
-			existing_cert = frappe.db.exists("Exam Certificate", {"exam_submission": subm["name"]})
-			if existing_cert:
+			if frappe.db.exists("Exam Certificate", {"exam_submission": subm["name"]}):
 				certificates_already_exist += 1
 				continue
 
-			# Create new certificate
 			today = datetime.fromisoformat(now().split(".")[0]).date()
 			cert_expiry = frappe.db.get_value("Exam", subm["exam"], "expiry")
 
@@ -580,14 +581,17 @@ def send_certificates(docname):
 				"issue_date": today,
 				"certificate_template": frappe.db.get_value("Exam", subm["exam"], "certificate_template")
 			})
-			
+
 			if cert_expiry:
 				cert_expiry *= 365
 				new_cert.expiry_date = today + timedelta(days=cert_expiry)
-			
+
 			new_cert.insert()
 			certificates_sent += 1
 
+		except frappe.UniqueValidationError:
+			# Race condition: another request inserted between our exists() check and insert()
+			certificates_already_exist += 1
 		except Exception as e:
 			errors.append(f"Error creating certificate for {subm['candidate_name']}: {str(e)}")
 
