@@ -6,9 +6,55 @@ import frappe
 from frappe.utils import now_datetime
 import requests
 
+from exampro.exam_pro.api.utils import get_current_user_partner
+
 
 CACHE_KEY_PREFIX = "exam_studio_state:"
 CACHE_TTL = 86400  # 24 hours
+
+
+def _get_caller_partner():
+	"""Returns partner name if caller is Exam Partner (not manager), else None."""
+	roles = frappe.get_roles()
+	if "Exam Manager" in roles:
+		return None
+	if "Exam Partner" in roles:
+		partner = get_current_user_partner()
+		if not partner:
+			frappe.throw("Your account is not linked to any exam partner.", frappe.PermissionError)
+		return partner
+	frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+
+def _check_manager_or_partner():
+	"""Ensure caller is Exam Manager or Exam Partner. Returns caller's partner name or None."""
+	return _get_caller_partner()
+
+
+def _assert_exam_manager():
+	if "Exam Manager" not in frappe.get_roles():
+		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+
+def _assert_category_partner(category_name, partner):
+	if partner:
+		cat_partner = frappe.db.get_value("Exam Question Category", category_name, "partner")
+		if cat_partner != partner:
+			frappe.throw("You do not have permission to access this category.", frappe.PermissionError)
+
+
+def _assert_batch_partner(batch_name, partner):
+	if partner:
+		batch_partner = frappe.db.get_value("Exam Batch", batch_name, "partner")
+		if batch_partner != partner:
+			frappe.throw("You do not have permission to access this batch.", frappe.PermissionError)
+
+
+def _assert_exam_partner(exam_name, partner):
+	if partner:
+		exam_partner = frappe.db.get_value("Exam", exam_name, "partner")
+		if exam_partner != partner:
+			frappe.throw("You do not have permission to access this exam.", frappe.PermissionError)
 
 IMAGE_STYLE_PROMPTS = {
 	"realistic": "Photorealistic style, high detail, natural lighting, like a professional photograph. Do NOT include any text, words, letters, numbers, labels, captions, watermarks, or writing of any kind in the image.",
@@ -42,8 +88,8 @@ def clear_cached_state():
 
 @frappe.whitelist()
 def get_category_questions(category):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	_assert_category_partner(category, partner)
 
 	questions = frappe.get_all(
 		"Exam Question",
@@ -188,8 +234,7 @@ def generate_questions(category, count, difficulty, question_type, prompt="", ma
 
 @frappe.whitelist()
 def save_questions(questions):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
 
 	if isinstance(questions, str):
 		questions = json.loads(questions)
@@ -199,6 +244,8 @@ def save_questions(questions):
 
 	for q in questions:
 		try:
+			if partner:
+				_assert_category_partner(q.get("category", ""), partner)
 			doc = frappe.get_doc({
 				"doctype": "Exam Question",
 				"question": q.get("question", ""),
@@ -245,13 +292,13 @@ def save_questions(questions):
 
 @frappe.whitelist()
 def update_question(name, data):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
 
 	if isinstance(data, str):
 		data = json.loads(data)
 
 	doc = frappe.get_doc("Exam Question", name)
+	_assert_category_partner(doc.category, partner)
 
 	doc.question = data.get("question", doc.question)
 	doc.mark = data.get("mark", doc.mark)
@@ -487,64 +534,120 @@ def _extract_image_url(content):
 
 @frappe.whitelist()
 def get_exams():
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
-
-	return _get_recent_exams()
+	partner = _check_manager_or_partner()
+	return _get_recent_exams(partner=partner)
 
 
-def _get_recent_exams(limit=10):
-	rows = frappe.db.sql(
-		"""
-		SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
-			   e.question_type, e.total_questions, e.total_marks, e.certificate_template,
-			   e.enable_payment, e.price
-		FROM `tabExam` e
-		LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
-		ORDER BY COALESCE(s.start_date_time, e.modified) DESC
-		LIMIT %(limit)s
-		""",
-		{"limit": limit},
-		as_dict=True,
-	)
+def _get_recent_exams(limit=10, partner=None):
+	if partner:
+		rows = frappe.db.sql(
+			"""
+			SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
+				   e.question_type, e.total_questions, e.total_marks, e.certificate_template,
+				   e.enable_payment, e.price
+			FROM `tabExam` e
+			LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
+			WHERE e.partner = %(partner)s
+			ORDER BY COALESCE(s.start_date_time, e.modified) DESC
+			LIMIT %(limit)s
+			""",
+			{"partner": partner, "limit": limit},
+			as_dict=True,
+		)
+	else:
+		rows = frappe.db.sql(
+			"""
+			SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
+				   e.question_type, e.total_questions, e.total_marks, e.certificate_template,
+				   e.enable_payment, e.price
+			FROM `tabExam` e
+			LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
+			ORDER BY COALESCE(s.start_date_time, e.modified) DESC
+			LIMIT %(limit)s
+			""",
+			{"limit": limit},
+			as_dict=True,
+		)
 	return rows
 
 
 @frappe.whitelist()
+def create_category(title):
+	partner = _check_manager_or_partner()
+	title = (title or "").strip()
+	if not title:
+		frappe.throw("Category title is required")
+
+	doc = frappe.get_doc({
+		"doctype": "Exam Question Category",
+		"title": title,
+		"partner": partner or None,
+	})
+	doc.insert()
+	return {"name": doc.name, "title": doc.title}
+
+
+@frappe.whitelist()
 def search_categories(query):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
 
 	query = (query or "").strip()
 	if not query or len(query) < 2:
 		return []
 
 	like = f"%{query}%"
-	rows = frappe.db.sql(
-		"""
-		SELECT c.name, c.title,
-		       (SELECT COUNT(*) FROM `tabExam Question` q WHERE q.category = c.name) AS question_count
-		FROM `tabExam Question Category` c
-		WHERE c.title LIKE %(like)s
-		ORDER BY c.modified DESC
-		LIMIT 20
-		""",
-		{"like": like},
-		as_dict=True,
-	)
+	if partner:
+		rows = frappe.db.sql(
+			"""
+			SELECT c.name, c.title,
+			       (SELECT COUNT(*) FROM `tabExam Question` q WHERE q.category = c.name) AS question_count
+			FROM `tabExam Question Category` c
+			WHERE c.title LIKE %(like)s AND c.partner = %(partner)s
+			ORDER BY c.modified DESC
+			LIMIT 20
+			""",
+			{"like": like, "partner": partner},
+			as_dict=True,
+		)
+	else:
+		rows = frappe.db.sql(
+			"""
+			SELECT c.name, c.title,
+			       (SELECT COUNT(*) FROM `tabExam Question` q WHERE q.category = c.name) AS question_count
+			FROM `tabExam Question Category` c
+			WHERE c.title LIKE %(like)s
+			ORDER BY c.modified DESC
+			LIMIT 20
+			""",
+			{"like": like},
+			as_dict=True,
+		)
 	return rows
 
 
 @frappe.whitelist()
 def search_exams(query):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
 
 	query = (query or "").strip()
 	if not query or len(query) < 2:
 		return []
 
 	like = f"%{query}%"
+	if partner:
+		return frappe.db.sql(
+			"""
+			SELECT name, title, exam_mode, duration, question_type,
+				   total_questions, total_marks, certificate_template,
+				   enable_payment, price
+			FROM `tabExam`
+			WHERE title LIKE %(like)s AND partner = %(partner)s
+			ORDER BY modified DESC
+			LIMIT 20
+			""",
+			{"like": like, "partner": partner},
+			as_dict=True,
+		)
 	return frappe.db.sql(
 		"""
 		SELECT name, title, exam_mode, duration, question_type,
@@ -562,8 +665,8 @@ def search_exams(query):
 
 @frappe.whitelist()
 def get_exam_detail(name):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	_assert_exam_partner(name, partner)
 
 	doc = frappe.get_doc("Exam", name)
 	return {
@@ -602,8 +705,8 @@ def get_exam_detail(name):
 
 @frappe.whitelist()
 def get_exam_schedules(exam):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	_assert_exam_partner(exam, partner)
 
 	schedules = frappe.get_all(
 		"Exam Schedule",
@@ -625,21 +728,35 @@ def get_exam_schedules(exam):
 
 @frappe.whitelist()
 def get_ongoing_schedules():
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
 
 	now = now_datetime()
-	schedules = frappe.db.sql(
-		"""
-		SELECT es.name, es.exam, es.start_date_time, es.duration,
-		       es.schedule_type, es.schedule_expire_in_days,
-		       e.title as exam_title
-		FROM `tabExam Schedule` es
-		JOIN `tabExam` e ON e.name = es.exam
-		ORDER BY es.start_date_time
-		""",
-		as_dict=True,
-	)
+	if partner:
+		schedules = frappe.db.sql(
+			"""
+			SELECT es.name, es.exam, es.start_date_time, es.duration,
+			       es.schedule_type, es.schedule_expire_in_days,
+			       e.title as exam_title
+			FROM `tabExam Schedule` es
+			JOIN `tabExam` e ON e.name = es.exam
+			WHERE e.partner = %(partner)s
+			ORDER BY es.start_date_time
+			""",
+			{"partner": partner},
+			as_dict=True,
+		)
+	else:
+		schedules = frappe.db.sql(
+			"""
+			SELECT es.name, es.exam, es.start_date_time, es.duration,
+			       es.schedule_type, es.schedule_expire_in_days,
+			       e.title as exam_title
+			FROM `tabExam Schedule` es
+			JOIN `tabExam` e ON e.name = es.exam
+			ORDER BY es.start_date_time
+			""",
+			as_dict=True,
+		)
 
 	ongoing = []
 	for sch in schedules:
@@ -679,8 +796,10 @@ def _compute_schedule_status(sch, now):
 
 @frappe.whitelist()
 def get_schedule_candidates(schedule):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	if partner:
+		exam_name = frappe.db.get_value("Exam Schedule", schedule, "exam")
+		_assert_exam_partner(exam_name, partner)
 
 	candidates = frappe.get_all(
 		"Exam Submission",
@@ -703,8 +822,7 @@ def get_schedule_candidates(schedule):
 
 @frappe.whitelist()
 def search_users(query):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	_check_manager_or_partner()
 
 	query = (query or "").strip()
 	if not query or len(query) < 2:
@@ -729,8 +847,7 @@ def search_users(query):
 
 @frappe.whitelist()
 def save_exam(data):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	_assert_exam_manager()
 
 	if isinstance(data, str):
 		data = json.loads(data)
@@ -779,8 +896,7 @@ def save_exam(data):
 
 @frappe.whitelist()
 def duplicate_exam(name):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	_assert_exam_manager()
 
 	source = frappe.get_doc("Exam", name)
 	new_doc = frappe.copy_doc(source)
@@ -801,8 +917,7 @@ def duplicate_exam(name):
 
 @frappe.whitelist()
 def save_schedule(data):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	_assert_exam_manager()
 
 	if isinstance(data, str):
 		data = json.loads(data)
@@ -846,10 +961,9 @@ def save_schedule(data):
 
 @frappe.whitelist()
 def get_batches():
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
-
-	return frappe.get_all("Exam Batch", fields=["name"], order_by="name")
+	partner = _check_manager_or_partner()
+	filters = {"partner": partner} if partner else {}
+	return frappe.get_all("Exam Batch", filters=filters, fields=["name"], order_by="name")
 
 
 @frappe.whitelist()
@@ -1002,11 +1116,11 @@ def parse_questions_json(content):
 
 @frappe.whitelist()
 def get_batches_with_counts():
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
-
+	partner = _check_manager_or_partner()
+	filters = {"partner": partner} if partner else {}
 	batches = frappe.get_all(
 		"Exam Batch",
+		filters=filters,
 		fields=["name", "batch_name", "description"],
 		order_by="batch_name",
 	)
@@ -1017,8 +1131,8 @@ def get_batches_with_counts():
 
 @frappe.whitelist()
 def get_batch_users(batch_name):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	_assert_batch_partner(batch_name, partner)
 
 	if not frappe.db.exists("Exam Batch", batch_name):
 		frappe.throw("Batch not found", frappe.DoesNotExistError)
@@ -1039,13 +1153,13 @@ def get_batch_users(batch_name):
 
 @frappe.whitelist()
 def create_batch(batch_name, description=""):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
 
 	doc = frappe.get_doc({
 		"doctype": "Exam Batch",
 		"batch_name": batch_name,
 		"description": description,
+		"partner": partner or None,
 	})
 	doc.insert()
 	return {
@@ -1058,8 +1172,8 @@ def create_batch(batch_name, description=""):
 
 @frappe.whitelist()
 def add_users_to_batch(batch_name, emails):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	_assert_batch_partner(batch_name, partner)
 
 	if not frappe.db.exists("Exam Batch", batch_name):
 		frappe.throw("Batch not found", frappe.DoesNotExistError)
@@ -1092,8 +1206,8 @@ def add_users_to_batch(batch_name, emails):
 
 @frappe.whitelist()
 def create_users_and_add_to_batch(batch_name, users_data):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	_assert_batch_partner(batch_name, partner)
 
 	if not frappe.db.exists("Exam Batch", batch_name):
 		frappe.throw("Batch not found", frappe.DoesNotExistError)
@@ -1160,8 +1274,8 @@ def create_users_and_add_to_batch(batch_name, users_data):
 
 @frappe.whitelist()
 def remove_user_from_batch(batch_name, email):
-	if "Exam Manager" not in frappe.get_roles():
-		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+	partner = _check_manager_or_partner()
+	_assert_batch_partner(batch_name, partner)
 
 	batch_user = frappe.db.get_value(
 		"Exam Batch User",

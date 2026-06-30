@@ -33,7 +33,7 @@
             Exams
             <span class="tab-count" x-text="exams.length" x-show="exams.length > 0"></span>
           </h6>
-          <button class="btn btn-sm btn-generate-sm" @click="openExamModal('create')">
+          <button class="btn btn-sm btn-generate-sm" @click="openExamModal('create')" x-show="!currentPartner">
             <i data-feather="plus" style="width:14px;height:14px;"></i> New
           </button>
         </div>
@@ -85,7 +85,7 @@
                   </span>
                 </div>
               </div>
-              <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedExam && selectedExam.name === exam.name}">
+              <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedExam && selectedExam.name === exam.name}" x-show="!currentPartner">
                 <div class="quiz-dropdown-wrap">
                   <button class="btn btn-sm btn-link" @click.stop="toggleExamDropdown(exam.name)" title="Actions">
                     <i data-feather="more-vertical" style="width:12px;height:12px;"></i>
@@ -115,7 +115,7 @@
             Schedules
             <span class="tab-count" x-text="schedules.length" x-show="schedules.length > 0"></span>
           </h6>
-          <button class="btn btn-sm btn-generate-sm" @click="openScheduleModal('create')" x-show="selectedExam" :disabled="!selectedExam">
+          <button class="btn btn-sm btn-generate-sm" @click="openScheduleModal('create')" x-show="selectedExam && !currentPartner" :disabled="!selectedExam">
             <i data-feather="plus" style="width:14px;height:14px;"></i> New
           </button>
         </div>
@@ -159,7 +159,7 @@
                   </span>
                 </div>
               </div>
-              <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedSchedule && selectedSchedule.name === sch.name}">
+              <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedSchedule && selectedSchedule.name === sch.name}" x-show="!currentPartner">
                 <div class="quiz-dropdown-wrap">
                   <button class="btn btn-sm btn-link" @click.stop="toggleScheduleDropdown(sch.name)" title="Actions">
                     <i data-feather="more-vertical" style="width:12px;height:12px;"></i>
@@ -194,7 +194,7 @@
             Candidates
             <span class="tab-count" x-text="candidates.length" x-show="candidates.length > 0"></span>
           </h6>
-          <button class="btn btn-sm btn-generate-sm" @click="openCandidateModal()" x-show="selectedSchedule && selectedSchedule.status !== 'Completed'" :disabled="!selectedSchedule">
+          <button class="btn btn-sm btn-generate-sm" @click="openCandidateModal()" x-show="selectedSchedule && selectedSchedule.status !== 'Completed' && !currentPartner" :disabled="!selectedSchedule">
             <i data-feather="user-plus" style="width:14px;height:14px;"></i> Add
           </button>
         </div>

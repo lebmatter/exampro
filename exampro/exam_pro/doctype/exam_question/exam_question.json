@@ -359,8 +359,18 @@
     "select": 1,
     "share": 1,
     "write": 1
+  },
+  {
+    "create": 1,
+    "delete": 1,
+    "read": 1,
+    "role": "Exam Partner",
+    "select": 1,
+    "write": 1
   }
  ],
+ "modified": "2026-06-30 12:00:00.000000",
+ "modified_by": "labeeb@zerodha.com",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

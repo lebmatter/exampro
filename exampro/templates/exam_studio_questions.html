@@ -70,7 +70,7 @@
             Generated
             <span class="tab-count" x-text="generatedQuestions.length" x-show="generatedQuestions.length > 0"></span>
           </h6>
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-2" x-show="!currentPartner">
             <button
               class="btn btn-sm btn-outline-secondary"
               @click="insertAll()"
@@ -126,6 +126,9 @@
             Approved
             <span class="tab-count" x-text="approvedQuestions.length" x-show="approvedQuestions.length > 0"></span>
           </h6>
+          <button class="btn btn-sm btn-generate-sm" @click="openNewQuestionModal()" x-show="currentPartner && category" :disabled="!category">
+            <i data-feather="plus" style="width:14px;height:14px;"></i> New
+          </button>
         </div>
 
         <div class="approved-body">

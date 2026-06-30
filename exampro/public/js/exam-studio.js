@@ -1,5 +1,7 @@
 function examStudioApp() {
   return {
+    currentPartner: window.examStudioData?.currentPartner || "",
+    partnerName: window.examStudioData?.partnerName || "",
     aiConfigured: window.examStudioData?.aiConfigured || false,
     allCategories: window.examStudioData?.categories || [],
     categories: window.examStudioData?.categories || [],
@@ -708,13 +710,8 @@ function examStudioApp() {
 
       try {
         const r = await frappe.call({
-          method: "frappe.client.insert",
-          args: {
-            doc: {
-              doctype: "Exam Question Category",
-              title: name,
-            },
-          },
+          method: "exampro.exam_pro.api.exam_studio.create_category",
+          args: { title: name },
         });
 
         if (r.message) {
@@ -735,6 +732,34 @@ function examStudioApp() {
       } catch (e) {
         // error shown by frappe
       }
+    },
+
+    openNewQuestionModal() {
+      if (!this.category) return;
+      var blank = {
+        question: "",
+        type: "Choices",
+        category: this.category,
+        mark: 1,
+        difficulty: "Medium",
+        options: [
+          { text: "", is_correct: false, explanation: "", image: "" },
+          { text: "", is_correct: false, explanation: "", image: "" },
+          { text: "", is_correct: false, explanation: "", image: "" },
+          { text: "", is_correct: false, explanation: "", image: "" },
+        ],
+        possible_answers: [""],
+        help_show: "Do not show",
+        help_type: "Text",
+        help_text: "",
+        help_link: "",
+        help_quiz: [],
+        description_image: "",
+        helper_text_image: "",
+        _existing: false,
+      };
+      this.approvedQuestions.unshift(blank);
+      this.openModal(0, "approved");
     },
 
     openNewCategoryModal() {

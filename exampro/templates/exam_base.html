@@ -101,7 +101,13 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav">
             {% if frappe.session.user != "Guest" %}
-            <!-- Dashboard link for all users -->
+            {% if is_partner and not is_manager %}
+            <!-- Partner-only nav -->
+            <li class="nav-item">
+              <a class="nav-link" href="/exam-studio">Studio</a>
+            </li>
+            {% else %}
+            <!-- Standard nav -->
             <li class="nav-item">
               <a class="nav-link" href="/dashboard">Dashboard</a>
             </li>
@@ -145,7 +151,9 @@
                 </li>
               </ul>
             </li>
-            {% endif %} {% endif %}
+            {% endif %}
+            {% endif %}
+            {% endif %}
           </ul>
         </div>
       </div>
@@ -228,7 +236,7 @@ get_telemetry_boot_info() %}
       $('a[href="/proctor"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/evaluate") {
       $('a[href="/evaluate"]').closest(".nav-item").addClass("active");
-    } else if (currentPath === "/exam-studio") {
+    } else if (currentPath === "/exam-studio" || currentPath.startsWith("/exam-studio")) {
       $('a[href="/exam-studio"]').closest(".nav-item").addClass("active");
     }
 

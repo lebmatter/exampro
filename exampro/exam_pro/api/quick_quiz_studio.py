@@ -4,6 +4,8 @@ import re
 import frappe
 import requests
 
+from exampro.exam_pro.api.utils import get_current_user_partner
+
 
 CACHE_KEY_PREFIX = "quiz_studio_state:"
 CACHE_TTL = 86400  # 24 hours
@@ -12,6 +14,25 @@ CACHE_TTL = 86400  # 24 hours
 def _check_exam_manager():
 	if "Exam Manager" not in frappe.get_roles():
 		frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+
+def _check_manager_or_partner():
+	roles = frappe.get_roles()
+	if "Exam Manager" in roles:
+		return None
+	if "Exam Partner" in roles:
+		partner = get_current_user_partner()
+		if not partner:
+			frappe.throw("Your account is not linked to any exam partner.", frappe.PermissionError)
+		return partner
+	frappe.throw("You are not authorized to perform this action", frappe.PermissionError)
+
+
+def _assert_quiz_partner(quiz_name, partner):
+	if partner:
+		quiz_partner = frappe.db.get_value("Quick Quiz", quiz_name, "partner")
+		if quiz_partner != partner:
+			frappe.throw("You do not have permission to access this quiz.", frappe.PermissionError)
 
 
 @frappe.whitelist()
@@ -32,10 +53,11 @@ def set_cached_state(state):
 
 @frappe.whitelist()
 def get_quiz_list():
-	_check_exam_manager()
-
+	partner = _check_manager_or_partner()
+	filters = {"partner": partner} if partner else {}
 	quizzes = frappe.get_all(
 		"Quick Quiz",
+		filters=filters,
 		fields=[
 			"name", "title", "quiz_mode", "status", "access_type",
 			"total_questions", "short_uuid", "theme", "modified",
@@ -53,7 +75,8 @@ def get_quiz_list():
 
 @frappe.whitelist()
 def get_quiz_detail(name):
-	_check_exam_manager()
+	partner = _check_manager_or_partner()
+	_assert_quiz_partner(name, partner)
 
 	doc = frappe.get_doc("Quick Quiz", name)
 
@@ -96,7 +119,7 @@ def get_quiz_detail(name):
 
 @frappe.whitelist()
 def save_quiz(data):
-	_check_exam_manager()
+	partner = _check_manager_or_partner()
 
 	if isinstance(data, str):
 		data = json.loads(data)
@@ -105,6 +128,7 @@ def save_quiz(data):
 
 	if data.get("name") and frappe.db.exists("Quick Quiz", data["name"]):
 		# Update existing quiz
+		_assert_quiz_partner(data["name"], partner)
 		doc = frappe.get_doc("Quick Quiz", data["name"])
 
 		for field in (
@@ -137,6 +161,7 @@ def save_quiz(data):
 		doc_dict = {
 			"doctype": "Quick Quiz",
 			"title": data.get("title", ""),
+			"partner": partner or None,
 			"quiz_mode": data.get("quiz_mode", "Simple"),
 			"status": data.get("status", "Draft"),
 			"access_type": data.get("access_type", "PIN"),
@@ -173,7 +198,8 @@ def save_quiz(data):
 
 @frappe.whitelist()
 def delete_quiz(name):
-	_check_exam_manager()
+	partner = _check_manager_or_partner()
+	_assert_quiz_partner(name, partner)
 
 	doc = frappe.get_doc("Quick Quiz", name)
 	doc.status = "Archived"
@@ -184,13 +210,15 @@ def delete_quiz(name):
 
 @frappe.whitelist()
 def duplicate_quiz(name):
-	_check_exam_manager()
+	partner = _check_manager_or_partner()
+	_assert_quiz_partner(name, partner)
 
 	source = frappe.get_doc("Quick Quiz", name)
 
 	new_doc_dict = {
 		"doctype": "Quick Quiz",
 		"title": f"{source.title} (Copy)",
+		"partner": partner or source.partner or None,
 		"quiz_mode": source.quiz_mode,
 		"status": "Draft",
 		"access_type": source.access_type,
@@ -308,7 +336,7 @@ def generate_quiz_questions(topic, count, tone="fun"):
 
 @frappe.whitelist()
 def import_from_question_bank(category, count=10):
-	_check_exam_manager()
+	_check_manager_or_partner()
 
 	count = int(count)
 
@@ -343,7 +371,8 @@ def import_from_question_bank(category, count=10):
 
 @frappe.whitelist()
 def get_quiz_submissions(quiz_name):
-	_check_exam_manager()
+	partner = _check_manager_or_partner()
+	_assert_quiz_partner(quiz_name, partner)
 
 	submissions = frappe.get_all(
 		"Quick Quiz Submission",
@@ -361,7 +390,8 @@ def get_quiz_submissions(quiz_name):
 
 @frappe.whitelist()
 def get_quiz_analytics(quiz_name):
-	_check_exam_manager()
+	partner = _check_manager_or_partner()
+	_assert_quiz_partner(quiz_name, partner)
 
 	total_respondents = frappe.db.count(
 		"Quick Quiz Submission",
@@ -414,13 +444,13 @@ def get_quiz_analytics(quiz_name):
 
 @frappe.whitelist()
 def get_question_categories():
-	_check_exam_manager()
-
+	partner = _check_manager_or_partner()
+	filters = {"partner": partner} if partner else {}
 	categories = frappe.get_all(
 		"Exam Question Category",
+		filters=filters,
 		fields=["name", "title"],
 	)
-
 	return {"categories": categories}
 
 

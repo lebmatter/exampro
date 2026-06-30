@@ -16,14 +16,20 @@
         <h4 class="bold-heading mb-1">
           <i data-feather="cpu" style="width:20px;height:20px;"></i>
           Studio
-          <span class="coming-soon-badge" style="background:#fff3bf;color:#e67700;">Beta</span>
+          <template x-if="!currentPartner">
+            <span class="coming-soon-badge" style="background:#fff3bf;color:#e67700;">Beta</span>
+          </template>
+          <template x-if="currentPartner">
+            <span class="coming-soon-badge" style="background:#e8f4fd;color:#0c63e4;" x-text="partnerName"></span>
+          </template>
         </h4>
-        <p class="text-muted mb-0" style="font-size:0.85rem;">AI-powered question generation and exam management</p>
+        <p class="text-muted mb-0" style="font-size:0.85rem;" x-show="!currentPartner">AI-powered question generation and exam management</p>
+        <p class="text-muted mb-0" style="font-size:0.85rem;" x-show="currentPartner">Manage your exams, question categories, quizzes and user batches</p>
       </div>
     </div>
 
-    <!-- AI not configured banner -->
-    <template x-if="!aiConfigured">
+    <!-- AI not configured banner (managers only) -->
+    <template x-if="!aiConfigured && !currentPartner">
       <div class="alert-banner mb-4">
         <i data-feather="alert-triangle" style="width:16px;height:16px;"></i>
         <span>OpenRouter API key not configured.</span>
@@ -76,6 +82,8 @@
     batches: {{ batches | tojson | safe }},
     certificateTemplates: {{ certificate_templates | tojson | safe }},
     partners: {{ partners | tojson | safe }},
+    currentPartner: {{ current_partner | tojson | safe }},
+    partnerName: {{ partner_name | tojson | safe }},
   };
 </script>
 <script src="/assets/exampro/js/exam-studio.js"></script>
