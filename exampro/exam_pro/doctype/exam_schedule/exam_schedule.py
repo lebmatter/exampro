@@ -756,3 +756,32 @@ def recompute_results_for_schedule(schedule):
 
 	return {"status": "success"}
 
+
+@frappe.whitelist()
+def force_terminate_schedule(schedule_name):
+	user_roles = frappe.get_roles()
+	if "Exam Manager" not in user_roles:
+		frappe.throw("You do not have permission to force terminate a schedule.")
+
+	schedule = frappe.get_doc("Exam Schedule", schedule_name)
+	if schedule.get_status() != "Ongoing":
+		frappe.throw("Schedule is not currently Ongoing.")
+
+	from exampro.exam_pro.doctype.exam_submission.exam_submission import terminate_exam
+
+	active_submissions = frappe.get_all(
+		"Exam Submission",
+		filters={
+			"exam_schedule": schedule_name,
+			"status": ["in", ["Registered", "Started"]]
+		},
+		fields=["name"]
+	)
+
+	count = 0
+	for sub in active_submissions:
+		terminate_exam(sub["name"], check_permission=False)
+		count += 1
+
+	return {"terminated": count}
+

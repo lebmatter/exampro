@@ -89,6 +89,57 @@ function add_status_based_actions(frm, status) {
             bulk_add_submissions(frm);
         }, __('Actions'));
     }
+
+    if (status === "Ongoing") {
+        frm.add_custom_button(__('Force Terminate'), function() {
+            show_force_terminate_dialog(frm);
+        }, __('Actions'));
+    }
+}
+
+function show_force_terminate_dialog(frm) {
+    let d = new frappe.ui.Dialog({
+        title: __('Force Terminate Schedule'),
+        fields: [
+            {
+                fieldtype: 'HTML',
+                options: `<div class="alert alert-danger" style="margin-bottom: 12px;">
+                    <strong>Warning:</strong> This will immediately terminate all active (Registered and Started) candidate submissions for this schedule. This action cannot be undone.
+                </div>`
+            },
+            {
+                fieldtype: 'Data',
+                fieldname: 'confirm_text',
+                label: 'Type <strong>terminate schedule</strong> to confirm',
+                reqd: 0
+            }
+        ],
+        primary_action_label: __('Terminate'),
+        primary_action(values) {
+            if (values.confirm_text !== 'terminate schedule') {
+                frappe.show_alert({
+                    message: __('Please type "terminate schedule" exactly to confirm.'),
+                    indicator: 'red'
+                });
+                return;
+            }
+            d.hide();
+            frappe.call({
+                method: 'exampro.exam_pro.doctype.exam_schedule.exam_schedule.force_terminate_schedule',
+                args: { schedule_name: frm.doc.name },
+                callback(r) {
+                    if (r.message) {
+                        frappe.show_alert({
+                            message: __('Terminated {0} submission(s).', [r.message.terminated]),
+                            indicator: 'green'
+                        });
+                        frm.reload_doc();
+                    }
+                }
+            });
+        }
+    });
+    d.show();
 }
 
 function generate_invite_link(frm) {
