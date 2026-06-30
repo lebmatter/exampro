@@ -259,6 +259,9 @@ fixtures = [
         "filters": [
             ["name", "in", ["ExamPro Default Certificate"]]
         ]
+    },
+    {
+        "dt": "Exam Settings"
     }
 ]
 

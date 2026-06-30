@@ -81,11 +81,6 @@
   line-height: 1;
 }
 
-.score-total {
-  font-size: 0.85rem;
-  color: #6c757d;
-  margin-top: 0.25rem;
-}
 
 .hero-icon {
   width: 96px;
@@ -277,6 +272,60 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Social sharing */
+
+.share-section {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.share-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.share-label svg { width: 13px; height: 13px; }
+
+.share-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.share-btn:hover { opacity: 0.82; }
+.share-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.share-linkedin { background: #0077B5; }
+.share-x        { background: #000; }
+
+
+@media (max-width: 575px) {
+  .share-btn { flex: 1 1 calc(50% - 0.25rem); justify-content: center; }
 }
 
 /* Pending alert card — same look as the exam-page alert. */

@@ -24,7 +24,11 @@
   "column_break_ai",
   "default_text_model",
   "image_model_section",
-  "default_image_model"
+  "default_image_model",
+  "social_sharing_tab",
+  "social_sharing_section",
+  "linkedin_share_text",
+  "x_share_text"
  ],
  "fields": [
   {
@@ -134,6 +138,28 @@
    "label": "Image Generation Model",
    "options": "bytedance-seed/seedream-4.5",
    "reqd": 1
+  },
+  {
+   "fieldname": "social_sharing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Social Sharing"
+  },
+  {
+   "fieldname": "social_sharing_section",
+   "fieldtype": "Section Break",
+   "label": "Share Text Templates"
+  },
+  {
+   "description": "Placeholders: {candidate_name}, {score}, {max_score}, {exam_name}, {status}",
+   "fieldname": "linkedin_share_text",
+   "fieldtype": "Small Text",
+   "label": "LinkedIn Share Text"
+  },
+  {
+   "description": "Keep under 280 characters. Placeholders: {candidate_name}, {score}, {max_score}, {exam_name}, {status}",
+   "fieldname": "x_share_text",
+   "fieldtype": "Small Text",
+   "label": "X (Twitter) Share Text"
   }
  ],
  "index_web_pages_for_search": 1,

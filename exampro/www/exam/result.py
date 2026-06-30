@@ -37,7 +37,7 @@ def set_exam_context(context, exmsubmn):
 	# Get exam data
 	exam_data = frappe.db.get_value(
 		"Exam", exam_submission.exam,
-		["total_marks", "show_result", "show_result_after_date", "total_marks"],
+		["title", "total_marks", "show_result", "show_result_after_date"],
 		as_dict=True
 	)
 	
@@ -103,6 +103,10 @@ def set_exam_context(context, exmsubmn):
 				context.certificate_name = frappe.db.get_value(
 					"Exam Certificate", {"exam_submission": exam_submission.name}, "name"
 				)
+
+			sharing_settings = frappe.db.get_singles_dict("Exam Settings")
+			context.linkedin_share_text = sharing_settings.get("linkedin_share_text", "")
+			context.x_share_text = sharing_settings.get("x_share_text", "")
 
 	else:
 		context.result_type = "pending"

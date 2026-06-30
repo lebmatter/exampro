@@ -1,0 +1,10 @@
+[
+ {
+  "default_image_model": "bytedance-seed/seedream-4.5",
+  "default_text_model": "anthropic/claude-sonnet-4-6",
+  "doctype": "Exam Settings",
+  "linkedin_share_text": "Proud to share that I scored {score}/{max_score} on \"{exam_name}\" — {status}! 🎓\n#ExamPro #Learning #ProfessionalDevelopment",
+  "name": "Exam Settings",
+  "x_share_text": "Just scored {score}/{max_score} on \"{exam_name}\" — {status}! 🎯 #ExamPro #Learning"
+ }
+]
