@@ -106,8 +106,9 @@
   align-items: center;
 }
 
-.my-exams-table .btn > i {
-  margin-right: 0.45rem;
+.my-exams-table .btn > i,
+.my-exams-table .btn > svg {
+  margin-right: 0.25rem;
 }
 
 /* ── Responsive ───────────────────────────────────────────────── */
@@ -164,7 +165,8 @@
     padding: 0.2rem 0.4rem;
   }
 
-  .my-exams-table .btn > i {
+  .my-exams-table .btn > i,
+  .my-exams-table .btn > svg {
     margin-right: 0.25rem;
   }
 

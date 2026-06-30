@@ -97,6 +97,13 @@ def set_exam_context(context, exmsubmn):
 			context.result_type = "pending"
 			context.message = "Your exam submission is incomplete or not evaluated yet. Please check back later."
 
+		if context.result_type == "scorecard":
+			cert_enabled = frappe.db.get_value("Exam", exam_submission.exam, "enable_certification")
+			if cert_enabled:
+				context.certificate_name = frappe.db.get_value(
+					"Exam Certificate", {"exam_submission": exam_submission.name}, "name"
+				)
+
 	else:
 		context.result_type = "pending"
 		context.message = "This exam submission is currently in progress or incomplete."

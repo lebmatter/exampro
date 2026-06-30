@@ -24,7 +24,7 @@
             <th>{{ _("Scheduled") }}</th>
             <th>{{ _("Duration") }}</th>
             <th>{{ _("Result") }}</th>
-            <th class="text-end"></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -70,25 +70,26 @@
               <span class="status-pill status-neutral">{{ exam.status }}</span>
               {% endif %}
             </td>
-            <td class="text-end">
-              <div class="btn-group" role="group">
+            <td>
+              <div class="d-flex gap-2 flex-wrap">
                 {% if exam.status == "Submitted" %}
+                  {% if exam.can_show_results %}
+                  <a href="/exam/{{ exam.submission }}" class="btn btn-sm btn-outline-secondary">
+                    <i data-feather="file-text"></i> Result
+                  </a>
+                  {% endif %}
                   {% if exam.certification_enabled and exam.certificate_exists %}
                   <button type="button"
                           onclick="downloadCertificate('{{ exam.certificate_name }}')"
                           class="btn btn-sm btn-success">
-                    <i data-feather="download"></i>Certificate
+                    <i data-feather="award"></i> Certificate
                   </button>
-                  {% else %}
-                  <a href="/exam/{{ exam.submission }}" class="btn btn-sm btn-outline-secondary">
-                    <i data-feather="file-text"></i>View Result
-                  </a>
                   {% endif %}
                   {% if exam.leaderboard_enabled %}
                   <a href="/leaderboard/{{ exam.submission }}"
                      class="btn btn-sm btn-outline-secondary"
                      title="View Leaderboard">
-                    <i data-feather="award"></i>Leaderboard
+                    <i data-feather="bar-chart-2"></i> Leaderboard
                   </a>
                   {% endif %}
                 {% endif %}

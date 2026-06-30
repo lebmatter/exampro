@@ -26,10 +26,11 @@
    "reqd": 1
   },
   {
-   "description": "Optional parameters for PDF generation in JSON format",
+   "description": "Deprecated — page size/margins are now set via @page CSS inside the HTML template. This field is kept for reference only.",
    "fieldname": "wkhtmltopdf_params",
    "fieldtype": "JSON",
-   "label": "PDFKit Parameters (JSON)"
+   "label": "Legacy PDFKit Parameters (unused)",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

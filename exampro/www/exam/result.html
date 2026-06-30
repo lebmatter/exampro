@@ -22,10 +22,10 @@
       </div>
       <div class="alert-actions">
         <a href="/dashboard" class="alert-button alert-button-primary">
-          <i data-feather="arrow-left"></i>Dashboard
+          <i data-feather="arrow-left"></i> Dashboard
         </a>
         <a href="/my-exams" class="alert-button alert-button-secondary">
-          <i data-feather="book-open"></i>My Exams
+          <i data-feather="book-open"></i> My Exams
         </a>
       </div>
     </div>
@@ -70,6 +70,16 @@
         <span class="meta-label">Completed</span>
         <span class="meta-value">{{ exam_submission.modified.strftime('%d %b %Y, %I:%M %p') }}</span>
       </div>
+      {% if certificate_name %}
+      <div class="meta-row">
+        <span class="meta-label">Certificate</span>
+        <span class="meta-value">
+          <button type="button" class="btn btn-sm btn-success" onclick="downloadCertificate('{{ certificate_name }}')">
+            <i data-feather="award"></i> Download Certificate
+          </button>
+        </span>
+      </div>
+      {% endif %}
     </div>
 
     {% elif result_type == "terminated" %}
@@ -87,10 +97,10 @@
 
     <div class="result-actions">
       <a href="/dashboard" class="alert-button alert-button-primary">
-        <i data-feather="arrow-left"></i>Dashboard
+        <i data-feather="arrow-left"></i> Dashboard
       </a>
       <a href="/my-exams" class="alert-button alert-button-secondary">
-        <i data-feather="book-open"></i>My Exams
+        <i data-feather="book-open"></i> My Exams
       </a>
     </div>
   </div>
@@ -98,4 +108,6 @@
 </div>
 {% endblock %}
 
-{% block script %}{{ super() }}{% endblock %}
+{% block script %}{{ super() }}
+<script type="text/javascript" src="/assets/exampro/js/my-exams.js"></script>
+{% endblock %}

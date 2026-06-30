@@ -1,0 +1,140 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Partner Dashboard{% endblock %}
+
+{% block page_content %}
+<div class="container mt-4 mb-5">
+
+  <!-- Partner header -->
+  <div class="d-flex align-items-center mb-4 gap-3">
+    {% if partner.logo %}
+    <img src="{{ partner.logo }}" alt="{{ partner.partner_name }}" style="height:56px;width:auto;object-fit:contain;border-radius:6px;">
+    {% endif %}
+    <div>
+      <h2 class="mb-0">{{ partner.partner_name }}</h2>
+      {% if partner.description %}
+      <p class="text-muted mb-0">{{ partner.description }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ stats.total_exams }}</div>
+        <div class="score-card-label">Exams</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ stats.total_schedules }}</div>
+        <div class="score-card-label">Schedules</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ stats.total_candidates }}</div>
+        <div class="score-card-label">Candidates</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ stats.total_passed }}</div>
+        <div class="score-card-label">Passed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exams section -->
+  {% if exams %}
+  <h4 class="mb-3">
+    <i data-feather="book-open"></i> Your Exams
+  </h4>
+  <div class="row g-3 mb-5">
+    {% for exam in exams %}
+    <div class="col-12 col-md-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <h5 class="card-title mb-1">{{ exam.title }}</h5>
+            {% if exam.partner_manages_questions %}
+            <a href="/partner/exam/{{ exam.name }}" class="btn btn-sm btn-outline-secondary">
+              <i data-feather="edit-2"></i> Questions
+            </a>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2 mt-2 flex-wrap">
+            <span class="badge badge-exam">{{ exam.duration }} min</span>
+            <span class="badge badge-exam">Pass {{ exam.pass_percentage }}%</span>
+            {% if exam.enable_certification %}
+            <span class="badge badge-success">Certificate</span>
+            {% endif %}
+            {% if exam.partner_manages_questions %}
+            <span class="badge badge-info">You manage questions</span>
+            {% else %}
+            <span class="badge badge-secondary">Questions managed by admin</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Schedules section -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i data-feather="calendar"></i> Schedules
+    </h4>
+  </div>
+
+  {% if schedules %}
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Exam</th>
+          <th>Start Time</th>
+          <th>Status</th>
+          <th>Candidates</th>
+          <th>Passed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in schedules %}
+        <tr>
+          <td>{{ s.exam_title }}</td>
+          <td>{{ s.start_display }}</td>
+          <td>
+            <span class="badge badge-{% if s.status == 'Ongoing' %}warning{% elif s.status == 'Completed' %}success{% else %}secondary{% endif %}">
+              {{ s.status }}
+            </span>
+          </td>
+          <td>{{ s.total_candidates }}</td>
+          <td>{{ s.passed_candidates }}</td>
+          <td>
+            <a href="/partner/schedule/{{ s.name }}" class="btn btn-sm btn-outline-primary">
+              <i data-feather="users"></i> Manage
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert-card">
+    <div class="alert-card-body">
+      <div class="alert-icon-section"><i data-feather="calendar"></i></div>
+      <div class="alert-status">No schedules yet</div>
+      <div class="alert-message-box">
+        <p>Exam schedules for your partner exams will appear here once created by the exam manager.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

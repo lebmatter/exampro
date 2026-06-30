@@ -3,38 +3,23 @@
 
 import frappe
 import json
-import pdfkit
 from frappe.model.document import Document
-from frappe.utils import get_site_path
-import os
 
 
 class ExamCertificateTemplate(Document):
 			
 	def generate_pdf(self, context_data=None):
-		"""Generate PDF from HTML template using wkhtmltopdf"""
+		"""Generate PDF from HTML template using WeasyPrint"""
 		if not self.html_template:
 			frappe.throw("HTML template is required to generate PDF")
-		
-		# Parse wkhtmltopdf parameters
-		pdf_options = {}
-		if self.wkhtmltopdf_params:
-			try:
-				pdf_options = json.loads(self.wkhtmltopdf_params)
-			except json.JSONDecodeError:
-				frappe.throw("Invalid JSON in wkhtmltopdf parameters")
-		
-		# Merge default options with custom ones
-		pdf_options = {**pdf_options}
-		
-		# Render HTML template with context
+
 		html_content = self.html_template
 		if context_data:
 			html_content = frappe.render_template(self.html_template, context_data)
-		
-		# Generate PDF
+
 		try:
-			pdf_bytes = pdfkit.from_string(html_content, False, options=pdf_options)
+			from weasyprint import HTML as WeasyHTML
+			pdf_bytes = WeasyHTML(string=html_content).write_pdf()
 			return pdf_bytes
 		except Exception as e:
 			frappe.throw(f"Error generating PDF: {str(e)}")

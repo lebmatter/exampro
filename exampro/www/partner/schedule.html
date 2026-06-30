@@ -1,0 +1,168 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}{{ exam.title }} — Schedule{% endblock %}
+
+{% block page_content %}
+<div class="container mt-4 mb-5">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3">
+    <a href="/partner" class="text-muted">
+      <i data-feather="arrow-left"></i> Partner Dashboard
+    </a>
+  </nav>
+
+  <!-- Schedule header -->
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="mb-1">{{ exam.title }}</h2>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <span class="badge badge-{% if schedule_status == 'Ongoing' %}warning{% elif schedule_status == 'Completed' %}success{% else %}secondary{% endif %}">
+          {{ schedule_status }}
+        </span>
+        <span class="text-muted">{{ start_display }}</span>
+        <span class="text-muted">·</span>
+        <span class="text-muted">{{ schedule.duration }} min</span>
+      </div>
+    </div>
+    {% if schedule_status == 'Completed' and exam.enable_certification %}
+    <button class="btn btn-primary" id="btn-send-certs">
+      <i data-feather="award"></i> Send Certificates
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ total_candidates }}</div>
+        <div class="score-card-label">Total</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ passed_count }}</div>
+        <div class="score-card-label">Passed</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ failed_count }}</div>
+        <div class="score-card-label">Failed</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="score-card">
+        <div class="score-card-value">{{ total_candidates - passed_count - failed_count }}</div>
+        <div class="score-card-label">Pending</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add candidates -->
+  {% if schedule_status in ['Upcoming', 'Ongoing'] %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3">
+        <i data-feather="user-plus"></i> Add Candidates
+      </h5>
+      <p class="text-muted mb-2">Enter email addresses, one per line or comma-separated.</p>
+      <textarea id="email-list" class="form-control mb-2" rows="4" placeholder="user@example.com&#10;another@example.com"></textarea>
+      <button class="btn btn-primary" id="btn-add-candidates">
+        <i data-feather="plus"></i> Add Candidates
+      </button>
+      <div id="add-result" class="mt-2"></div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Candidates table -->
+  <h4 class="mb-3"><i data-feather="users"></i> Candidates</h4>
+  {% if submissions %}
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Result</th>
+          <th>Score</th>
+          <th>Certificate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in submissions %}
+        <tr>
+          <td>{{ sub.candidate_name or "—" }}</td>
+          <td>{{ sub.candidate }}</td>
+          <td>{{ sub.status }}</td>
+          <td>
+            {% if sub.result_status %}
+            <span class="badge badge-{% if sub.result_status == 'Passed' %}success{% elif sub.result_status == 'Failed' %}danger{% else %}secondary{% endif %}">
+              {{ sub.result_status }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ sub.total_marks if sub.total_marks is not none else "—" }}</td>
+          <td>
+            {% if sub.issued_certificate %}
+            <span class="badge badge-success"><i data-feather="check"></i> Issued</span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-muted">No candidates registered yet.</p>
+  {% endif %}
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const scheduleName = {{ schedule.name | tojson }};
+
+  const addBtn = document.getElementById("btn-add-candidates");
+  if (addBtn) {
+    addBtn.addEventListener("click", function () {
+      const emailList = document.getElementById("email-list").value;
+      if (!emailList.trim()) return;
+      addBtn.disabled = true;
+      frappe.call({
+        method: "exampro.www.partner.schedule.partner_bulk_add_candidates",
+        args: { schedule_name: scheduleName, email_list: emailList },
+        callback: function (r) {
+          addBtn.disabled = false;
+          const div = document.getElementById("add-result");
+          if (r.message) {
+            div.innerHTML = '<div class="alert alert-success">' + r.message + "</div>";
+            setTimeout(() => location.reload(), 1200);
+          }
+        },
+        error: function () { addBtn.disabled = false; }
+      });
+    });
+  }
+
+  const certBtn = document.getElementById("btn-send-certs");
+  if (certBtn) {
+    certBtn.addEventListener("click", function () {
+      if (!confirm("Send certificates to all passing candidates?")) return;
+      certBtn.disabled = true;
+      frappe.call({
+        method: "exampro.www.partner.schedule.partner_send_certificates",
+        args: { schedule_name: scheduleName },
+        callback: function (r) {
+          certBtn.disabled = false;
+          frappe.msgprint(r.message || "Certificates sent.");
+        },
+        error: function () { certBtn.disabled = false; }
+      });
+    });
+  }
+});
+</script>
+{% endblock %}

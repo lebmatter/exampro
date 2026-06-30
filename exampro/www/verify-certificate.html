@@ -1,0 +1,166 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Verify Certificate{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/exam-result.css" />
+{% endblock %}
+
+{% block page_content %}
+<div class="container dashboard-page" id="verify-page">
+
+  {% if is_guest %}
+  <!-- Guest landing -->
+  <div class="result-card" style="max-width:560px;text-align:center;">
+    <div style="margin-bottom:1.5rem;">
+      <div style="width:72px;height:72px;border-radius:50%;background:#e8f5e9;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+        <i data-feather="shield" style="width:32px;height:32px;color:#198754;"></i>
+      </div>
+      <h3 style="font-weight:600;margin-bottom:0.5rem;">Certificate Verification</h3>
+      <p class="text-muted" style="max-width:380px;margin:0 auto;">
+        Verify the authenticity of an ExamPro certificate by entering its ID.
+        Please log in to continue.
+      </p>
+    </div>
+    <a href="/login?redirect-to=/verify-certificate" class="btn btn-primary">
+      <i data-feather="log-in"></i> Log in to Verify
+    </a>
+  </div>
+
+  {% else %}
+  <!-- Logged-in: search form + result rendered by JS -->
+  <div class="result-card" id="verify-card" style="max-width:720px;">
+
+    <div class="result-card-title">
+      <i data-feather="shield"></i> Verify Certificate
+    </div>
+    <div class="result-card-subtitle">Enter a certificate ID to check its authenticity.</div>
+
+    <form id="verify-form" class="d-flex gap-2 mb-4" onsubmit="verifyCert(event)">
+      <input
+        type="text"
+        id="cert-id-input"
+        class="form-control"
+        placeholder="e.g. CERT-2026-00001"
+        autocomplete="off"
+        required
+      >
+      <button type="submit" class="btn btn-primary" style="white-space:nowrap;" id="verify-btn">
+        <i data-feather="search"></i> Verify
+      </button>
+    </form>
+
+    <div id="verify-result"></div>
+
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function verifyCert(e) {
+  e.preventDefault();
+  var certId = document.getElementById('cert-id-input').value.trim();
+  if (!certId) return;
+
+  var btn = document.getElementById('verify-btn');
+  var resultEl = document.getElementById('verify-result');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i data-feather="loader"></i> Verifying...';
+  if (window.feather) feather.replace();
+  resultEl.innerHTML = '';
+
+  var csrfToken = frappe.csrf_token || getCookie('csrf_token') || '';
+  fetch('/api/method/exampro.www.verify-certificate.verify_certificate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Frappe-CSRF-Token': csrfToken
+    },
+    body: JSON.stringify({ cert_id: certId })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    btn.disabled = false;
+    btn.innerHTML = '<i data-feather="search"></i> Verify';
+    if (window.feather) feather.replace();
+    var msg = data && data.message;
+    if (!msg || !msg.found) {
+      resultEl.innerHTML = renderNotFound(msg && msg.error);
+    } else {
+      resultEl.innerHTML = renderCertCard(msg);
+    }
+    if (window.feather) feather.replace();
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<i data-feather="search"></i> Verify';
+    if (window.feather) feather.replace();
+    resultEl.innerHTML = renderNotFound('Something went wrong. Please try again.');
+    if (window.feather) feather.replace();
+  });
+}
+
+function renderNotFound(message) {
+  var msg = message || 'Certificate not found.';
+  return '<div class="result-meta">' +
+    '<div class="meta-row" style="gap:0.5rem;">' +
+      '<span class="meta-label" style="color:#dc3545;display:inline-flex;align-items:center;gap:0.4rem;flex-shrink:0;">' +
+        '<i data-feather="x-circle" style="width:15px;height:15px;"></i> Not Found' +
+      '</span>' +
+      '<span class="meta-value text-danger">' + escHtml(msg) + '</span>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderCertCard(c) {
+  var pillClass = c.is_expired ? 'status-failed' : 'status-passed';
+  var pillLabel = c.is_expired ? 'Expired' : 'Valid Certificate';
+
+  var logoHtml = '';
+  if (c.partner_logo) {
+    logoHtml = '<img src="' + escHtml(c.partner_logo) + '" alt="' + escHtml(c.partner_name || '') + '" ' +
+      'style="max-height:36px;max-width:120px;object-fit:contain;">';
+  }
+
+  var rows = '';
+  rows += metaRow('Certificate ID', '<span style="font-family:monospace;font-size:0.85rem;">' + escHtml(c.id) + '</span>');
+  rows += metaRow('Candidate', escHtml(c.candidate_name || '—'));
+  rows += metaRow('Exam', escHtml(c.exam_title || '—'));
+  if (c.partner_name) {
+    rows += metaRow('Issued by', escHtml(c.partner_name));
+  }
+  rows += metaRow('Issue Date', escHtml(c.issue_date || '—'));
+  var expiryVal = c.expiry_date
+    ? (c.is_expired ? '<span class="text-danger">' + escHtml(c.expiry_date) + '</span>' : escHtml(c.expiry_date))
+    : '<span class="text-muted">No expiry</span>';
+  rows += metaRow('Expiry Date', expiryVal);
+
+  return '<div class="mb-3 d-flex align-items-center gap-3">' +
+      '<span class="status-pill ' + pillClass + '">' + pillLabel + '</span>' +
+      logoHtml +
+    '</div>' +
+    '<div class="result-meta">' + rows + '</div>';
+}
+
+function metaRow(label, valueHtml) {
+  return '<div class="meta-row">' +
+    '<span class="meta-label">' + label + '</span>' +
+    '<span class="meta-value">' + valueHtml + '</span>' +
+  '</div>';
+}
+
+function getCookie(name) {
+  var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+{% endblock %}

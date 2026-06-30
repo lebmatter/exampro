@@ -34,6 +34,9 @@
   "enable_certification",
   "expiry",
   "certificate_template",
+  "partner_section",
+  "partner",
+  "partner_manages_questions",
   "public_payment_section",
   "is_public",
   "column_break_public",
@@ -312,6 +315,27 @@
    "fieldtype": "Link",
    "label": "Certificate Template",
    "options": "Exam Certificate Template"
+  },
+  {
+   "fieldname": "partner_section",
+   "fieldtype": "Section Break",
+   "label": "Partner Settings"
+  },
+  {
+   "description": "Link to an Exam Partner if this is a partnered exam. Leave blank for standard exams.",
+   "fieldname": "partner",
+   "fieldtype": "Link",
+   "in_list_view": 0,
+   "label": "Partner",
+   "options": "Exam Partner"
+  },
+  {
+   "default": "0",
+   "depends_on": "partner",
+   "description": "When enabled, partner users can manage exam questions. When disabled, only Exam Managers can edit questions.",
+   "fieldname": "partner_manages_questions",
+   "fieldtype": "Check",
+   "label": "Partner Can Manage Questions"
   },
   {
    "default": "0",

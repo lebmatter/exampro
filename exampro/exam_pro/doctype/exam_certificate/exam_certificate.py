@@ -8,13 +8,15 @@ from frappe.model.document import Document
 class ExamCertificate(Document):
 
     def before_save(self):
-        # only one certificate per exam submission
-        existing_certs = frappe.get_all("Exam Certificate", filters={"exam_submission": self.exam_submission})
-        if len(existing_certs) > 0:
-            frappe.throw("Duplicate certificate exist for exam submission {}.".format(self.exam_submission))
+        filters = {"exam_submission": self.exam_submission}
+        if self.name:
+            filters["name"] = ["!=", self.name]
+        if frappe.get_all("Exam Certificate", filters=filters, limit=1):
+            frappe.throw("A certificate already exists for exam submission {}.".format(self.exam_submission))
 
 
     def after_insert(self):
+        frappe.db.set_value("Exam Submission", self.exam_submission, "issued_certificate", self.name)
         self.send_email()
 
     def can_send_certificate(self):
@@ -126,6 +128,10 @@ class ExamCertificate(Document):
         else:
             percentage = "0"
         
+        partner_logo = None
+        if exam_doc.partner:
+            partner_logo = frappe.db.get_value("Exam Partner", exam_doc.partner, "logo")
+
         return {
             "student_name": self.candidate_name,
             "exam_title": exam_doc.title,
@@ -136,7 +142,9 @@ class ExamCertificate(Document):
             "completion_date": frappe.utils.format_date(exam_submission.modified, "dd MMM yyyy"),
             "exam_duration": f"{exam_doc.duration} minutes" if exam_doc.duration else "N/A",
             "certificate_id": self.name,
-            "issue_date": frappe.utils.format_date(self.issue_date, "dd MMM yyyy") if self.issue_date else frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy")
+            "issue_date": frappe.utils.format_date(self.issue_date, "dd MMM yyyy") if self.issue_date else frappe.utils.format_date(frappe.utils.nowdate(), "dd MMM yyyy"),
+            "partner_name": exam_doc.partner or None,
+            "partner_logo": partner_logo,
         }
 
     def get_email_status(self):

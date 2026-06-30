@@ -7,6 +7,16 @@ services:
     image: frappe/bench:latest
     command: >
       bash -c "
+        apt-get update -qq &&
+        apt-get install -y -qq --no-install-recommends
+          libpango-1.0-0
+          libpangoft2-1.0-0
+          libpangocairo-1.0-0
+          libcairo2
+          libgdk-pixbuf2.0-0
+          libffi8
+          shared-mime-info &&
+        /home/frappe/frappe-bench/env/bin/pip install --quiet weasyprint &&
         cd /home/frappe/frappe-bench &&
         bench set-config -g db_host db &&
         bench set-config -g db_port 5432 &&

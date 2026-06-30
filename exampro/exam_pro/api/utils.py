@@ -25,6 +25,7 @@ def get_website_context(context):
     is_proctor = "Exam Proctor" in user_roles
     is_evaluator = "Exam Evaluator" in user_roles
     is_manager = "Exam Manager" in user_roles
+    is_partner = "Exam Partner" in user_roles
 
     if is_proctor:
         top_bar_items.append({"label": "Proctor Exam", "url": "/proctor"})
@@ -35,11 +36,46 @@ def get_website_context(context):
     if is_manager:
         top_bar_items.append({"label": "Manage", "url": "/app/exam"})
 
+    if is_partner:
+        top_bar_items.append({"label": "Partner Dashboard", "url": "/partner"})
+
     context.top_bar_items = top_bar_items
     context.is_proctor = is_proctor
     context.is_evaluator = is_evaluator
     context.is_manager = is_manager
+    context.is_partner = is_partner
     return context
+
+
+def get_current_user_partner():
+    """Return the Exam Partner name for the current session user, or None."""
+    rows = frappe.get_all(
+        "Exam Partner User",
+        filters={"user": frappe.session.user},
+        fields=["parent"],
+        ignore_permissions=True,
+        limit=1,
+    )
+    return rows[0].parent if rows else None
+
+
+def assert_partner_access(partner_name=None):
+    """
+    Ensure current user has the Exam Partner role and belongs to the given partner.
+    If partner_name is None, only checks role membership.
+    Returns the partner name.
+    """
+    if "Exam Partner" not in frappe.get_roles(frappe.session.user):
+        frappe.throw("You do not have permission to access the partner portal.", frappe.PermissionError)
+
+    user_partner = get_current_user_partner()
+    if not user_partner:
+        frappe.throw("Your account is not linked to any exam partner.", frappe.PermissionError)
+
+    if partner_name and user_partner != partner_name:
+        frappe.throw("You do not have permission to access this partner's data.", frappe.PermissionError)
+
+    return user_partner
 
 def create_sample_exams():
     # Create question categories
@@ -254,6 +290,10 @@ def create_sample_exams():
             <head>
                 <meta charset="UTF-8">
                 <style>
+                    @page {
+                        size: A4 landscape;
+                        margin: 0.5in;
+                    }
                     body {
                         font-family: 'Times New Roman', serif;
                         margin: 0;
@@ -363,23 +403,10 @@ def create_sample_exams():
             </html>
         """
         
-        sample_wkhtmltopdf_params = """{
-            "page-size": "A4",
-            "orientation": "Landscape",
-            "margin-top": "0.5in",
-            "margin-right": "0.5in",
-            "margin-bottom": "0.5in",
-            "margin-left": "0.5in",
-            "encoding": "UTF-8",
-            "no-outline": null,
-            "enable-local-file-access": null
-        }"""
-        
         frappe.get_doc({
             "doctype": "Exam Certificate Template",
             "title": "Sample Certificate Template",
             "html_template": sample_html_template.strip(),
-            "wkhtmltopdf_params": sample_wkhtmltopdf_params
         }).insert()
 
     frappe.db.commit()

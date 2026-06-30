@@ -4,9 +4,10 @@
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 6px;
-  max-width: 720px;
+  max-width: 960px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem 1.75rem;
+  padding: 2.5rem 2.5rem;
 }
 
 .result-card.result-scorecard {
@@ -196,18 +197,26 @@
   padding: 0.5rem 1.1rem;
 }
 
-.result-actions .btn > i {
+.result-actions .btn > i,
+.result-actions .btn > svg {
   margin-right: 0.5rem;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .result-card {
     max-width: 100%;
+    padding: 2rem 1.75rem;
   }
+}
 
+@media (max-width: 767px) {
+  .result-card,
   .alert-card {
     max-width: 100%;
-    padding: 1.5rem 1.25rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: 1.75rem 1.25rem;
   }
 
   .alert-actions {
@@ -216,26 +225,34 @@
 }
 
 @media (max-width: 575px) {
-  .result-card {
-    padding: 1.5rem 1.1rem;
+  .result-card,
+  .alert-card {
+    padding: 1.25rem 1rem;
   }
 
   .result-card-title {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
   }
 
   .score-ring {
-    width: 120px;
-    height: 120px;
+    width: 110px;
+    height: 110px;
   }
 
   .score-value {
-    font-size: 1.85rem;
+    font-size: 1.75rem;
   }
 
   .meta-row {
     padding: 0.6rem 0.75rem;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .meta-value {
+    text-align: left;
   }
 
   .result-actions {
@@ -246,10 +263,6 @@
   .result-actions .alert-button {
     width: 100%;
     justify-content: center;
-  }
-
-  .alert-card {
-    padding: 1.25rem 1rem;
   }
 
   .alert-status {
@@ -267,7 +280,8 @@
 }
 
 /* Pending alert card — same look as the exam-page alert. */
-.dashboard-page:has(> .alert-card) {
+.dashboard-page:has(> .alert-card),
+.dashboard-page:has(> .result-card) {
   min-height: calc(100vh - 160px);
   display: flex;
   align-items: center;
@@ -365,7 +379,8 @@
   transition: all 0.2s ease;
 }
 
-.alert-button i { margin-right: 0.45rem; }
+.alert-button i,
+.alert-button svg { margin-right: 0.45rem; }
 
 .alert-button-primary {
   background: #0d6efd;

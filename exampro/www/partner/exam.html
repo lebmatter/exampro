@@ -1,0 +1,162 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Questions — {{ exam.title }}{% endblock %}
+
+{% block page_content %}
+<div class="container mt-4 mb-5">
+
+  <!-- Breadcrumb -->
+  <nav class="mb-3">
+    <a href="/partner" class="text-muted">
+      <i data-feather="arrow-left"></i> Partner Dashboard
+    </a>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="mb-1">{{ exam.title }}</h2>
+      <p class="text-muted mb-0">
+        Manage questions for this exam. Total: <strong>{{ total_questions }}</strong>
+        &nbsp;·&nbsp; Pass: {{ exam.pass_percentage }}%
+        &nbsp;·&nbsp; Duration: {{ exam.duration }} min
+      </p>
+    </div>
+  </div>
+
+  <!-- Add question from category -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3"><i data-feather="plus-circle"></i> Add Question</h5>
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-5">
+          <label class="form-label">Category</label>
+          <select id="question-category" class="form-control">
+            <option value="">— Select category —</option>
+            {% for cat in categories %}
+            <option value="{{ cat.name }}">{{ cat.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-5">
+          <label class="form-label">Question</label>
+          <select id="question-select" class="form-control" disabled>
+            <option value="">— Select question —</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-2">
+          <button id="btn-add-question" class="btn btn-primary w-100" disabled>
+            <i data-feather="plus"></i> Add
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current questions -->
+  <h4 class="mb-3"><i data-feather="list"></i> Current Questions</h4>
+  {% if added_questions %}
+  <div class="table-responsive">
+    <table class="table" id="questions-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Question</th>
+          <th>Category</th>
+          <th>Marks</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in added_questions %}
+        <tr id="row-{{ q.name }}">
+          <td>{{ loop.index }}</td>
+          <td>{{ q.question }}</td>
+          <td>{{ q.question_category or "—" }}</td>
+          <td>{{ q.mark or 1 }}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger btn-remove-question" data-name="{{ q.name }}">
+              <i data-feather="trash-2"></i>
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-muted" id="no-questions-msg">No questions added yet.</p>
+  {% endif %}
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const examName = {{ exam.name | tojson }};
+
+  const catSelect = document.getElementById("question-category");
+  const qSelect = document.getElementById("question-select");
+  const addBtn = document.getElementById("btn-add-question");
+
+  catSelect.addEventListener("change", function () {
+    const cat = this.value;
+    qSelect.innerHTML = '<option value="">— loading —</option>';
+    qSelect.disabled = true;
+    addBtn.disabled = true;
+    if (!cat) return;
+
+    frappe.call({
+      method: "exampro.www.partner.exam.get_questions_by_category",
+      args: { exam_name: examName, category: cat },
+      callback: function (r) {
+        qSelect.innerHTML = '<option value="">— Select question —</option>';
+        (r.message || []).forEach(function (q) {
+          const opt = document.createElement("option");
+          opt.value = q.name;
+          opt.textContent = q.question;
+          qSelect.appendChild(opt);
+        });
+        qSelect.disabled = false;
+      }
+    });
+  });
+
+  qSelect.addEventListener("change", function () {
+    addBtn.disabled = !this.value;
+  });
+
+  addBtn.addEventListener("click", function () {
+    const qName = qSelect.value;
+    if (!qName) return;
+    addBtn.disabled = true;
+    frappe.call({
+      method: "exampro.www.partner.exam.add_question_to_exam",
+      args: { exam_name: examName, question_name: qName },
+      callback: function (r) {
+        if (r.message && r.message.success) {
+          frappe.show_alert({ message: "Question added.", indicator: "green" });
+          setTimeout(() => location.reload(), 800);
+        }
+      },
+      error: function () { addBtn.disabled = false; }
+    });
+  });
+
+  document.querySelectorAll(".btn-remove-question").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const qName = this.dataset.name;
+      if (!confirm("Remove this question from the exam?")) return;
+      frappe.call({
+        method: "exampro.www.partner.exam.remove_question_from_exam",
+        args: { exam_name: examName, question_name: qName },
+        callback: function (r) {
+          if (r.message && r.message.success) {
+            const row = document.getElementById("row-" + qName);
+            if (row) row.remove();
+            frappe.show_alert({ message: "Question removed.", indicator: "orange" });
+          }
+        }
+      });
+    });
+  });
+});
+</script>
+{% endblock %}
