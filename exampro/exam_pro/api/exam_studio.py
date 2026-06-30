@@ -497,7 +497,8 @@ def _get_recent_exams(limit=10):
 	rows = frappe.db.sql(
 		"""
 		SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
-			   e.question_type, e.total_questions, e.total_marks, e.certificate_template
+			   e.question_type, e.total_questions, e.total_marks, e.certificate_template,
+			   e.enable_payment, e.price
 		FROM `tabExam` e
 		LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
 		ORDER BY COALESCE(s.start_date_time, e.modified) DESC
@@ -547,7 +548,8 @@ def search_exams(query):
 	return frappe.db.sql(
 		"""
 		SELECT name, title, exam_mode, duration, question_type,
-			   total_questions, total_marks
+			   total_questions, total_marks, certificate_template,
+			   enable_payment, price
 		FROM `tabExam`
 		WHERE title LIKE %(like)s
 		ORDER BY modified DESC
@@ -582,6 +584,19 @@ def get_exam_detail(name):
 			}
 			for sq in (doc.select_questions or [])
 		],
+		"enable_certification": bool(doc.enable_certification),
+		"expiry": doc.expiry if doc.expiry is not None else 0,
+		"certificate_template": doc.certificate_template or "",
+		"partner": doc.partner or "",
+		"partner_manages_questions": bool(doc.partner_manages_questions),
+		"is_public": bool(doc.is_public),
+		"enable_payment": bool(doc.enable_payment),
+		"price": doc.price or 0,
+		"enable_video_proctoring": bool(doc.enable_video_proctoring),
+		"enable_screen_recording": bool(doc.enable_screen_recording),
+		"enable_chat": bool(doc.enable_chat),
+		"enable_calculator": bool(doc.enable_calculator),
+		"max_warning_count": doc.max_warning_count if doc.max_warning_count is not None else 3,
 	}
 
 
@@ -727,12 +742,18 @@ def save_exam(data):
 		doc = frappe.new_doc("Exam")
 
 	for field in ("title", "exam_mode", "duration", "pass_percentage",
-				  "question_type", "description", "instructions"):
+				  "question_type", "description", "instructions",
+				  "expiry", "certificate_template", "partner", "price",
+				  "max_warning_count"):
 		if field in data:
 			doc.set(field, data[field])
 
-	if "randomize_questions" in data:
-		doc.randomize_questions = 1 if data["randomize_questions"] else 0
+	for bool_field in ("randomize_questions", "enable_certification",
+					   "partner_manages_questions", "is_public", "enable_payment",
+					   "enable_video_proctoring", "enable_screen_recording",
+					   "enable_chat", "enable_calculator"):
+		if bool_field in data:
+			doc.set(bool_field, 1 if data[bool_field] else 0)
 
 	if "select_questions" in data:
 		doc.select_questions = []

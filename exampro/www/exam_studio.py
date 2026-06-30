@@ -30,7 +30,8 @@ def get_context(context):
 	context.exams = frappe.db.sql(
 		"""
 		SELECT DISTINCT e.name, e.title, e.exam_mode, e.duration,
-			   e.question_type, e.total_questions, e.total_marks
+			   e.question_type, e.total_questions, e.total_marks,
+			   e.certificate_template, e.enable_payment, e.price
 		FROM `tabExam` e
 		LEFT JOIN `tabExam Schedule` s ON s.exam = e.name
 		ORDER BY COALESCE(s.start_date_time, e.modified) DESC
@@ -43,4 +44,17 @@ def get_context(context):
 		"Exam Batch",
 		fields=["name"],
 		order_by="name",
+	)
+
+	context.certificate_templates = frappe.get_all(
+		"Exam Certificate Template",
+		fields=["name", "title"],
+		order_by="title",
+	)
+
+	context.partners = frappe.get_all(
+		"Exam Partner",
+		filters={"is_active": 1},
+		fields=["name", "partner_name"],
+		order_by="partner_name",
 	)

@@ -80,6 +80,9 @@
                   <span class="badge-meta" x-show="exam.certificate_template" title="Certificate exam" style="color:#adb5bd;">
                     <i data-feather="award" style="width:10px;height:10px;"></i>
                   </span>
+                  <span class="badge-meta" x-show="exam.enable_payment && exam.price" title="Paid exam">
+                    ₹<span x-text="exam.price"></span>
+                  </span>
                 </div>
               </div>
               <div class="question-actions quiz-actions-hoverable" :class="{'quiz-actions-visible': selectedExam && selectedExam.name === exam.name}">
@@ -271,6 +274,26 @@
               <span class="tab-count" x-text="examForm.select_questions.length" x-show="examForm.select_questions.length > 0"></span>
             </button>
           </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': examModalTab === 'certificate'}" @click="examModalTab = 'certificate'">
+              <i data-feather="award" style="width:12px;height:12px;"></i> Certificate
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': examModalTab === 'partner'}" @click="examModalTab = 'partner'">
+              <i data-feather="users" style="width:12px;height:12px;"></i> Partner
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': examModalTab === 'payment'}" @click="examModalTab = 'payment'">
+              <i data-feather="credit-card" style="width:12px;height:12px;"></i> Payment
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{'active': examModalTab === 'proctoring'}" @click="examModalTab = 'proctoring'">
+              <i data-feather="eye" style="width:12px;height:12px;"></i> Proctoring
+            </button>
+          </li>
         </ul>
 
         <!-- Details tab -->
@@ -431,6 +454,136 @@
             </div>
           </template>
         </div>
+
+        <!-- Certificate tab -->
+        <div class="modal-tab-content" x-show="examModalTab === 'certificate'">
+          <div class="control-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" x-model="examForm.enable_certification" id="examEnableCert">
+              <label class="form-check-label" for="examEnableCert" style="font-size:0.85rem;">Enable certification</label>
+            </div>
+          </div>
+          <div x-show="examForm.enable_certification">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="control-group">
+                  <label class="control-label">Certificate valid for (years) <span class="text-muted" style="font-weight:400;">— 0 for no expiry</span></label>
+                  <input type="number" class="form-control form-control-sm" x-model.number="examForm.expiry" min="0">
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="control-group">
+                  <label class="control-label">Certificate Template</label>
+                  <select class="form-select form-select-sm" x-model="examForm.certificate_template">
+                    <option value="">None</option>
+                    <template x-for="t in allCertificateTemplates" :key="t.name">
+                      <option :value="t.name" x-text="t.title || t.name"></option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <a href="/app/exam-certificate-template" target="_blank" class="studio-advanced-link">
+              Manage certificate templates <i data-feather="external-link" style="width:12px;height:12px;"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Partner tab -->
+        <div class="modal-tab-content" x-show="examModalTab === 'partner'">
+          <div class="control-group">
+            <label class="control-label">Partner</label>
+            <select class="form-select form-select-sm" x-model="examForm.partner">
+              <option value="">None</option>
+              <template x-for="p in allPartners" :key="p.name">
+                <option :value="p.name" x-text="p.partner_name || p.name"></option>
+              </template>
+            </select>
+          </div>
+          <div class="control-group" x-show="examForm.partner">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" x-model="examForm.partner_manages_questions" id="examPartnerManagesQ">
+              <label class="form-check-label" for="examPartnerManagesQ" style="font-size:0.85rem;">Partner manages questions</label>
+            </div>
+          </div>
+          <div class="mt-3">
+            <a href="/app/exam-partner" target="_blank" class="studio-advanced-link">
+              Manage partners <i data-feather="external-link" style="width:12px;height:12px;"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Payment tab -->
+        <div class="modal-tab-content" x-show="examModalTab === 'payment'">
+          <div class="control-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" x-model="examForm.is_public" id="examIsPublic">
+              <label class="form-check-label" for="examIsPublic" style="font-size:0.85rem;">Public exam (listed on open exams page)</label>
+            </div>
+          </div>
+          <div x-show="examForm.is_public">
+            <div class="control-group">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" x-model="examForm.enable_payment" id="examEnablePayment">
+                <label class="form-check-label" for="examEnablePayment" style="font-size:0.85rem;">Require payment to register</label>
+              </div>
+            </div>
+            <div class="control-group" x-show="examForm.enable_payment">
+              <label class="control-label">Price (₹)</label>
+              <input type="number" class="form-control form-control-sm" x-model.number="examForm.price" min="0" step="0.01" placeholder="0.00" style="max-width:200px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Proctoring tab -->
+        <div class="modal-tab-content" x-show="examModalTab === 'proctoring'">
+          <div x-show="examForm.exam_mode !== 'Exam'">
+            <p class="text-muted" style="font-size:0.85rem;">Proctoring settings apply to Exam mode only.</p>
+          </div>
+          <div x-show="examForm.exam_mode === 'Exam'">
+            <div class="row g-3 mb-2">
+              <div class="col-md-6">
+                <div class="control-group">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" x-model="examForm.enable_video_proctoring" id="examVideoProctor">
+                    <label class="form-check-label" for="examVideoProctor" style="font-size:0.85rem;">Enable video proctoring</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="control-group">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" x-model="examForm.enable_screen_recording" id="examScreenRec">
+                    <label class="form-check-label" for="examScreenRec" style="font-size:0.85rem;">Enable screen recording</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="control-group">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" x-model="examForm.enable_chat" id="examEnableChat">
+                    <label class="form-check-label" for="examEnableChat" style="font-size:0.85rem;">Enable chat</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="control-group">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" x-model="examForm.enable_calculator" id="examEnableCalc">
+                    <label class="form-check-label" for="examEnableCalc" style="font-size:0.85rem;">Enable calculator</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="control-group" style="max-width:200px;">
+              <label class="control-label">Max warnings before termination</label>
+              <input type="number" class="form-control form-control-sm" x-model.number="examForm.max_warning_count" min="1">
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <div class="modal-footer">
@@ -446,7 +599,7 @@
               </span>
             </template>
           </button>
-          <a class="studio-advanced-link ms-auto" :href="'/app/exam/' + encodeURIComponent(examForm.name)" x-show="examForm.name" target="_blank">
+          <a class="studio-advanced-link ms-auto" :href="'/app/exam/' + encodeURIComponent(examForm.name)" x-show="examForm.name" target="_blank" style="margin-left:1.5rem;">
             Advanced settings
             <i data-feather="external-link" style="width:12px;height:12px;"></i>
           </a>

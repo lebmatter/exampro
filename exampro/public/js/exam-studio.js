@@ -55,6 +55,8 @@ function examStudioApp() {
     selectedSchedule: null,
     candidates: [],
     batches: window.examStudioData?.batches || [],
+    allCertificateTemplates: window.examStudioData?.certificateTemplates || [],
+    allPartners: window.examStudioData?.partners || [],
 
     loadingSchedules: false,
     loadingCandidates: false,
@@ -75,6 +77,19 @@ function examStudioApp() {
       instructions: "",
       randomize_questions: false,
       select_questions: [],
+      enable_certification: false,
+      expiry: 0,
+      certificate_template: "",
+      partner: "",
+      partner_manages_questions: false,
+      is_public: false,
+      enable_payment: false,
+      price: 0,
+      enable_video_proctoring: false,
+      enable_screen_recording: false,
+      enable_chat: false,
+      enable_calculator: false,
+      max_warning_count: 3,
     },
 
     scheduleForm: {
@@ -975,6 +990,19 @@ function examStudioApp() {
         instructions: "",
         randomize_questions: false,
         select_questions: [],
+        enable_certification: false,
+        expiry: 0,
+        certificate_template: "",
+        partner: "",
+        partner_manages_questions: false,
+        is_public: false,
+        enable_payment: false,
+        price: 0,
+        enable_video_proctoring: false,
+        enable_screen_recording: false,
+        enable_chat: false,
+        enable_calculator: false,
+        max_warning_count: 3,
       };
       if (this._examModal) this._examModal.show();
       this.syncExamEditors();
@@ -997,6 +1025,19 @@ function examStudioApp() {
               mark_per_question: sq.mark_per_question,
             };
           });
+          this.examForm.enable_certification = detail.enable_certification || false;
+          this.examForm.expiry = detail.expiry || 1;
+          this.examForm.certificate_template = detail.certificate_template || "";
+          this.examForm.partner = detail.partner || "";
+          this.examForm.partner_manages_questions = detail.partner_manages_questions || false;
+          this.examForm.is_public = detail.is_public || false;
+          this.examForm.enable_payment = detail.enable_payment || false;
+          this.examForm.price = detail.price || 0;
+          this.examForm.enable_video_proctoring = detail.enable_video_proctoring || false;
+          this.examForm.enable_screen_recording = detail.enable_screen_recording || false;
+          this.examForm.enable_chat = detail.enable_chat || false;
+          this.examForm.enable_calculator = detail.enable_calculator || false;
+          this.examForm.max_warning_count = detail.max_warning_count !== undefined ? detail.max_warning_count : 3;
         }
       } catch (e) {
         // keep modal open with basic data
@@ -1043,6 +1084,19 @@ function examStudioApp() {
               mark_per_question: sq.mark_per_question,
             };
           }),
+          enable_certification: exam.enable_certification || false,
+          expiry: (exam.expiry != null ? exam.expiry : 0),
+          certificate_template: exam.certificate_template || "",
+          partner: exam.partner || "",
+          partner_manages_questions: exam.partner_manages_questions || false,
+          is_public: exam.is_public || false,
+          enable_payment: exam.enable_payment || false,
+          price: exam.price || 0,
+          enable_video_proctoring: exam.enable_video_proctoring || false,
+          enable_screen_recording: exam.enable_screen_recording || false,
+          enable_chat: exam.enable_chat || false,
+          enable_calculator: exam.enable_calculator || false,
+          max_warning_count: exam.max_warning_count !== undefined ? exam.max_warning_count : 3,
         };
       } else {
         this.examForm = {
@@ -1056,6 +1110,19 @@ function examStudioApp() {
           instructions: "",
           randomize_questions: false,
           select_questions: [],
+          enable_certification: false,
+          expiry: 0,
+          certificate_template: "",
+          partner: "",
+          partner_manages_questions: false,
+          is_public: false,
+          enable_payment: false,
+          price: 0,
+          enable_video_proctoring: false,
+          enable_screen_recording: false,
+          enable_chat: false,
+          enable_calculator: false,
+          max_warning_count: 3,
         };
       }
       if (this._examModal) this._examModal.show();
@@ -1088,6 +1155,19 @@ function examStudioApp() {
           select_questions: this.examForm.select_questions.filter(function(sq) {
             return sq.question_category;
           }),
+          enable_certification: this.examForm.enable_certification,
+          expiry: this.examForm.expiry,
+          certificate_template: this.examForm.certificate_template,
+          partner: this.examForm.partner,
+          partner_manages_questions: this.examForm.partner_manages_questions,
+          is_public: this.examForm.is_public,
+          enable_payment: this.examForm.enable_payment,
+          price: this.examForm.price,
+          enable_video_proctoring: this.examForm.enable_video_proctoring,
+          enable_screen_recording: this.examForm.enable_screen_recording,
+          enable_chat: this.examForm.enable_chat,
+          enable_calculator: this.examForm.enable_calculator,
+          max_warning_count: this.examForm.max_warning_count,
         };
         if (this.examModalMode === "edit" && this.examForm.name) {
           payload.name = this.examForm.name;
