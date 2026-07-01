@@ -695,19 +695,24 @@ def get_schedule_end_time(exam_schedule, additional_time=0):
 @frappe.whitelist()
 def get_ongoing_schedules():
 	"""Return names of all currently ongoing exam schedules."""
-	now_dt = datetime.fromisoformat(now().split(".")[0])
-	schedules = frappe.get_all(
-		"Exam Schedule",
-		fields=["name", "start_date_time", "duration", "schedule_type", "schedule_expire_in_days"],
+	now_dt = now()
+	# Filter in SQL: start has passed and computed end hasn't yet.
+	# Fixed: end = start + duration_minutes
+	# Flexible: end = start + expire_days + duration_minutes
+	rows = frappe.db.sql(
+		"""
+		SELECT name FROM `tabExam Schedule`
+		WHERE start_date_time <= %(now)s
+		  AND CASE
+		        WHEN schedule_type = 'Flexible'
+		        THEN DATE_ADD(start_date_time, INTERVAL (IFNULL(schedule_expire_in_days, 0) * 1440 + IFNULL(duration, 0)) MINUTE)
+		        ELSE DATE_ADD(start_date_time, INTERVAL IFNULL(duration, 0) MINUTE)
+		      END >= %(now)s
+		""",
+		{"now": now_dt},
+		as_dict=True,
 	)
-	ongoing = []
-	for s in schedules:
-		end = s.start_date_time + timedelta(minutes=s.duration or 0)
-		if s.schedule_type == "Flexible":
-			end += timedelta(days=s.schedule_expire_in_days or 0)
-		if s.start_date_time <= now_dt <= end:
-			ongoing.append(s.name)
-	return ongoing
+	return [r.name for r in rows]
 
 
 @frappe.whitelist()

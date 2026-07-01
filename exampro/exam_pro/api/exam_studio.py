@@ -770,44 +770,31 @@ def get_all_schedules():
 def get_ongoing_schedules():
 	partner = _check_manager_or_partner()
 
+	partner_filter = "AND e.partner = %(partner)s" if partner else ""
 	now = now_datetime()
-	if partner:
-		schedules = frappe.db.sql(
-			"""
-			SELECT es.name, es.exam, es.start_date_time, es.duration,
-			       es.schedule_type, es.schedule_expire_in_days,
-			       e.title as exam_title
-			FROM `tabExam Schedule` es
-			JOIN `tabExam` e ON e.name = es.exam
-			WHERE e.partner = %(partner)s
-			ORDER BY es.start_date_time
-			""",
-			{"partner": partner},
-			as_dict=True,
-		)
-	else:
-		schedules = frappe.db.sql(
-			"""
-			SELECT es.name, es.exam, es.start_date_time, es.duration,
-			       es.schedule_type, es.schedule_expire_in_days,
-			       e.title as exam_title
-			FROM `tabExam Schedule` es
-			JOIN `tabExam` e ON e.name = es.exam
-			ORDER BY es.start_date_time
-			""",
-			as_dict=True,
-		)
 
-	ongoing = []
-	for sch in schedules:
-		status = _compute_schedule_status(sch, now)
-		if status == "Ongoing":
-			sch["candidate_count"] = frappe.db.count(
-				"Exam Submission", {"exam_schedule": sch["name"]}
-			)
-			ongoing.append(sch)
+	schedules = frappe.db.sql(
+		f"""
+		SELECT es.name, es.exam, es.start_date_time, es.duration,
+		       es.schedule_type, es.schedule_expire_in_days,
+		       e.title as exam_title,
+		       (SELECT COUNT(*) FROM `tabExam Submission` sub WHERE sub.exam_schedule = es.name) as candidate_count
+		FROM `tabExam Schedule` es
+		JOIN `tabExam` e ON e.name = es.exam
+		WHERE es.start_date_time <= %(now)s
+		  AND CASE
+		        WHEN es.schedule_type = 'Flexible'
+		        THEN DATE_ADD(es.start_date_time, INTERVAL (IFNULL(es.schedule_expire_in_days, 0) * 1440 + IFNULL(es.duration, 0)) MINUTE)
+		        ELSE DATE_ADD(es.start_date_time, INTERVAL IFNULL(es.duration, 0) MINUTE)
+		      END >= %(now)s
+		  {partner_filter}
+		ORDER BY es.start_date_time
+		""",
+		{"now": now, "partner": partner},
+		as_dict=True,
+	)
 
-	return ongoing
+	return schedules
 
 
 @frappe.whitelist()
