@@ -111,6 +111,9 @@ function examStudioApp() {
 
     examSearchQuery: "",
     scheduleModalMode: "create",
+    conflictingSchedules: [],
+    loadingConflicts: false,
+    conflictsChecked: false,
 
     ongoingSchedules: [],
 
@@ -1230,6 +1233,9 @@ function examStudioApp() {
 
     openScheduleModal(mode, sch) {
       this.scheduleModalMode = mode || "create";
+      this.conflictingSchedules = [];
+      this.conflictsChecked = false;
+      this.loadingConflicts = false;
       if (mode === "edit" && sch) {
         var dt = (sch.start_date_time || "").replace(" ", "T");
         if (dt.length > 16) dt = dt.substring(0, 16);
@@ -1253,6 +1259,9 @@ function examStudioApp() {
       }
       if (this._scheduleModal) this._scheduleModal.show();
       this._initScheduleDatetime();
+      if (this.scheduleForm.start_date_time) {
+        this.checkConflicts(this.scheduleForm.start_date_time);
+      }
       this.replaceIcons();
     },
 
@@ -1271,12 +1280,54 @@ function examStudioApp() {
         defaultDate: defaultDate,
         onChange: function (selectedDates, dateStr) {
           self.scheduleForm.start_date_time = dateStr ? dateStr + ":00" : "";
+          self.checkConflicts(self.scheduleForm.start_date_time);
         },
       });
     },
 
+    async checkConflicts(dateStr) {
+      if (!dateStr || !this.selectedExam) {
+        this.conflictingSchedules = [];
+        this.conflictsChecked = false;
+        return;
+      }
+      this.loadingConflicts = true;
+      try {
+        var startDt = dateStr.replace("T", " ");
+        if (startDt.length === 16) startDt += ":00";
+        const r = await frappe.call({
+          method: "exampro.exam_pro.api.exam_studio.get_conflicting_schedules",
+          args: {
+            start_date_time: startDt,
+            duration_minutes: this.selectedExam.duration || 0,
+            exclude_schedule: this.scheduleForm.name || null,
+          },
+        });
+        this.conflictingSchedules = r.message || [];
+        this.conflictsChecked = true;
+      } catch (e) {
+        this.conflictingSchedules = [];
+        this.conflictsChecked = false;
+      }
+      this.loadingConflicts = false;
+      this.replaceIcons();
+    },
+
     async saveSchedule() {
       if (!this.scheduleForm.start_date_time || !this.selectedExam) return;
+
+      if (this.conflictingSchedules.length > 0) {
+        const count = this.conflictingSchedules.length;
+        const confirmed = await new Promise(resolve => {
+          frappe.confirm(
+            `This schedule overlaps with ${count} other exam${count > 1 ? "s" : ""}. Do you want to continue?`,
+            () => resolve(true),
+            () => resolve(false)
+          );
+        });
+        if (!confirmed) return;
+      }
+
       this.savingSchedule = true;
 
       try {

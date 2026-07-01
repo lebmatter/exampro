@@ -770,6 +770,46 @@ def get_ongoing_schedules():
 	return ongoing
 
 
+@frappe.whitelist()
+def get_conflicting_schedules(start_date_time, duration_minutes, exclude_schedule=None):
+	from datetime import timedelta
+
+	partner = _check_manager_or_partner()
+	start = frappe.utils.get_datetime(start_date_time)
+	duration_mins = int(float(duration_minutes or 0))
+	end = start + timedelta(minutes=duration_mins)
+
+	partner_filter = "AND e.partner = %(partner)s" if partner else ""
+	exclude_filter = "AND es.name != %(exclude_schedule)s" if exclude_schedule else ""
+
+	schedules = frappe.db.sql(
+		f"""
+		SELECT es.name, es.exam, es.start_date_time, es.schedule_type,
+		       es.duration, es.schedule_expire_in_days, e.title as exam_title
+		FROM `tabExam Schedule` es
+		JOIN `tabExam` e ON e.name = es.exam
+		WHERE es.start_date_time < %(end_dt)s
+		  AND CASE
+		        WHEN es.schedule_type = 'Flexible'
+		        THEN DATE_ADD(es.start_date_time, INTERVAL (IFNULL(es.schedule_expire_in_days, 0) * 1440 + IFNULL(es.duration, 0)) MINUTE)
+		        ELSE DATE_ADD(es.start_date_time, INTERVAL IFNULL(es.duration, 0) MINUTE)
+		      END > %(start_dt)s
+		  {partner_filter}
+		  {exclude_filter}
+		ORDER BY es.start_date_time
+		""",
+		{
+			"start_dt": start,
+			"end_dt": end,
+			"partner": partner,
+			"exclude_schedule": exclude_schedule or "",
+		},
+		as_dict=True,
+	)
+
+	return schedules
+
+
 def _compute_schedule_status(sch, now):
 	from datetime import timedelta
 	start = sch.get("start_date_time")

@@ -628,6 +628,32 @@
         <div class="control-group">
           <label class="control-label">Start Date & Time <span class="text-danger">*</span></label>
           <input type="text" id="schedule-datetime-picker" class="form-control form-control-sm" placeholder="Pick date and time">
+
+          <template x-if="loadingConflicts">
+            <div class="mt-1 text-muted" style="font-size:12px;">
+              <span class="spinner-border spinner-border-sm me-1" style="width:10px;height:10px;border-width:1.5px;"></span>
+              Checking for conflicts...
+            </div>
+          </template>
+
+          <template x-if="!loadingConflicts && conflictsChecked && conflictingSchedules.length === 0">
+            <div class="mt-1" style="font-size:12px;color:var(--green-600,#16a34a);">
+              <i data-feather="check-circle" style="width:12px;height:12px;vertical-align:middle;"></i>
+              No other exams scheduled at this time.
+            </div>
+          </template>
+
+          <template x-if="!loadingConflicts && conflictingSchedules.length > 0">
+            <div class="alert alert-warning mt-2 mb-0 p-2" style="font-size:12px;">
+              <div class="fw-semibold mb-1">
+                <i data-feather="alert-triangle" style="width:12px;height:12px;vertical-align:middle;"></i>
+                <span x-text="conflictingSchedules.length + ' overlapping exam schedule' + (conflictingSchedules.length > 1 ? 's' : '') + ' found'"></span>
+              </div>
+              <template x-for="c in conflictingSchedules" :key="c.name">
+                <div class="text-muted" x-text="c.exam_title + '  —  ' + (c.start_date_time || '').substring(0, 16)"></div>
+              </template>
+            </div>
+          </template>
         </div>
 
         <div class="control-group">
