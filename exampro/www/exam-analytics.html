@@ -1,0 +1,304 @@
+{% extends "exampro/templates/exam_base.html" %}
+{% block title %}Analytics — {{ exam_title or "Exam Analytics" }}{% endblock %}
+{% block head_include %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/exampro/css/exam-studio.css" />
+<link rel="stylesheet" href="/assets/exampro/css/exam-analytics.css" />
+{% endblock %}
+
+{% block page_content %}
+<div x-data="examAnalyticsApp()" x-init="init()">
+  <div class="container-fluid dashboard-page" style="max-width:1400px">
+
+    {% if not exam_name or not exam_found %}
+    <div class="empty-state" style="min-height:300px;padding-top:4rem;">
+      <i data-feather="bar-chart-2" style="width:2.5rem;height:2.5rem;"></i>
+      <h6>No exam selected</h6>
+      <p class="text-muted mb-0">Open this page from an exam or schedule in Studio.</p>
+      <a href="/exam-studio" class="btn-generate mt-3" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;border-radius:4px;text-decoration:none;">
+        <i data-feather="cpu" style="width:14px;height:14px;"></i> Go to Studio
+      </a>
+    </div>
+    {% else %}
+
+    <script>
+      window.examAnalyticsData = {
+        examName: {{ exam_name | tojson }},
+        scheduleName: {{ schedule_name | tojson }},
+      };
+    </script>
+
+    <!-- Header -->
+    <div class="row mb-3">
+      <div class="col">
+        <h4 class="bold-heading mb-1">
+          <i data-feather="bar-chart-2" style="width:20px;height:20px;"></i>
+          {{ exam_title }}
+        </h4>
+        <p class="text-muted mb-0" style="font-size:0.85rem;">
+          <a href="/exam-studio" style="color:inherit;text-decoration:none;">Studio</a>
+          <span class="mx-1">/</span>
+          Analytics
+          <span class="mx-1">/</span>
+          {% if schedule_label %}
+            {{ schedule_label }}
+          {% else %}
+            All Schedules
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs studio-tabs mb-0">
+      <li class="nav-item">
+        <button class="nav-link active" id="ea-tab-questions-btn" data-bs-toggle="tab" data-bs-target="#ea-tab-questions">
+          <i data-feather="list" style="width:14px;height:14px;"></i>
+          Questions
+          <span class="tab-count" x-text="questionStats.length" x-show="questionStats.length > 0"></span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ea-tab-summary" @click="loadSummary()">
+          <i data-feather="pie-chart" style="width:14px;height:14px;"></i>
+          Summary
+        </button>
+      </li>
+      <li class="nav-item" x-show="!scopeSchedule">
+        <button class="nav-link" id="ea-tab-schedules-btn" data-bs-toggle="tab" data-bs-target="#ea-tab-schedules" @click="loadScheduleComparison()">
+          <i data-feather="trending-up" style="width:14px;height:14px;"></i>
+          Schedules
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content pt-4">
+
+      <!-- Questions Tab -->
+      <div class="tab-pane fade show active" id="ea-tab-questions">
+        <div class="question-list-card">
+          <div class="question-list-header">
+            <h6>
+              <i data-feather="list" style="width:14px;height:14px;"></i>
+              Per-Question Statistics
+            </h6>
+            <span class="text-muted" style="font-size:0.75rem;">D-index ≥0.3 good · 0.1–0.3 fair · &lt;0.1 poor</span>
+          </div>
+          <div style="overflow-x:auto;">
+
+            <template x-if="!questionStatsLoaded">
+              <div class="empty-state">
+                <span class="spinner-border text-muted mb-2" style="width:1.5rem;height:1.5rem;"></span>
+                <p class="text-muted mb-0" style="font-size:0.82rem;">Loading question stats...</p>
+              </div>
+            </template>
+
+            <template x-if="questionStatsLoaded && questionStats.length === 0">
+              <div class="empty-state">
+                <i data-feather="help-circle" style="width:2rem;height:2rem;"></i>
+                <h6>No data yet</h6>
+                <p class="text-muted mb-0">Question statistics appear once candidates submit answers</p>
+              </div>
+            </template>
+
+            <template x-if="questionStatsLoaded && questionStats.length > 0">
+              <table class="table ea-stats-table">
+                <thead>
+                  <tr>
+                    <th>Question</th>
+                    <th>Category</th>
+                    <th>Difficulty</th>
+                    <th>Attempts</th>
+                    <th>Success Rate</th>
+                    <th>D-Index</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="q in questionStats" :key="q.exam_question">
+                    <tr>
+                      <td>
+                        <div class="ea-question-preview" x-text="q.question || '(No preview)'"></div>
+                      </td>
+                      <td>
+                        <span class="badge-cat" x-show="q.category" x-text="q.category"></span>
+                        <span x-show="!q.category" class="text-muted">—</span>
+                      </td>
+                      <td>
+                        <span x-show="q.difficulty" :class="'badge-' + (q.difficulty || '').toLowerCase()" x-text="q.difficulty"></span>
+                        <span x-show="!q.difficulty" class="text-muted">—</span>
+                      </td>
+                      <td x-text="q.total_attempts"></td>
+                      <td>
+                        <template x-if="q.success_rate !== null && q.success_rate !== undefined">
+                          <span :class="successRateClass(q.success_rate)" x-text="q.success_rate + '%'"></span>
+                        </template>
+                        <template x-if="q.success_rate === null || q.success_rate === undefined">
+                          <span class="text-muted">—</span>
+                        </template>
+                      </td>
+                      <td>
+                        <template x-if="q.d_index !== null && q.d_index !== undefined">
+                          <span :class="dIndexClass(q.d_index)" :title="dIndexTooltip(q.d_index)" x-text="q.d_index"></span>
+                        </template>
+                        <template x-if="q.d_index === null || q.d_index === undefined">
+                          <span class="text-muted" title="Need more submissions for D-index">—</span>
+                        </template>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </template>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Tab -->
+      <div class="tab-pane fade" id="ea-tab-summary">
+
+        <template x-if="!summaryLoaded">
+          <div class="empty-state" style="min-height:200px;">
+            <span class="spinner-border text-muted mb-2" style="width:1.5rem;height:1.5rem;"></span>
+            <p class="text-muted mb-0" style="font-size:0.82rem;">Loading summary...</p>
+          </div>
+        </template>
+
+        <template x-if="summaryLoaded && summaryData && summaryData.total_submissions === 0">
+          <div class="empty-state" style="min-height:200px;">
+            <i data-feather="pie-chart" style="width:2rem;height:2rem;"></i>
+            <h6>No submissions yet</h6>
+            <p class="text-muted mb-0">Summary will appear once candidates submit</p>
+          </div>
+        </template>
+
+        <template x-if="summaryLoaded && summaryData && summaryData.total_submissions > 0">
+          <div>
+            <!-- Metric cards -->
+            <div class="d-flex flex-wrap gap-3 mb-4">
+              <div class="ea-metric-card">
+                <div class="ea-metric-label">
+                  <i data-feather="users" style="width:12px;height:12px;"></i> Total Submitted
+                </div>
+                <div class="ea-metric-value" x-text="summaryData.total_submissions"></div>
+              </div>
+              <div class="ea-metric-card">
+                <div class="ea-metric-label">
+                  <i data-feather="check-circle" style="width:12px;height:12px;"></i> Pass Rate
+                </div>
+                <div class="ea-metric-value" x-text="summaryData.pass_rate + '%'"></div>
+              </div>
+              <div class="ea-metric-card">
+                <div class="ea-metric-label">
+                  <i data-feather="bar-chart-2" style="width:12px;height:12px;"></i> Avg Score
+                </div>
+                <div class="ea-metric-value" x-text="summaryData.avg_score"></div>
+              </div>
+              <div class="ea-metric-card">
+                <div class="ea-metric-label">
+                  <i data-feather="clock" style="width:12px;height:12px;"></i> Avg Time
+                </div>
+                <div class="ea-metric-value" x-text="summaryData.avg_completion_time + ' min'"></div>
+              </div>
+              <div class="ea-metric-card" x-show="summaryData.pending_eval > 0">
+                <div class="ea-metric-label">
+                  <i data-feather="edit" style="width:12px;height:12px;"></i> Pending Eval
+                </div>
+                <div class="ea-metric-value" x-text="summaryData.pending_eval"></div>
+              </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="d-flex flex-wrap gap-3">
+              <div class="ea-chart-card">
+                <h6>Score Distribution</h6>
+                <div id="ea-score-dist-chart"></div>
+              </div>
+              <div class="ea-chart-card">
+                <h6>Pass / Fail Breakdown</h6>
+                <div id="ea-pass-fail-chart"></div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+      </div>
+
+      <!-- Schedules Tab -->
+      <div class="tab-pane fade" id="ea-tab-schedules">
+
+        <template x-if="!scheduleComparisonLoaded">
+          <div class="empty-state" style="min-height:200px;">
+            <span class="spinner-border text-muted mb-2" style="width:1.5rem;height:1.5rem;"></span>
+            <p class="text-muted mb-0" style="font-size:0.82rem;">Loading schedule comparison...</p>
+          </div>
+        </template>
+
+        <template x-if="scheduleComparisonLoaded && scheduleComparison.length < 2">
+          <div class="empty-state" style="min-height:200px;">
+            <i data-feather="trending-up" style="width:2rem;height:2rem;"></i>
+            <h6>Need more data</h6>
+            <p class="text-muted mb-0">Trend comparison requires at least 2 completed schedules with submissions</p>
+          </div>
+        </template>
+
+        <template x-if="scheduleComparisonLoaded && scheduleComparison.length >= 2">
+          <div>
+            <!-- Trend chart -->
+            <div class="ea-chart-card mb-4" style="max-width:760px;">
+              <h6>Performance Trends Across Schedules</h6>
+              <div id="ea-schedule-trend-chart"></div>
+            </div>
+
+            <!-- Table -->
+            <div class="question-list-card">
+              <div class="question-list-header">
+                <h6>
+                  <i data-feather="calendar" style="width:14px;height:14px;"></i>
+                  Schedule Breakdown
+                </h6>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="table ea-stats-table">
+                  <thead>
+                    <tr>
+                      <th>Schedule</th>
+                      <th>Date</th>
+                      <th>Candidates</th>
+                      <th>Pass Rate</th>
+                      <th>Avg Score</th>
+                      <th>Avg Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="s in scheduleComparison" :key="s.schedule_name">
+                      <tr>
+                        <td>
+                          <span class="badge-cat" x-text="s.badge || s.schedule_name"></span>
+                        </td>
+                        <td x-text="s.start_date_time.substring(0, 10)"></td>
+                        <td x-text="s.candidate_count"></td>
+                        <td>
+                          <span :class="successRateClass(s.pass_rate)" x-text="s.pass_rate + '%'"></span>
+                        </td>
+                        <td x-text="s.avg_score"></td>
+                        <td x-text="s.avg_completion_time + ' min'"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </template>
+
+      </div>
+
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+<script src="/assets/exampro/js/exam-analytics.js"></script>
+{% endblock %}

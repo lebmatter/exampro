@@ -97,6 +97,9 @@
                     <button class="quiz-dropdown-item" @click.stop="duplicateExam(exam); examDropdownOpen = null">
                       <i data-feather="copy" style="width:13px;height:13px;"></i> Duplicate
                     </button>
+                    <a class="quiz-dropdown-item" :href="'/exam-analytics?exam=' + encodeURIComponent(exam.name)" @click.stop="examDropdownOpen = null">
+                      <i data-feather="bar-chart-2" style="width:13px;height:13px;"></i> Analyse Exam
+                    </a>
                   </div>
                 </div>
               </div>
@@ -179,6 +182,9 @@
                     <button class="quiz-dropdown-item" :class="{'quiz-dropdown-item-disabled': sch.status !== 'Completed'}" :disabled="sch.status !== 'Completed'" @click.stop="sch.status === 'Completed' && (exportScheduleResultsCsv(sch), scheduleDropdownOpen = null)" :title="sch.status !== 'Completed' ? 'Available after schedule is completed' : ''">
                       <i data-feather="download" style="width:13px;height:13px;"></i> Export Results as CSV
                     </button>
+                    <a class="quiz-dropdown-item" :class="{'quiz-dropdown-item-disabled': sch.status !== 'Completed'}" :href="sch.status === 'Completed' ? '/exam-analytics?exam=' + encodeURIComponent(selectedExam.name) + '&schedule=' + encodeURIComponent(sch.name) : '#'" @click.stop="scheduleDropdownOpen = null" :title="sch.status !== 'Completed' ? 'Available after schedule is completed' : ''">
+                      <i data-feather="bar-chart-2" style="width:13px;height:13px;"></i> Analyse Schedule
+                    </a>
                   </div>
                 </div>
               </div>

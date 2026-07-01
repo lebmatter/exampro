@@ -238,6 +238,8 @@ get_telemetry_boot_info() %}
       $('a[href="/evaluate"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/exam-studio" || currentPath.startsWith("/exam-studio")) {
       $('a[href="/exam-studio"]').closest(".nav-item").addClass("active");
+    } else if (currentPath === "/exam-analytics" || currentPath.startsWith("/exam-analytics")) {
+      $('a[href="/exam-analytics"]').closest(".nav-item").addClass("active");
     }
 
     // Logout: hit Frappe's logout RPC, then redirect — the API returns JSON
