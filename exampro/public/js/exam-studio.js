@@ -996,6 +996,29 @@ function examStudioApp() {
       );
     },
 
+    async exportScheduleResultsCsv(sch) {
+      try {
+        frappe.show_alert({ message: "Preparing CSV export...", indicator: "blue" });
+        const r = await frappe.call({
+          method: "exampro.exam_pro.doctype.exam_schedule.exam_schedule.export_results_csv",
+          args: { schedule_name: sch.name },
+        });
+        if (r.message) {
+          const blob = new Blob([r.message], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = sch.name + "_results.csv";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      } catch (e) {
+        // error shown by frappe
+      }
+    },
+
     async duplicateExam(exam) {
       try {
         const r = await frappe.call({

@@ -76,10 +76,15 @@ function add_status_based_actions(frm, status) {
         frm.add_custom_button(__('Send Certificates'), function() {
             send_certificates(frm);
         }, __('Actions'));
-        
+
         // Recompute Results - only for Completed
         frm.add_custom_button(__('Recompute Results'), function() {
             recompute_results(frm);
+        }, __('Actions'));
+
+        // Export Results as CSV - only for Completed
+        frm.add_custom_button(__('Export Results as CSV'), function() {
+            export_results_csv(frm);
         }, __('Actions'));
     }
     
@@ -367,6 +372,27 @@ function bulk_add_submissions(frm) {
     });
     
     dialog.show();
+}
+
+function export_results_csv(frm) {
+    frappe.show_alert({ message: __('Preparing CSV export...'), indicator: 'blue' });
+    frappe.call({
+        method: 'exampro.exam_pro.doctype.exam_schedule.exam_schedule.export_results_csv',
+        args: { schedule_name: frm.doc.name },
+        callback: function(r) {
+            if (r.message) {
+                let blob = new Blob([r.message], { type: 'text/csv' });
+                let url = URL.createObjectURL(blob);
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = frm.doc.name + '_results.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+    });
 }
 
 function show_assignment_counts(frm) {

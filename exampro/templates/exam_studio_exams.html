@@ -176,6 +176,9 @@
                         <i data-feather="award" style="width:13px;height:13px;"></i> Send Certificates
                       </button>
                     </template>
+                    <button class="quiz-dropdown-item" :class="{'quiz-dropdown-item-disabled': sch.status !== 'Completed'}" :disabled="sch.status !== 'Completed'" @click.stop="sch.status === 'Completed' && (exportScheduleResultsCsv(sch), scheduleDropdownOpen = null)" :title="sch.status !== 'Completed' ? 'Available after schedule is completed' : ''">
+                      <i data-feather="download" style="width:13px;height:13px;"></i> Export Results as CSV
+                    </button>
                   </div>
                 </div>
               </div>

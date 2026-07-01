@@ -789,3 +789,54 @@ def force_terminate_schedule(schedule_name):
 
 	return {"terminated": count}
 
+
+@frappe.whitelist()
+def export_results_csv(schedule_name):
+	user_roles = frappe.get_roles()
+	if "Exam Manager" not in user_roles:
+		frappe.throw("You do not have permission to export results.")
+
+	sched = frappe.get_doc("Exam Schedule", schedule_name, ignore_permissions=True)
+	max_additional_time = frappe.db.get_value("Exam Submission", {"exam_schedule": schedule_name}, "max(additional_time_given)") or 0
+	if sched.get_status(additional_time=max_additional_time) != "Completed":
+		frappe.throw("Results can only be exported after the schedule is completed.")
+
+	exam_total_marks = frappe.db.get_value("Exam", sched.exam, "total_marks") or 0
+
+	submissions = frappe.get_all(
+		"Exam Submission",
+		filters={"exam_schedule": schedule_name},
+		fields=[
+			"candidate", "candidate_name", "total_marks", "result_status",
+			"status", "exam_started_time", "exam_submitted_time"
+		],
+		order_by="candidate_name asc"
+	)
+
+	import csv
+	import io
+
+	output = io.StringIO()
+	writer = csv.writer(output)
+	writer.writerow(["Candidate Name", "Email", "Score", "Percentage", "Pass/Fail", "Time Taken (mins)", "Status"])
+
+	for s in submissions:
+		score = s.total_marks or 0
+		percentage = round((score / exam_total_marks * 100), 2) if exam_total_marks else ""
+		pass_fail = s.result_status or ""
+		time_taken = ""
+		if s.exam_started_time and s.exam_submitted_time:
+			diff = s.exam_submitted_time - s.exam_started_time
+			time_taken = round(diff.total_seconds() / 60, 2)
+		writer.writerow([
+			s.candidate_name or "",
+			s.candidate or "",
+			score,
+			percentage,
+			pass_fail,
+			time_taken,
+			s.status or ""
+		])
+
+	return output.getvalue()
+
