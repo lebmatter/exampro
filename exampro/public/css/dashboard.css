@@ -287,6 +287,26 @@
   margin-bottom: 0.25rem;
 }
 
+.completed-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  flex-wrap: wrap;
+}
+
+.completed-pagination .pagination .page-link {
+  color: #495057;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.completed-pagination .pagination .page-item.active .page-link {
+  background-color: #212529;
+  border-color: #212529;
+  color: #fff;
+}
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .dashboard-page {

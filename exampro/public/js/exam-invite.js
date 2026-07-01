@@ -16,7 +16,7 @@ function acceptInvitation(scheduleName) {
           indicator: "green",
         });
         setTimeout(function () {
-          window.location.href = "/my-exams";
+          window.location.href = "/dashboard?tab=completed";
         }, 1500);
       } else {
         $btn

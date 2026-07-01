@@ -7,6 +7,7 @@ from frappe.utils import format_datetime, strip_html
 from exampro.exam_pro.api.utils import submit_candidate_pending_exams
 from exampro.exam_pro.doctype.exam_schedule.exam_schedule import get_schedule_status
 from exampro.www.evaluate import get_evaluator_live_exams
+from exampro.www.my_exams import get_past_exams
 from exampro.www.proctor import get_proctor_live_exams, get_proctor_upcoming_events
 
 
@@ -226,6 +227,10 @@ def get_context(context):
     submit_candidate_pending_exams()
     context.no_cache = 1
 
+    active_tab = frappe.form_dict.get("tab", "live")
+    completed_page = int(frappe.form_dict.get("completed_page", 1))
+    context.active_tab = active_tab
+
     roles = frappe.get_roles()
     is_proctor = "Exam Proctor" in roles
     is_evaluator = "Exam Evaluator" in roles
@@ -293,6 +298,11 @@ def get_context(context):
     else:
         scope_text = ", ".join(scopes[:-1]) + f" and {scopes[-1]}"
     context.subheading = f"Your live and upcoming {scope_text}."
+
+    completed_data = get_past_exams(page=completed_page, page_size=20)
+    context.completed_exams = completed_data["exams"]
+    context.completed_pagination = completed_data["pagination"]
+    context.completed_count = completed_data["pagination"]["total"]
 
     context.open_exams = _open_exams()
 

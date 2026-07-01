@@ -132,21 +132,27 @@
 
   <ul class="nav nav-tabs dashboard-tabs" id="dashboardTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="live-tab" data-bs-toggle="tab" data-bs-target="#live" type="button" role="tab">
+      <button class="nav-link {% if active_tab != 'upcoming' and active_tab != 'completed' %}active{% endif %}" id="live-tab" data-bs-toggle="tab" data-bs-target="#live" type="button" role="tab">
         <i data-feather="radio"></i>Live
         <span class="tab-count">{{ live_count }}</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
+      <button class="nav-link {% if active_tab == 'upcoming' %}active{% endif %}" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">
         <i data-feather="calendar"></i>Upcoming
         <span class="tab-count">{{ upcoming_count }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link {% if active_tab == 'completed' %}active{% endif %}" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+        <i data-feather="check-circle"></i>Completed
+        <span class="tab-count">{{ completed_count }}</span>
       </button>
     </li>
   </ul>
 
   <div class="tab-content pt-4">
-    <div class="tab-pane fade show active" id="live" role="tabpanel">
+    <div class="tab-pane fade {% if active_tab != 'upcoming' and active_tab != 'completed' %}show active{% endif %}" id="live" role="tabpanel">
       {% if live_items %}
       <div class="row g-3">
         {% for item in live_items %}
@@ -164,7 +170,7 @@
       {% endif %}
     </div>
 
-    <div class="tab-pane fade" id="upcoming" role="tabpanel">
+    <div class="tab-pane fade {% if active_tab == 'upcoming' %}show active{% endif %}" id="upcoming" role="tabpanel">
       {% if upcoming_items %}
       <div class="row g-3">
         {% for item in upcoming_items %}
@@ -181,6 +187,116 @@
       </div>
       {% endif %}
     </div>
+
+    <div class="tab-pane fade {% if active_tab == 'completed' %}show active{% endif %}" id="completed" role="tabpanel">
+      {% if completed_exams %}
+      <div class="row g-2 mb-3">
+        {% for exam in completed_exams %}
+        <div class="col-md-6 col-lg-4">
+          <div class="dashboard-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-badges">
+                <span class="dashboard-badge badge-exam">Exam</span>
+              </div>
+              <div class="schedule-pills">
+                {% if exam.schedule_type == "Flexible" %}
+                <span class="schedule-pill schedule-flexible">Flexible</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="dashboard-card-body">
+              <h5 class="dashboard-card-title">{{ exam.exam_title }}</h5>
+              <ul class="dashboard-meta">
+                <li>
+                  <i data-feather="clock"></i>
+                  <span>{{ exam.schedule_time }}</span>
+                </li>
+                <li>
+                  <i data-feather="watch"></i>
+                  <span>{{ exam.duration }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="dashboard-card-footer" style="gap:0.4rem;flex-wrap:wrap;justify-content:space-between;align-items:center;">
+              <div>
+                {% if exam.status == "Submitted" %}
+                  {% if not exam.can_show_results %}
+                  <span class="status-pill status-pending">Result Pending</span>
+                  {% elif exam.result_status == "Passed" %}
+                  <span class="status-pill status-passed">Passed</span>
+                  {% elif exam.result_status == "Failed" %}
+                  <span class="status-pill status-failed">Failed</span>
+                  {% elif exam.result_status == "Pending" %}
+                  <span class="status-pill status-pending">Pending</span>
+                  {% else %}
+                  <span class="status-pill status-neutral">{{ exam.result_status or 'Submitted' }}</span>
+                  {% endif %}
+                {% elif exam.status == "Terminated" %}
+                <span class="status-pill status-failed">Terminated</span>
+                {% else %}
+                <span class="status-pill status-neutral">{{ exam.status }}</span>
+                {% endif %}
+              </div>
+              <div class="d-flex gap-2">
+                {% if exam.status == "Submitted" and exam.can_show_results %}
+                <a href="/exam/{{ exam.submission }}" class="btn btn-sm btn-outline-secondary dashboard-action">
+                  <i data-feather="file-text"></i> Result
+                </a>
+                {% endif %}
+                {% if exam.certification_enabled and exam.certificate_exists %}
+                <button type="button" onclick="downloadCertificate('{{ exam.certificate_name }}')" class="btn btn-sm btn-outline-success dashboard-action">
+                  <i data-feather="award"></i> Certificate
+                </button>
+                {% endif %}
+                {% if exam.leaderboard_enabled %}
+                <a href="/leaderboard/{{ exam.submission }}" class="btn btn-sm btn-outline-secondary dashboard-action">
+                  <i data-feather="bar-chart-2"></i>
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% set p = completed_pagination %}
+      {% if p.total_pages > 1 %}
+      <div class="completed-pagination">
+        <p class="text-muted mb-0 small">
+          {{ (p.page - 1) * p.page_size + 1 }}–{{ p.page * p.page_size if p.page * p.page_size < p.total else p.total }} of {{ p.total }}
+        </p>
+        <nav aria-label="Completed exams pagination">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {% if not p.has_prev %}disabled{% endif %}">
+              <a class="page-link" href="?tab=completed&completed_page={{ p.page - 1 }}">&laquo;</a>
+            </li>
+            {% for i in range(1, p.total_pages + 1) %}
+            <li class="page-item {% if i == p.page %}active{% endif %}">
+              <a class="page-link" href="?tab=completed&completed_page={{ i }}">{{ i }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if not p.has_next %}disabled{% endif %}">
+              <a class="page-link" href="?tab=completed&completed_page={{ p.page + 1 }}">&raquo;</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="empty-state">
+        <i data-feather="book-open"></i>
+        <h5>No completed exams yet</h5>
+        <p class="text-muted mb-0">Finished exams will appear here.</p>
+      </div>
+      {% endif %}
+    </div>
   </div>
 </div>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script type="text/javascript" src="/assets/exampro/js/my-exams.js"></script>
 {% endblock %}

@@ -111,9 +111,6 @@
             <li class="nav-item">
               <a class="nav-link" href="/dashboard">Dashboard</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/my-exams">My Exams</a>
-            </li>
             {% if is_manager %}
             <li class="nav-item dropdown">
               <a
@@ -230,8 +227,6 @@ get_telemetry_boot_info() %}
     // Map URLs to navigation items
     if (currentPath === "/dashboard" || currentPath === "/") {
       $('a[href="/dashboard"]').closest(".nav-item").addClass("active");
-    } else if (currentPath === "/my-exams") {
-      $('a[href="/my-exams"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/proctor") {
       $('a[href="/proctor"]').closest(".nav-item").addClass("active");
     } else if (currentPath === "/evaluate") {

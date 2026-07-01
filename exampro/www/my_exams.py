@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import frappe
 from frappe.utils import format_datetime
-from exampro.exam_pro.api.utils import submit_candidate_pending_exams, can_show_exam_results_for_leaderboard
+from exampro.exam_pro.api.utils import can_show_exam_results_for_leaderboard
 
 
 PAST_STATUSES = ("Submitted", "Terminated")
@@ -84,23 +84,8 @@ def get_past_exams(member=None, page=1, page_size=10):
 
 
 def get_context(context):
-	if frappe.session.user == "Guest":
-		frappe.local.flags.redirect_location = "/login"
-		raise frappe.Redirect
-
-	submit_candidate_pending_exams()
-	context.no_cache = 1
-
-	page = int(frappe.form_dict.get("page", 1))
-	page_size = 10
-	data = get_past_exams(page=page, page_size=page_size)
-	context.exams = data["exams"]
-	context.pagination = data["pagination"]
-
-	context.metatags = {
-		"title": "My Exams",
-		"description": "Your past exam attempts",
-	}
+	frappe.local.flags.redirect_location = "/dashboard?tab=completed"
+	raise frappe.Redirect
 
 
 @frappe.whitelist()

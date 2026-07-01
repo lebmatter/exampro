@@ -21,7 +21,7 @@ endblock %} {% block head_include %} {{ super() }} {% for ext in page_extensions
           <p>{{ alert.text }}</p>
         </div>
         <div class="alert-actions">
-          <a href="/my-exams" class="alert-button alert-button-primary">
+          <a href="/dashboard?tab=completed" class="alert-button alert-button-primary">
             <i data-feather="arrow-left"></i>My Exams
           </a>
         </div>
