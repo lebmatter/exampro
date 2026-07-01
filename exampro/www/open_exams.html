@@ -50,21 +50,17 @@
               <span>{{ exam.schedules | length }} schedule{{ 's' if exam.schedules | length > 1 else '' }}</span>
             </li>
           </ul>
-
-          <div class="schedule-selector mt-3">
-            <label class="form-label">Select Schedule</label>
-            <select class="form-select form-select-sm" x-model="selectedSchedule">
-              <option value="">-- Choose a date --</option>
-              {% for sched in exam.schedules %}
-              <option value="{{ sched.short_uuid }}">
-                {{ sched.start_date_time }}
-                {% if sched.schedule_type == 'Flexible' %} (Flexible){% endif %}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
         </div>
-        <div class="dashboard-card-footer">
+        <div class="dashboard-card-footer open-exam-footer">
+          <select class="form-select form-select-sm" x-model="selectedSchedule">
+            <option value="">-- Choose a date --</option>
+            {% for sched in exam.schedules %}
+            <option value="{{ sched.short_uuid }}">
+              {{ sched.start_date_time }}
+              {% if sched.schedule_type == 'Flexible' %} (Flexible){% endif %}
+            </option>
+            {% endfor %}
+          </select>
           {% if is_logged_in %}
           <a
             class="btn btn-sm btn-primary dashboard-action"

@@ -27,27 +27,31 @@
   color: #fff;
 }
 
-.schedule-selector .form-label {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: #868e96;
-  margin-bottom: 0.3rem;
+.open-exam-footer {
+  gap: 0.5rem;
 }
 
-.schedule-selector .form-select {
-  font-size: 0.85rem;
+.open-exam-footer .form-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.public-exam-card .dashboard-card-footer .form-select {
+  font-size: 0.82rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   color: #495057;
-  padding: 0.4rem 0.6rem;
-  background-color: #fff;
+  background-color: #fafbfc;
+  padding: 0.35rem 2rem 0.35rem 0.6rem;
   transition: border-color 0.2s ease;
+  box-shadow: none;
 }
 
-.schedule-selector .form-select:focus {
-  border-color: #f5c344ff;
+.public-exam-card .dashboard-card-footer .form-select:focus {
+  border-color: #f5c344;
   box-shadow: 0 0 0 2px rgba(245, 195, 68, 0.15);
   outline: none;
+  background-color: #fff;
 }
 
 /* Registration page */
