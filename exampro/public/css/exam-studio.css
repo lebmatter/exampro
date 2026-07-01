@@ -1700,3 +1700,225 @@
   background: rgba(0, 0, 0, 0.06);
   margin: 0.25rem 0;
 }
+
+/* ---- Calendar Tab ---- */
+
+.cal-card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Month navigation */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: #fafbfc;
+}
+
+.cal-nav-btn {
+  padding: 0.2rem 0.45rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cal-nav-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cal-month-select,
+.cal-year-select {
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #212529;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.cal-month-select { width: auto; }
+.cal-year-select { width: auto; }
+
+/* Grid header */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.cal-grid-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cal-day-header {
+  padding: 0.4rem 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* Day cells */
+.cal-grid-body {
+  position: relative;
+}
+
+.cal-grid-days {
+  border-left: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cal-day {
+  min-height: 80px;
+  padding: 4px 3px 3px;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  vertical-align: top;
+  overflow: hidden;
+}
+
+.cal-day-today {
+  background: rgba(245, 195, 68, 0.08);
+}
+
+.cal-day-other {
+  background: #fafbfc;
+}
+
+.cal-day-num {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.cal-day-today .cal-day-num {
+  color: #e67700;
+}
+
+/* Event labels */
+.cal-event {
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 1px 5px;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  line-height: 1.5;
+}
+
+.cal-event-single {
+  border-radius: 3px;
+}
+
+.cal-event-start {
+  border-radius: 3px 0 0 3px;
+  margin-right: -1px;
+}
+
+.cal-event-middle {
+  border-radius: 0;
+  margin-left: -1px;
+  margin-right: -1px;
+}
+
+.cal-event-end {
+  border-radius: 0 3px 3px 0;
+  margin-left: -1px;
+}
+
+.cal-event-completed {
+  background: #e9ecef !important;
+  color: #6c757d !important;
+}
+
+/* 8 exam color palette */
+.cal-color-0 { background: #e8f4fd; color: #0c63e4; }
+.cal-color-1 { background: #e8f5e9; color: #1b5e20; }
+.cal-color-2 { background: #fff3bf; color: #e67700; }
+.cal-color-3 { background: #fce4ec; color: #c62828; }
+.cal-color-4 { background: #ede7f6; color: #4527a0; }
+.cal-color-5 { background: #e0f7fa; color: #006064; }
+.cal-color-6 { background: #e8eaf6; color: #283593; }
+.cal-color-7 { background: #fff8e1; color: #e65100; }
+
+/* Left schedule list */
+.cal-schedule-list {
+  max-height: 540px;
+}
+
+.cal-schedule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cal-schedule-item:last-child {
+  border-bottom: none;
+}
+
+.cal-schedule-item:hover {
+  background: rgba(245, 195, 68, 0.06);
+}
+
+.cal-schedule-completed {
+  opacity: 0.5;
+}
+
+.cal-schedule-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* Reuse cal-color-* for the dot background */
+.cal-schedule-dot.cal-color-0 { background: #0c63e4; }
+.cal-schedule-dot.cal-color-1 { background: #1b5e20; }
+.cal-schedule-dot.cal-color-2 { background: #e67700; }
+.cal-schedule-dot.cal-color-3 { background: #c62828; }
+.cal-schedule-dot.cal-color-4 { background: #4527a0; }
+.cal-schedule-dot.cal-color-5 { background: #006064; }
+.cal-schedule-dot.cal-color-6 { background: #283593; }
+.cal-schedule-dot.cal-color-7 { background: #e65100; }
+
+.cal-schedule-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-schedule-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #212529;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-schedule-meta {
+  font-size: 0.73rem;
+  color: #6c757d;
+}
+
+.cal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}

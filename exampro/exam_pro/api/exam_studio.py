@@ -727,6 +727,46 @@ def get_exam_schedules(exam):
 
 
 @frappe.whitelist()
+def get_all_schedules():
+	partner = _check_manager_or_partner()
+
+	if partner:
+		schedules = frappe.db.sql(
+			"""
+			SELECT es.name, es.start_date_time, es.schedule_type, es.duration,
+			       es.schedule_expire_in_days, es.badge,
+			       e.title as exam_title, e.name as exam,
+			       (SELECT COUNT(*) FROM `tabExam Submission` sub WHERE sub.exam_schedule = es.name) as candidate_count
+			FROM `tabExam Schedule` es
+			JOIN `tabExam` e ON e.name = es.exam
+			WHERE e.partner = %(partner)s
+			ORDER BY es.start_date_time ASC
+			""",
+			{"partner": partner},
+			as_dict=True,
+		)
+	else:
+		schedules = frappe.db.sql(
+			"""
+			SELECT es.name, es.start_date_time, es.schedule_type, es.duration,
+			       es.schedule_expire_in_days, es.badge,
+			       e.title as exam_title, e.name as exam,
+			       (SELECT COUNT(*) FROM `tabExam Submission` sub WHERE sub.exam_schedule = es.name) as candidate_count
+			FROM `tabExam Schedule` es
+			JOIN `tabExam` e ON e.name = es.exam
+			ORDER BY es.start_date_time ASC
+			""",
+			as_dict=True,
+		)
+
+	now = now_datetime()
+	for sch in schedules:
+		sch["status"] = _compute_schedule_status(sch, now)
+
+	return schedules
+
+
+@frappe.whitelist()
 def get_ongoing_schedules():
 	partner = _check_manager_or_partner()
 

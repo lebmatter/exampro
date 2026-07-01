@@ -1,0 +1,137 @@
+<!-- Calendar Tab -->
+<div class="tab-pane fade" id="tab-calendar">
+  <div class="row g-3">
+
+    <!-- Left: Schedule list -->
+    <div class="col-lg-4 col-md-5">
+      <div class="question-list-card">
+        <div class="question-list-header">
+          <h6>
+            <i data-feather="list" style="width:14px;height:14px;"></i>
+            Schedules
+            <span class="tab-count" x-text="calendarSchedules.length" x-show="calendarSchedules.length > 0"></span>
+          </h6>
+        </div>
+        <div class="question-list-body cal-schedule-list">
+
+          <template x-if="!calendarLoaded">
+            <div class="empty-state">
+              <span class="spinner-border text-muted mb-2" style="width:1.5rem;height:1.5rem;"></span>
+              <p class="text-muted mb-0" style="font-size:0.82rem;">Loading schedules...</p>
+            </div>
+          </template>
+
+          <template x-if="calendarLoaded && calendarSchedules.length === 0">
+            <div class="empty-state">
+              <i data-feather="calendar" style="width:2rem;height:2rem;"></i>
+              <h6>No schedules</h6>
+              <p class="text-muted mb-0">Create schedules in the Exams tab</p>
+            </div>
+          </template>
+
+          <template x-for="sch in calendarScheduleList()" :key="sch.name">
+            <div class="cal-schedule-item" :class="sch.status === 'Completed' ? 'cal-schedule-completed' : ''"
+                 @click="calendarJumpToSchedule(sch)">
+              <div class="cal-schedule-dot" :class="'cal-color-' + examColorIndex(sch.exam)"></div>
+              <div class="cal-schedule-info">
+                <div class="cal-schedule-title" x-text="sch.exam_title"></div>
+                <div class="cal-schedule-meta">
+                  <span x-text="formatCalendarDate(sch.start_date_time)"></span>
+                </div>
+                <div class="cal-schedule-meta mt-1" style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;">
+                  <span class="badge-schedule-status" :class="'badge-status-' + (sch.status || 'upcoming').toLowerCase()" x-text="sch.status || 'Upcoming'"></span>
+                  <span class="badge-type" x-text="sch.schedule_type" x-show="sch.schedule_type"></span>
+                  <template x-if="sch.badge">
+                    <span class="badge-type" x-text="sch.badge"></span>
+                  </template>
+                  <span class="badge-meta" x-show="sch.candidate_count > 0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span x-text="sch.candidate_count"></span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Calendar -->
+    <div class="col-lg-8 col-md-7">
+      <div class="cal-card">
+
+        <!-- Month navigation -->
+        <div class="cal-nav">
+          <button class="btn btn-sm btn-outline-secondary cal-nav-btn" @click="calendarPrev()">
+            <i data-feather="chevron-left" style="width:14px;height:14px;"></i>
+          </button>
+          <div class="cal-nav-title">
+            <select class="form-select form-select-sm cal-month-select" x-model.number="calendarMonth">
+              <template x-for="(m, i) in calendarMonthNames" :key="i">
+                <option :value="i" x-text="m" :selected="i === calendarMonth"></option>
+              </template>
+            </select>
+            <select class="form-select form-select-sm cal-year-select" x-model.number="calendarYear">
+              <template x-for="y in calendarYearOptions()" :key="y">
+                <option :value="y" x-text="y" :selected="y === calendarYear"></option>
+              </template>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary cal-nav-btn" @click="calendarNext()">
+            <i data-feather="chevron-right" style="width:14px;height:14px;"></i>
+          </button>
+        </div>
+
+        <!-- Day headers -->
+        <div class="cal-grid cal-grid-header">
+          <template x-for="day in calendarDayNames" :key="day">
+            <div class="cal-day-header" x-text="day"></div>
+          </template>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="cal-grid-body">
+          <template x-if="!calendarLoaded">
+            <div class="cal-loading">
+              <span class="spinner-border text-muted" style="width:1.5rem;height:1.5rem;"></span>
+            </div>
+          </template>
+          <template x-if="calendarLoaded">
+            <div class="cal-grid cal-grid-days">
+              <template x-for="(week, wi) in calendarGrid()" :key="wi">
+                <template x-for="(day, di) in week" :key="wi + '-' + di">
+                  <div class="cal-day"
+                       :class="{
+                         'cal-day-today': day.isToday,
+                         'cal-day-other': !day.isCurrentMonth,
+                       }">
+                    <div class="cal-day-num" :class="{'text-muted': !day.isCurrentMonth}" x-text="day.date"></div>
+                    <template x-for="(ev, ei) in day.schedules" :key="ev.name + '-' + day.date + '-' + day.month">
+                      <div class="cal-event"
+                           :class="[
+                             ev.status === 'Completed' ? 'cal-event-completed' : 'cal-color-' + ev.colorIndex,
+                             ev.isStart && ev.isEnd ? 'cal-event-single' :
+                               ev.isStart ? 'cal-event-start' :
+                               ev.isEnd ? 'cal-event-end' : 'cal-event-middle'
+                           ]"
+                           :title="ev.exam_title + (ev.badge ? ' · ' + ev.badge : '')">
+                        <template x-if="ev.isStart">
+                          <span x-text="ev.badge || ev.exam_title"></span>
+                        </template>
+                        <template x-if="!ev.isStart">
+                          <span>&nbsp;</span>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </template>
+            </div>
+          </template>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

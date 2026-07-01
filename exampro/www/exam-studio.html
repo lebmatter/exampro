@@ -63,6 +63,13 @@
           Users
         </button>
       </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-calendar"
+                @click="loadCalendarSchedules()">
+          <i data-feather="calendar" style="width:14px;height:14px;"></i>
+          Calendar
+        </button>
+      </li>
     </ul>
 
     <div class="tab-content pt-4">
@@ -70,6 +77,7 @@
       {% include "exampro/templates/exam_studio_questions.html" %}
       {% include "exampro/templates/exam_studio_quick_quiz.html" %}
       {% include "exampro/templates/exam_studio_users.html" %}
+      {% include "exampro/templates/exam_studio_calendar.html" %}
     </div>
   </div>
 </div>

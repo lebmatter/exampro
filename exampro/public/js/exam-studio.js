@@ -117,6 +117,14 @@ function examStudioApp() {
 
     ongoingSchedules: [],
 
+    // --- Calendar tab state ---
+    calendarSchedules: [],
+    calendarLoaded: false,
+    calendarMonth: new Date().getMonth(),
+    calendarYear: new Date().getFullYear(),
+    calendarMonthNames: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+    calendarDayNames: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+
     _examModal: null,
     _scheduleModal: null,
     _candidateModal: null,
@@ -1454,6 +1462,142 @@ function examStudioApp() {
 
       this.addingCandidates = false;
       this.replaceIcons();
+    },
+
+    // --- Calendar methods ---
+    loadCalendarSchedules() {
+      if (this.calendarLoaded) return;
+      frappe.call({
+        method: "exampro.exam_pro.api.exam_studio.get_all_schedules",
+        callback: (r) => {
+          this.calendarSchedules = r.message || [];
+          this.calendarLoaded = true;
+          this.replaceIcons();
+        },
+      });
+    },
+
+    calendarPrev() {
+      if (this.calendarMonth === 0) {
+        this.calendarMonth = 11;
+        this.calendarYear--;
+      } else {
+        this.calendarMonth--;
+      }
+    },
+
+    calendarNext() {
+      if (this.calendarMonth === 11) {
+        this.calendarMonth = 0;
+        this.calendarYear++;
+      } else {
+        this.calendarMonth++;
+      }
+    },
+
+    calendarYearOptions() {
+      const current = new Date().getFullYear();
+      const years = [];
+      for (let y = current - 5; y <= current + 2; y++) years.push(y);
+      return years;
+    },
+
+    examColorIndex(examName) {
+      let hash = 0;
+      for (let i = 0; i < examName.length; i++) {
+        hash = (hash * 31 + examName.charCodeAt(i)) >>> 0;
+      }
+      return hash % 8;
+    },
+
+    calendarGrid() {
+      const year = this.calendarYear;
+      const month = this.calendarMonth;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Find first cell: Monday on or before the 1st of the month
+      const firstDay = new Date(year, month, 1);
+      let startDow = firstDay.getDay(); // 0=Sun
+      // Shift so week starts Monday: Mon=0 ... Sun=6
+      startDow = (startDow + 6) % 7;
+      const gridStart = new Date(firstDay);
+      gridStart.setDate(gridStart.getDate() - startDow);
+
+      const weeks = [];
+      const cursor = new Date(gridStart);
+
+      for (let w = 0; w < 6; w++) {
+        const week = [];
+        for (let d = 0; d < 7; d++) {
+          const dayDate = new Date(cursor);
+          dayDate.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(dayDate);
+          dayEnd.setHours(23, 59, 59, 999);
+
+          const daySchedules = [];
+          for (const sch of this.calendarSchedules) {
+            const start = new Date(sch.start_date_time);
+            start.setHours(0, 0, 0, 0);
+            const endMs = this._scheduleEndMs(sch);
+            const end = new Date(endMs);
+            end.setHours(0, 0, 0, 0);
+
+            if (start <= dayDate && end >= dayDate) {
+              daySchedules.push({
+                ...sch,
+                colorIndex: this.examColorIndex(sch.exam),
+                isStart: start.getTime() === dayDate.getTime(),
+                isEnd: end.getTime() === dayDate.getTime(),
+              });
+            }
+          }
+          daySchedules.sort((a, b) => new Date(a.start_date_time) - new Date(b.start_date_time));
+
+          week.push({
+            date: cursor.getDate(),
+            month: cursor.getMonth(),
+            year: cursor.getFullYear(),
+            isCurrentMonth: cursor.getMonth() === month,
+            isToday: dayDate.getTime() === today.getTime(),
+            schedules: daySchedules,
+          });
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        weeks.push(week);
+      }
+      return weeks;
+    },
+
+    _scheduleEndMs(sch) {
+      const start = new Date(sch.start_date_time).getTime();
+      const durationMs = (sch.duration || 0) * 60 * 1000;
+      if (sch.schedule_type === "Flexible") {
+        const expireMs = (sch.schedule_expire_in_days || 0) * 24 * 60 * 60 * 1000;
+        return start + durationMs + expireMs;
+      }
+      return start + durationMs;
+    },
+
+    calendarScheduleList() {
+      const active = this.calendarSchedules.filter(s => s.status !== "Completed")
+        .sort((a, b) => new Date(a.start_date_time) - new Date(b.start_date_time));
+      const completed = this.calendarSchedules.filter(s => s.status === "Completed")
+        .sort((a, b) => new Date(b.start_date_time) - new Date(a.start_date_time));
+      return [...active, ...completed];
+    },
+
+    calendarJumpToSchedule(sch) {
+      const d = new Date(sch.start_date_time);
+      this.calendarMonth = d.getMonth();
+      this.calendarYear = d.getFullYear();
+    },
+
+    formatCalendarDate(dtStr) {
+      if (!dtStr) return "";
+      const d = new Date(dtStr);
+      return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) +
+        " " + d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
     },
   };
 }
