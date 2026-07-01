@@ -4,6 +4,7 @@
 {{ super() }}
 <link rel="stylesheet" href="/assets/exampro/css/exam-studio.css" />
 <link rel="stylesheet" href="/assets/exampro/css/exam-analytics.css" />
+<script src="/assets/frappe/node_modules/frappe-charts/dist/frappe-charts.umd.js"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -70,6 +71,13 @@
           Schedules
         </button>
       </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ea-tab-incidents" @click="loadIncidents()">
+          <i data-feather="alert-triangle" style="width:14px;height:14px;"></i>
+          Incidents
+          <span class="tab-count" x-text="incidentCandidates.length" x-show="incidentsLoaded && incidentCandidates.length > 0"></span>
+        </button>
+      </li>
     </ul>
 
     <div class="tab-content pt-4">
@@ -102,19 +110,19 @@
             </template>
 
             <template x-if="questionStatsLoaded && questionStats.length > 0">
-              <table class="table ea-stats-table">
+              <table class="table ea-stats-table ea-sortable-table">
                 <thead>
                   <tr>
-                    <th>Question</th>
-                    <th>Category</th>
-                    <th>Difficulty</th>
-                    <th>Attempts</th>
-                    <th>Success Rate</th>
-                    <th>D-Index</th>
+                    <th @click="setSort(questionSort, 'question')" style="cursor:pointer">Question<span x-text="sortIcon(questionSort, 'question')"></span></th>
+                    <th @click="setSort(questionSort, 'category')" style="cursor:pointer">Category<span x-text="sortIcon(questionSort, 'category')"></span></th>
+                    <th @click="setSort(questionSort, 'difficulty')" style="cursor:pointer">Difficulty<span x-text="sortIcon(questionSort, 'difficulty')"></span></th>
+                    <th @click="setSort(questionSort, 'total_attempts')" style="cursor:pointer">Attempts<span x-text="sortIcon(questionSort, 'total_attempts')"></span></th>
+                    <th @click="setSort(questionSort, 'success_rate')" style="cursor:pointer">Success Rate<span x-text="sortIcon(questionSort, 'success_rate')"></span></th>
+                    <th @click="setSort(questionSort, 'd_index')" style="cursor:pointer">D-Index<span x-text="sortIcon(questionSort, 'd_index')"></span></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <template x-for="q in questionStats" :key="q.exam_question">
+                  <template x-for="q in sortedQuestions" :key="q.exam_question">
                     <tr>
                       <td>
                         <div class="ea-question-preview" x-text="q.question || '(No preview)'"></div>
@@ -224,6 +232,122 @@
 
       </div>
 
+      <!-- Incidents Tab -->
+      <div class="tab-pane fade" id="ea-tab-incidents">
+
+        <template x-if="!incidentsLoaded">
+          <div class="empty-state" style="min-height:200px;">
+            <span class="spinner-border text-muted mb-2" style="width:1.5rem;height:1.5rem;"></span>
+            <p class="text-muted mb-0" style="font-size:0.82rem;">Loading incidents...</p>
+          </div>
+        </template>
+
+        <template x-if="incidentsLoaded && incidentCandidates.length === 0">
+          <div class="empty-state" style="min-height:200px;">
+            <i data-feather="check-circle" style="width:2rem;height:2rem;"></i>
+            <h6>No incidents</h6>
+            <p class="text-muted mb-0">No proctoring incidents were recorded for this exam</p>
+          </div>
+        </template>
+
+        <template x-if="incidentsLoaded && incidentCandidates.length > 0">
+          <div>
+            <!-- Summary cards -->
+            <div class="d-flex flex-wrap gap-3 mb-4">
+              <div class="ea-metric-card">
+                <div class="ea-metric-label">
+                  <i data-feather="alert-triangle" style="width:12px;height:12px;"></i> Total Incidents
+                </div>
+                <div class="ea-metric-value" x-text="incidentSummary.total_incidents"></div>
+              </div>
+              <div class="ea-metric-card">
+                <div class="ea-metric-label">
+                  <i data-feather="users" style="width:12px;height:12px;"></i> Candidates Affected
+                </div>
+                <div class="ea-metric-value" x-text="incidentSummary.candidates_affected"></div>
+              </div>
+              <div class="ea-metric-card" x-show="incidentSummary.most_common">
+                <div class="ea-metric-label">
+                  <i data-feather="trending-up" style="width:12px;height:12px;"></i> Most Common
+                </div>
+                <div class="ea-metric-value" style="font-size:1rem;" x-text="incidentTypeLabel(incidentSummary.most_common)"></div>
+              </div>
+            </div>
+
+            <!-- Chart + Export -->
+            <div class="d-flex flex-wrap align-items-start gap-3 mb-4">
+              <div class="ea-chart-card" style="flex:1;min-width:320px;">
+                <h6>Incidents by Type</h6>
+                <div id="ea-incident-type-chart"></div>
+              </div>
+              <div style="padding-top:0.25rem;">
+                <button class="btn btn-outline-secondary btn-sm" @click="exportIncidentsCsv()" style="display:inline-flex;align-items:center;gap:0.4rem;">
+                  <i data-feather="download" style="width:13px;height:13px;"></i>
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            <!-- Per-candidate table -->
+            <div class="question-list-card">
+              <div class="question-list-header">
+                <h6>
+                  <i data-feather="user" style="width:14px;height:14px;"></i>
+                  Per-Candidate Breakdown
+                </h6>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="table ea-stats-table ea-sortable-table">
+                  <thead>
+                    <tr>
+                      <th @click="setSort(incidentSort, 'candidate_name')" style="cursor:pointer">Candidate<span x-text="sortIcon(incidentSort, 'candidate_name')"></span></th>
+                      <template x-if="!scopeSchedule"><th @click="setSort(incidentSort, 'schedule')" style="cursor:pointer">Schedule<span x-text="sortIcon(incidentSort, 'schedule')"></span></th></template>
+                      <th @click="setSort(incidentSort, 'attention_score')" style="cursor:pointer">Attention<span x-text="sortIcon(incidentSort, 'attention_score')"></span></th>
+                      <th title="Tab Changes" @click="setSort(incidentSort, 'tabchange')" style="cursor:pointer">Tab<span x-text="sortIcon(incidentSort, 'tabchange')"></span></th>
+                      <th title="Monitor Changes" @click="setSort(incidentSort, 'monitorchange')" style="cursor:pointer">Monitor<span x-text="sortIcon(incidentSort, 'monitorchange')"></span></th>
+                      <th title="No Webcam" @click="setSort(incidentSort, 'webcam')" style="cursor:pointer">Webcam<span x-text="sortIcon(incidentSort, 'webcam')"></span></th>
+                      <th title="No Face" @click="setSort(incidentSort, 'face')" style="cursor:pointer">Face<span x-text="sortIcon(incidentSort, 'face')"></span></th>
+                      <th title="Fullscreen Exit" @click="setSort(incidentSort, 'fullscreenexit')" style="cursor:pointer">Fullscreen<span x-text="sortIcon(incidentSort, 'fullscreenexit')"></span></th>
+                      <th title="Other" @click="setSort(incidentSort, 'other')" style="cursor:pointer">Other<span x-text="sortIcon(incidentSort, 'other')"></span></th>
+                      <th @click="setSort(incidentSort, 'total')" style="cursor:pointer">Total<span x-text="sortIcon(incidentSort, 'total')"></span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="c in sortedIncidents" :key="c.candidate">
+                      <tr>
+                        <td>
+                          <div style="font-size:0.85rem;" x-text="c.candidate_name || c.candidate"></div>
+                          <div class="text-muted" style="font-size:0.75rem;" x-text="c.candidate"></div>
+                        </td>
+                        <template x-if="!scopeSchedule">
+                          <td><span class="badge-cat" x-text="c.schedule"></span></td>
+                        </template>
+                        <td>
+                          <template x-if="c.attention_score !== null && c.attention_score !== undefined">
+                            <span :class="attentionClass(c.attention_score)" x-text="c.attention_score"></span>
+                          </template>
+                          <template x-if="c.attention_score === null || c.attention_score === undefined">
+                            <span class="text-muted">—</span>
+                          </template>
+                        </td>
+                        <td x-text="c.tabchange || 0"></td>
+                        <td x-text="c.monitorchange || 0"></td>
+                        <td x-text="(c.nowebcam || 0) + (c.nowebcamtimeout || 0)"></td>
+                        <td x-text="(c.noface || 0) + (c.nofacetimeout || 0)"></td>
+                        <td x-text="c.fullscreenexit || 0"></td>
+                        <td x-text="c.other || 0"></td>
+                        <td><strong x-text="c.total"></strong></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </template>
+
+      </div>
+
       <!-- Schedules Tab -->
       <div class="tab-pane fade" id="ea-tab-schedules">
 
@@ -259,19 +383,19 @@
                 </h6>
               </div>
               <div style="overflow-x:auto;">
-                <table class="table ea-stats-table">
+                <table class="table ea-stats-table ea-sortable-table">
                   <thead>
                     <tr>
-                      <th>Schedule</th>
-                      <th>Date</th>
-                      <th>Candidates</th>
-                      <th>Pass Rate</th>
-                      <th>Avg Score</th>
-                      <th>Avg Time</th>
+                      <th @click="setSort(scheduleSort, 'badge')" style="cursor:pointer">Schedule<span x-text="sortIcon(scheduleSort, 'badge')"></span></th>
+                      <th @click="setSort(scheduleSort, 'start_date_time')" style="cursor:pointer">Date<span x-text="sortIcon(scheduleSort, 'start_date_time')"></span></th>
+                      <th @click="setSort(scheduleSort, 'candidate_count')" style="cursor:pointer">Candidates<span x-text="sortIcon(scheduleSort, 'candidate_count')"></span></th>
+                      <th @click="setSort(scheduleSort, 'pass_rate')" style="cursor:pointer">Pass Rate<span x-text="sortIcon(scheduleSort, 'pass_rate')"></span></th>
+                      <th @click="setSort(scheduleSort, 'avg_score')" style="cursor:pointer">Avg Score<span x-text="sortIcon(scheduleSort, 'avg_score')"></span></th>
+                      <th @click="setSort(scheduleSort, 'avg_completion_time')" style="cursor:pointer">Avg Time<span x-text="sortIcon(scheduleSort, 'avg_completion_time')"></span></th>
                     </tr>
                   </thead>
                   <tbody>
-                    <template x-for="s in scheduleComparison" :key="s.schedule_name">
+                    <template x-for="s in sortedSchedules" :key="s.schedule_name">
                       <tr>
                         <td>
                           <span class="badge-cat" x-text="s.badge || s.schedule_name"></span>
