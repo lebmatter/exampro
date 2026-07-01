@@ -49,9 +49,6 @@ def get_context(context):
         if not schedule:
             context.message = _("Invalid invitation link.")
             return context
-        if not schedule.schedule_invite_link:
-            context.message = _("Invalid invitation link.")
-            return context
         if schedule.get_status() == "Completed":
             context.message = _("This exam schedule has already been completed.")
             return context
